@@ -15,13 +15,13 @@ F-1 — fundação para o protótipo técnico até **F4 (IA efémera)**, em curs
 - Cline 4.1.19 instalado no VS Code portátil.
 - MinGit 2.55.0.windows.5 descarregado; hash oficial e assinatura válidos.
 - Constituição, arquitetura, plano e regras do Cline criados.
-- Repositório Git inicializado na pasta do projeto; falta o primeiro commit porque não foi inventado um email de autor.
+- Repositório Git local iniciado em `main`; primeiro commit documental `e44dfac` enviado ao repositório privado `PAPACREATOR/cerebro-parvo-` em 2026-09-22. O commit usou o nome declarado de Pedro e o endereço GitHub `noreply` associado à conta, sem divulgar email pessoal.
 - GitHub Copilot 1.388.0 instalado a partir do pacote oficial do Marketplace; autenticação GitHub ainda pendente.
 
 ## Ainda não validado
 
 - Gemini API configurada e chamada mínima concluída.
-- Primeiro baseline/commit Git com identidade autorizada.
+- Contrato de implementação F0 e respetivos testes; o commit documental não valida código de produto.
 - Ambiente Python do produto e pytest.
 - Qualquer código F0.
 
@@ -42,7 +42,7 @@ Depois de F-1 passar, executar `tasks/SPEC-F0-001.md`, rever o diff, correr test
 - Cursor deve usar Privacy Mode. Não enviar fontes, dossier jurídico, históricos, segredos ou o acervo completo.
 - A pesquisa de quotas e integração está em `FERRAMENTAS-GRATUITAS-E-EQUIPA.md`. BYOK Gemini não desbloqueia o Agent Hobby ilimitado; os limites da conta ainda não foram testados.
 - Comparação do Plano Mestre F12 com os documentos anteriores: `AUDITORIA-DOCUMENTAL-P4.md`. Constituição/Arquitetura estão em v0.3 após a correção dos dois SQLite; a v0.2 e as variantes anteriores estão identificadas no histórico.
-- GitHub privado solicitado. Em 2026-09-22, a página de criação abriu na página de login; Pedro precisa entrar na sua conta. Nenhum remoto criado nem ficheiro enviado. `.gitignore` foi reforçado e `git check-ignore` confirmou exclusão de fontes, jurídico, memória e diário; ainda é necessária revisão do índice/histórico antes de qualquer push.
+- GitHub privado `PAPACREATOR/cerebro-parvo-` criado por Pedro e confirmado como privado. O commit documental inicial `e44dfac` foi enviado para `main`. Antes do envio, `.gitignore`, índice, padrões de segredos e `git diff --cached --check` foram verificados; fontes, jurídico, memória e diário não integraram o commit. A comparação dirigida com ResearchVault/Will foi atualizada depois deste baseline e ainda requer commit próprio.
 - Segunda auditoria e evidência comparável: `VALIDACAO-CONCEPTUAL-E-MITIGACAO.md`, `COMPARACAO-WILL-E-PROBABILIDADES.md` e `REGISTO-DE-EVENTOS-E-ACOES.md`. Will é referência, não dependência; nenhum teste dele foi executado por nós.
 - Cópia para `D:\Cerebro-Independente` continua por executar por falta de permissão técnica de escrita.
 
