@@ -17,11 +17,15 @@ Não é um chatbot, um agente LLM permanente, uma coleção de scripts ou uma ap
 4. Nada entra no cofre final sem aprovação expressa da pessoa para uma versão concreta. Fontes externas, IA, Activepieces e classificadores não escrevem diretamente nele.
 5. Activepieces é a automação externa escolhida; não substituir por n8n por conveniência.
 6. Logseq é a superfície cognitiva escolhida; não substituir por Obsidian por conveniência.
-7. IA começa sem capacidades. Cada chamada recebe apenas capacidades necessárias e permitidas, durante o tempo mínimo.
+7. IA começa sem capacidades e permanece **confinada em sandbox**. Cada chamada recebe apenas contexto e capacidades necessárias e permitidas, durante o tempo mínimo. `AIOutput = Proposal`: IA não é autoridade, não escreve diretamente nas memórias, não muda objetivos/regras/permissões, não apaga conhecimento e não executa ações externas diretamente.
 8. Resultados não determinísticos tornam-se eventos registados e são reutilizados no replay; não se volta a chamar a origem.
 9. Usar antes de adaptar; adaptar antes de criar. Código próprio é a menor categoria.
 10. Alterações estruturais exigem evidência, consequências documentadas e decisão humana.
 11. A pessoa escreve e decide em linguagem normal; **não precisa de saber o que é Markdown** nem de o escrever, editar, formatar ou gerir para usar o fluxo principal. Markdown, YAML, SQL, ficheiros e conversões são responsabilidade invisível da implementação. Não impor uma parede de botões.
+12. O sistema adapta-se progressivamente à linguagem, preferências e modo de trabalhar de cada pessoa. Comportamento observado é evidência, não autorização automática para criar objetivos humanos.
+13. A finalidade é humana. O sistema pode criar apenas subobjetivos instrumentais rastreáveis a objetivos humanos; não cria silenciosamente finalidades próprias.
+14. A memória criativa persiste como grafo/genealogia mesmo depois de um resultado ser consolidado. O canónico pode alimentar criação futura, mas nunca proíbe o criativo de o questionar.
+15. **Docker não é requisito; sandbox é requisito.** Soluções com Docker e sem Docker devem ser pesquisadas e testadas. A escolha é feita por isolamento efetivo e custo total, incluindo esforço de instalação, manutenção e recuperação por pessoa não técnica.
 
 ## Regra do último cofre
 
@@ -43,6 +47,12 @@ Com o mesmo estado inicial, eventos, regras e configuração, o estado final e o
 - Falhas de replay nunca são escondidas para avançar de fase.
 
 ## Segurança de IA
+
+`AIOutput = Proposal`
+
+A IA é tratada como componente não confiável e substituível, atrás de uma fronteira de sandbox independente do modelo. Por defeito: sem escrita direta nas memórias, sem alteração de objetivos/regras/permissões, sem execução externa, sem credenciais e sem filesystem/rede/processos/dispositivos além do que um contrato temporário autorize.
+
+A sandbox é uma propriedade de segurança, não o nome de uma tecnologia. Para o alvo Windows, **AppContainer/Win32 App Isolation** deve ser testado primeiro como hipótese de implementação simples e nativa; Docker endurecido/rootless e VM/sandbox dedicada permanecem comparadores. A decisão exige testes de permissões, rede, filesystem, processos, GPU, RAM/CPU, instalação, atualização, recuperação e operação por utilizador não técnico.
 
 `C_i = C_needed ∩ C_permitted`
 
