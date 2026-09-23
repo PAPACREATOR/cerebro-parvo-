@@ -36,3 +36,13 @@
 - A iniciativa do sistema é instrumental e rastreável a objetivos humanos; não há finalidade autónoma da máquina.
 - O criativo e o canónico são dois regimes persistentes: consolidar não apaga o grafo criativo; o canónico pode informar criação futura sem a limitar. Regra: **consolidar o conhecimento sem consolidar o pensamento**.
 - Estas linhas consolidam hipóteses/regras de investigação; não constituem validação experimental nem autorização para implementar fases adicionais.
+
+
+### Evidência adicional — casos reais de isolamento Windows
+
+- A Microsoft publicou em 2024 um caso explícito de **CPython 3.12 em Win32 App Isolation**, incluindo execução de código não confiável e ataques relacionados com LLMs entre os cenários motivadores. Isto reduz o risco da hipótese Python-first + sandbox nativa, mas não prova compatibilidade com o nosso runner/GPU.
+- O **Chromium** usa no Windows uma arquitetura de sandbox broker/target e acrescenta tokens **AppContainer/LowBox** a processos sandboxed; a ausência da capability de Internet é usada como proteção adicional de rede. Isto é evidência de produção para o mecanismo, embora o Chromium use defesa em profundidade e não apenas AppContainer.
+- **AppContainer/LPAC** e **Win32 App Isolation moderno** não devem ser confundidos. AppContainer existe desde Windows 8; a documentação atual do Win32 App Isolation integrado indica Windows 11 24H2/build 26100+ e a funcionalidade continua marcada como preview.
+- Prioridade experimental corrigida: testar primeiro um processo de IA lançado por **AppContainer/LPAC ou API nativa equivalente**, com acesso apenas ao canal de I/O e aos pesos estritamente necessários. Se empacotamento, versão do Windows, IPC ou GPU/CUDA tornarem esta via pior, comparar imediatamente com Docker endurecido e alternativas.
+- Teste obrigatório antes de decisão: runner/modelo + RTX 2080/CUDA; bloqueio de cofres/SQLite/credenciais/rede/processos; RAM/CPU/latência; instalação limpa; atualização; falha/recuperação; comparação equivalente com Docker.
+- Esta evidência aumenta a plausibilidade técnica da via sem Docker, **não altera formalmente a confiança global histórica aproximada de 85%**.
