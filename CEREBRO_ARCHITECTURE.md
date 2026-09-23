@@ -34,11 +34,25 @@ Activepieces é o «interior vivo» operacional: horários, pesquisa, APIs, espe
 
 F3 deve usar outbox/retry com estados explícitos para impedir eventos presos entre staging e ingestão. Nenhuma integração pode depender de duas escritas sem recuperação observável.
 
-## IA efémera
+## IA efémera e confinada em sandbox
 
-`necessidade → contexto mínimo → capability lease → chamada → evento de resultado → validação → aplicar/rejeitar → auditoria → revogação`
+`necessidade → contexto mínimo → sandbox → capability lease → chamada → PROPOSTA → evento de resultado → validação determinística → aplicar/rejeitar → auditoria → revogação`
 
-Modelos e fornecedores são substituíveis. Cline + Gemini é ferramenta de construção, não componente do produto.
+**Invariante:** a IA é componente não confiável, substituível e confinado. `AIOutput = Proposal`, nunca autoridade. O modelo não escreve diretamente nas memórias criativa ou canónica, não altera objetivos humanos, regras constitucionais, permissões ou estado persistente, não apaga conhecimento e não executa ações externas diretamente.
+
+A sandbox expõe apenas contexto e capacidades mínimas. Rede, filesystem, processos, dispositivos e credenciais são negados por defeito e concedidos apenas por contrato explícito, mínimo e temporário.
+
+**Docker não é requisito arquitetural. A sandbox é.** A implementação deve comparar Docker endurecido/rootless, isolamento nativo do sistema operativo e, se necessário, sandbox/VM dedicada. Em Windows, AppContainer/Win32 App Isolation é candidato prioritário por fornecer isolamento nativo de ficheiros, rede, processos e recursos sem obrigar o utilizador a gerir Docker. Docker continua candidato quando trouxer vantagem operacional mensurável. Um contentor por si só não demonstra uma fronteira de segurança suficiente.
+
+A escolha deve minimizar: superfície de ataque + permissões + RAM/CPU + dependências + instalação + manutenção + recuperação + esforço humano. Modelos e fornecedores são substituíveis. Cline + Gemini é ferramenta de construção, não componente do produto.
+
+## Princípio humano e adaptação
+
+O humano usa a máquina; a máquina não usa o humano. A pessoa trabalha em linguagem natural e o sistema adapta progressivamente linguagem, recuperação, apresentação e automação ao indivíduo. Comportamento observado pode ser evidência de preferência/interesse, mas não cria silenciosamente novos objetivos humanos.
+
+A finalidade permanece humana. O sistema pode derivar apenas subobjetivos instrumentais rastreáveis a objetivos humanos. Quanto mais aprende sobre uma pessoa, mais capaz deve ficar de a servir, não de a governar.
+
+A memória persistente preserva dois regimes: **criativo**, que conserva o grafo/processo que produziu ideias, hipóteses, alternativas, erros e relações; e **canónico**, que conserva conhecimento consolidado por decisão humana. Consolidar um resultado não apaga nem consome o grafo criativo que o originou. O canónico pode informar criação futura, mas não limita o que o criativo pode questionar: **consolidar o conhecimento sem consolidar o pensamento**.
 
 ## Interface
 
