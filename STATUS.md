@@ -1,56 +1,30 @@
 # Estado operacional
 
-Atualizado: 2026-09-22
+Atualizado: 2026-09-24
 
-**Correção arquitetónica atual:** Pedro confirmou dois cofres separados. O criativo usa as funções nativas do Logseq; o utilizador escreve normalmente, sem input Markdown técnico. O final só recebe item/versão após aprovação expressa e contém Markdown gerido pelo sistema **mais SQLite interno vivo**. Há **um segundo SQLite espelhado**, com contrato por fechar. Activepieces executa, não aprova. A formulação antiga de SQLite como simples índice do Markdown foi revogada; F2 precisa de nova SPEC antes de programar. Esta revisão é documental, sem teste de integração aprovado.
+## Estado conceptual
+Arquitetura fechada para implementação e testes. A composição de 2026-09-22 (Logseq + Activepieces + dois SQLite) é histórica. Decisão corrente: ARQUITETURA-ATUAL-2026-09-24.md; razão/genealogia: MIGRACAO-ARQUITETURAL-2026-09-24.md.
 
-## Fase atual
+Runtime alvo: Joplin + thin bridge + Python deterministic Core + Markdown + EventLog + SQLite + TinyModelSandbox.
 
-F-1 — fundação para o protótipo técnico até **F4 (IA efémera)**, em curso. A primeira SPEC prevista continua F0-001.
+Confiança conceptual histórica aproximada (~85%) permanece congelada. Reutilização reduz risco de implementação, não valida comportamento final.
 
-## Validado
+## LEGO fechado
+Joplin=USE; second-brain=REUSE/ADAPT storage/recovery; knowledge-worker=REUSE/ADAPT candidate/provenance/discovery; GBrain=REIMPLEMENT_PATTERN claims/relations/contradictions; Will=REIMPLEMENT_PATTERN event/replay; Pith=REIMPLEMENT_PATTERN/REFERENCE behavioral weighting; PCA=método/referência.
 
-- Python 3.12.10 e Node.js 26.7.0 encontrados.
-- Visual Studio Code portátil 1.138.0 instalado; assinatura Microsoft válida.
-- Cline 4.1.19 instalado no VS Code portátil.
-- MinGit 2.55.0.windows.5 descarregado; hash oficial e assinatura válidos.
-- Constituição, arquitetura, plano e regras do Cline criados.
-- Repositório Git local iniciado em `main`; primeiro commit documental `e44dfac` enviado ao repositório privado `PAPACREATOR/cerebro-parvo-` em 2026-09-22. O commit usou o nome declarado de Pedro e o endereço GitHub `noreply` associado à conta, sem divulgar email pessoal.
-- GitHub Copilot 1.388.0 instalado a partir do pacote oficial do Marketplace; autenticação GitHub ainda pendente.
+Commits/tags/licenças por ficheiro ainda devem ser fixados antes de copiar código real.
+
+## Estado de implementação
+O GitHub contém principalmente documentação/especificações. Pedro indicou trabalho local até F2 que pode não estar enviado; não declarar esse código validado, obsoleto ou substituído até ser inspecionado. A migração deve aproveitar implementação compatível.
+
+## Próxima execução
+1. Fixar versões/commits e proveniência LEGO.
+2. Reconciliar SPECs antigas com arquitetura corrente sem apagar história.
+3. Inspecionar código local quando estiver acessível/pushed.
+4. Implementar/testar em microtarefas.
 
 ## Ainda não validado
-
-- Gemini API configurada e chamada mínima concluída.
-- Contrato de implementação F0 e respetivos testes; o commit documental não valida código de produto.
-- Ambiente Python do produto e pytest.
-- Qualquer código F0.
-
-## Trabalho atual
-
-Pedro decidiu começar com Cursor Hobby (gratuito) como único programador. VS Code portátil foi encerrado. O instalador oficial Cursor 3.21.16 foi descarregado e a assinatura digital da Anysphere foi validada. A instalação e autenticação ainda não estão concluídas: a permissão técnica de escrita na pasta padrão do utilizador não foi concedida. P0 permanece incompleta; pytest ainda não foi instalado/testado. Nenhuma compra foi efetuada ou confirmada pelo Codex.
-
-Objetivo corrigido e confirmado por Pedro: **protótipo técnico até F4 do Plano Mestre — IA efémera sem ações**, após núcleo determinístico, cognição sem IA, dois cofres e Activepieces. O extrator/organizador inicial é dependência transversal de onboarding. Os quatro módulos da antiga fase 4 funcional não são requisito deste marco. Isto não é o Alpha F9 nem a interface final.
-
-## Próximo
-
-Depois de F-1 passar, executar `tasks/SPEC-F0-001.md`, rever o diff, correr testes e registar resultados.
-
-## Bloqueios e riscos
-
-- A chave Google fornecida apareceu no histórico do chat: substituir/desativar a antiga **antes** de qualquer teste e auditar utilização. Não a repetir nem guardar aqui.
-- Cline fica inativo. Copilot Free é candidato apenas a revisão isolada, sem autenticação verificada. A API Gemini não foi usada.
-- Cursor deve usar Privacy Mode. Não enviar fontes, dossier jurídico, históricos, segredos ou o acervo completo.
-- A pesquisa de quotas e integração está em `FERRAMENTAS-GRATUITAS-E-EQUIPA.md`. BYOK Gemini não desbloqueia o Agent Hobby ilimitado; os limites da conta ainda não foram testados.
-- Comparação do Plano Mestre F12 com os documentos anteriores: `AUDITORIA-DOCUMENTAL-P4.md`. Constituição/Arquitetura estão em v0.3 após a correção dos dois SQLite; a v0.2 e as variantes anteriores estão identificadas no histórico.
-- GitHub privado `PAPACREATOR/cerebro-parvo-` criado por Pedro e confirmado como privado. O commit documental inicial `e44dfac` foi enviado para `main`. Antes do envio, `.gitignore`, índice, padrões de segredos e `git diff --cached --check` foram verificados; fontes, jurídico, memória e diário não integraram o commit. A comparação dirigida com ResearchVault/Will foi atualizada depois deste baseline e ainda requer commit próprio.
-- Segunda auditoria e evidência comparável: `VALIDACAO-CONCEPTUAL-E-MITIGACAO.md`, `COMPARACAO-WILL-E-PROBABILIDADES.md` e `REGISTO-DE-EVENTOS-E-ACOES.md`. Will é referência, não dependência; nenhum teste dele foi executado por nós.
-- Cópia para `D:\Cerebro-Independente` continua por executar por falta de permissão técnica de escrita.
+Creative+Canonical sem lixo/complexidade; Algorithmic Will útil sem deriva; Behavioral sem transformar comportamento em finalidade; tiny model NL→intent com baixo erro; continuidade após shutdown/semana; valor do sistema completo sobre Joplin+search+memória simples; suficiência do Joplin Sync; instalação/recovery; necessidade real de A/L/S/G.
 
 ## Não fazer
-
-- Não ativar on-demand usage, subscrição ou qualquer cobrança sem decisão explícita de Pedro. O plano atual é gratuito.
-- Não dar auto-approve global ao Cursor.
-- Não enviar `fontes/`, `juridico/` ou memória de trabalho ao modelo.
-- Não começar F1 enquanto F0 tiver falhas.
-- Não substituir Logseq, Activepieces ou os dois cofres.
-- Não permitir que Cline, Copilot ou outro agente edite em paralelo com Cursor.
+Não reabrir arquitetura por curiosidade. Não instalar ecossistemas LEGO completos. Não adicionar MCP/n8n/Activepieces/graph DB/cloud/LLM grande/Docker obrigatório sem falha observada. Não apagar histórico. Não assumir SQLite descartável. Não promover pesquisa/IA para Canonical sem humano.
