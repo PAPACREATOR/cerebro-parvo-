@@ -3,43 +3,29 @@
 Projeto: Cérebro Independente
 Autor e Gatekeeper: Pedro Alexandre Caldas Coelho
 
-## Antes de qualquer alteração
+## Antes de alterar
+Ler: CEREBRO_CONSTITUTION.md → ARQUITETURA-ATUAL-2026-09-24.md → MIGRACAO-ARQUITETURAL-2026-09-24.md → DECISIONS.md → LEGO-LOCK.md → COMPATIBILITY-MATRIX.md → STATUS.md → SPEC ativa.
 
-1. Ler `CEREBRO_CONSTITUTION.md`.
-2. Ler `CEREBRO_ARCHITECTURE.md`, `DECISIONS.md` e `STATUS.md`.
-3. Abrir apenas a SPEC indicada em `STATUS.md`.
-4. Se não existir uma SPEC ativa e fechada, não programar.
+## Método
+Uma SPEC de cada vez: contrato → implementação mínima → testes → resultados → revisão humana → parar. Aplicar USE > ADAPT > CREATE. Tarefas de programação devem indicar Goal, referência, dependências permitidas, proibições, invariantes e testes.
 
-## Regras de execução
+## Arquitetura congelada
+Runtime: Joplin + thin bridge + Python Core + SQLite + Markdown + EventLog + TinyModelSandbox.
+- Joplin é camada humana substituível; lógica cognitiva não entra no bridge.
+- Python é linguagem do Core; stdlib-first.
+- Tiny model apenas NL→structured proposal; sem memória persistente, filesystem, credenciais, rede, pesquisa ou autoridade.
+- Creative e Canonical persistem; rejeição/promoção não apaga genealogia.
+- Human Authority prevalece.
+- Algorithmic Will só cria prioridades/subobjetivos instrumentais rastreáveis a objetivos humanos.
+- Web/pesquisa gera candidato/evidência, nunca Canonical.
+- SQLite: cada tabela REBUILDABLE ou AUTHORITATIVE.
+- Joplin Sync é primeira solução de sincronização a testar.
 
-- Executar uma única SPEC por vez.
-- Fluxo: SPEC → implementação mínima → testes → resultados → atualização de estado → parar.
-- Não iniciar a tarefa seguinte, não fazer commit e não mudar arquitetura sem autorização.
-- Nunca esconder, apagar, enfraquecer ou ignorar testes falhados.
-- Registar em `STATUS.md` os comandos, códigos de saída e contagens reais.
-- Aplicar `USE > ADAPT > CREATE`; código próprio é a menor categoria.
-- Quando houver conflito estrutural, parar e apresentar evidência, impacto e alteração mínima.
+Não ressuscitar por conveniência: Logseq, Activepieces, dois SQLite obrigatórios, MCP, n8n, graph DB, Docker obrigatório, cloud obrigatória ou LLM grande.
+Nova tecnologia só com ObservedFailure AND CurrentArchitectureCannotSolve.
 
-## Limites arquitetónicos
+## LEGO
+Consultar LEGO-LOCK.md. second-brain/knowledge-worker podem fornecer código seletivo após licença+commit+ficheiro+testes. GBrain/Will/Pith são principalmente padrões a adaptar/reimplementar em Python. Nunca instalar todos como serviços.
 
-- Nome atual: Cérebro Independente. Nexus e LocalNest são nomes históricos.
-- Logseq não é substituído por Obsidian.
-- Activepieces não é substituído por n8n.
-- Cofre criativo nativo do Logseq e cofre final permanecem separados. O final contém Markdown gerido pelo sistema e **SQLite interno vivo**; existe **um segundo SQLite espelhado**. Não fundir as duas bases nem tratar o interno como cache descartável. A v0.1 `vault.db` como cofre único é histórica.
-- O utilizador escreve normalmente no Logseq: não exigir input Markdown/YAML/SQL nem reconstruir nativamente blocos, páginas, links, tarefas ou queries do Logseq.
-- Nenhuma entrada no cofre final sem aprovação expressa de Pedro ligada ao item e à sua versão; não apagar automaticamente do criativo após promoção.
-- IA é opcional, efémera e sem capacidades permanentes.
-- Fontes externas e IA nunca escrevem diretamente no Final Vault.
-- Replay, auditoria, proveniência, human gate e idempotência não podem ser removidos.
-
-## Segurança e confidencialidade
-
-- Nunca ler ou enviar `fontes/`, `juridico/`, `documentacao/` ou `MEMORIA-DE-TRABALHO.md` durante programação normal.
-- Nunca mostrar, guardar ou commitar chaves, tokens, passwords ou dados de pagamento.
-- Não ativar faturação adicional, on-demand usage, MCP, serviços cloud ou publicação.
-- Não executar comandos destrutivos.
-- Pedir aprovação antes de instalar dependências ou usar rede.
-
-## Paragem obrigatória
-
-No fim da SPEC, apresentar ficheiros alterados, testes executados, resultados PASS/FAIL, riscos e trabalho restante. Depois parar e aguardar revisão do Codex e decisão de Pedro.
+## Segurança e paragem
+Não commitar segredos. Não dar auto-approve global. Fixar versões, rever network/filesystem/subprocess e manter rollback. No fim da SPEC apresentar ficheiros alterados, proveniência, testes PASS/FAIL, invariantes, riscos e trabalho restante. Falha bloqueia avanço.
