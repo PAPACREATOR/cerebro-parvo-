@@ -11,6 +11,3 @@ MEMORIA-DE-TRABALHO.md
 **/*token*
 runtime/**
 .venv/**
-
-# Histórico consultável explicitamente; não é orientação ativa.
-historico/**

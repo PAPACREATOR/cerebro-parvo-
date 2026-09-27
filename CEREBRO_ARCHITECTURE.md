@@ -1,43 +1,43 @@
-# Arquitetura consolidada — v0.4, 2026-09-24
+# Arquitetura vigente — Folha Única e M1–M14
 
-Este ficheiro aponta para a arquitetura operacional corrente. A v0.3 de 2026-09-22 (Logseq + Activepieces + dois SQLite) é histórica e a razão da mudança está em MIGRACAO-ARQUITETURAL-2026-09-24.md.
+A arquitetura mantém-se fechada. Esta página organiza a baseline de 26/09; não acrescenta módulos nem decisões de produto.
 
-## Circuito
-HUMAN → JOPLIN → thin bridge → TINY MODEL SANDBOX (NL→proposal only) → PYTHON DETERMINISTIC CORE → Markdown + EventLog + SQLite.
+```mermaid
+flowchart TD
+ P[Pessoa] --> F[Folha Única]
+ F --> C[Core M1–M14]
+ C --> CR[Creative]
+ CR --> H[Portão humano]
+ P --> H
+ H --> CA[Canonical]
+ C --> E[Eventos e proveniência]
+ E --> R[Persistência e recuperação]
+ C --> A[Activepieces e adaptadores]
+ A --> T[Ferramentas e IA isolada]
+ T --> V[Resultado não confiável]
+ V --> C
+```
 
-O tiny model não é memória nem autoridade. O Core deve continuar funcional sem ele.
+A linha Creative → portão → Canonical descreve a autoridade, não uma transferência que apague Creative. As operações persistentes obedecem ao contrato de eventos/recibos aplicável; G10 e IMP-019 ainda não estão fechados.
 
-## Core
-Intent Validator; Event Engine; Process Router; Working Memory; Behavioral/Procedural Memory; Persistent Knowledge (Creative + Canonical); Candidate Engine; Provenance; Claims/Relations/Contradictions; Genealogy; Algorithmic Will; Research Loop; Human Authority; Recovery/Replay/Invariants.
+Folha: `@@` arquivo; `@` web; `""` fontes; `&` trabalhar; `??` perguntar; `%` calcular; `#` tema. São sinais opcionais; texto normal continua permitido. UI não decide conhecimento.
 
-## Memória
-Creative preserva processo cognitivo: hipóteses, alternativas, contradições, erros, fontes, versões e rejeições. Canonical preserva a versão humana atualmente consolidada. Promoção não destrói Creative. Canonical não significa verdade universal.
+M1 identidade; M2 documentos/blocos; M3 versões/genealogia; M4 Creative; M5 Canonical; M6 portão humano; M7 relações; M8 proveniência/fontes; M9 contradições; M10 pesquisa/recuperação; M11 regras; M12 EventLog/auditoria; M13 integridade/recuperação; M14 coordenação/iniciativa.
 
-## Persistência
-Markdown = portable persistent knowledge.
-EventLog = causal history.
-SQLite = structured operational state/index/projection.
-Cada tabela SQLite é REBUILDABLE ou AUTHORITATIVE; rebuild é provado por teste.
+## Algoritmo da família de importação
 
-## Interface
-Joplin é implementação atual da camada humana, não dependência ontológica. O utilizador trabalha em linguagem natural sem gerir Markdown/SQLite/paths/plugins. O bridge deve ser menor e mais simples que o Core e não conter lógica cognitiva.
+Receber → validar → identificar operação/anexo → quarentena → hash → duplicação exata → formato → adaptador → tarefa delimitada → executar → resultado não confiável → validar envelope/conteúdo → classificar.
 
-## IA
-Input: human_text + minimal_context + allowed_intents.
-Output: intent + arguments + references + confidence/ambiguity.
-Sem direct persistent memory, Canonical, human goals, CoreRules, Web research, filesystem ou program execution. Ambiguidade relevante → ASK_HUMAN. Não há escalada interna para LLM grande.
+- READY: preparar candidato Creative e proveniência → eventos → materialização confirmada → derivados → apresentação.
+- REVIEW: preservar ligação/evidência e apresentar revisão; sem Creative automático.
+- FAILED: tratar falha; retry só com segurança demonstrada.
+- Interrupção/incerteza: reconciliar; RECOVERY_REQUIRED bloqueia mutações incompatíveis.
+- Eliminação: pedido humano separado → proposta → autorização específica → execução quando o contrato estiver fechado.
 
-## Iniciativa e pesquisa
-Algorithmic Will calcula próxima operação útil a partir de objetivos humanos, gaps, staleness, contradições, evidência e custo. Cada subobjetivo deve ser rastreável a finalidade humana.
-Research Loop: gap→question→search→sources→provenance→compare→candidate→Creative→human→Canonical se aprovado.
+Esta família não é o catálogo completo de todas as funções M1–M14. Pesquisa, cognição adaptativa, aprendizagem operacional, versões, relações e promoção humana exigem contratos e testes próprios.
 
-## LEGO
-Consultar LEGO-LOCK.md. Runtime deliberadamente curto: Joplin + Python + SQLite + Markdown + EventLog + TinyModelSandbox + CérebroCore. Projetos externos fornecem produto, código seletivo ou padrões; não se tornam automaticamente serviços.
+## Stack e fronteiras
 
-## Segurança
-Core network-deny por defeito quando viável; tiny model com mínimo privilégio; versões externas pinadas; sem silent updates; hash/diff/security+compatibility tests/rollback. Trust(code)=Source+Provenance+Audit+Reproducibility+Isolation+Tests.
+Python-first; SQLite/FTS5 quando aplicável; Markdown/formatos abertos; Activepieces para execução operacional; LibreOffice, Zotero e LanguageTool como capacidades delimitadas; IA opcional e isolada. Second-Brain é candidato a mecanismos de persistência/recovery, não integração já demonstrada. Joplin e Logseq ficam na genealogia e como referências de mecanismos, sem serem interface obrigatória.
 
-## Regra de mudança
-ObservedFailure AND CurrentArchitectureCannotSolve antes de novo framework/LEGO/DB/model/protocolo/serviço.
-
-Detalhe normativo: ARQUITETURA-ATUAL-2026-09-24.md.
+[Prompt mestre](docs/baseline/CEREBRO_PROMPT_MESTRE_CURSOR_2026-09-26.md) · [Matriz de conformidade](docs/MATRIZ-CONFORMIDADE.md) · [Compatibilidade](COMPATIBILITY-MATRIX.md).
