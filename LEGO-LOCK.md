@@ -1,47 +1,19 @@
-# LEGO Lock — 2026-09-24
+# Componentes, proveniência e estado
 
-Estado: seleção arquitetural congelada; commits/tags exatos devem ser fixados e auditados antes de copiar código.
+Seleção documental não significa instalação, integração nem licença verificada nesta tarefa.
 
-| LEGO | Papel | Estratégia | Runtime no produto | Licença a verificar no commit fixado |
-|---|---|---|---|---|
-| Joplin | camada humana madura | USE | sim | AGPL-3.0-or-later no Desktop/repo atual; verificar versão |
-| stancsz/second-brain | persistência/recovery | REUSE_CODE / ADAPT_CODE seletivo | não como serviço | MIT; verificar ficheiro/commit |
-| rahulmranga/knowledge-worker | candidates/provenance/discovery | REUSE_CODE / ADAPT_CODE seletivo | não como serviço | MIT; verificar ficheiro/commit |
-| garrytan/gbrain | claims/provenance/contradições | REIMPLEMENT_PATTERN | não | MIT; verificar commit |
-| mindot-ai/will | event/tick/replay determinístico | REIMPLEMENT_PATTERN | não | Apache-2.0; verificar commit |
-| pithrun/pith-core | behavioral weighting/decay | REIMPLEMENT_PATTERN / REFERENCE | não | Apache-2.0; verificar commit |
-| PCA | método de especificação/execução | REFERENCE_ONLY | não | verificar antes de copiar qualquer material |
+| Componente | Papel corrente | Estado |
+| --- | --- | --- |
+| Python / stdlib / SQLite / Markdown | Core, contratos, persistência/representação | Baseline; protocolo de persistência G10 ainda aberto |
+| Activepieces | Flows/Pieces executam capacidades, sem autoridade Canonical | Fronteira no candidato é callback; integração real NOT RUN |
+| Second-Brain | Candidato a storage/lock/receipt/journal/recovery | Origem histórica stancsz/second-brain; commit/licença/ficheiros por fixar |
+| LibreOffice / Zotero / LanguageTool | Capacidades de documentos, fontes e língua | Integração NOT RUN |
+| IA | Capacidade residual/opcional isolada | Integração e sandbox NOT RUN |
+| Joplin / Logseq | Genealogia e mecanismos estudados | Não são interface obrigatória |
+| knowledge-worker / GBrain / Will / Pith | Reutilização seletiva ou padrões | Não são serviços a instalar automaticamente |
 
-## Regra de proveniência
+Antes de copiar terceiro: URL + commit/tag + ficheiro/função + hash + licença/notices + dependências/permissões + alterações + testes. A biblioteca citada no README do candidato não se torna dependência automaticamente. Não converter descrições históricas de licenças em verificação atual.
 
-Antes de reutilizar código real registar: origem, autor/projeto, URL, commit/tag, data, licença e hash da licença, ficheiro/função, dependências, rede/filesystem/subprocess, decisão (REUSE_CODE/ADAPT_CODE/REIMPLEMENT_PATTERN/REFERENCE_ONLY/REJECT), alterações Cérebro e testes.
+As dependências de auditoria estão fixadas em [requirements-auditoria.txt](requirements-auditoria.txt). Os Actions oficiais têm SHA fixo resolvido em 27/09/2026. Não foi reutilizado código novo desses projetos nesta reconciliação.
 
-Open source não significa copiar sem condições. MIT/Apache exigem preservação dos avisos aplicáveis. Código Joplin AGPL não é incorporado no Core sem decisão específica e revisão das consequências de distribuição.
-
-## Blocos alvo
-
-### second-brain
-Estudar lock, receipt, crash journal, snapshot, restore, rebuild, digest e conflict preservation. Rejeitar MCP, agent-host assumptions, cloud/Git sync/Postgres/Supabase/rclone salvo falha futura concreta.
-
-### knowledge-worker
-Estudar candidate lifecycle, validation, provenance, promote/merge e discovery determinístico (staleness, question debt, weak/single-source claims, bridges/tensions e métricas de grafo quando justificadas). Rejeição no Cérebro permanece em Creative.
-
-### GBrain
-Adaptar em Python esquema Entity/Claim/Relation/Source/Confidence/Timestamp/Contradiction e identidade/proveniência. Não trazer Bun/TypeScript/runtime apenas para isto.
-
-### Will
-Adaptar event/step/record/replay/state hash/stable clock. Não trazer personalidade, identidade artificial, objetivos existenciais ou runtime Will.
-
-### Pith
-Começar com função pequena de BehaviorEvidence: source/time/frequency/confidence/current_weight/contradictions. Instrução humana explícita atual prevalece sempre.
-
-## Testes constitucionais de qualquer LEGO
-
-`Compromise(TinyModel) => Memory intact`
-`Crash(TinyModel) => Core intact`
-`Remove(TinyModel) => Core operational`
-`InvalidOutput(TinyModel) => No mutation`
-`Reject(Hypothesis) => Hypothesis remains in Creative`
-`AlgorithmicWill => no new HumanFinalGoal`
-
-Nenhum LEGO entra se quebrar autoridade humana, determinismo/replay, portabilidade ou substituibilidade.
+[Seleção histórica de 24/09](historico/repositorio-2026-09-24/LEGO-LOCK.md) · [Genealogia](docs/GENEALOGIA.md).

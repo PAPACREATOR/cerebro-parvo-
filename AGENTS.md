@@ -1,31 +1,20 @@
-# Instruções obrigatórias para agentes
+# Instruções correntes — Cérebro
 
-Projeto: Cérebro Independente
-Autor e Gatekeeper: Pedro Alexandre Caldas Coelho
+Reconciliação autorizada por Pedro em 27-09-2026. Ler CEREBRO_CONSTITUTION.md, CEREBRO_ARCHITECTURE.md, docs/baseline/CEREBRO_PROMPT_MESTRE_CURSOR_2026-09-26.md, DECISIONS.md, STATUS.md e a SPEC ativa antes de alterar código.
 
-## Antes de alterar
-Ler: CEREBRO_CONSTITUTION.md → ARQUITETURA-ATUAL-2026-09-24.md → MIGRACAO-ARQUITETURAL-2026-09-24.md → DECISIONS.md → LEGO-LOCK.md → COMPATIBILITY-MATRIX.md → STATUS.md → SPEC ativa.
+## Autoridade e âmbito
 
-## Método
-Uma SPEC de cada vez: contrato → implementação mínima → testes → resultados → revisão humana → parar. Aplicar USE > ADAPT > CREATE. Tarefas de programação devem indicar Goal, referência, dependências permitidas, proibições, invariantes e testes.
+- Arquitetura M1–M14 fechada; Folha Única, linguagem natural, complexidade interna invisível. Não criar M15 nem impor Joplin/Logseq.
+- Python-first, não Python-only. Activepieces executa capacidades fora da autoridade do Core. IA é opcional, isolada, proposta/evidência; não decide Canonical.
+- Preservar Creative/Canonical, três memórias, três comparadores, autoridade humana, originais, genealogia, fontes, eventos e recuperação.
+- Aplicar USE > ADAPT > CREATE. Fixar origem/commit/licença e testar antes de copiar código externo. Não instalar todos os projetos estudados.
+- O prompt mestre contém versões sobrepostas. Para a família de importação, consultar a Parte III, explicitamente corrigida. docs/RECONCILIACAO.md regista as diferenças. Não decidir contradições normativas novas silenciosamente.
+- Os documentos sob historico são fontes históricas, não regras operacionais atuais. Os textos recebidos sob docs/baseline e o código candidato são preservados por hash; alterar uma cópia de trabalho numa tarefa própria, não os originais para esconder divergências.
 
-## Arquitetura congelada
-Runtime: Joplin + thin bridge + Python Core + SQLite + Markdown + EventLog + TinyModelSandbox.
-- Joplin é camada humana substituível; lógica cognitiva não entra no bridge.
-- Python é linguagem do Core; stdlib-first.
-- Tiny model apenas NL→structured proposal; sem memória persistente, filesystem, credenciais, rede, pesquisa ou autoridade.
-- Creative e Canonical persistem; rejeição/promoção não apaga genealogia.
-- Human Authority prevalece.
-- Algorithmic Will só cria prioridades/subobjetivos instrumentais rastreáveis a objetivos humanos.
-- Web/pesquisa gera candidato/evidência, nunca Canonical.
-- SQLite: cada tabela REBUILDABLE ou AUTHORITATIVE.
-- Joplin Sync é primeira solução de sincronização a testar.
+## Execução
 
-Não ressuscitar por conveniência: Logseq, Activepieces, dois SQLite obrigatórios, MCP, n8n, graph DB, Docker obrigatório, cloud obrigatória ou LLM grande.
-Nova tecnologia só com ObservedFailure AND CurrentArchitectureCannotSolve.
+Uma SPEC/IMP de cada vez: contrato → implementação mínima → testes positivos/negativos/adversariais → regressão → evidência → revisão → PASS/FAIL/NOT RUN. Não avançar IMP sem PASS completo. Testes fornecidos a verde não bastam quando faltam critérios. Não implementar POR DEFINIR necessário ao comportamento.
 
-## LEGO
-Consultar LEGO-LOCK.md. second-brain/knowledge-worker podem fornecer código seletivo após licença+commit+ficheiro+testes. GBrain/Will/Pith são principalmente padrões a adaptar/reimplementar em Python. Nunca instalar todos como serviços.
+O pedido corrente de reorganização permite documentar, importar material existente e reproduzir testes; não transforma o protótipo numa release aprovada. Não confundir SPEC-F0-001 histórica com IMP-001 atual.
 
-## Segurança e paragem
-Não commitar segredos. Não dar auto-approve global. Fixar versões, rever network/filesystem/subprocess e manter rollback. No fim da SPEC apresentar ficheiros alterados, proveniência, testes PASS/FAIL, invariantes, riscos e trabalho restante. Falha bloqueia avanço.
+Não assumir acesso de Copilot ao repositório. Preparar microtarefa autocontida quando necessário. Corrigir erros técnicos dentro do âmbito autorizado; alterações normativas são propostas para decisão humana. Não publicar, ativar cobrança, enviar segredos ou dar auto-approve global. Manter alterações reversíveis e comunicar evidência e limitações.

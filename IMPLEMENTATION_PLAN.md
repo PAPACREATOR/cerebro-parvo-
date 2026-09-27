@@ -1,37 +1,12 @@
-# Plano de implementação
+# Plano de execução vigente
 
-**Nota de âmbito corrigida (2026-09-22):** Pedro confirmou que o alvo atual é **F4 deste roteiro técnico — IA efémera sem ação**, após F-1 e F0–F3. `PLANO-DE-TAREFAS-POR-FASE.md` define o protótipo técnico limitado F4. F5–F9 ficam como backlog; o “Alpha completo” histórico não é a entrega atual. A numeração funcional do documento 04 é histórica para este objetivo.
+1. Usar a documentação reconciliada e os contratos corrigidos, preservando genealogia.
+2. Auditar o candidato importado contra IMP-001. Implementar/corrigir apenas o âmbito dessa tarefa quando autorizado; fechar os testes de receção e integração de referência/stream.
+3. Só após PASS completo de IMP-001, fechar política/contrato de IMP-002 e avançar sequencialmente.
+4. Resolver G10 antes de afirmar persistência autoritativa em IMP-003/004/005/018/019. Não fingir atomicidade conjunta SQLite/filesystem/EventLog.
+5. Formar B1 ingestão (001–007), B2 adaptação (008–015), B3 persistência (016–020), B4 falha/apresentação/recovery (021–023), B5 eliminação separada (024–026) apenas com IMP aprovados.
+6. Executar regressão, T1–T10 e E2E-01–15 conforme fontes; completar contratos de outras famílias M1–M14.
 
-## F-1 — Fundação
+O código candidato já contém esboços de etapas posteriores. A sua preservação não equivale a ter passado estes portões. Não criar novos módulos para preencher a matriz por contagem.
 
-- Repositório Git local, rollback e estado operacional.
-- Python 3.12 isolado e testes locais.
-- Regras permanentes do Cline e proteção de fontes confidenciais.
-- Inventário verificado de ferramentas; sem reinstalar o que já funciona.
-
-## F0 — Esqueleto determinístico
-
-1. Evento versionado e serialização canónica.
-2. Estado e transição pura, sem relógio ou aleatoriedade implícitos.
-3. Event log append-only e idempotência central por `event_id`.
-4. Snapshot e restart.
-5. Replay de 10 000 eventos com igualdade de hash.
-6. Casos: duplicado, inválido, fora de ordem, corrupção, crash durante escrita e alteração de configuração.
-
-## F1–F9
-
-- F1: cognição determinística.
-- F2: memórias, Logseq, Final Vault e truth maintenance.
-- F3: Activepieces, staging e outbox/retry.
-- F4: IA efémera somente leitura.
-- F5: capacidades temporárias, sandbox e teste de execução indireta via componente confiável.
-- F6: ciclo contínuo, actionability gate, urgência e feedback de confirmação. Meta inicial a validar: pelo menos 80% das intervenções aceites num conjunto de avaliação definido antes do teste.
-- F7: domínios e adaptador Logseq fino, sem acoplar o núcleo à interface.
-- F8: integração e stress prolongado.
-- F9: Alpha completa.
-
-Cada fase inclui toda a regressão anterior. Uma fase não avança com testes falhados.
-
-## Primeira vertical
-
-Depois de F0 básico: uma entrada controlada gera evento, sofre transição determinística, grava estado e produz resultado observável. IA, Logseq, Activepieces e SQLCipher não entram nesta primeira tarefa.
+[IMP-001](tasks/IMP-001.md) · [Pendências](docs/PENDENCIAS.md) · [Conformidade](docs/MATRIZ-CONFORMIDADE.md).

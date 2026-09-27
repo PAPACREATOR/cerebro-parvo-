@@ -1,33 +1,14 @@
-# Equipa e método de trabalho
+# Trabalho e ferramentas do GitHub
 
-## Papéis
+Pedro define finalidade, arquitetura e decisões normativas. Codex cruza documentação, audita e testa. Copilot/Cline/Cursor podem escrever uma microtarefa fechada; não assumir acesso ao repositório nem delegar desenho por falta de contexto.
 
-- **Pedro Alexandre Caldas Coelho — proprietário e Gatekeeper:** confirma decisões estruturais, custos, publicação e passagem de fase.
-- **Codex — engenheiro principal:** consolida contratos, prepara tarefas, verifica licenças, revê alterações, repete testes e diagnostica falhas.
-- **Cursor Hobby (gratuito) — programador de implementação, sujeito aos limites do plano:** executa uma única SPEC pequena, com permissões limitadas, e para após apresentar resultados. O plano pago é apenas uma possibilidade futura, não uma condição para começar.
-- **Cline — inativo:** permanece apenas como ferramenta instalada historicamente.
-- **GitHub Copilot Free — revisor opcional, ainda não autenticado:** pode analisar uma alteração depois de Cursor parar, num ambiente oficialmente suportado. Não é segundo escritor nem extensão assumida para Cursor.
+## GitHub usado neste processo
 
-Nenhuma IA decide que o próprio trabalho está correto. Testes observáveis e revisão determinam PASS/FAIL.
+- Commits e histórico: versões reversíveis e proveniência das alterações.
+- Pull requests: revisão do conjunto alterado, âmbito, testes e limitações; modelo em .github/pull_request_template.md.
+- Actions: verificar links/hashes e reproduzir os testes fornecidos num runner Linux, sem segredos. Não declara PASS dos IMP nem aprovação humana do produto.
+- Issues: registar lacunas e falhas específicas, com requisito, evidência e critério de fecho. Modelo de microprocesso incluído.
 
-## Ciclo obrigatório de cada tarefa
+A passagem de um IMP exige contrato + testes necessários + evidência + revisão, não apenas um check verde. A reconciliação documental não permite avançar a programação de IMP posteriores.
 
-1. SPEC fechada com âmbito, entregáveis, PASS, FAIL e paragem.
-2. Revisão da SPEC pelo Codex.
-3. Implementação pelo Cursor.
-4. Testes executados pelo Cursor.
-5. Revisão de todos os ficheiros alterados pelo Codex.
-6. Repetição independente dos testes pelo Codex.
-7. Atualização de `STATUS.md` e `CHANGELOG.md`.
-8. Decisão PASS/FAIL.
-9. Só com PASS se prepara a tarefa seguinte.
-
-## Regra de concorrência
-
-Só existe um escritor automático por tarefa: Cursor. Codex pode inspecionar, mas não corrige silenciosamente antes de registar o resultado recebido.
-
-Se a quota gratuita do Cursor acabar, parar e decidir o próximo escritor; a chave Gemini e a quota do Copilot não aumentam automaticamente a quota do Agent Cursor. Ver `FERRAMENTAS-GRATUITAS-E-EQUIPA.md`.
-
-## Contexto permitido
-
-Por defeito, ferramentas cloud recebem apenas a SPEC atual, os contratos consolidados e os ficheiros de código necessários. Fontes históricas, dossier jurídico, acervo do disco, chaves e dados pessoais ficam excluídos.
+Branch protection, regras de revisão obrigatória, Projects, Wiki, Copilot e funcionalidades dependentes de plano/permissões não foram ativadas nem presumidas. Não criar notificações ou integrações externas sem necessidade. Actions fica limitado a uma tarefa Linux por execução, timeout de cinco minutos, permissões de leitura e sem cron. O runtime do produto continua local-first; o CI só testa código com dados artificiais.

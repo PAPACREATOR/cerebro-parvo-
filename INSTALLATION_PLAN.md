@@ -1,40 +1,15 @@
-# Plano de instalação e verificação
+# Ambiente de auditoria e desenvolvimento
 
-Instalar por necessidade e testar cada bloco antes do seguinte. Não instalar toda a arquitetura de uma vez.
+O ambiente usado nesta reconciliação foi Linux, Python 3.12.14 e pytest 8.3.5 numa venv isolada. O pacote recebido declara Python >=3.10; isto não demonstra compatibilidade em todas essas versões nem no Windows alvo.
 
-## I0 — Inventário e segurança — PASS
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements-auditoria.txt
+.venv/bin/python ferramentas/verificar_documentacao.py
+cd implementacao/candidata-2026-09-27
+../../.venv/bin/python -m pytest -q --color=no
+```
 
-- Ferramentas existentes inventariadas.
-- Pasta do projeto e fontes protegidas.
-- Sem billing ou serviços pagos.
+Em Windows, usar o Python do ambiente em `.venv\Scripts\python.exe`. Esse procedimento ainda não foi executado no computador de Pedro. Não instalar globalmente nem reinstalar ferramentas já verificadas. Testes do produto usam dados artificiais e diretórios temporários.
 
-## I1 — Ferramentas de desenvolvimento — em validação
-
-- Python 3.12.10: encontrado.
-- Node.js 26.7.0: encontrado.
-- MinGit 2.55.0.windows.5: instalado de forma portátil, hash oficial e assinatura válidos.
-- Visual Studio Code 1.138.0: instalado de forma portátil, assinatura Microsoft válida.
-- Cline 4.1.19: instalado.
-- GitHub Copilot 1.388.0: instalado a partir do pacote oficial do Marketplace.
-- Ambiente virtual Python: criado; pytest ainda não instalado nem testado (pacotes descarregados não equivalem a instalação).
-
-## I2 — Fornecedores de programação — requer verificação
-
-- Cursor Hobby: instalar, autenticar e confirmar o plano gratuito antes de escrever código.
-- GitHub Copilot Free: autenticar a conta GitHub apenas se for usado para revisão pontual num ambiente oficialmente suportado; não supor que funciona dentro do Cursor.
-- Gemini API: chave antiga exposta no chat deve ser substituída antes de qualquer teste; usar só contexto mínimo aprovado e chamada direta isolada, se Pedro escolher esta ajuda. Não é pré-requisito de F0.
-- Não ativar faturação, consumo adicional ou auto-approve global.
-
-## I3 — Repositório e rollback
-
-- Repositório Git: inicializado.
-- Primeiro commit: pendente de email Git confirmado por Pedro.
-- Checkpoints do Cline: históricos; Cline está inativo.
-
-## I4 — Ferramentas do produto — ainda não instalar
-
-Logseq Classic/File Graph, SQLite/FTS5, Activepieces, ferramenta de backup e outros componentes só entram quando a fase correspondente tiver versão, licença, caminho de integração e teste de instalação definidos. SQLCipher não é requisito do cofre final Markdown; proteção em repouso continua por decidir e testar. Instalação antecipada não conta como progresso.
-
-## Critério para começar a primeira SPEC técnica
-
-Python/pytest e testes de controlo devem estar verificados, e o escritor escolhido deve abrir o projeto com aprovações manuais e exclusões ativas. Primeiro commit continua dependente de identidade Git autorizada por Pedro. Não é necessário chamar Cline ou Gemini para iniciar a SPEC-F0-001. O objetivo corrigido e confirmado por Pedro é o protótipo técnico até **F4 (IA efémera)**, não a fase 4 funcional antiga.
+Activepieces, LibreOffice, Zotero, LanguageTool, Second-Brain e IA não foram instalados/integrados nesta tarefa. Instalar componentes apenas na etapa cujo contrato os exija e com versão, proveniência, permissões, teste e recuperação definidos.

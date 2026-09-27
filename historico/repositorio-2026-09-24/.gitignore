@@ -31,8 +31,3 @@ REGISTO-DE-EVENTOS-E-ACOES.md
 .clinerules/
 .clineignore
 .vscode/
-
-.audit-venv/
-**/.venv/
-**/.pytest_cache/
-**/__pycache__/
