@@ -1,87 +1,114 @@
 # Cérebro Independente
 
-Sistema local-first de criação, conhecimento e execução governada. A pessoa escreve em linguagem normal numa única interface; regras e flows escolhem capacidades maduras; as ferramentas trabalham nos bastidores; a pessoa continua autoridade final.
+Sistema local-first de criação, conhecimento e execução governada para uma pessoa. A pessoa usa linguagem normal; o sistema coordena processos e memória nos bastidores; a pessoa continua autoridade final.
 
-## Arquitetura em uma frase
+## Estado atual em uma frase
 
-**Uma interface, poucas regras e tabelas, flows simples e providers substituíveis.**
+**Núcleo candidato: Humano + Activepieces Community + um Memory Provider local SQLite/MCP.**
 
-O projeto não pretende reconstruir editores, motores de workflow, sistemas de pesquisa, geradores multimédia ou gestores bibliográficos. Liga ferramentas maduras e obriga-as a respeitar as mesmas leis humanas.
+A arquitetura conceptual está estável, mas a implementação física **não está fechada** até o Memory Provider passar testes reais.
 
-## O que fica nosso
+## O que é nosso
 
-- 3 memórias: trabalho, comportamental/procedimental e conhecimento persistente;
+- 3 memórias lógicas: Working, Behavioral/Procedural e Persistent Knowledge;
 - 2 domínios de autoridade: Creative e Canonical;
-- 3 comparadores: determinístico, semântico e relacional;
+- 3 comparadores: determinístico/exato, semântico e relacional;
 - Human Gate;
 - M1–M14 como responsabilidades;
 - proveniência, genealogia, contradições e recuperação;
-- regras pessoais versionadas;
-- IA sempre sem autoridade.
+- regras versionadas e explicáveis;
+- IA/provider sem autoridade;
+- provider substituível;
+- desmontar deve ser tão fácil como montar.
 
-## Implementação preferencial
+## Núcleo candidato
 
 ```
-Pessoa
-  -> Activepieces WebUI / Chat UI
-  -> regras + Tables/Storage + flows
-  -> capacidade necessária
-       -> Open Notebook
-       -> K-DLC ou outro knowledge-governance provider
-       -> Zotero
-       -> LibreOffice
-       -> Pinokio / ComfyUI / outros providers locais
-       -> outras Pieces / MCP / API / CLI
-  -> resultado
-  -> Creative
-  -> Human Gate
-  -> Canonical / ação autorizada
+                         HUMANO
+                      autoridade final
+                            |
+                            v
+                     ACTIVEPIECES
+                processos / regras / gates
+                            |
+                            | MCP
+                            v
+                  MEMORY PROVIDER LOCAL
+                    SQLite + FTS5
+                 + semântico opcional
+                 + relações/proveniência
 ```
 
-O utilizador não deve precisar de abrir as aplicações internas nem conhecer Markdown, IDs, SQL, MCP ou APIs.
+### Bloco 1 — Activepieces Community
+
+Função: execução determinística, flows/subflows, estado de processo, Human Gate, integração MCP/HTTP e receitas.
+
+Licença: **core MIT**. Funcionalidades Enterprise ficam fora do núcleo salvo licença própria.
+
+### Bloco 2 — Memory Provider SQLite/MCP
+
+Função: conhecimento persistente, pesquisa, relações, temporalidade, proveniência e histórico.
+
+Candidatos a testar, sem decisão antecipada:
+
+1. **RMANOV/sqlite-memory-mcp** — candidato A: SQLite/WAL, FTS5, semântica opcional, knowledge graph, proveniência, eventos e promoção approval-aware. MIT.
+2. **Beledarian/mcp-local-memory** — candidato B: SQLite, FTS5, sqlite-vec, pesquisa temporal, entidades/relações e lifecycle auditável. MIT.
+
+SQLite é parte interna desta camada; não precisa de ser um terceiro serviço.
+
+### PiecesOS
+
+PiecesOS deixa de ser dependência nuclear. Mantém-se como:
+- benchmark funcional;
+- opção experimental para protótipo;
+- referência para LTM/FTS/vector/temporal/MCP.
+
+É proprietário e não temos prova de direito de redistribuição perpétua. A geração 12.3.8/12.3.9 continua útil para comparação, mas o projeto deve funcionar sem ela.
 
 ## Regra permanente
 
 **LIGAR > CONFIGURAR > ADAPTAR > CRIAR.**
 
-Python, SQLite, bases vetoriais, serviços próprios e adaptadores próprios deixam de ser pressupostos do MVP. Só entram se um teste real provar que um provider existente não consegue cumprir uma regra essencial.
+E ainda:
 
-## Compatibilidade verificada
+- **NENHUM COMPONENTE ENTRA SEM UM FAIL QUE O JUSTIFIQUE.**
+- **SE NÃO PODE SER DESLIGADO SEM DESTRUIR O RESTO, ESTÁ MAL INTEGRADO.**
+- **ACTIVEPIECES É MOTOR, NÃO PROPRIETÁRIO DO CONHECIMENTO.**
+- **MEMÓRIA NÃO É AUTORIDADE.**
+- **PROMOTE_TO_CANONICAL só acontece após decisão humana.**
 
-- Activepieces: Chat UI/Human Input, Flows, Subflows, Tables, Storage, MCP e centenas de integrações;
-- Open Notebook: REST API para notebooks, fontes, pesquisa, chat e operações cognitivas;
-- Zotero: API local no desktop, incluindo leitura e escritas autorizadas;
-- LibreOffice: execução headless/CLI e controlo por API;
-- Pinokio: instalação e execução local de aplicações/servidores AI;
-- ComfyUI: backend/API local para workflows de imagem e multimédia;
-- K-DLC: forte compatibilidade conceptual para governação de conhecimento, mas ainda tratado como provider opcional porque a especificação atual continua draft.
+## Providers periféricos
 
-Ver [Matriz de compatibilidade](COMPATIBILITY-MATRIX.md).
+LibreOffice, Zotero, ComfyUI, LanguageTool, IA local, web, email e publicação não pertencem ao núcleo. Entram por receita apenas quando necessários.
 
-## Estado real
+Open Notebook e K-DLC deixam de ser dependências runtime. Permanecem como referências históricas/fontes de requisitos e só regressam se um teste demonstrar uma lacuna concreta.
 
-A arquitetura está fechada. O produto completo ainda não está provado ponta-a-ponta.
+## Próxima prova
 
-O repositório preserva a implementação Python e o writer recuperável já testados como evidência técnica/fallback, mas eles deixaram de ser caminho obrigatório.
+Testar os dois Memory Providers contra o mesmo contrato:
 
-O próximo teste é uma única vertical slice, preferencialmente sem código próprio:
+```
+Activepieces
+ -> MCP
+ -> criar memória
+ -> FTS
+ -> semântico
+ -> temporal
+ -> relações/proveniência
+ -> contradição sem auto-delete
+ -> Creative
+ -> Human Gate
+ -> Canonical
+ -> restart
+ -> backup/restore
+ -> desligar provider
+ -> núcleo continua íntegro
+```
 
-`WebUI -> regras/tabelas -> provider -> Creative -> Human Gate -> Canonical`.
+Só depois deste teste se escolhe o provider.
 
-## Documentação vigente
+## Licença do projeto
 
-1. [Constituição](CEREBRO_CONSTITUTION.md)
-2. [Arquitetura vigente](CEREBRO_ARCHITECTURE.md)
-3. [Decisões](DECISIONS.md)
-4. [Estado](STATUS.md)
-5. [Plano de implementação](IMPLEMENTATION_PLAN.md)
-6. [Matriz de compatibilidade](COMPATIBILITY-MATRIX.md)
-7. [Pendências](docs/PENDENCIAS.md)
+O código/documentação próprios do repositório usam PolyForm Noncommercial 1.0.0. Dependências mantêm as suas licenças: Activepieces core MIT; os dois candidatos atuais de memória MIT; SQLite public domain; PiecesOS proprietário.
 
-Documentos anteriores permanecem no histórico para genealogia, não como orientação operacional atual.
-
-## Licença
-
-O repositório usa [PolyForm Noncommercial 1.0.0](LICENSE). Uso comercial do código/documentação próprios exige licença ou permissão separada do titular. Licenças dos providers e componentes de terceiros continuam independentes.
-
-[CONTRIBUTING](CONTRIBUTING.md) · [CLA](CONTRIBUTOR_LICENSE_AGREEMENT.md) · [Licenciamento comercial](COMMERCIAL-LICENSING.md) · [Segurança](SECURITY.md) · [Terceiros](THIRD_PARTY_NOTICES.md)
+[Constituição](CEREBRO_CONSTITUTION.md) · [Arquitetura](CEREBRO_ARCHITECTURE.md) · [Decisões](DECISIONS.md) · [Estado](STATUS.md) · [Plano](IMPLEMENTATION_PLAN.md) · [Pendências](docs/PENDENCIAS.md)
