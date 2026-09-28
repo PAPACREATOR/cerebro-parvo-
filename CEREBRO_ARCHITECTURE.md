@@ -1,119 +1,123 @@
-# Arquitetura vigente — composição mínima governada
+# Arquitetura vigente — núcleo mínimo substituível
 
-A arquitetura conceptual continua fechada. A implementação operacional foi simplificada ao mínimo: **não construir mecanismos próprios quando uma capacidade madura já produz o comportamento necessário**.
+## Estado
+
+A arquitetura **conceptual** está estável. A composição física está em validação e não deve ser declarada fechada antes do teste comparativo do Memory Provider.
+
+## Diagrama
 
 ```mermaid
 flowchart TD
- P[Pessoa] --> UI[Activepieces WebUI / Folha Única]
- UI --> R[Regras + estado + flows]
- R --> AP[Activepieces: Flows / Subflows / Tables / Storage / MCP / Pieces]
- AP --> KG[K-DLC ou outro provider de knowledge governance]
- AP --> ON[Open Notebook + uma tiny parametrizada]
- AP --> Z[Zotero]
- AP --> LO[LibreOffice]
- AP --> PK[Pinokio -> imagem / áudio local]
- AP --> O[Outras capacidades]
- KG --> U[Resultados / evidência]
- ON --> U
- Z --> U
- LO --> U
- PK --> U
- O --> U
- U --> CR[Creative]
- CR --> H[Human Gate]
- P --> H
- H --> CA[Canonical / ação autorizada]
+ P[Humano / autoridade final] --> AP[Activepieces Community]
+ AP -->|MCP| MP[Memory Provider local]
+ MP --> DB[(SQLite)]
+ MP --> EX[FTS5 / exato]
+ MP --> SE[Semântico opcional]
+ MP --> RE[Entidades / relações / proveniência]
+ MP --> TE[Temporal / histórico]
+ AP --> CR[Creative]
+ CR --> HG[Human Gate]
+ P --> HG
+ HG --> CA[Canonical]
+ AP --> PR[Providers periféricos por receita]
 ```
 
-## O que é nosso
+## Responsabilidades
 
-O Cérebro não é definido por um programa específico. É definido por invariantes:
+### Humano
+É a única autoridade final. Aprova promoção a Canonical e ações protegidas.
 
-- pessoa como autoridade final;
-- três memórias: trabalho, comportamental/procedimental e conhecimento persistente;
-- dois domínios de autoridade: Creative e Canonical;
-- três comparadores: determinístico, semântico e relacional;
-- M1–M14 como responsabilidades;
-- proveniência, genealogia e contradições;
-- regras versionadas e explicáveis;
-- IA sem autoridade;
-- Human Gate para promoção/ações protegidas;
-- similaridade semântica nunca autoriza eliminação;
-- replay/recuperação não volta a inventar evidência externa.
+### Activepieces
+É o motor executivo, não o proprietário do conhecimento:
+- flows/subflows;
+- regras e estados de execução;
+- Human Gate;
+- recipes;
+- MCP/HTTP;
+- coordenação dos comparadores;
+- chamadas a providers.
 
-## O que deixa de ser obrigatório
+### Memory Provider
+É o sistema de conhecimento local e substituível:
+- SQLite/WAL;
+- FTS5/BM25;
+- pesquisa semântica quando necessária;
+- temporalidade;
+- entidades/relações;
+- proveniência/eventos;
+- histórico sem eliminação automática por similaridade.
 
-- Core Python separado;
-- SQLite no MVP;
-- motor de workflows próprio;
-- motor de pesquisa próprio;
-- vários agentes permanentes;
-- frontend próprio;
-- adaptadores próprios quando Piece/MCP/API/CLI resolve.
+Candidatos:
+- A: RMANOV/sqlite-memory-mcp;
+- B: Beledarian/mcp-local-memory.
 
-O “Core” passa a significar a **função constitucional**: regras, estados, permissões e autoridade. Sempre que possível, esta função é expressa com Activepieces Flows/Subflows, Tables/Storage e configuração.
-
-SQLite ou Python só entram se um teste real demonstrar uma lacuna que as capacidades existentes não conseguem fechar.
+Nenhum é aceite sem teste.
 
 ## Três memórias
 
-Implementação preferencial inicial:
+São papéis lógicos, não três programas:
+- Working: estado de execução Activepieces + contexto temporário;
+- Behavioral/Procedural: regras/preferências/correções versionadas;
+- Persistent Knowledge: conhecimento persistente no Memory Provider, distinguindo Creative de Canonical.
 
-- Working Memory -> estado do flow + Tables/Storage;
-- Behavioral/Procedural Memory -> Tables versionadas com regras, preferências e correções;
-- Persistent Knowledge -> Creative/Canonical em formatos abertos, com provider de governação quando útil.
+## Dois domínios
 
-Estas são funções de memória, não três produtos nem três bases de dados.
+- Creative: propostas, hipóteses, variantes, contradições e material ainda não aprovado;
+- Canonical: conhecimento explicitamente aprovado pelo humano.
+
+A existência de uma função técnica chamada `promote` num provider não lhe dá autoridade. A chamada só pode ocorrer após Human Gate.
 
 ## Três comparadores
 
-Podem ser providers independentes:
+- determinístico/exato: regras, hashes, IDs, estados + FTS quando aplicável;
+- semântico: embeddings/vector apenas quando necessário;
+- relacional: entidades, relações, proveniência, versões e genealogia.
 
-- determinístico -> condições, hashes, estados, valores, regras;
-- relacional -> relações, backlinks, fontes, versões, genealogia, índices;
-- semântico -> Open Notebook/tiny ou outro provider.
+Os resultados são evidência. Nenhum comparador decide Canonical.
 
-O flow cruza os resultados. Nenhum comparador promove Canonical sozinho.
+## Invariantes
 
-## Capacidades
+- humano manda;
+- IA/provider nunca aprova;
+- similaridade/paráfrase nunca autoriza apagar;
+- contradições são preservadas e sinalizadas;
+- replay não volta a chamar IA/web para inventar evidência histórica;
+- backup só é válido depois de restore demonstrado;
+- provider swap não altera as leis;
+- Internet desligada não deve destruir o núcleo;
+- desmontar deve ser tão fácil como montar.
 
-Registo conceptual mínimo:
+## Redundância
 
-```
-CAPACIDADE -> PROVIDER
-SEMANTIC_WORK -> Open Notebook
-KNOWLEDGE_GOVERNANCE -> K-DLC (se compatível)
-REFERENCES -> Zotero
-DOCUMENT_OUTPUT -> LibreOffice
-IMAGE -> Pinokio/provider local
-AUDIO_MUSIC -> Pinokio/provider local
-PUBLISH -> Piece/provider aplicável
-```
+Não duplicar serviços por segurança aparente. A redundância é funcional:
+- Activepieces guarda/processa execução;
+- Memory Provider guarda conhecimento num formato SQLite portátil;
+- exports/backups independentes permitem reconstrução;
+- Canonical nunca depende de PiecesOS ou de uma cloud.
 
-O provider pode mudar sem alterar as leis do Cérebro.
+## PiecesOS
 
-## Regra permanente de implementação
+Não é núcleo. É proprietário e fica como benchmark/opção experimental. A geração 12.3.8/12.3.9 é interessante por LTM + MCP + FTS/vector/temporal, mas a arquitetura não pode depender do seu entitlement, cloud ou redistribuição.
+
+## Providers periféricos
+
+Zotero, LibreOffice, ComfyUI, LanguageTool, IA local, web, email e publicação entram apenas quando uma receita exige. Open Notebook/K-DLC deixam de ser runtime obrigatório.
+
+## Regra de implementação
 
 **LIGAR > CONFIGURAR > ADAPTAR > CRIAR.**
 
-Não adicionar serviço, base de dados, agente, biblioteca ou aplicação enquanto um flow + provider existente cumprir o comportamento requerido.
+1. Activepieces já resolve?
+2. Memory Provider já resolve?
+3. MCP/API/CLI de provider maduro resolve?
+4. configurar/adaptar minimamente;
+5. criar código apenas perante FAIL demonstrado.
 
-## Critério de produto
-
-Para o utilizador deve existir uma única experiência:
+## Critério de desacoplamento
 
 ```
-Pessoa
--> Activepieces WebUI
--> pedido normal
--> flow escolhe capacidades
--> ferramentas trabalham nos bastidores
--> resultado volta
--> Creative / aprovação humana / Canonical
+Remove(MemoryProvider) -> Activepieces + leis + configuração sobrevivem
+Remove(Activepieces)   -> SQLite/Canonical + exports sobrevivem
+Remove(AI)             -> conhecimento e autoridade sobrevivem
+Internet=OFF           -> núcleo continua utilizável
 ```
-
-O utilizador não deve ter de circular entre aplicações para completar o processo.
-
-## Estado real
-
-Esta arquitetura está agora fechada como direção operacional. Ainda falta provar a composição numa vertical slice real em Activepieces. O código histórico e o writer recuperável permanecem como evidência/alternativa técnica, mas deixam de ser pressuposto obrigatório do MVP.
