@@ -14,34 +14,58 @@ Arquitetura consolidada em [Projeto final auditado](docs/PROJETO-FINAL-AUDITADO-
 - 3 memórias, 3 comparadores e M1–M14 preservados como responsabilidades;
 - pessoa como autoridade final.
 
-Obsidian/Joplin/Logseq não são dependências do runtime. Obsidian permanece referência de mercado e viewer opcional de Markdown, se útil.
+Obsidian/Joplin/Logseq não são dependências do runtime. Obsidian permanece referência de mercado e viewer opcional de Markdown.
 
 ## Prova executada
 
-No commit 3e5b61e31774ba64c8a96cd5b83d515b3f0f3f56:
+No commit `f48382f396e3b4af18e62a15c3ecb6104dfd52c9`:
 
 - GitHub Actions: **SUCCESS**;
-- job: **Integridade documental e 34 testes fornecidos**;
-- suite candidata: 34 testes reproduzidos sem falha pela workflow;
-- código candidato não foi alterado pelos refinamentos de arquitetura.
+- suite histórica importada: **34 PASS**;
+- writer recuperável ativo: **11 PASS**;
+- total executado pela CI em duas suites: **45 testes sem falha**;
+- integridade documental: PASS.
 
-Isto é regressão do candidato existente. Não é certificação do produto completo.
+Isto continua a ser evidência parcial, não certificação do produto completo.
 
-## Decisões técnicas novas
+## Implementação ativa
 
-### G10/IMP-019
+Existe agora `implementacao/ativa-2026-09-28/`.
 
-Foi selecionado um protocolo mínimo de commit recuperável:
+O componente `cerebro/persistence.py` implementa o substrato de G10:
 
-PREPARED em SQLite -> materialização Markdown por replace atómico -> verificação de hash -> COMMITTED -> derivados.
+`PREPARED em SQLite -> temporário + fsync -> os.replace -> hash -> COMMITTED -> reconcile/resume`.
 
-Crash é reconciliado por operation_id, estado e hash. Divergência fecha em RECOVERY_REQUIRED.
+Testado:
 
-**Estado: desenho escolhido; implementação/testes NOT RUN. G10 só fecha depois de crash/replay/idempotência reais.**
+- Creative;
+- Canonical com o mesmo writer;
+- idempotência;
+- crash após PREPARED;
+- crash após replace;
+- replay/resume a partir do payload congelado;
+- divergência de bytes;
+- COMMITTED sem ficheiro;
+- operação reutilizada com payload diferente;
+- path traversal.
 
-### Eliminação
+**Estado G10/IMP-019: PARCIAL IMPLEMENTADO / TESTADO.** Falta ligar este writer ao pipeline `materialize()`, provar restart de processo real e integração com EventLog/flows.
 
-Eliminação automática de originais fica fora do MVP. IMP-024–026 permanecem preservados para trabalho futuro e nunca são necessários para provar o primeiro produto útil.
+## Publicação e colaboração
+
+Preparados:
+
+- PolyForm Noncommercial 1.0.0;
+- CONTRIBUTING;
+- Contributor License Agreement para preservar possibilidade de relicenciamento comercial;
+- política de licenciamento comercial;
+- SECURITY;
+- CODE_OF_CONDUCT;
+- THIRD_PARTY_NOTICES;
+- template de PR com aceitação explícita do CLA;
+- scan textual por padrões comuns de segredos sem resultados encontrados.
+
+A visibilidade do repositório continua **PRIVATE** porque o conector GitHub disponível não expõe a operação administrativa de alteração de visibilidade.
 
 ## Ainda NOT RUN
 
@@ -49,20 +73,19 @@ Eliminação automática de originais fica fora do MVP. IMP-024–026 permanecem
 - MCP real entre Core e flows;
 - Open Notebook/tiny;
 - isolamento real do espaço cognitivo;
-- persistência Creative completa;
 - Human Gate + promoção Canonical;
 - FTS/rebuild;
-- crash/restart/replay;
+- restart de processo real;
+- backup/restore;
 - Windows;
 - E2E do produto;
 - instalação por utilizador não técnico.
 
 ## Próximo portão
 
-Construir uma vertical slice, não continuar a expandir documentação:
-
-pessoa -> Activepieces -> Core -> Creative -> aprovação -> Canonical,
-
-e depois inserir Open Notebook/tiny como ramo cognitivo isolado.
+1. ligar o writer ao `materialize()`;
+2. primeira vertical slice Activepieces -> Core -> Creative;
+3. Human Gate -> Canonical;
+4. Open Notebook/tiny isolado.
 
 [Plano](IMPLEMENTATION_PLAN.md) · [Pendências](docs/PENDENCIAS.md) · [Compatibilidade](COMPATIBILITY-MATRIX.md)
