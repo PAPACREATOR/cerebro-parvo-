@@ -1,80 +1,101 @@
 # Estado operacional — 28-09-2026
 
-## Arquitetura
+## Estado
 
-**FECHADA — composição mínima governada.**
+**ARQUITETURA CONCEPTUAL ESTÁVEL; COMPOSIÇÃO FÍSICA EM TESTE.**
 
-A arquitetura só reabre por decisão humana explícita ou falha estrutural demonstrada em teste real.
+Não declarar o Memory Provider escolhido antes de teste comparativo.
 
-Direção vigente:
+## Núcleo candidato
 
-- Activepieces WebUI/Chat UI como experiência principal;
-- Flows/Subflows/Tables/Storage/MCP/Pieces como orquestração e estado inicial;
-- “Core” como função constitucional — regras, permissões, estados e autoridade — não como aplicação Python obrigatória;
-- 3 memórias, Creative/Canonical, 3 comparadores, M1–M14 e Human Gate preservados;
-- Open Notebook + uma tiny/modelo parametrizado para cognição/semântica;
-- K-DLC apenas como provider opcional/substituível de knowledge governance;
-- Zotero, LibreOffice, Pinokio/ComfyUI e outros providers como capacidades nos bastidores;
-- SQLite/Python/código próprio apenas se um teste real provar que a composição não cumpre uma regra;
-- regra permanente: **LIGAR > CONFIGURAR > ADAPTAR > CRIAR**.
+```
+Humano
+  |
+  v
+Activepieces Community (MIT)
+  |
+  | MCP
+  v
+Memory Provider local (MIT)
+  |
+  v
+SQLite (public domain)
+```
 
-## Compatibilidade documental verificada
+Candidatos:
+- A: RMANOV/sqlite-memory-mcp;
+- B: Beledarian/mcp-local-memory.
 
-- Activepieces: Chat UI/Human Input, Tables, Storage, Subflows, MCP e catálogo amplo de Pieces;
-- Open Notebook: REST API completa, pesquisa full-text/vector, fontes, chat e controlo de contexto;
-- Zotero: API local offline; leitura e escrita autorizada no desktop;
-- LibreOffice: headless/CLI e API/UNO;
-- Pinokio: instalação e lançamento local de aplicações/servidores;
-- ComfyUI: API/backend para workflows locais;
-- K-DLC: alinhamento forte com governação, mas especificação 0.2.0 ainda “Draft for implementation”.
+PiecesOS: benchmark/opção experimental, não dependência.
 
-Ver [Matriz de compatibilidade](COMPATIBILITY-MATRIX.md).
+## O que está preservado
 
-## Evidência preservada
+- 3 memórias;
+- Creative/Canonical;
+- 3 comparadores;
+- Human Gate;
+- M1–M14;
+- proveniência/genealogia/contradições;
+- regras versionadas;
+- IA sem autoridade;
+- recuperação verificável;
+- provider swap.
 
-O código histórico, a implementação ativa e o writer recuperável continuam preservados como evidência técnica/fallback.
+## Licenças verificadas
+
+- Activepieces core: MIT; Enterprise separado/comercial;
+- sqlite-memory-mcp: MIT;
+- mcp-local-memory: MIT;
+- SQLite: public domain;
+- PiecesOS: proprietário;
+- código/documentação próprios do Cérebro: PolyForm Noncommercial 1.0.0.
+
+Antes de distribuição final, fixar versões e THIRD_PARTY_NOTICES.
+
+## O que saiu do núcleo
+
+- PiecesOS obrigatório;
+- Open Notebook obrigatório;
+- K-DLC runtime;
+- vector DB separado;
+- Qdrant/Neo4j;
+- motor de pesquisa próprio;
+- Core Python obrigatório;
+- frontend técnico/Markdown para o utilizador.
+
+## Evidência histórica preservada
 
 No commit `f48382f396e3b4af18e62a15c3ecb6104dfd52c9`:
-
-- GitHub Actions: SUCCESS;
-- suite histórica: 34 PASS;
-- writer recuperável: 11 PASS;
-- total: 45 testes sem falha;
-- integridade documental: PASS.
+- GitHub Actions SUCCESS;
+- 34 testes históricos PASS;
+- 11 writer tests PASS;
+- total 45 PASS.
 
 Isto não prova a nova composição E2E.
 
-## O que deixou de ser pressuposto
+## Próximo portão
 
-- Core Python separado;
-- SQLite obrigatório;
-- writer próprio como primeiro caminho;
-- workflow engine próprio;
-- motor de pesquisa próprio;
-- frontend próprio;
-- multiagente;
-- adaptadores onde Piece/MCP/API/CLI resolve.
+Executar o mesmo teste nos dois Memory Providers:
 
-Nada é apagado: permanece disponível como fallback.
+1. instalação Windows;
+2. Activepieces -> MCP;
+3. create/read/update;
+4. FTS/exato;
+5. semântico;
+6. temporal;
+7. entidades/relações;
+8. proveniência;
+9. contradições preservadas;
+10. Creative -> Human Gate -> Canonical;
+11. provider não consegue promover sozinho;
+12. restart;
+13. backup -> destruir -> restore;
+14. desligar Internet;
+15. desligar Memory Provider sem destruir leis/configuração Activepieces;
+16. desligar Activepieces sem perder SQLite/Canonical.
 
-## Próximo e único portão estrutural
+Escolher o provider apenas pelos resultados.
 
-Provar uma vertical slice preferencialmente sem código próprio:
+## Regra operacional
 
-```
-Activepieces WebUI
--> regras/tabelas
--> uma capacidade
--> resultado
--> Creative
--> Human Gate
--> Canonical
-```
-
-Depois acrescentar Open Notebook. Os restantes providers entram um a um sem alterar a arquitetura.
-
-## Critério de sucesso
-
-A pessoa usa linguagem natural numa única experiência; não vê processos internos nem precisa de conhecer aplicações auxiliares. As ferramentas trabalham nos bastidores, os resultados regressam à mesma interface e nenhuma IA/provider ganha autoridade.
-
-[Arquitetura](CEREBRO_ARCHITECTURE.md) · [Constituição](CEREBRO_CONSTITUTION.md) · [Decisões](DECISIONS.md) · [Plano](IMPLEMENTATION_PLAN.md) · [Pendências](docs/PENDENCIAS.md)
+**LIGAR > CONFIGURAR > ADAPTAR > CRIAR.**
