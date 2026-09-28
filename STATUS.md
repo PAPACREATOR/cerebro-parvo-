@@ -1,22 +1,68 @@
-# Estado operacional — 27-09-2026
+# Estado operacional — 28-09-2026
 
-## Arquitetura
+## Desenho atual
 
-Folha Única + M1–M14; baseline de 26/09. A orientação Joplin de 24/09 e a composição Logseq/dois SQLite de 22/09 foram preservadas como histórico. Activepieces é executor externo; IA opcional e isolada; pessoa mantém autoridade.
+Arquitetura consolidada em [Projeto final auditado](docs/PROJETO-FINAL-AUDITADO-2026-09-28.md):
 
-## Código e prova
+- Core determinístico pequeno;
+- Activepieces como UI/oficina de execução;
+- Pieces/Subflows/MCP/API/CLI antes de código próprio;
+- um único espaço Open Notebook para cognição temporária;
+- uma tiny IA que muda de contexto conforme a tarefa;
+- Creative e Canonical em Markdown/formatos abertos com a mesma mecânica de escrita e autoridade distinta;
+- SQLite para eventos, IDs, relações, estados, permissões, proveniência e índices;
+- 3 memórias, 3 comparadores e M1–M14 preservados como responsabilidades;
+- pessoa como autoridade final.
 
-- Código candidato revisto de 27/09 importado integralmente, sem alteração.
-- Suite fornecida: **34 PASS locais**, zero FAIL na suite; [evidência](auditoria/RESULTADOS.md).
-- IMP-001: **PARCIAL / portão não fechado**. Ausência de Folha/stream e cobertura incompleta de interrupção/erros; não avançar a IMP-002.
-- IMP-019/G10 e IMP-026: **POR DEFINIR / bloqueados**.
-- Integração real, crash/recovery, Windows e M1–M14 ponta-a-ponta: **NOT RUN**.
-- Produto completo: **não aprovado como release**.
+Obsidian/Joplin/Logseq não são dependências do runtime. Obsidian permanece referência de mercado e viewer opcional de Markdown, se útil.
 
-A auditoria anterior dizia corretamente que o GitHub não tinha código; o inventário mais amplo encontrou pacotes na Library. A presente atualização substitui essa descrição de disponibilidade, sem converter protótipos em sistema validado.
+## Prova executada
 
-## Próximo trabalho
+No commit 3e5b61e31774ba64c8a96cd5b83d515b3f0f3f56:
 
-Completar a auditoria/contrato do IMP-001 e testes dedicados na microtarefa adequada. Manter os POR DEFINIR explícitos. Não certificar trabalho local no PC de Pedro que ainda não tenha sido disponibilizado.
+- GitHub Actions: **SUCCESS**;
+- job: **Integridade documental e 34 testes fornecidos**;
+- suite candidata: 34 testes reproduzidos sem falha pela workflow;
+- código candidato não foi alterado pelos refinamentos de arquitetura.
 
-[Conformidade](docs/MATRIZ-CONFORMIDADE.md) · [Pendências](docs/PENDENCIAS.md) · [IMP-001](tasks/IMP-001.md) · [VS Code](docs/VS-CODE.md) · [Licenciamento](docs/LICENCIAMENTO-PENDENTE.md).
+Isto é regressão do candidato existente. Não é certificação do produto completo.
+
+## Decisões técnicas novas
+
+### G10/IMP-019
+
+Foi selecionado um protocolo mínimo de commit recuperável:
+
+PREPARED em SQLite -> materialização Markdown por replace atómico -> verificação de hash -> COMMITTED -> derivados.
+
+Crash é reconciliado por operation_id, estado e hash. Divergência fecha em RECOVERY_REQUIRED.
+
+**Estado: desenho escolhido; implementação/testes NOT RUN. G10 só fecha depois de crash/replay/idempotência reais.**
+
+### Eliminação
+
+Eliminação automática de originais fica fora do MVP. IMP-024–026 permanecem preservados para trabalho futuro e nunca são necessários para provar o primeiro produto útil.
+
+## Ainda NOT RUN
+
+- Activepieces real;
+- MCP real entre Core e flows;
+- Open Notebook/tiny;
+- isolamento real do espaço cognitivo;
+- persistência Creative completa;
+- Human Gate + promoção Canonical;
+- FTS/rebuild;
+- crash/restart/replay;
+- Windows;
+- E2E do produto;
+- instalação por utilizador não técnico.
+
+## Próximo portão
+
+Construir uma vertical slice, não continuar a expandir documentação:
+
+pessoa -> Activepieces -> Core -> Creative -> aprovação -> Canonical,
+
+e depois inserir Open Notebook/tiny como ramo cognitivo isolado.
+
+[Plano](IMPLEMENTATION_PLAN.md) · [Pendências](docs/PENDENCIAS.md) · [Compatibilidade](COMPATIBILITY-MATRIX.md)

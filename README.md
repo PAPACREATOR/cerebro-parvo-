@@ -1,39 +1,58 @@
 # Cérebro Independente
 
-Arquitetura conceptual fechada: **Folha Única + M1–M14**. Documentação reconciliada em 27-09-2026 com as decisões e fontes de 26-09-2026. Autor da conceção e autoridade final: Pedro Alexandre Caldas Coelho.
+Sistema local-first de conhecimento e execução governada: a pessoa escreve em linguagem normal; um Core determinístico aplica regras, memória e autoridade; Activepieces executa flows e capacidades; uma tiny IA só entra num espaço Open Notebook isolado quando é necessária.
 
-A pessoa escreve normalmente numa Folha. O Cérebro preserva, relaciona, pesquisa, compara e executa trabalho autorizado. Markdown, IDs, SQLite, eventos e ferramentas ficam internos. Creative conserva exploração e genealogia; Canonical contém conhecimento atualmente aprovado pela pessoa, sem ser verdade absoluta.
+A implementação é **usar > adaptar > criar**. Nenhuma tecnologia é defendida por tradição: mantém-se apenas o que reduz complexidade sem quebrar os contratos.
 
-## Começar aqui
+## Projeto consolidado
 
-1. [Constituição e precedência](CEREBRO_CONSTITUTION.md).
-2. [Arquitetura, diagrama e algoritmo](CEREBRO_ARCHITECTURE.md).
-3. [Prompt mestre integral](docs/baseline/CEREBRO_PROMPT_MESTRE_CURSOR_2026-09-26.md).
-4. [Estado real e evidência](STATUS.md).
-5. [Matriz M1–M14 e IMP-001–026](docs/MATRIZ-CONFORMIDADE.md).
-6. [Tarefa IMP-001](tasks/IMP-001.md).
+1. [Projeto final auditado — 28/09/2026](docs/PROJETO-FINAL-AUDITADO-2026-09-28.md)
+2. [Constituição e precedência](CEREBRO_CONSTITUTION.md)
+3. [Arquitetura vigente](CEREBRO_ARCHITECTURE.md)
+4. [Arquitetura operacional](docs/ARQUITETURA-OPERACIONAL-ADAPTATIVA.md)
+5. [Estado real e evidência](STATUS.md)
+6. [Matriz de compatibilidade](COMPATIBILITY-MATRIX.md)
+7. [Matriz M1–M14 e IMP-001–026](docs/MATRIZ-CONFORMIDADE.md)
 
-## Estado observado
+## Arquitetura em uma frase
 
-Existe código candidato de 27-09-2026, recuperado do pacote revisto. Os 34 testes fornecidos foram reproduzidos localmente com sucesso. Isto não fecha os 26 IMP nem demonstra M1–M14 ponta-a-ponta. IMP-001 está PARCIAL; IMP-019/G10 e IMP-026 têm bloqueios explícitos POR DEFINIR.
+**Core governa; Activepieces executa; Open Notebook pensa sob contexto limitado; Creative preserva propostas; a pessoa promove; Canonical guarda o aprovado.**
 
-O código foi importado sem alterar os bytes originais. Consulte [âmbito da implementação](implementacao/README.md) e [pendências](docs/PENDENCIAS.md). O estado aprovado do produto não avança por se arquivar ou testar um protótipo posterior.
+Mantêm-se:
 
-## Organização
+- 3 memórias;
+- 2 classes de autoridade: Creative e Canonical;
+- 3 comparadores;
+- M1–M14 como responsabilidades, não como obrigação de criar 14 serviços;
+- proveniência, genealogia, contradições, EventLog/recovery e Human Gate;
+- Markdown/formatos abertos para conteúdo humano;
+- SQLite para eventos, IDs, relações, estados e índices.
 
-| Local | Conteúdo e autoridade |
-| --- | --- |
-| Raiz | Orientação corrente, estado e processo |
-| docs/baseline | Três fontes de 26/09 preservadas integralmente |
-| docs | Genealogia, decisões de reconciliação, matrizes e inventário |
-| tasks | Contrato ativo de trabalho |
-| implementacao/candidata-2026-09-27 | Código e testes recebidos; candidato parcial |
-| auditoria | Hashes, comandos, resultados e cobertura |
-| historico/repositorio-2026-09-24 | Todos os 35 ficheiros anteriores, intactos |
-| .github | Actions, modelo de pull request e modelo de issue |
+Não são dependências obrigatórias: Obsidian, Joplin, Logseq, frontend próprio, vários agentes/notebooks permanentes ou RAG próprio no Core.
 
-[Genealogia e razões das mudanças](docs/GENEALOGIA.md) · [Fontes localizadas](docs/FONTES.md) · [Índice histórico](docs/INVENTARIO-HISTORICO.md) · [Uso do GitHub](TEAM_WORKFLOW.md).
+## Estado comprovado
 
-A aprovação dos testes existentes não substitui revisão do contrato. FAIL, SKIP, NOT RUN e resultado ambíguo nunca equivalem a PASS. Nenhuma publicação/licença de distribuição é criada por esta reorganização.
+O main mais recente antes desta consolidação, 3e5b61e3, passou no GitHub Actions a job **“Integridade documental e 34 testes fornecidos”**. Isto confirma regressão da suite candidata e integridade documental.
 
-[Abrir no VS Code](docs/VS-CODE.md) · [Licenciamento pendente](docs/LICENCIAMENTO-PENDENTE.md).
+Não prova ainda:
+
+- integração real Core ↔ Activepieces;
+- Open Notebook + tiny IA;
+- isolamento/sandbox E2E;
+- protocolo G10/IMP-019;
+- promoção Creative → Canonical;
+- crash/replay real;
+- Windows;
+- M1–M14 ponta-a-ponta.
+
+O produto ainda não é uma release.
+
+## Código candidato
+
+O candidato preservado está em [implementacao/candidata-2026-09-27](implementacao/candidata-2026-09-27). Os IMP-001–026 são contratos de comportamento/teste da família de importação; não devem ser transformados mecanicamente em 26 módulos.
+
+## Licença
+
+O repositório contém [PolyForm Noncommercial 1.0.0](LICENSE). Uso comercial exige licença/permissão separada do titular dos direitos. Ver [estado de licenciamento](docs/LICENCIAMENTO-PENDENTE.md). Licenças de componentes de terceiros continuam independentes.
+
+[Plano de implementação](IMPLEMENTATION_PLAN.md) · [Pendências](docs/PENDENCIAS.md) · [Uso do GitHub](TEAM_WORKFLOW.md)

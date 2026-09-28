@@ -1,20 +1,56 @@
 # Instruções correntes — Cérebro
 
-Reconciliação autorizada por Pedro em 27-09-2026. Ler CEREBRO_CONSTITUTION.md, CEREBRO_ARCHITECTURE.md, docs/baseline/CEREBRO_PROMPT_MESTRE_CURSOR_2026-09-26.md, DECISIONS.md, STATUS.md e a SPEC ativa antes de alterar código.
+Ler, por esta ordem, [Projeto final auditado](docs/PROJETO-FINAL-AUDITADO-2026-09-28.md), CEREBRO_CONSTITUTION.md, CEREBRO_ARCHITECTURE.md, DECISIONS.md, STATUS.md e o contrato da tarefa.
 
-## Autoridade e âmbito
+## Regra principal
 
-- Arquitetura M1–M14 fechada; Folha Única, linguagem natural, complexidade interna invisível. Não criar M15 nem impor Joplin/Logseq.
-- Python-first, não Python-only. Activepieces executa capacidades fora da autoridade do Core. IA é opcional, isolada, proposta/evidência; não decide Canonical.
-- Preservar Creative/Canonical, três memórias, três comparadores, autoridade humana, originais, genealogia, fontes, eventos e recuperação.
-- Aplicar USE > ADAPT > CREATE. Fixar origem/commit/licença e testar antes de copiar código externo. Não instalar todos os projetos estudados.
-- O prompt mestre contém versões sobrepostas. Para a família de importação, consultar a Parte III, explicitamente corrigida. docs/RECONCILIACAO.md regista as diferenças. Não decidir contradições normativas novas silenciosamente.
-- Os documentos sob historico são fontes históricas, não regras operacionais atuais. Os textos recebidos sob docs/baseline e o código candidato são preservados por hash; alterar uma cópia de trabalho numa tarefa própria, não os originais para esconder divergências.
+Não defender uma tecnologia porque já foi escolhida. Comparar primeiro. Manter uma decisão apenas se continuar a ser a forma mais simples de preservar o comportamento exigido.
 
-## Execução
+Aplicar sempre:
 
-Uma SPEC/IMP de cada vez: contrato → implementação mínima → testes positivos/negativos/adversariais → regressão → evidência → revisão → PASS/FAIL/NOT RUN. Não avançar IMP sem PASS completo. Testes fornecidos a verde não bastam quando faltam critérios. Não implementar POR DEFINIR necessário ao comportamento.
+USE > ADAPT > CREATE.
 
-O pedido corrente de reorganização permite documentar, importar material existente e reproduzir testes; não transforma o protótipo numa release aprovada. Não confundir SPEC-F0-001 histórica com IMP-001 atual.
+## Autoridade
 
-Não assumir acesso de Copilot ao repositório. Preparar microtarefa autocontida quando necessário. Corrigir erros técnicos dentro do âmbito autorizado; alterações normativas são propostas para decisão humana. Não publicar, ativar cobrança, enviar segredos ou dar auto-approve global. Manter alterações reversíveis e comunicar evidência e limitações.
+- A pessoa é autoridade final.
+- Activepieces executa; não decide conhecimento.
+- Open Notebook/tiny produz proposta/evidência; não decide autoridade.
+- Ferramentas externas devolvem UNTRUSTED.
+- Instrução humana atual prevalece sobre comportamento aprendido.
+- Creative e Canonical têm autoridade distinta.
+- Similaridade semântica nunca autoriza eliminação.
+- Nenhuma ferramenta publica, apaga ou promove diretamente sem o portão aplicável.
+
+## Implementação
+
+- M1–M14 são responsabilidades/invariantes, não exigem 14 serviços.
+- IMP-001–026 são contratos/testes da família de importação, não exigem 26 módulos.
+- Preferir flows/Subflows/Pieces/MCP/API/CLI existentes a código próprio.
+- Não duplicar no Activepieces regras que pertencem ao Core.
+- Não criar custom Piece quando um conector existente resolve.
+- Um flow deve ter explicação equivalente em linguagem natural.
+- Open Notebook usa um único espaço cognitivo por defeito; contexto e sessão são delimitados por tarefa.
+- A tiny recebe contexto temático, fontes permitidas, budget e schema de saída.
+- SQLite não é um terceiro cofre; coordena eventos/IDs/relações/estado/índices.
+- Markdown/formatos abertos materializam Creative/Canonical.
+- Obsidian/Joplin/Logseq não são dependências obrigatórias.
+
+## Método de trabalho
+
+Implementar vertical slices curtas:
+
+contrato -> implementação mínima -> testes positivos/negativos/adversariais -> regressão -> evidência -> PASS/FAIL/NOT RUN.
+
+Separar sempre:
+
+- desenhado;
+- implementado;
+- testado;
+- integrado;
+- aprovado.
+
+Não transformar um PASS unitário em release.
+
+Para G10 usar o desenho PREPARED -> materialização Markdown -> verificação de hash -> COMMITTED -> reconcile, mas não declarar fechado antes dos testes de crash/replay.
+
+Não aceitar segredos em prompts, publicar automaticamente, dar auto-approve global ou aumentar permissões silenciosamente.

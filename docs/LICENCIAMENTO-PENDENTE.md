@@ -1,11 +1,21 @@
-# Licenciamento — decisão pendente
+# Licenciamento — estado atual
 
-Em 27/09 Pedro perguntou sobre copyleft/não comercial. Não foi escolhida nem aplicada uma licença e a visibilidade do repositório não foi alterada.
+O repositório já contém [PolyForm Noncommercial 1.0.0](../LICENSE).
 
-Copyleft e proibição comercial são opções diferentes. GPL permite uso comercial e venda; a distribuição de derivados abrangidos tem condições de licença e disponibilização do código correspondentes. Uma restrição de uso comercial não satisfaz a definição de software livre. Não adicionar «não comercial» à GPL como se fosse a mesma licença.
+Isto permite disponibilizar o código sob os termos dessa licença para uso não comercial. Não é uma licença Open Source segundo a definição OSI, porque restringe uso comercial.
 
-Decisão de finalidade ainda necessária: preservar liberdades de uso/modificação/redistribuição (incluindo comercial) ou proibir exploração comercial. Antes de distribuir, conferir compatibilidade do código de terceiros efetivamente incorporado; a própria licença do projeto não substitui obrigações desses componentes.
+O titular dos direitos sobre o código próprio pode conceder separadamente uma licença comercial. Este ficheiro não concede essa licença.
 
-Esta nota é explicativa e não é uma licença. O projeto continua sem novo LICENSE.
+Antes de distribuição pública/comercialização:
 
-Fontes primárias consultadas em 27/09/2026: [definição de software livre](https://www.gnu.org/philosophy/free-sw.en.html), [GPLv3](https://www.gnu.org/licenses/gpl-3.0.en.html).
+1. inventariar apenas os componentes de terceiros realmente integrados;
+2. guardar versão/origem/licença;
+3. criar/atualizar THIRD_PARTY_NOTICES;
+4. verificar compatibilidade das obrigações de cada componente;
+5. definir política de contribuições antes de aceitar código de terceiros, sobretudo se se pretender licenciamento comercial separado;
+6. fazer scan de segredos;
+7. rever juridicamente os termos de distribuição comercial.
+
+A licença do Cérebro não altera as licenças de Activepieces, Open Notebook, LibreOffice, Zotero, LanguageTool, modelos de IA ou outras dependências.
+
+Estado do repositório em 28-09-2026: a licença do projeto foi escolhida e aplicada; a preparação de distribuição/comercialização continua incompleta.
