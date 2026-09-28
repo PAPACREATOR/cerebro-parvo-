@@ -1,81 +1,91 @@
-# Plano de execução vigente — vertical slices
+# Plano de execução vigente — composição antes de código
 
-Objetivo: provar o produto com o mínimo de código novo. Os IMP continuam contratos/testes; não são obrigação de implementar uma cadeia de 26 módulos antes de obter valor.
+Objetivo: provar o produto ligando capacidades maduras, com o mínimo possível de código próprio.
 
-## Fase 1 — persistência recuperável mínima
+## Princípio
 
-Estado: **substrato implementado e testado; integração ainda pendente**.
+**LIGAR > CONFIGURAR > ADAPTAR > CRIAR.**
 
-Já existe em `implementacao/ativa-2026-09-28/cerebro/persistence.py`:
+Nada é programado de raiz enquanto Activepieces, uma Piece, MCP, API, CLI, Open Notebook, K-DLC, Zotero, LibreOffice, Pinokio ou outro provider maduro conseguir produzir o comportamento exigido.
 
-1. operation_id;
-2. payload congelado em SQLite;
-3. PREPARED;
-4. temporário + fsync;
-5. replace atómico;
-6. hash verificado;
-7. COMMITTED;
-8. reconcile/resume;
-9. proteção contra divergência e path traversal.
+O humano continua autoridade máxima em todos os casos.
 
-CI: 11 testes específicos PASS.
+## Fase 1 — vertical slice mínima
 
-Falta para fechar G10/IMP-019:
+Construir primeiro apenas:
 
-- ligar ao `materialize()` do pipeline;
-- integrar proveniência/EventLog completo;
-- restart de processo real;
-- confirmar comportamento Windows;
-- teste E2E com Creative real.
+`Activepieces WebUI -> regras/tabelas -> capacidade -> resultado -> Creative -> Human Gate -> Canonical`
 
-## Fase 2 — primeira vertical slice sem IA
+Critérios:
 
-Criar um flow real:
+- uma única interface para a pessoa;
+- nenhuma IA ou provider externo promove Canonical;
+- estado e regras sobrevivem ao flow;
+- resultado externo é tratado como UNTRUSTED quando aplicável;
+- decisão humana explícita fecha ações protegidas;
+- sem Python/SQLite próprios salvo lacuna demonstrada.
 
-`Activepieces Chat/trigger -> Core -> capacidade simples -> resultado UNTRUSTED -> validação -> Creative -> apresentação`.
+## Fase 2 — três memórias
 
-Depois implementar decisão humana e promoção para Canonical, preservando Creative/genealogia.
+Implementar como funções, não como três sistemas:
 
-Critério: fechar/reabrir mantém estado e nenhuma ferramenta escreve diretamente nos cofres.
+- Working Memory -> estado do flow + Tables/Storage;
+- Behavioral/Procedural Memory -> Tables versionadas;
+- Persistent Knowledge -> Creative/Canonical em formatos abertos, com provider de governação quando útil.
 
-## Fase 3 — espaço cognitivo
+## Fase 3 — três comparadores
 
-Integrar um único Open Notebook e uma tiny local:
+Composição independente:
 
-- sessão/contexto por tarefa;
-- regras e fontes selecionadas pelo Core;
-- budget pelo limite real do modelo;
-- duas tarefas de domínios diferentes;
-- provar ausência de memória autoritativa transportada;
-- resultado volta UNTRUSTED e passa pelos comparadores.
+- determinístico -> condições, hashes, estados, valores, regras;
+- relacional -> relações, backlinks, fontes, versões, genealogia, índices;
+- semântico -> Open Notebook/tiny ou outro provider.
 
-## Fase 4 — capacidades externas
+O flow cruza os resultados. Nenhum comparador decide autoridade.
 
-Adicionar uma capacidade de cada vez, preferindo:
+## Fase 4 — capacidades
 
-`Piece existente -> MCP/API/CLI -> adaptador fino -> código novo`.
+Adicionar apenas quando necessárias:
 
-Começar por uma integração simples e verificável. LibreOffice, Zotero, LanguageTool, Whisper e outras são opcionais por necessidade.
+- SEMANTIC_WORK -> Open Notebook;
+- KNOWLEDGE_GOVERNANCE -> K-DLC se compatível;
+- REFERENCES -> Zotero;
+- DOCUMENT_OUTPUT -> LibreOffice;
+- IMAGE -> Pinokio/provider local;
+- AUDIO_MUSIC -> Pinokio/provider local;
+- PUBLISH -> Piece/provider aplicável.
 
-## Fase 5 — recuperação e produto
+Cada capacidade fica escondida atrás da mesma experiência Activepieces.
 
-- FTS/rebuild;
-- restart/replay;
-- backup + restore testado;
+## Fase 5 — prova de robustez
+
+Só depois da vertical slice funcional:
+
+- restart/recovery;
+- pesquisa/indexação;
+- backup/restore;
 - Windows;
 - E2E;
-- instalador/configuração simples;
-- experiência sem Markdown/IDs/SQL visíveis.
+- UX para utilizador não técnico;
+- troca de provider sem alterar as leis.
 
-## Regras de execução
+## Código já existente
 
-- USE > ADAPT > CREATE.
-- Activepieces executa; Core governa.
-- Open Notebook/tiny nunca aprova, publica ou escreve diretamente.
-- Um flow deve ter descrição equivalente em linguagem natural.
-- Criar Subflow apenas para reutilização, teste ou isolamento.
-- Não criar frontend próprio enquanto a UI existente servir.
-- Não implementar eliminação de originais no MVP.
-- Não transformar M1–M14 ou IMP-001–026 em módulos só para preencher uma matriz.
+A implementação Python e o writer recuperável permanecem preservados como evidência/fallback. Não são caminho obrigatório do MVP.
 
-[Projeto final](docs/PROJETO-FINAL-AUDITADO-2026-09-28.md) · [Pendências](docs/PENDENCIAS.md)
+Entram apenas se a composição real demonstrar uma lacuna que não possa ser resolvida por configuração/provider maduro.
+
+## Regra permanente
+
+- pessoa manda;
+- IA não aprova;
+- Activepieces orquestra tecnicamente;
+- regras/estado impõem autoridade;
+- Pieces fazem o trabalho;
+- Open Notebook pensa quando necessário;
+- Creative recebe propostas;
+- Human Gate decide promoção;
+- Canonical guarda o aprovado;
+- não criar componentes por antecipação.
+
+[Arquitetura vigente](CEREBRO_ARCHITECTURE.md) · [Pendências](docs/PENDENCIAS.md)
