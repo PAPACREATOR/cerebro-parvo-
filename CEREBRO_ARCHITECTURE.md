@@ -1,80 +1,119 @@
-# Arquitetura vigente — Folha Única e M1–M14
+# Arquitetura vigente — composição mínima governada
 
-A arquitetura conceptual mantém-se fechada. Esta página descreve a implementação operacional simplificada sem acrescentar módulos.
+A arquitetura conceptual continua fechada. A implementação operacional foi simplificada ao mínimo: **não construir mecanismos próprios quando uma capacidade madura já produz o comportamento necessário**.
 
 ```mermaid
 flowchart TD
- P[Pessoa] --> F[Activepieces Chat / Folha Única]
- F --> C[Core lógico M1–M14]
- C --> AP[Activepieces: Flows + Subflows + Pieces]
- AP --> T[Ferramentas externas / MCP / API / CLI]
- T --> ON[1 Open Notebook de trabalho + tiny IA]
- T --> O[Outras capacidades maduras]
- ON --> U[Resultado não confiável]
+ P[Pessoa] --> UI[Activepieces WebUI / Folha Única]
+ UI --> R[Regras + estado + flows]
+ R --> AP[Activepieces: Flows / Subflows / Tables / Storage / MCP / Pieces]
+ AP --> KG[K-DLC ou outro provider de knowledge governance]
+ AP --> ON[Open Notebook + uma tiny parametrizada]
+ AP --> Z[Zotero]
+ AP --> LO[LibreOffice]
+ AP --> PK[Pinokio -> imagem / áudio local]
+ AP --> O[Outras capacidades]
+ KG --> U[Resultados / evidência]
+ ON --> U
+ Z --> U
+ LO --> U
+ PK --> U
  O --> U
- U --> C
- C --> CMP[3 comparadores]
- CMP --> CR[Creative]
- CR --> H[Portão humano]
+ U --> CR[Creative]
+ CR --> H[Human Gate]
  P --> H
- H --> CA[Canonical]
- C --> E[Eventos + proveniência + genealogia]
- E --> R[Markdown + SQLite / recuperação]
+ H --> CA[Canonical / ação autorizada]
 ```
 
-## Invariantes preservadas
+## O que é nosso
+
+O Cérebro não é definido por um programa específico. É definido por invariantes:
 
 - pessoa como autoridade final;
 - três memórias: trabalho, comportamental/procedimental e conhecimento persistente;
 - dois domínios de autoridade: Creative e Canonical;
 - três comparadores: determinístico, semântico e relacional;
-- M1–M14;
+- M1–M14 como responsabilidades;
 - proveniência, genealogia e contradições;
 - regras versionadas e explicáveis;
-- IA opcional, isolada e sem autoridade;
-- nenhuma ferramenta externa escreve diretamente em Creative/Canonical;
-- promoção para Canonical exige o portão humano aplicável;
+- IA sem autoridade;
+- Human Gate para promoção/ações protegidas;
 - similaridade semântica nunca autoriza eliminação;
-- replay/recuperação não inventam novamente evidência externa.
+- replay/recuperação não volta a inventar evidência externa.
 
-## Implementação mínima
+## O que deixa de ser obrigatório
 
-O Core governa. Activepieces executa.
+- Core Python separado;
+- SQLite no MVP;
+- motor de workflows próprio;
+- motor de pesquisa próprio;
+- vários agentes permanentes;
+- frontend próprio;
+- adaptadores próprios quando Piece/MCP/API/CLI resolve.
 
-Por defeito, Open Notebook é uma única bancada cognitiva reutilizável. O Core escolhe as fontes/contexto relevantes para cada tarefa, limita o contexto entregue à tiny IA e recebe de volta resultado + evidência. O notebook não é memória autoritativa e não substitui Creative/Canonical.
+O “Core” passa a significar a **função constitucional**: regras, estados, permissões e autoridade. Sempre que possível, esta função é expressa com Activepieces Flows/Subflows, Tables/Storage e configuração.
 
-Creative e Canonical podem usar a mesma mecânica física em Markdown/formatos abertos, mantendo fronteiras de autoridade distintas. SQLite serve IDs, relações, proveniência, genealogia, estados, permissões, eventos, FTS e índices; não é um terceiro cofre.
+SQLite ou Python só entram se um teste real demonstrar uma lacuna que as capacidades existentes não conseguem fechar.
 
-O registo de capacidades deve permanecer simples: `CAPACIDADE -> flow/subflow/provider`.
+## Três memórias
 
-Activepieces pode usar Chat UI, routing, branching, Subflows, retries, waitpoints, webhooks, Pieces e MCP/API/CLI. Nenhum desses mecanismos decide conhecimento.
+Implementação preferencial inicial:
 
-## Linguagem e flows
+- Working Memory -> estado do flow + Tables/Storage;
+- Behavioral/Procedural Memory -> Tables versionadas com regras, preferências e correções;
+- Persistent Knowledge -> Creative/Canonical em formatos abertos, com provider de governação quando útil.
 
-As regras humanas dos flows devem ser explicáveis em linguagem natural. Exemplo:
+Estas são funções de memória, não três produtos nem três bases de dados.
 
-“Quando chegar uma fatura, liga-a ao contrato, regista a despesa e pergunta-me antes de marcar como concluída.”
+## Três comparadores
 
-A implementação técnica dessa regra pode mudar sem mudar o significado humano.
+Podem ser providers independentes:
 
-Famílias operacionais iniciais preferidas:
+- determinístico -> condições, hashes, estados, valores, regras;
+- relacional -> relações, backlinks, fontes, versões, genealogia, índices;
+- semântico -> Open Notebook/tiny ou outro provider.
 
-`RECEBER -> PESQUISAR -> TRABALHAR -> COMPARAR -> CRIAR -> VALIDAR -> APRESENTAR -> PEDIR_APROVAÇÃO -> EXECUTAR_AÇÃO -> REGISTAR`.
+O flow cruza os resultados. Nenhum comparador promove Canonical sozinho.
 
-Criar micro-subflows apenas quando reduz repetição, melhora teste ou isolamento.
+## Capacidades
 
-## Algoritmo da família de importação
+Registo conceptual mínimo:
 
-Receber → validar → identificar operação/anexo → quarentena → hash → duplicação exata → formato → adaptador → tarefa delimitada → executar → resultado não confiável → validar envelope/conteúdo → classificar.
+```
+CAPACIDADE -> PROVIDER
+SEMANTIC_WORK -> Open Notebook
+KNOWLEDGE_GOVERNANCE -> K-DLC (se compatível)
+REFERENCES -> Zotero
+DOCUMENT_OUTPUT -> LibreOffice
+IMAGE -> Pinokio/provider local
+AUDIO_MUSIC -> Pinokio/provider local
+PUBLISH -> Piece/provider aplicável
+```
 
-- READY: preparar candidato Creative e proveniência → eventos → materialização confirmada → derivados → apresentação.
-- REVIEW: preservar ligação/evidência e apresentar revisão; sem Creative automático.
-- FAILED: tratar falha; retry só com segurança demonstrada.
-- Interrupção/incerteza: reconciliar; RECOVERY_REQUIRED bloqueia mutações incompatíveis.
-- Eliminação: pedido humano separado → proposta → autorização específica → execução quando o contrato estiver fechado.
+O provider pode mudar sem alterar as leis do Cérebro.
+
+## Regra permanente de implementação
+
+**LIGAR > CONFIGURAR > ADAPTAR > CRIAR.**
+
+Não adicionar serviço, base de dados, agente, biblioteca ou aplicação enquanto um flow + provider existente cumprir o comportamento requerido.
+
+## Critério de produto
+
+Para o utilizador deve existir uma única experiência:
+
+```
+Pessoa
+-> Activepieces WebUI
+-> pedido normal
+-> flow escolhe capacidades
+-> ferramentas trabalham nos bastidores
+-> resultado volta
+-> Creative / aprovação humana / Canonical
+```
+
+O utilizador não deve ter de circular entre aplicações para completar o processo.
 
 ## Estado real
 
-G10/IMP-019 continuam por fechar. Integração real Activepieces, sandbox, persistência Creative completa, promoção Creative→Canonical, eliminação final, Windows e E2E continuam a exigir implementação e teste.
-
-[Prompt mestre](docs/baseline/CEREBRO_PROMPT_MESTRE_CURSOR_2026-09-26.md) · [Arquitetura operacional](docs/ARQUITETURA-OPERACIONAL-ADAPTATIVA.md) · [Matriz de conformidade](docs/MATRIZ-CONFORMIDADE.md) · [Compatibilidade](COMPATIBILITY-MATRIX.md).
+Esta arquitetura está agora fechada como direção operacional. Ainda falta provar a composição numa vertical slice real em Activepieces. O código histórico e o writer recuperável permanecem como evidência/alternativa técnica, mas deixam de ser pressuposto obrigatório do MVP.
