@@ -1,30 +1,74 @@
 # Constituição — orientação vigente
 
-Reconciliação de 27-09-2026; baseline conceptual de 26-09-2026. Esta atualização substitui a orientação operacional de 24/09, preservada no histórico.
+Baseline conceptual preservada; implementação operacional fechada em 28-09-2026 por composição mínima.
 
 ## Precedência
 
-1. Decisão humana explícita posterior, com data e âmbito.
-2. Princípios e M1–M14 da baseline de 26/09 e do prompt mestre.
-3. Contratos corrigidos da Parte III do prompt mestre para a família IMP-001–026.
-4. Especificação operacional de ferramentas e capacidades da Parte II.
-5. SPEC de execução compatível, matriz de conformidade e evidência.
-6. Documentos históricos: explicam o percurso, não substituem decisões posteriores.
+1. decisão humana explícita posterior, com data e âmbito;
+2. esta Constituição e as invariantes M1–M14;
+3. contratos de comportamento/teste aplicáveis;
+4. flows, tabelas, providers e integrações concretas;
+5. documentos históricos, que explicam o percurso mas não substituem decisões posteriores.
 
-Esta ordem reconcilia fontes já identificadas como baseline e contrato corrigido; não concede ao agente autoridade para resolver novas divergências normativas.
+Nenhum agente, workflow, plugin, modelo ou provider resolve por si só uma divergência normativa.
 
-## Princípios preservados
+## Invariantes
 
-Pessoa como autoridade final; Folha Única simples; núcleo funcional sem IA; Python-first; Creative e Canonical separados por autoridade; portão humano; fontes/proveniência; versões/genealogia; relações/contradições; regras versionadas; eventos autoritativos; recuperação demonstrável; derivados reconstruíveis sem substituir a fonte.
+- pessoa como autoridade final;
+- uma interface simples em linguagem natural;
+- três memórias: trabalho, comportamental/procedimental e conhecimento persistente;
+- dois domínios de autoridade: Creative e Canonical;
+- três comparadores: determinístico, semântico e relacional;
+- M1–M14 como responsabilidades, não como obrigação de criar serviços ou módulos;
+- proveniência, genealogia e contradições preservadas;
+- regras versionadas e explicáveis;
+- instrução humana atual prevalece sobre comportamento aprendido;
+- IA e providers externos nunca aprovam conhecimento nem aumentam permissões;
+- promoção para Canonical exige o Human Gate aplicável;
+- similaridade, paráfrase ou concordância semântica nunca autorizam eliminação;
+- replay/recuperação não volta a chamar IA/Web/provider para inventar evidência histórica;
+- backup só é considerado válido após restauro demonstrado.
 
-Original não é eliminado por hash, similaridade, paráfrase ou conveniência. A eliminação protegida exige decisão humana específica e atual; IMP-026 permanece bloqueado pelas decisões de retenção/original ainda em falta. Autosave, relógio, workflow, plugin e IA não aprovam conhecimento.
+## Implementação operacional
 
-Três memórias: trabalho, comportamental/procedimental e conhecimento persistente. Três comparadores: determinístico, semântico e relacional. Instrução humana atual prevalece sobre comportamento aprendido. Concordância entre comparadores não promove Canonical.
+O Cérebro é definido pelas leis acima, não por uma tecnologia específica.
 
-Activepieces executa tarefas; Core governa conhecimento. IA opcional produz proposta/evidência dentro de permissões delimitadas. Nenhum adaptador recebe autoridade direta sobre os cofres.
+Por defeito:
 
-Um efeito crítico exige COMMITTED, NOT_COMMITTED ou RECOVERY_REQUIRED conforme prova. Replay não chama novamente Web/IA/adaptadores para inventar a evidência histórica. Backup só se considera validado após restauro testado.
+- Activepieces fornece WebUI/Chat UI, flows, Subflows, Tables, Storage, MCP, triggers, routing, waits e integrações;
+- as regras e o estado constitucional são expressos por configuração, tabelas e flows sempre que isso for suficiente;
+- capacidades externas são providers substituíveis chamados por Piece/MCP/API/CLI;
+- Open Notebook é uma bancada cognitiva/semântica, não memória autoritativa;
+- uma única tiny/modelo pode mudar de papel por parâmetros, contexto e permissões;
+- K-DLC pode ser usado como provider de governação de conhecimento quando compatível, mas não substitui esta Constituição;
+- Zotero, LibreOffice, Pinokio/ComfyUI e outros programas fazem trabalho especializado nos bastidores;
+- Python, SQLite, bases vetoriais, serviços próprios ou adaptadores próprios só entram perante lacuna real demonstrada por teste.
 
-A arquitetura só é revista por decisão humana explícita ou proposta fundamentada em falha estrutural observada. Dificuldade de programação, por si só, não justifica redesenho.
+## Regra de engenharia
 
-[Fonte integral](docs/baseline/README-CEREBRO-BASELINE-2026-09-26.md) · [Contratos corrigidos](docs/CONTRATOS-IMP.md) · [Reconciliação](docs/RECONCILIACAO.md).
+**LIGAR > CONFIGURAR > ADAPTAR > CRIAR.**
+
+Não se adiciona serviço, base de dados, agente, biblioteca, frontend ou aplicação enquanto uma combinação de flow + tabela + provider maduro produzir o comportamento exigido.
+
+A simplificação pode trocar mecanismos; não pode retirar capacidades ou autoridade humana.
+
+## Experiência do utilizador
+
+O utilizador vê apenas a experiência principal e linguagem normal.
+
+Fluxos, tabelas, Markdown, IDs, APIs, MCP, índices, providers e aplicações especializadas ficam ocultos por defeito.
+
+Modelo:
+
+```
+Pessoa
+-> Activepieces WebUI
+-> regras + estado + flow
+-> provider necessário
+-> resultado
+-> Creative
+-> Human Gate
+-> Canonical / ação autorizada
+```
+
+[Arquitetura vigente](CEREBRO_ARCHITECTURE.md) · [Decisões](DECISIONS.md) · [Estado](STATUS.md).
