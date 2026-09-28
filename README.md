@@ -1,58 +1,87 @@
 # Cérebro Independente
 
-Sistema local-first de conhecimento e execução governada: a pessoa escreve em linguagem normal; um Core determinístico aplica regras, memória e autoridade; Activepieces executa flows e capacidades; uma tiny IA só entra num espaço Open Notebook isolado quando é necessária.
-
-A implementação é **usar > adaptar > criar**. Nenhuma tecnologia é defendida por tradição: mantém-se apenas o que reduz complexidade sem quebrar os contratos.
-
-## Projeto consolidado
-
-1. [Projeto final auditado — 28/09/2026](docs/PROJETO-FINAL-AUDITADO-2026-09-28.md)
-2. [Constituição e precedência](CEREBRO_CONSTITUTION.md)
-3. [Arquitetura vigente](CEREBRO_ARCHITECTURE.md)
-4. [Arquitetura operacional](docs/ARQUITETURA-OPERACIONAL-ADAPTATIVA.md)
-5. [Estado real e evidência](STATUS.md)
-6. [Matriz de compatibilidade](COMPATIBILITY-MATRIX.md)
-7. [Matriz M1–M14 e IMP-001–026](docs/MATRIZ-CONFORMIDADE.md)
+Sistema local-first de criação, conhecimento e execução governada. A pessoa escreve em linguagem normal numa única interface; regras e flows escolhem capacidades maduras; as ferramentas trabalham nos bastidores; a pessoa continua autoridade final.
 
 ## Arquitetura em uma frase
 
-**Core governa; Activepieces executa; Open Notebook pensa sob contexto limitado; Creative preserva propostas; a pessoa promove; Canonical guarda o aprovado.**
+**Uma interface, poucas regras e tabelas, flows simples e providers substituíveis.**
 
-Mantêm-se:
+O projeto não pretende reconstruir editores, motores de workflow, sistemas de pesquisa, geradores multimédia ou gestores bibliográficos. Liga ferramentas maduras e obriga-as a respeitar as mesmas leis humanas.
 
-- 3 memórias;
-- 2 classes de autoridade: Creative e Canonical;
-- 3 comparadores;
-- M1–M14 como responsabilidades, não como obrigação de criar 14 serviços;
-- proveniência, genealogia, contradições, EventLog/recovery e Human Gate;
-- Markdown/formatos abertos para conteúdo humano;
-- SQLite para eventos, IDs, relações, estados e índices.
+## O que fica nosso
 
-Não são dependências obrigatórias: Obsidian, Joplin, Logseq, frontend próprio, vários agentes/notebooks permanentes ou RAG próprio no Core.
+- 3 memórias: trabalho, comportamental/procedimental e conhecimento persistente;
+- 2 domínios de autoridade: Creative e Canonical;
+- 3 comparadores: determinístico, semântico e relacional;
+- Human Gate;
+- M1–M14 como responsabilidades;
+- proveniência, genealogia, contradições e recuperação;
+- regras pessoais versionadas;
+- IA sempre sem autoridade.
 
-## Estado comprovado
+## Implementação preferencial
 
-O main mais recente antes desta consolidação, 3e5b61e3, passou no GitHub Actions a job **“Integridade documental e 34 testes fornecidos”**. Isto confirma regressão da suite candidata e integridade documental.
+```
+Pessoa
+  -> Activepieces WebUI / Chat UI
+  -> regras + Tables/Storage + flows
+  -> capacidade necessária
+       -> Open Notebook
+       -> K-DLC ou outro knowledge-governance provider
+       -> Zotero
+       -> LibreOffice
+       -> Pinokio / ComfyUI / outros providers locais
+       -> outras Pieces / MCP / API / CLI
+  -> resultado
+  -> Creative
+  -> Human Gate
+  -> Canonical / ação autorizada
+```
 
-Não prova ainda:
+O utilizador não deve precisar de abrir as aplicações internas nem conhecer Markdown, IDs, SQL, MCP ou APIs.
 
-- integração real Core ↔ Activepieces;
-- Open Notebook + tiny IA;
-- isolamento/sandbox E2E;
-- protocolo G10/IMP-019;
-- promoção Creative → Canonical;
-- crash/replay real;
-- Windows;
-- M1–M14 ponta-a-ponta.
+## Regra permanente
 
-O produto ainda não é uma release.
+**LIGAR > CONFIGURAR > ADAPTAR > CRIAR.**
 
-## Código candidato
+Python, SQLite, bases vetoriais, serviços próprios e adaptadores próprios deixam de ser pressupostos do MVP. Só entram se um teste real provar que um provider existente não consegue cumprir uma regra essencial.
 
-O candidato preservado está em [implementacao/candidata-2026-09-27](implementacao/candidata-2026-09-27). Os IMP-001–026 são contratos de comportamento/teste da família de importação; não devem ser transformados mecanicamente em 26 módulos.
+## Compatibilidade verificada
+
+- Activepieces: Chat UI/Human Input, Flows, Subflows, Tables, Storage, MCP e centenas de integrações;
+- Open Notebook: REST API para notebooks, fontes, pesquisa, chat e operações cognitivas;
+- Zotero: API local no desktop, incluindo leitura e escritas autorizadas;
+- LibreOffice: execução headless/CLI e controlo por API;
+- Pinokio: instalação e execução local de aplicações/servidores AI;
+- ComfyUI: backend/API local para workflows de imagem e multimédia;
+- K-DLC: forte compatibilidade conceptual para governação de conhecimento, mas ainda tratado como provider opcional porque a especificação atual continua draft.
+
+Ver [Matriz de compatibilidade](COMPATIBILITY-MATRIX.md).
+
+## Estado real
+
+A arquitetura está fechada. O produto completo ainda não está provado ponta-a-ponta.
+
+O repositório preserva a implementação Python e o writer recuperável já testados como evidência técnica/fallback, mas eles deixaram de ser caminho obrigatório.
+
+O próximo teste é uma única vertical slice, preferencialmente sem código próprio:
+
+`WebUI -> regras/tabelas -> provider -> Creative -> Human Gate -> Canonical`.
+
+## Documentação vigente
+
+1. [Constituição](CEREBRO_CONSTITUTION.md)
+2. [Arquitetura vigente](CEREBRO_ARCHITECTURE.md)
+3. [Decisões](DECISIONS.md)
+4. [Estado](STATUS.md)
+5. [Plano de implementação](IMPLEMENTATION_PLAN.md)
+6. [Matriz de compatibilidade](COMPATIBILITY-MATRIX.md)
+7. [Pendências](docs/PENDENCIAS.md)
+
+Documentos anteriores permanecem no histórico para genealogia, não como orientação operacional atual.
 
 ## Licença
 
-O repositório contém [PolyForm Noncommercial 1.0.0](LICENSE). Uso comercial exige licença/permissão separada do titular dos direitos. Ver [estado de licenciamento](docs/LICENCIAMENTO-PENDENTE.md). Licenças de componentes de terceiros continuam independentes.
+O repositório usa [PolyForm Noncommercial 1.0.0](LICENSE). Uso comercial do código/documentação próprios exige licença ou permissão separada do titular. Licenças dos providers e componentes de terceiros continuam independentes.
 
-## Colaboração e modelo comercial\n\nO repositório foi preparado para colaboração pública sem abdicar da possibilidade de licenciamento comercial separado. Consulte [CONTRIBUTING](CONTRIBUTING.md), [CLA](CONTRIBUTOR_LICENSE_AGREEMENT.md), [licenciamento comercial](COMMERCIAL-LICENSING.md), [segurança](SECURITY.md) e [avisos de terceiros](THIRD_PARTY_NOTICES.md).\n\nNão é feita uma alegação de unicidade global. A diferenciação procurada está na combinação de determinismo-first, IA cognitiva isolada, 3 memórias, Creative/Canonical, 3 comparadores, Human Gate e automação multiaplicação escondida atrás de linguagem natural.\n\n[Plano de implementação](IMPLEMENTATION_PLAN.md) · [Pendências](docs/PENDENCIAS.md) · [Uso do GitHub](TEAM_WORKFLOW.md)
+[CONTRIBUTING](CONTRIBUTING.md) · [CLA](CONTRIBUTOR_LICENSE_AGREEMENT.md) · [Licenciamento comercial](COMMERCIAL-LICENSING.md) · [Segurança](SECURITY.md) · [Terceiros](THIRD_PARTY_NOTICES.md)
