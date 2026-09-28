@@ -1,27 +1,38 @@
 # Plano de execução vigente — vertical slices
 
-Objetivo: provar o produto com o mínimo de código novo. Os IMP continuam contratos/testes; não são uma obrigação de implementar uma cadeia de 26 módulos antes de obter valor.
+Objetivo: provar o produto com o mínimo de código novo. Os IMP continuam contratos/testes; não são obrigação de implementar uma cadeia de 26 módulos antes de obter valor.
 
 ## Fase 1 — persistência recuperável mínima
 
-Implementar um writer único para Creative/Canonical:
+Estado: **substrato implementado e testado; integração ainda pendente**.
+
+Já existe em `implementacao/ativa-2026-09-28/cerebro/persistence.py`:
 
 1. operation_id;
-2. ficheiro temporário + hash;
-3. evento PREPARED em SQLite;
-4. replace atómico do Markdown;
-5. verificação de hash;
-6. COMMITTED;
-7. derivados apenas depois;
-8. reconcile de crash.
+2. payload congelado em SQLite;
+3. PREPARED;
+4. temporário + fsync;
+5. replace atómico;
+6. hash verificado;
+7. COMMITTED;
+8. reconcile/resume;
+9. proteção contra divergência e path traversal.
 
-Testar crash em cada fronteira, retry e replay. Só então fechar G10/IMP-019.
+CI: 11 testes específicos PASS.
+
+Falta para fechar G10/IMP-019:
+
+- ligar ao `materialize()` do pipeline;
+- integrar proveniência/EventLog completo;
+- restart de processo real;
+- confirmar comportamento Windows;
+- teste E2E com Creative real.
 
 ## Fase 2 — primeira vertical slice sem IA
 
 Criar um flow real:
 
-Activepieces Chat/trigger -> Core -> capacidade simples -> resultado UNTRUSTED -> validação -> Creative -> apresentação.
+`Activepieces Chat/trigger -> Core -> capacidade simples -> resultado UNTRUSTED -> validação -> Creative -> apresentação`.
 
 Depois implementar decisão humana e promoção para Canonical, preservando Creative/genealogia.
 
@@ -42,9 +53,9 @@ Integrar um único Open Notebook e uma tiny local:
 
 Adicionar uma capacidade de cada vez, preferindo:
 
-Piece existente -> MCP/API/CLI -> adaptador fino -> código novo.
+`Piece existente -> MCP/API/CLI -> adaptador fino -> código novo`.
 
-Começar por uma integração simples e verificável. LibreOffice, Zotero, LanguageTool, Whisper e outras são opcionais por necessidade da pessoa.
+Começar por uma integração simples e verificável. LibreOffice, Zotero, LanguageTool, Whisper e outras são opcionais por necessidade.
 
 ## Fase 5 — recuperação e produto
 
