@@ -1,34 +1,49 @@
 # Pendências e portões — 28-09-2026
 
-A arquitetura operacional foi simplificada. As pendências abaixo são implementação/prova, não convite para voltar a expandir o desenho.
+A arquitetura está fechada em composição mínima. As pendências são agora provas de ligação e comportamento, não módulos a programar.
 
 | ID | Lacuna | Fecho mínimo |
 | --- | --- | --- |
-| P01 | Integrar writer G10/IMP-019 | Ligar `RecoverableMarkdownWriter` ao `materialize()`, EventLog/proveniência e teste de restart real |
-| P02 | Vertical slice Activepieces | Chat/trigger -> Core -> resultado -> Creative real, com correlação e erro explícito |
-| P03 | Human Gate | Decisão humana autenticada/específica -> Canonical; preservar Creative/genealogia |
-| P04 | Open Notebook + tiny | Um espaço reutilizável, sessão/contexto por tarefa, budget real, duas áreas temáticas, saída UNTRUSTED |
-| P05 | 3 comparadores integrados | Provar determinístico/semântico/relacional num caso real e preservar contradição |
-| P06 | Pesquisa/derivados | FTS/cache reconstruível e política com índice sujo |
-| P07 | Sandbox/fronteiras | Activepieces sandbox para flows; Open Notebook/tiny sem acesso direto aos cofres; temporários para ferramentas |
-| P08 | Recovery operacional | restart, recibos, estado divergente, backup e restore testado |
-| P09 | Windows/UX | instalação no PC alvo e uso sem Markdown/SQL/IDs visíveis |
-| P10 | Terceiros | Fixar versão/licença/origem apenas dos componentes realmente integrados |
-| P11 | Visibilidade pública | Alterar GitHub Settings -> Danger Zone -> repository visibility para Public; conector atual não expõe esta mutação administrativa |
-| P12 | Eliminação | Fora do MVP; IMP-024–026 continuam bloqueados até política futura específica |
+| P01 | Vertical slice Activepieces | WebUI -> regras/tabelas -> capacidade -> Creative -> Human Gate -> Canonical |
+| P02 | 3 memórias | Provar Working, Behavioral/Procedural e Persistent Knowledge sem criar três sistemas |
+| P03 | 3 comparadores | Provar determinístico, relacional e semântico com providers separados e cruzamento no flow |
+| P04 | Open Notebook + tiny | Um espaço reutilizável, agente único parametrizado, duas áreas temáticas, saída UNTRUSTED |
+| P05 | Knowledge governance | Testar K-DLC como provider sem lhe conceder autoridade sobre as leis do Cérebro |
+| P06 | Pesquisa/indexação | Usar primeiro capacidades existentes; SQLite/FTS próprio só se houver lacuna demonstrada |
+| P07 | Documentos/fontes | Ligar Zotero e LibreOffice por Piece/MCP/API/CLI, sem obrigar o utilizador a trocar de interface |
+| P08 | Multimédia local | Ligar Pinokio/provider local para imagem e, depois, áudio/música |
+| P09 | Recovery/backup | Provar restart, divergência, backup e restore com a composição real |
+| P10 | Windows/UX | Uso no PC alvo através de uma experiência principal Activepieces, sem Markdown/SQL/IDs visíveis |
+| P11 | Terceiros | Fixar versão/licença/origem apenas dos providers realmente usados |
+| P12 | Visibilidade pública | Alterar manualmente a visibilidade do repositório quando pretendido |
+| P13 | Eliminação | Continua fora do MVP até existir política humana específica |
 
-## Já resolvido parcialmente
+## Fallback preservado
 
-O writer recuperável Creative/Canonical está implementado na linha ativa e passou 11 testes específicos, além dos 34 testes históricos que continuam verdes. Isto reduz P01; não o fecha ainda porque falta integração real.
+O writer recuperável e a implementação Python já existentes ficam preservados. Não são apagados nem obrigatórios. Servem como fallback apenas se a composição provar que uma capacidade madura não fecha uma regra essencial.
 
-A preparação para colaboração pública também existe: LICENSE, CONTRIBUTING, CLA, SECURITY, CODE_OF_CONDUCT, THIRD_PARTY_NOTICES, política comercial e template de PR.
+## Critério de decisão
 
-## Importação
+Antes de qualquer código novo perguntar, por ordem:
 
-IMP-001–026 continuam como matriz de contratos da família de importação. Quando uma vertical slice toca num IMP, os critérios aplicáveis têm de passar.
+1. já existe Piece?
+2. já existe MCP/API/CLI?
+3. Activepieces Tables/Storage/flow já resolve?
+4. um provider maduro já resolve?
+5. apenas se todas falharem: adaptar ou criar o mínimo indispensável.
 
 ## Regra
 
-Resolver por dependência e evidência. Se uma ferramenta madura já resolver a mecânica, integrar e testar em vez de reimplementar.
+**LIGAR > CONFIGURAR > ADAPTAR > CRIAR.**
 
-[Projeto final](PROJETO-FINAL-AUDITADO-2026-09-28.md) · [Plano](../IMPLEMENTATION_PLAN.md)
+A simplificação nunca pode retirar:
+
+- autoridade humana;
+- 3 memórias;
+- Creative/Canonical;
+- 3 comparadores;
+- proveniência/genealogia/contradições;
+- IA sem autoridade;
+- recuperação verificável.
+
+[Arquitetura vigente](../CEREBRO_ARCHITECTURE.md) · [Plano](../IMPLEMENTATION_PLAN.md)
