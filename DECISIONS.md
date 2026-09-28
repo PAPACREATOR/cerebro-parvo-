@@ -1,27 +1,47 @@
 # Decisões vigentes e respetiva origem
 
-## 28-09-2026 — consolidação por comparação
+## 28-09-2026 — arquitetura mínima por composição (vigente)
 
-Pedro autorizou rever tudo sem proteger tecnologias por apego e pediu a solução mais simples que preserve os resultados.
+Pedro fechou a direção operacional: preservar integralmente as leis do Cérebro, mas não programar mecanismos que ferramentas maduras já fornecem.
 
-Decisões:
+Decisões vigentes:
 
-- arquitetura conceptual continua expressa por 3 memórias, Creative/Canonical, 3 comparadores, M1–M14, proveniência, genealogia, contradições, recuperação e autoridade humana;
-- estas responsabilidades não obrigam a topologia física nem a um módulo por conceito;
-- Activepieces passa a ser a oficina operacional preferencial: UI, flows, Subflows, Pieces, MCP, waits, retries e execução;
-- Core mantém regras, memória, permissões, comparação, autoridade e validação;
-- Open Notebook é um único espaço cognitivo reutilizável; não é cofre nem segunda memória;
-- uma tiny IA trabalha apenas com contexto temático delimitado e regressa sempre ao processo determinístico;
-- Creative/Canonical usam a mesma mecânica de persistência e diferem por autoridade;
-- Markdown permanece formato humano aberto; SQLite coordena eventos, IDs, relações, estados e índices;
-- Obsidian/Joplin/Logseq deixam de ser dependências do runtime; podem servir como referências ou viewers opcionais;
-- IMP-001–026 são contratos/testes da família de importação, não instrução para criar 26 módulos;
-- eliminação automática de originais fica fora do MVP;
-- G10 adota desenho PREPARED -> materialização atómica -> hash -> COMMITTED -> reconcile, ainda sujeito a implementação/testes;
-- critério permanente: usar > adaptar > criar.
+- a arquitetura conceptual mantém 3 memórias, Creative/Canonical, 3 comparadores, M1–M14, proveniência, genealogia, contradições, recuperação e autoridade humana;
+- o “Core” é uma função lógica/constitucional, não uma obrigação de existir como aplicação Python separada;
+- no MVP, tentar expressar Core/autoridade com **Activepieces WebUI + Flows/Subflows + Tables/Storage + regras/configuração**;
+- Activepieces é simultaneamente porta de entrada e orquestrador técnico;
+- as capacidades reais são providers substituíveis chamados por Piece/MCP/API/CLI;
+- Open Notebook é a bancada cognitiva/semântica; usa uma única tiny adaptável por parâmetros/contexto e nunca é autoridade;
+- K-DLC pode servir como provider de KNOWLEDGE_GOVERNANCE quando cumprir as nossas regras; não substitui a Constituição;
+- Zotero fornece referências; LibreOffice fornece documentos; Pinokio pode alojar providers locais de imagem/áudio; outras capacidades entram apenas quando necessárias;
+- Working Memory pode usar estado do flow/Tables/Storage; Behavioral/Procedural Memory pode usar Tables versionadas; Persistent Knowledge mantém Creative/Canonical em formatos abertos;
+- comparação determinística, relacional e semântica pode ser feita por providers diferentes e cruzada no flow; não requer três motores próprios;
+- SQLite deixa de ser obrigatório no MVP: entra apenas se Tables/Storage/providers não cobrirem pesquisa, relações, eventos ou recuperação necessários;
+- Python deixa de ser obrigatório no MVP: só entra perante lacuna comportamental demonstrada por teste;
+- nenhum provider externo recebe autoridade para promover Canonical;
+- pessoa continua autoridade final; IA nunca aprova conhecimento;
+- critério permanente passa a ser **LIGAR > CONFIGURAR > ADAPTAR > CRIAR**;
+- não adicionar serviço, base de dados, agente ou aplicação enquanto um flow + provider existente cumprir o comportamento requerido.
+
+Modelo operacional:
+
+```
+Pessoa
+  -> Activepieces WebUI
+  -> regras + estado + flows
+  -> capability/provider
+  -> resultado UNTRUSTED quando aplicável
+  -> Creative
+  -> Human Gate
+  -> Canonical / ação autorizada
+```
+
+O valor próprio do projeto fica concentrado nas leis, nos estados, nas tabelas e nos flows que fazem ferramentas maduras cooperarem sob autoridade humana.
+
+## 28-09-2026 — consolidação por comparação (histórica)
+
+A decisão anterior introduziu Activepieces como oficina operacional, um Core pequeno, Open Notebook único, Creative/Canonical, SQLite e o princípio usar > adaptar > criar. Continua válida como genealogia, mas a decisão vigente acima simplifica-a: Core e SQLite deixam de ser componentes físicos obrigatórios no MVP.
 
 ## Evidência
 
-O commit 3e5b61e3 passou no GitHub Actions a suite candidata de 34 testes e integridade documental. Isto não prova as integrações novas.
-
-As decisões anteriores continuam preservadas no histórico e na baseline para genealogia. A orientação operacional atual está em [Projeto final auditado](docs/PROJETO-FINAL-AUDITADO-2026-09-28.md).
+As suites existentes continuam a demonstrar apenas o código já implementado. Não provam ainda a nova composição sem-código/low-code. Esta arquitetura deve ser validada por uma vertical slice real em Activepieces.
