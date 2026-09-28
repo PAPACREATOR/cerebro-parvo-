@@ -1,28 +1,67 @@
 # Arquitetura vigente — Folha Única e M1–M14
 
-A arquitetura mantém-se fechada. Esta página organiza a baseline de 26/09; não acrescenta módulos nem decisões de produto.
+A arquitetura conceptual mantém-se fechada. Esta página descreve a implementação operacional simplificada sem acrescentar módulos.
 
 ```mermaid
 flowchart TD
- P[Pessoa] --> F[Folha Única]
- F --> C[Core M1–M14]
- C --> CR[Creative]
+ P[Pessoa] --> F[Activepieces Chat / Folha Única]
+ F --> C[Core lógico M1–M14]
+ C --> AP[Activepieces: Flows + Subflows + Pieces]
+ AP --> T[Ferramentas externas / MCP / API / CLI]
+ T --> ON[1 Open Notebook de trabalho + tiny IA]
+ T --> O[Outras capacidades maduras]
+ ON --> U[Resultado não confiável]
+ O --> U
+ U --> C
+ C --> CMP[3 comparadores]
+ CMP --> CR[Creative]
  CR --> H[Portão humano]
  P --> H
  H --> CA[Canonical]
- C --> E[Eventos e proveniência]
- E --> R[Persistência e recuperação]
- C --> A[Activepieces e adaptadores]
- A --> T[Ferramentas e IA isolada]
- T --> V[Resultado não confiável]
- V --> C
+ C --> E[Eventos + proveniência + genealogia]
+ E --> R[Markdown + SQLite / recuperação]
 ```
 
-A linha Creative → portão → Canonical descreve a autoridade, não uma transferência que apague Creative. As operações persistentes obedecem ao contrato de eventos/recibos aplicável; G10 e IMP-019 ainda não estão fechados.
+## Invariantes preservadas
 
-Folha: `@@` arquivo; `@` web; `""` fontes; `&` trabalhar; `??` perguntar; `%` calcular; `#` tema. São sinais opcionais; texto normal continua permitido. UI não decide conhecimento.
+- pessoa como autoridade final;
+- três memórias: trabalho, comportamental/procedimental e conhecimento persistente;
+- dois domínios de autoridade: Creative e Canonical;
+- três comparadores: determinístico, semântico e relacional;
+- M1–M14;
+- proveniência, genealogia e contradições;
+- regras versionadas e explicáveis;
+- IA opcional, isolada e sem autoridade;
+- nenhuma ferramenta externa escreve diretamente em Creative/Canonical;
+- promoção para Canonical exige o portão humano aplicável;
+- similaridade semântica nunca autoriza eliminação;
+- replay/recuperação não inventam novamente evidência externa.
 
-M1 identidade; M2 documentos/blocos; M3 versões/genealogia; M4 Creative; M5 Canonical; M6 portão humano; M7 relações; M8 proveniência/fontes; M9 contradições; M10 pesquisa/recuperação; M11 regras; M12 EventLog/auditoria; M13 integridade/recuperação; M14 coordenação/iniciativa.
+## Implementação mínima
+
+O Core governa. Activepieces executa.
+
+Por defeito, Open Notebook é uma única bancada cognitiva reutilizável. O Core escolhe as fontes/contexto relevantes para cada tarefa, limita o contexto entregue à tiny IA e recebe de volta resultado + evidência. O notebook não é memória autoritativa e não substitui Creative/Canonical.
+
+Creative e Canonical podem usar a mesma mecânica física em Markdown/formatos abertos, mantendo fronteiras de autoridade distintas. SQLite serve IDs, relações, proveniência, genealogia, estados, permissões, eventos, FTS e índices; não é um terceiro cofre.
+
+O registo de capacidades deve permanecer simples: `CAPACIDADE -> flow/subflow/provider`.
+
+Activepieces pode usar Chat UI, routing, branching, Subflows, retries, waitpoints, webhooks, Pieces e MCP/API/CLI. Nenhum desses mecanismos decide conhecimento.
+
+## Linguagem e flows
+
+As regras humanas dos flows devem ser explicáveis em linguagem natural. Exemplo:
+
+“Quando chegar uma fatura, liga-a ao contrato, regista a despesa e pergunta-me antes de marcar como concluída.”
+
+A implementação técnica dessa regra pode mudar sem mudar o significado humano.
+
+Famílias operacionais iniciais preferidas:
+
+`RECEBER -> PESQUISAR -> TRABALHAR -> COMPARAR -> CRIAR -> VALIDAR -> APRESENTAR -> PEDIR_APROVAÇÃO -> EXECUTAR_AÇÃO -> REGISTAR`.
+
+Criar micro-subflows apenas quando reduz repetição, melhora teste ou isolamento.
 
 ## Algoritmo da família de importação
 
@@ -34,10 +73,8 @@ Receber → validar → identificar operação/anexo → quarentena → hash →
 - Interrupção/incerteza: reconciliar; RECOVERY_REQUIRED bloqueia mutações incompatíveis.
 - Eliminação: pedido humano separado → proposta → autorização específica → execução quando o contrato estiver fechado.
 
-Esta família não é o catálogo completo de todas as funções M1–M14. Pesquisa, cognição adaptativa, aprendizagem operacional, versões, relações e promoção humana exigem contratos e testes próprios.
+## Estado real
 
-## Stack e fronteiras
+G10/IMP-019 continuam por fechar. Integração real Activepieces, sandbox, persistência Creative completa, promoção Creative→Canonical, eliminação final, Windows e E2E continuam a exigir implementação e teste.
 
-Python-first; SQLite/FTS5 quando aplicável; Markdown/formatos abertos; Activepieces para execução operacional; LibreOffice, Zotero e LanguageTool como capacidades delimitadas; IA opcional e isolada. Second-Brain é candidato a mecanismos de persistência/recovery, não integração já demonstrada. Joplin e Logseq ficam na genealogia e como referências de mecanismos, sem serem interface obrigatória.
-
-[Prompt mestre](docs/baseline/CEREBRO_PROMPT_MESTRE_CURSOR_2026-09-26.md) · [Matriz de conformidade](docs/MATRIZ-CONFORMIDADE.md) · [Compatibilidade](COMPATIBILITY-MATRIX.md).
+[Prompt mestre](docs/baseline/CEREBRO_PROMPT_MESTRE_CURSOR_2026-09-26.md) · [Arquitetura operacional](docs/ARQUITETURA-OPERACIONAL-ADAPTATIVA.md) · [Matriz de conformidade](docs/MATRIZ-CONFORMIDADE.md) · [Compatibilidade](COMPATIBILITY-MATRIX.md).
