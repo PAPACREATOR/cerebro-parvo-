@@ -1,67 +1,94 @@
-# Estado operacional — 28-09-2026
+# Estado operacional — 30-09-2026
 
 ## Estado
 
-**ARQUITETURA CONCEPTUAL ESTÁVEL; COMPOSIÇÃO FÍSICA EM TESTE.**
+**ARQUITETURA CONCEPTUAL REDUZIDA AO NEXUS MINIMAL; IMPLEMENTAÇÃO E2E AINDA NÃO PROVADA.**
 
-Não declarar o Memory Provider escolhido antes de teste comparativo.
+Não declarar o sistema funcional até o circuito mínimo passar em máquina real.
 
-## Núcleo candidato
+## Núcleo atual
 
-```
+```text
 Humano
-  |
-  v
-Activepieces Community (MIT)
-  |
-  | MCP
-  v
-Memory Provider local (MIT)
-  |
-  v
-SQLite (public domain)
+  ↕
+Folha Nexus — linguagem natural
+  ↓
+Conductor — condutor/runtime candidato
+  ├─ Windows / capabilities / web
+  └─ Open Notebook — bancada cognitiva descartável
+                       └─ tiny local
+  ↓
+resultado estruturado
+  ↓
+Nexus/Windows — memória soberana
+Raw / Creative / Canonical / arquivo / proveniência / eventos / templates
 ```
 
-Candidatos:
-- A: RMANOV/sqlite-memory-mcp;
-- B: Beledarian/mcp-local-memory.
+## Princípio de redução
 
-PiecesOS: benchmark/opção experimental, não dependência.
+Nexus não tenta ser um superagente. É um launcher organizado e metódico que:
+- recebe intenção humana;
+- procura processo/template conhecido;
+- compõe as ferramentas disponíveis;
+- usa cognição apenas quando regras/processos não chegam;
+- verifica o resultado;
+- preserva experiência e proveniência;
+- mantém a autoridade no humano.
 
 ## O que está preservado
 
-- 3 memórias;
+- Folha Única em linguagem natural;
 - Creative/Canonical;
-- 3 comparadores;
 - Human Gate;
-- M1–M14;
-- proveniência/genealogia/contradições;
-- regras versionadas;
 - IA sem autoridade;
-- recuperação verificável;
-- provider swap.
+- PASS/FAIL/UNKNOWN;
+- proveniência direta ↔ inversa;
+- contradições preservadas;
+- eliminação automática só de duplicação absolutamente exata;
+- agentes em microprocessos reconstruíveis;
+- templates/processos reutilizáveis;
+- capabilities substituíveis;
+- memória independente da bancada/modelo;
+- possibilidade de reduzir uso de IA à medida que processos estabilizam.
 
-## Licenças verificadas
+## O que saiu do Core
 
-- Activepieces core: MIT; Enterprise separado/comercial;
-- sqlite-memory-mcp: MIT;
-- mcp-local-memory: MIT;
-- SQLite: public domain;
-- PiecesOS: proprietário;
-- código/documentação próprios do Cérebro: PolyForm Noncommercial 1.0.0.
-
-Antes de distribuição final, fixar versões e THIRD_PARTY_NOTICES.
-
-## O que saiu do núcleo
-
+- Activepieces como requisito nuclear;
+- Memory Provider externo obrigatório;
 - PiecesOS obrigatório;
-- Open Notebook obrigatório;
 - K-DLC runtime;
 - vector DB separado;
-- Qdrant/Neo4j;
-- motor de pesquisa próprio;
-- Core Python obrigatório;
-- frontend técnico/Markdown para o utilizador.
+- framework multi-agent permanente;
+- RAG próprio;
+- ELIZA obrigatória;
+- LibreOffice/Zotero/LanguageTool/imagem/áudio como dependências de boot.
+
+Estas ferramentas podem regressar apenas como capabilities ou alternativas perante necessidade/teste.
+
+## Open Notebook
+
+Regra atual: **bancada de trabalho, ponto.** Pode receber contexto/fontes/prompts/schemas para uma tarefa e devolver resultado. Não possui a memória soberana. Deve ser possível apagar/substituir a bancada e continuar a partir da memória Nexus.
+
+## Benchmark externo
+
+Nesta fase comparar com **um único projeto: Negentropy-Laby/OpenDoge**. Razão: oferece material concreto sobre local-first single-operator, workflow templates, contracts, approvals, evidence/replay e slots/capabilities. Não copiar a sua dimensão/complexidade; extrair apenas padrões que reduzam engenharia e respeitem as leis Nexus.
+
+## Próximo portão — Nexus Minimal E2E
+
+1. abrir Folha;
+2. escrever pedido em linguagem natural;
+3. routing pelo condutor;
+4. enviar tarefa cognitiva limitada à bancada;
+5. tiny local devolve JSON conforme schema;
+6. guardar resultado em Creative;
+7. mostrar resultado na Folha;
+8. bloquear escrita direta em Canonical;
+9. Human Gate explícito promove quando autorizado;
+10. reconstruir bancada sem perda de memória;
+11. demonstrar proveniência inversa;
+12. repetir tarefa semelhante e medir reutilização do processo.
+
+Resultado permitido: PASS, FAIL ou UNKNOWN. Sem PASS real não avançar para o catálogo grande de capabilities.
 
 ## Evidência histórica preservada
 
@@ -71,30 +98,7 @@ No commit `f48382f396e3b4af18e62a15c3ecb6104dfd52c9`:
 - 11 writer tests PASS;
 - total 45 PASS.
 
-Isto não prova a nova composição E2E.
-
-## Próximo portão
-
-Executar o mesmo teste nos dois Memory Providers:
-
-1. instalação Windows;
-2. Activepieces -> MCP;
-3. create/read/update;
-4. FTS/exato;
-5. semântico;
-6. temporal;
-7. entidades/relações;
-8. proveniência;
-9. contradições preservadas;
-10. Creative -> Human Gate -> Canonical;
-11. provider não consegue promover sozinho;
-12. restart;
-13. backup -> destruir -> restore;
-14. desligar Internet;
-15. desligar Memory Provider sem destruir leis/configuração Activepieces;
-16. desligar Activepieces sem perder SQLite/Canonical.
-
-Escolher o provider apenas pelos resultados.
+Isto continua a ser evidência histórica e não prova o Nexus Minimal E2E.
 
 ## Regra operacional
 
