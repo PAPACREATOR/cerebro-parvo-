@@ -1,84 +1,84 @@
 # Decisões vigentes e genealogia
 
-## 28-09-2026 — simplificação para dois blocos nucleares (VIGENTE)
+## 30-09-2026 — Nexus Minimal: launcher metódico + bancada descartável (VIGENTE)
 
-Após reanálise de Activepieces, PiecesOS e projetos de memória MCP locais, a composição física deixa de ser considerada fechada e passa a uma decisão por teste.
+A arquitetura foi reduzida novamente para preservar funções e cortar engenharia própria.
 
-### Núcleo candidato
+### Formulação vigente
 
-1. **Activepieces Community** — motor executivo/governação operacional.
-2. **Memory Provider local SQLite/MCP** — conhecimento/pesquisa/proveniência.
+**Nexus é um launcher metódico, com memória, leis e templates executáveis, que compõe ferramentas existentes para atingir um fim.**
 
-O humano permanece acima dos dois como autoridade final.
+Fluxo principal:
 
-SQLite deixa de ser um terceiro serviço: é preferencialmente a base interna do Memory Provider.
+```text
+Humano → Folha em linguagem natural → Condutor
+                                  ├→ template/processo conhecido → ferramenta/capability
+                                  └→ problema novo → Open Notebook/tiny → resultado
+                                                        ↓
+Creative → VERIFY → PASS/FAIL/UNKNOWN → Human Gate quando exigido → Canonical
+                                                        ↓
+                                    experiência validada → template candidato
+```
 
-### Candidatos de memória
+### Responsabilidades fechadas
 
-**A — RMANOV/sqlite-memory-mcp (MIT)**
-- SQLite/WAL;
-- FTS5/BM25;
-- semântica opcional via sqlite-vec;
-- knowledge graph;
-- provenance/event tracking;
-- candidate claims;
-- promoção approval-aware/canonical facts;
-- sessões e recuperação;
-- funcionalidades avançadas opcionais que não são necessárias ao núcleo.
+- **Folha Nexus:** interface inicial em linguagem natural; anexos, resultados e Human Gates. Infraestrutura fica invisível na utilização normal.
+- **Conductor:** runtime/condutor candidato para flows, routing, scripts, MCP, paralelismo e gates. Deve passar testes locais antes de ser dependência definitiva.
+- **Open Notebook:** apenas bancada cognitiva. Não é memória Nexus, Creative, Canonical, arquivo, Wiki, autoridade ou interface principal.
+- **Nexus/Windows:** memória soberana, regras, proveniência, histórico, processos/templates e continuidade.
+- **Tiny local:** cognição probabilística apenas quando necessária, dentro do pacote de trabalho autorizado.
+- **Capabilities:** LibreOffice, Zotero, LanguageTool, web, imagem, áudio, Whisper/TTS etc. entram por processo, nunca por antecipação.
 
-É o candidato funcionalmente mais próximo da nossa governação, mas qualquer promoção automática/policy-gated deve ser subordinada ao Human Gate do Cérebro.
+### Memória soberana
 
-**B — Beledarian/mcp-local-memory (MIT)**
-- SQLite;
-- FTS5;
-- sqlite-vec + embeddings locais;
-- pesquisa temporal;
-- entidades/relações/observações;
-- lifecycle auditável;
-- suppress/restore em vez de eliminação obrigatória.
+A memória durável pertence ao Nexus e deve permanecer em formatos portáveis/reconstruíveis: Markdown, JSON, YAML, fontes originais, hashes e logs; SQLite/FTS5 pode servir de índice/estado quando necessário. Destruir Open Notebook não pode destruir conhecimento Nexus.
 
-É mais simples e menos opinativo sobre governação.
+### Agente em microprocesso
 
-**Decisão:** não escolher por semelhança ou número de funções. Executar o mesmo contrato de testes nos dois. O que cumprir as leis com menos adaptação/dependências vence.
+Um agente não precisa de identidade persistente. Pode ser reconstruído por tarefa como:
 
-### Activepieces
+`tiny + prompt + contexto permitido + leis + ferramentas permitidas + schema + objetivo`.
 
-- core Community: MIT;
-- Enterprise/commercial folders não fazem parte do núcleo;
-- função: processos, recipes, estados de execução, Human Gate, MCP/HTTP e coordenação;
-- Activepieces não é proprietário do conhecimento.
+Executa, devolve resultado estruturado e termina. O que persiste é memória/processo/proveniência, não o agente.
 
-### PiecesOS
+### Templates/processos
 
-- removido como dependência obrigatória;
-- permanece benchmark/opção experimental;
-- proprietário;
-- versões antigas 11.x e 12.3.x demonstram arquitetura local/MCP, mas não existe prova suficiente para o tornar dependência redistribuível/perpétua;
-- não escrever arquitetura que dependa do entitlement Pieces.
+Experiência validada pode ser compilada num processo explícito e testável (`process.yaml`, schemas, prompts, regras e testes). A primeira resolução pode usar mais cognição; ocorrências semelhantes devem reutilizar o processo e, quando possível, reduzir chamadas à IA. Aprendizagem nunca aumenta autoridade.
 
-### Open Notebook e K-DLC
+### Benchmark externo único
 
-Saem do runtime obrigatório. A investigação feita permanece genealogia e fonte de requisitos. Só regressam se um FAIL concreto justificar.
+Para impedir dispersão, o único projeto externo escolhido para comparação arquitetónica nesta fase é **Negentropy-Laby/OpenDoge**. Motivos: local-first/single-operator, workflow templates, runtime contracts, approvals, evidence/replay e extensão por slots/capabilities. É benchmark, não dependência nem arquitetura a copiar. Só se adapta algo se reduzir código/risco sem violar leis Nexus e com licença compatível.
 
-### Providers periféricos
+### Testes que decidem
 
-Zotero, LibreOffice, ComfyUI, LanguageTool, IA local, web, email e publicação são capacidades chamadas por receitas, não blocos nucleares.
+1. Folha → condutor → bancada → JSON → Creative → Folha;
+2. Canonical não aceita escrita direta;
+3. Human Gate permite promoção explícita;
+4. Open Notebook pode ser destruído/reconstruído sem perda Nexus;
+5. tiny não ganha acesso fora do pacote permitido;
+6. proveniência percorre resultado ↔ processo ↔ contexto/evidência ↔ fonte/pedido;
+7. microprocessos independentes podem comparar e produzir PASS/FAIL/UNKNOWN;
+8. tarefa semelhante reutiliza experiência/processo com menos descoberta;
+9. substituir tiny/bancada não destrói leis nem memória.
 
-### Regras reforçadas
+### Regra de engenharia
 
-- LIGAR > CONFIGURAR > ADAPTAR > CRIAR.
-- Nenhum componente entra sem um FAIL que o justifique.
-- Se não pode ser desligado sem destruir o resto, está mal integrado.
-- Memória não é autoridade.
-- IA não é autoridade.
-- Activepieces executa; humano decide.
-- PROMOTE_TO_CANONICAL requer Human Gate explícito.
-- Similaridade semântica nunca autoriza eliminação.
+**LIGAR > CONFIGURAR > ADAPTAR > CRIAR.** O Core programa sobretudo cola, contratos, memória, leis, auditoria e testes. Não reprogramar motores maduros.
 
-## Decisão anterior — composição Activepieces + Open Notebook + K-DLC (HISTÓRICA)
+---
 
-A fase anterior demonstrou que ferramentas maduras podiam substituir grande parte do código próprio, mas acumulava providers e responsabilidades. Foi simplificada pela decisão vigente acima. Open Notebook/K-DLC continuam preservados como alternativas históricas, não como orientação operacional.
+## 28-09-2026 — simplificação Activepieces + Memory Provider (HISTÓRICA / SUPERADA)
+
+A fase anterior propôs Activepieces Community + um Memory Provider SQLite/MCP como dois blocos nucleares. Foi útil para provar que workflows, memória e providers podiam ser desacoplados, mas ainda atribuía demasiada responsabilidade a um provider de memória e mantinha um motor específico como centro conceptual.
+
+Os candidatos RMANOV/sqlite-memory-mcp e Beledarian/mcp-local-memory permanecem referências históricas. Não são dependências vigentes e só regressam perante FAIL concreto.
+
+PiecesOS permanece benchmark histórico/proprietário, não dependência.
+
+## Decisão anterior — Activepieces + Open Notebook + K-DLC (HISTÓRICA)
+
+Demonstrou que ferramentas maduras podiam substituir grande parte do código próprio, mas acumulava providers e responsabilidades. Open Notebook regressa agora com responsabilidade muito mais estreita: **bancada de trabalho apenas**.
 
 ## Evidência histórica de implementação
 
-O código Python e writer recuperável já testados permanecem preservados como fallback/evidência. Não são apagados e não voltam a ser obrigatórios sem FAIL real.
+Código Python e writer recuperável já testados permanecem preservados como fallback/evidência. Não são apagados e não voltam a ser obrigatórios sem FAIL real.
