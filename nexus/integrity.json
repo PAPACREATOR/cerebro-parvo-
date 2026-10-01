@@ -1,7 +1,7 @@
 {
   "app.py": "171049269dcc6f13ce69b40db4430289303f4e1190639d57022048bb0812739b",
   "contracts.py": "6c97ed0af3892c7dbbfe7d4b1f673c319ed9fc92c24f638161b91f2c43c02f3c",
-  "host.py": "e292530c8fb806c1e5aa9f0ad4d7b78f7260d45818c46111a82665ae51e7f658",
+  "host.py": "36d3f3415232f6fc9c4dc2914182ac5557c580095a6ed48020e6e5195b67f73a",
   "store.py": "60c34e179efa40ced908f19e01d119935d5c288d2ea94db386129a8a1e497c0c",
   "__init__.py": "46cab08a37d7677c810002d394bfc5ac0729e488dc9b6920cabedf37db8dc15a",
   "adapters/conductor_runner.py": "ca7efded3f337c6b0350a41263fdbcfe2f2d986f0067ccbb92ca870575ba6660",
@@ -26,7 +26,7 @@
   "ui/style.css": "00422a3fb94d39ec264041e66637dc14b72840b3f0f26c6f129de2a510515530",
   "adapters/constitutional.py": "46829be8e42d3469ca7a2e558c1e9ecd76edebd8fb00199fd19141ee1ed9cf61",
   "processes/register_object.yaml": "d00e8cca76d2a93d2c9b88c208ee431342baeb3dc4a4c8328dd934746ee462a0",
-  "schemas/multimedia.json": "d933b54e7bdc2224adbb4ceeb9d2070f7fc67091a003662147ad3dff425b8a5b",
-  "families/multimedia/som.md": "dec399892e57b439205b1c954b850c18ae74cec88ef34d8c8751f2ac15fa8e89",
-  "families/multimedia/imagem.md": "23b86a10a7eba8fba3ffdf4668ed75e0ec576411bedca2c9eaca9ea28b003f3e"
+  "schemas/multimedia.json": "ea20b02da3c33557d42475c84e111f98a1f7048708af0e434dde4aca53154e01",
+  "families/multimedia/som.md": "d31057a867080291d183e9cde486b6079e686403cf7869ed749d0f005e770462",
+  "families/multimedia/imagem.md": "4a321cdc18751a5d3e1dec770908aa5d992e17126e5569bbfd9045a2dc4583de"
 }
