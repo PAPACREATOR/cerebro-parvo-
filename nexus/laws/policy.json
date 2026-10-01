@@ -1,0 +1,8 @@
+{
+  "version": "1.0",
+  "canonical_gate": "human_required",
+  "automatic_deletion": false,
+  "ai_authority": false,
+  "processes": ["verify", "interpret"],
+  "max_input_bytes": 2097152
+}

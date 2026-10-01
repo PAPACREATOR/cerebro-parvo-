@@ -1,0 +1,24 @@
+workflow:
+  name: nexus-interpret
+  version: 1.0.0
+  entry_point: notebook
+  input:
+    input_path: {type: string}
+    python: {type: string}
+    powershell: {type: string}
+  limits:
+    max_iterations: 2
+    timeout_seconds: 130
+agents:
+- name: notebook
+  type: script
+  command: '{{ workflow.input.python }}'
+  args:
+  - -I
+  - '{{ workflow.dir }}/../adapters/notebook.py'
+  - '{{ workflow.input.input_path }}'
+  timeout: 120
+  routes:
+  - to: $end
+output:
+  result: '{{ notebook.output.stdout }}'

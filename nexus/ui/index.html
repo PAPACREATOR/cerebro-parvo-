@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Folha Nexus</title><link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <aside>
+    <a class="brand" href="/"><span class="symbol">N</span> nexus<span class="dot">.</span></a>
+    <div class="workspace">O TEU ESPAÇO DE TRABALHO</div>
+    <button id="new" class="new">＋ Novo pedido</button>
+    <div class="nav-label">TRABALHO RECENTE</div>
+    <div id="history" aria-label="Pedidos anteriores"></div>
+    <div class="aside-bottom"><span class="online"></span> No teu computador<br><small>Protótipo · Windows</small></div>
+  </aside>
+  <main>
+    <header><span>Folha de trabalho</span><span class="pill">A decisão é tua</span></header>
+    <section class="intro"><div class="eyebrow">DO PEDIDO AO RESULTADO</div>
+      <h1>Um lugar para<br>começar a trabalhar.</h1>
+      <p>Escreve, junta um ficheiro e escolhe o que queres fazer.<br>Revê o resultado antes de o guardar como aprovado.</p>
+    </section>
+    <div class="body-grid">
+      <section class="paper">
+        <div class="section-top"><h2>O teu pedido</h2><span>01</span></div>
+        <form id="form">
+          <label for="text">Em que vamos trabalhar?</label>
+          <textarea id="text" placeholder="Escreve aqui o teu texto ou uma nota sobre o ficheiro…"></textarea>
+          <label class="attachment" for="file"><span>＋ Juntar ficheiro</span><small id="file-label">Até 2 MB · um ficheiro de cada vez</small></label>
+          <input type="file" id="file" hidden>
+          <fieldset><legend>O que queres fazer?</legend>
+            <label class="choice"><input type="radio" name="process" value="verify" checked><span><strong>Verificar conteúdo</strong><small>Comparar o mesmo conteúdo por dois métodos. Sem IA.</small></span><span class="tag">DISPONÍVEL</span></label>
+            <label class="choice"><input type="radio" name="process" value="interpret"><span><strong>Interpretar documento</strong><small>Usar a bancada cognitiva e um modelo local.</small></span><span class="tag muted">REQUER LIGAÇÃO</span></label>
+          </fieldset>
+          <div class="form-footer"><small>O original é conservado.</small><button id="submit" class="primary" type="submit">Executar pedido <span>↗</span></button></div>
+        </form>
+      </section>
+      <section class="result-panel">
+        <div class="section-top"><h2>Resultado</h2><span>02</span></div>
+        <div id="empty"><div class="empty-icon">◎</div><h3>O próximo passo começa aqui.</h3><p>O resultado aparece neste espaço.<br>Podes revê-lo e decidir o que fica.</p></div>
+        <div id="result" hidden><div id="status" class="status"></div><h3 id="result-title"></h3><p id="message"></p><pre id="content"></pre><div id="actions" hidden><p class="gate-note">Este resultado é um candidato. Só a tua confirmação o torna aprovado.</p><button id="prepare" class="primary">Rever e guardar como aprovado</button><button id="download" class="secondary">Descarregar resultado</button></div></div>
+      </section>
+    </div>
+    <p id="notice" role="status" aria-live="polite"></p>
+    <footer><span>01 Pedido <i>→</i> 02 Execução <i>→</i> 03 Candidato <i>→</i> <b>04 A tua decisão</b></span><span>NEXUS / MINIMAL</span></footer>
+  </main>
+  <dialog id="approval"><div class="eyebrow">DECISÃO HUMANA</div><h2>Guardar este resultado?</h2><p>Confirma a versão abaixo. O original e o candidato são conservados.</p><pre id="review"></pre><label class="confirm"><input type="checkbox" id="confirm"> Li este resultado e aprovo esta versão.</label><div class="dialog-actions"><button id="cancel" class="secondary">Voltar</button><button id="approve" class="primary" disabled>Confirmar aprovação</button></div></dialog>
+  <script src="/app.js"></script>
+</body></html>

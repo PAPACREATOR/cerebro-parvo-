@@ -1,3 +1,11 @@
+# Atualização — 01-10-2026
+
+Código Nexus publicado em [nexus/](nexus/README.md). [Revisão desta versão](nexus/docs/PUBLICACAO-2026-10-01.md): 83 testes passaram em Windows; integração completa e isolamento por conta continuam pendentes. As responsabilidades M1–M14 não são declaradas concluídas.
+
+O retrato abaixo conserva o estado anterior.
+
+---
+
 # Estado operacional — 30-09-2026
 
 ## Estado

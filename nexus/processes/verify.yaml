@@ -1,0 +1,83 @@
+workflow:
+  name: nexus-verify
+  version: 1.0.0
+  entry_point: policy
+  input:
+    input_path: {type: string}
+    powershell: {type: string}
+    python:
+      type: string
+  limits:
+    max_iterations: 8
+    timeout_seconds: 60
+agents:
+- name: policy
+  type: set
+  values:
+    agreement: PASS
+    conflict: UNKNOWN
+    unknown: UNKNOWN
+    failure: FAIL
+  routes:
+  - to: hash_windows
+- name: hash_windows
+  type: script
+  command: '{{ workflow.input.powershell }}'
+  args:
+  - -NoProfile
+  - -NonInteractive
+  - -Command
+  - |
+    $ErrorActionPreference = 'Stop'
+    [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
+    [Console]::InputEncoding = [System.Text.UTF8Encoding]::new($false)
+    $p = [Console]::In.ReadToEnd().TrimEnd([char]10, [char]13)
+    try {
+      $algorithm = [System.Security.Cryptography.SHA256]::Create()
+      try { $hash = [BitConverter]::ToString($algorithm.ComputeHash([System.IO.File]::ReadAllBytes($p))).Replace('-', '').ToLowerInvariant() }
+      finally { $algorithm.Dispose() }
+      @{status='PASS'; sha256=$hash; capability='windows.dotnet-sha256'} | ConvertTo-Json -Compress
+    } catch {
+      @{status='FAIL'; sha256=$null; capability='windows.dotnet-sha256'; error=$_.Exception.Message} | ConvertTo-Json -Compress
+    }
+  stdin: '{{ workflow.input.input_path }}'
+  timeout: 15
+  routes:
+  - to: hash_python
+- name: hash_python
+  type: script
+  command: '{{ workflow.input.python }}'
+  args:
+  - -I
+  - '{{ workflow.dir }}/../adapters/tools.py'
+  - hash
+  - '{{ workflow.input.input_path }}'
+  stdin: ''
+  timeout: 15
+  routes:
+  - to: compare
+- name: compare
+  type: script
+  command: '{{ workflow.input.python }}'
+  args:
+  - -I
+  - '{{ workflow.dir }}/../adapters/tools.py'
+  - compare
+  stdin: '{{ {"a": hash_windows.output, "b": hash_python.output} | tojson }}'
+  timeout: 15
+  routes:
+  - to: report
+- name: report
+  type: script
+  command: '{{ workflow.input.python }}'
+  args:
+  - -I
+  - '{{ workflow.dir }}/../adapters/tools.py'
+  - report
+  stdin: '{{ {"comparison": compare.output, "status": policy.output[compare.output.outcome]}
+    | tojson }}'
+  timeout: 15
+  routes:
+  - to: $end
+output:
+  result: '{{ report.output.stdout }}'

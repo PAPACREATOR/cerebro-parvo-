@@ -2,6 +2,10 @@
 
 Sistema local-first de criação, conhecimento e execução governada para uma pessoa. A pessoa usa linguagem natural; o sistema compõe processos e ferramentas nos bastidores; a pessoa continua autoridade final.
 
+## Código desta versão
+
+O protótipo Windows está em [nexus/](nexus/README.md). Consultar o [estado testado e pendências](nexus/docs/PUBLICACAO-2026-10-01.md). As pastas `implementacao/` e `historico/` conservam versões anteriores; não são necessárias para executar Nexus.
+
 ## Estado atual em uma frase
 
 **Nexus Minimal = Folha em linguagem natural + Conductor como condutor candidato + memória soberana Nexus/Windows + Open Notebook apenas como bancada cognitiva descartável.**

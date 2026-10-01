@@ -1,0 +1,121 @@
+import json
+import threading
+import time
+from urllib.error import HTTPError
+from urllib.request import Request, urlopen
+import pytest
+
+from nexus.app import make_server
+from nexus.host import Host, process_environment
+from nexus.contracts import Blocked
+from nexus.tests.test_store import request, candidate
+
+
+def test_no_secrets_in_child_environment(tmp_path, monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "should-never-be-inherited")
+    monkeypatch.setenv("NEXUS_SESSION", "should-never-be-inherited")
+    assert "OPENAI_API_KEY" not in process_environment(tmp_path)
+    assert "NEXUS_SESSION" not in process_environment(tmp_path)
+
+
+def test_gate_requires_session_ticket_and_explicit_action(tmp_path):
+    host = Host(tmp_path)
+    run = candidate(host.store)
+    with pytest.raises(Blocked):
+        host.prepare_approval(run, "tool-session")
+    with pytest.raises(Blocked):
+        host.approve(run, "invented", True, host.session)
+    ticket = host.prepare_approval(run, host.session)["ticket"]
+    with pytest.raises(Blocked):
+        host.approve(run, ticket, "true", host.session)
+    ticket = host.prepare_approval(run, host.session)["ticket"]
+    host.approve(run, ticket, True, host.session)
+    with pytest.raises(Blocked):
+        host.approve(run, ticket, True, host.session)
+
+
+def test_expired_ticket(tmp_path):
+    host = Host(tmp_path)
+    run = candidate(host.store)
+    ticket = host.prepare_approval(run, host.session)["ticket"]
+    binding = host.tickets[ticket]
+    host.tickets[ticket] = (binding[0], binding[1], 0)
+    with pytest.raises(Blocked):
+        host.approve(run, ticket, True, host.session)
+
+
+def test_full_http_flow_and_bypasses(tmp_path):
+    host = Host(tmp_path)
+    server = make_server(host)
+    worker = threading.Thread(target=server.serve_forever, daemon=True)
+    worker.start()
+    base = "http://127.0.0.1:" + str(server.server_port)
+    def call(path, value=None, session=host.session, origin=None):
+        headers = {"Content-Type": "application/json", "X-Nexus-Session": session}
+        if origin:
+            headers["Origin"] = origin
+        req = Request(base + path, data=None if value is None else json.dumps(value).encode(), headers=headers)
+        with urlopen(req, timeout=15) as response:
+            return response.read()
+    try:
+        assert b"Folha Nexus" in call("/")
+        with pytest.raises(HTTPError):
+            call("/api/run", request(), session="")
+        with pytest.raises(HTTPError):
+            call("/api/run", request(), origin="https://untrusted.example")
+        run = json.loads(call("/api/run", request()))["run_id"]
+        deadline = time.monotonic() + 65
+        state = {}
+        while time.monotonic() < deadline:
+            state = json.loads(call("/api/runs/" + run))
+            if state["status"] != "RUNNING":
+                break
+            time.sleep(.2)
+        assert state["status"] == "HUMAN_REQUIRED", state
+        assert state["result"]["ai_calls"] == 0
+        with pytest.raises(HTTPError):
+            call("/api/approve", {"run_id": run, "ticket": "ai-invented", "confirmed": True})
+        ticket = json.loads(call("/api/prepare", {"run_id": run}))["ticket"]
+        final = json.loads(call("/api/approve", {"run_id": run, "ticket": ticket, "confirmed": True}))
+        assert final["status"] == "PASS"
+        provenance = json.loads((tmp_path / "canonical" / run / "provenance.json").read_bytes())
+        assert provenance["human_approval"]["sha256"] == state["candidate_sha256"]
+        assert provenance["execution"]["summary"]["usage"]["total_tokens"] == 0
+        assert len(provenance["input_references"]) == 1
+    finally:
+        server.shutdown()
+        server.server_close()
+
+
+def test_refresh_review_revokes_previous_ticket(tmp_path):
+    host = Host(tmp_path)
+    run = candidate(host.store)
+    old = host.prepare_approval(run, host.session)["ticket"]
+    current = host.prepare_approval(run, host.session)["ticket"]
+    assert len(host.tickets) == 1
+    with pytest.raises(Blocked):
+        host.approve(run, old, True, host.session)
+    assert host.approve(run, current, True, host.session)["status"] == "PASS"
+
+
+@pytest.mark.parametrize("output", [b"", b"not JSON", b'{"result":{},"trace":{}}'])
+def test_invalid_tool_output_never_promotes(tmp_path, monkeypatch, output):
+    class BrokenTool:
+        returncode = 0
+        def communicate(self, **kwargs):
+            return output, b""
+    monkeypatch.setattr("nexus.host.subprocess.Popen", lambda *args, **kwargs: BrokenTool())
+    host = Host(tmp_path)
+    run = host.store.create(request())
+    host.busy.acquire()
+    host._run(run)
+    assert host.store.state(run)["status"] == "BLOCKED"
+    assert not list((tmp_path / "canonical").iterdir())
+    assert not host.busy.locked()
+
+
+@pytest.mark.parametrize("reference", [None, 4, [], {}, "../outside"])
+def test_invalid_reference_is_blocked(tmp_path, reference):
+    host = Host(tmp_path)
+    with pytest.raises(Blocked):
+        host.prepare_approval(reference, host.session)

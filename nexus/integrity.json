@@ -1,0 +1,19 @@
+{
+  "app.py": "aa79a8d4b03c5ff2d8a9d74b411c8917b077c0fdfe5fe123972277887c33301f",
+  "contracts.py": "1ae4339844018006c4704ee6accc778fa2db077559d8aebd4cdd0bcd8e05ba7b",
+  "host.py": "d11dfe3bf4b406a8b0fe82b7a657885e626b73701845ce3ae5ab685cb15b531b",
+  "store.py": "f91d97b69eb16071b0ab2959c6d690ad4f60b6d65f1279c0d77e85edb56c8f0e",
+  "__init__.py": "46cab08a37d7677c810002d394bfc5ac0729e488dc9b6920cabedf37db8dc15a",
+  "adapters/conductor_runner.py": "819273e8aaf81e68433266c3f228e4b51e0b401b53dd6ddec96a8be471546645",
+  "adapters/tools.py": "c77a30cd738e5fdec94d25306f34b1f0fdc49f441504259f195d0fcf2aa64826",
+  "laws/CONSTITUTION.md": "addac01c2f907daeb69e5c393afb19f5ed4324dad6956a9259520b1d864c4851",
+  "laws/policy.json": "24838290daf93be569a4aca722db6f3fde6abddb106fd9c439b24c017d0b916b",
+  "processes/check.yaml": "e740e7ff09aa61bf12985e917c34bf1f592ed07528b7ccff24e2edfe1f112e63",
+  "processes/verify.yaml": "15d114a2f7b2f1d400a5fb381492b8d379d5657be27078bcadf66f8a08b23f60",
+  "schemas/request.json": "2ee448ff3cce8a187e92bd039008734cefdf383c03962ba6ad1adab22b84b707",
+  "schemas/result.json": "fa3ef3ec2ee82924fdb19ffed695029d9989d8698e3b5f5349d2b8b23e895ed1",
+  "adapters/notebook.py": "21ddac42c45a972a09dea4c1712bf4d1339c01bad447cfabff4130bc469a4866",
+  "schemas/cognitive.json": "e38903b40c416c14f09877f1bae1ec0beadab8c90c228b7b62641856b429edc3",
+  "processes/interpret.yaml": "7e790a51e23e7773842827f7aa47a5d509f6948e5e279a2cb56a2ad0868a92fb",
+  "approval_binding.py": "93b7fe307d23d06904dec4c32e9843f30d125c1feb876fc5b9fcfd20c35b25d6"
+}

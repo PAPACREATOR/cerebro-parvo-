@@ -1,0 +1,2 @@
+jsonschema==4.26.0
+conductor-cli @ git+https://github.com/microsoft/conductor.git@11dcc41ed3df78f0806127cc901822fe8758294b
