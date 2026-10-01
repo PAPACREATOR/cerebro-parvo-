@@ -26,3 +26,11 @@ Cognitivo na cópia atual: PASS em 10.57 s; interpret.yaml executado por Conduct
 Isolamento: **FAIL reproduzível**. Um filho Python -I com process_environment do Host leu e alterou uma sentinela sintética numa pasta de cofre de ensaio. Mesmo utilizador mantém os seus direitos de ficheiros. Não foi tocado conhecimento real. A conta Nexus continua ausente na verificação. Próximo trabalho: corrigir esta fronteira, sem avançar para capacidades adicionais.
 
 Este FAIL de requisito não desaparece com os 109 PASS da regressão existente: a suite cobre o comportamento implementado, não comprova isolamento de OS.
+
+## Configuração nativa parcial — 01-10-2026
+
+Conta padrão Nexus criada e membro de Users, sem associação direta a Administradores. Área sintética C:\ProgramData\NexusMinimal criada. Inspeção das DACL: herança protegida; Nexus Modify em work, ReadAndExecute em tools/laws; vaults sem ACE para Nexus. Host/humano, SYSTEM e Administradores mantêm controlo. Nenhum cofre existente foi migrado.
+
+O teste por processo com credenciais ainda não produziu probe-result.json nem isolation-result.json. Serviço Secondary Logon estava ativo; não foram encontrados eventos CodeIntegrity recentes na consulta. A causa da interrupção ainda não está demonstrada; aguarda-se a mensagem da janela interativa. Não redefinir palavra-passe nem repetir criação cegamente.
+
+**Estado: CONFIGURADO PARCIALMENTE / TESTE EFETIVO PENDENTE.** DACL inspecionada não é PASS de acesso negado. Host e Notebook continuam sem integração com a conta restrita.
