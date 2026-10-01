@@ -1,0 +1,24 @@
+workflow:
+  name: nexus-proofread
+  version: 1.0.0
+  entry_point: languagetool
+  input:
+    input_path: {type: string}
+    python: {type: string}
+    powershell: {type: string}
+  limits:
+    max_iterations: 2
+    timeout_seconds: 60
+agents:
+- name: languagetool
+  type: script
+  command: '{{ workflow.input.python }}'
+  args:
+  - -I
+  - '{{ workflow.dir }}/../adapters/languagetool.py'
+  - '{{ workflow.input.input_path }}'
+  timeout: 50
+  routes:
+  - to: $end
+output:
+  result: '{{ languagetool.output.stdout }}'

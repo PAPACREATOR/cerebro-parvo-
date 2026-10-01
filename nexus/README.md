@@ -20,6 +20,12 @@ A opção Interpretar requer Open Notebook configurado em `http://127.0.0.1:5055
 
 Ensaio anterior: Open Notebook 1.14.0, SurrealDB 2.7.0 e Qwen3-4B Q4_K_M via llama.cpp b6500. Texto UTF-8 até 6000 caracteres; PDF/DOCX ainda não suportados no ramo cognitivo. Saída sempre candidata UNKNOWN. Formato e citações verificáveis não provam veracidade.
 
+## Revisão de português opcional
+
+Com Java e LanguageTool instalados, criar no diretório de dados `languagetool.json` com `java` (caminho absoluto de `java.exe`) e `jar` (caminho absoluto de `languagetool-commandline.jar`). Esta configuração é administrativa e local; não pode ser fornecida pelo modelo. Escolher **Rever português** na Folha. Aceita texto UTF-8 até 6000 caracteres. Usa CLI, sem servidor nem IA; apresenta sugestões em Creative e conserva o original. Sem alertas não significa texto correto.
+
+[Evidência e limites desta integração](docs/F006-LANGUAGETOOL.md).
+
 ## Testes
 
 ```powershell
@@ -41,6 +47,6 @@ Consultar [estado revisto](docs/PUBLICACAO-2026-10-01.md) antes dos relatórios 
 
 ## Limites conhecidos
 
-O gate protege o percurso da aplicação; ainda não há isolamento Windows por conta/ACL entre ferramentas e cofres. Um processo com os mesmos direitos do utilizador pode alterar ficheiros. O manifesto verifica alterações acidentais, não é uma raiz de confiança externa. A recuperação testada não substitui backup/restauro. Wiki, integração LibreOffice/Zotero/LanguageTool/web, desenho e música permanecem pendentes.
+O gate protege o percurso da aplicação; ainda não há isolamento Windows por conta/ACL entre ferramentas e cofres. Um processo com os mesmos direitos do utilizador pode alterar ficheiros. O manifesto verifica alterações acidentais, não é uma raiz de confiança externa. A recuperação testada não substitui backup/restauro. Wiki, integração LibreOffice/Zotero/web, desenho e música permanecem pendentes.
 
 Licença do código Nexus: [PolyForm Noncommercial 1.0.0](../LICENSE). Dependências mantêm as suas licenças e não são redistribuídas nesta pasta.

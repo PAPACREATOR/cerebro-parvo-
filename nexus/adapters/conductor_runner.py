@@ -32,7 +32,7 @@ async def execute(workflow_path, inputs):
 if __name__ == "__main__":
     sys.stdout.reconfigure(encoding="utf-8")
     process, input_path = sys.argv[1:3]
-    if process not in ("verify", "interpret"):
+    if process not in ("verify", "interpret", "proofread"):
         raise SystemExit("Process unavailable")
     inputs = {
         "input_path": str(Path(input_path).resolve()),

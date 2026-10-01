@@ -3,6 +3,10 @@
   "canonical_gate": "human_required",
   "automatic_deletion": false,
   "ai_authority": false,
-  "processes": ["verify", "interpret"],
+  "processes": [
+    "verify",
+    "interpret",
+    "proofread"
+  ],
   "max_input_bytes": 2097152
 }

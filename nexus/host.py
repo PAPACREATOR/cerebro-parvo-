@@ -72,6 +72,11 @@ class Host:
                 if not config.exists():
                     raise Blocked("A interpretação ainda precisa de Open Notebook e de um modelo local configurados.")
                 atomic(directory / "open-notebook.json", config.read_bytes())
+            if process == "proofread":
+                config = self.store.root / "languagetool.json"
+                if not config.is_file():
+                    raise Blocked("A revisão precisa de Java e LanguageTool configurados localmente.")
+                atomic(directory / "languagetool.json", config.read_bytes())
             command = [sys.executable, "-I", str(ROOT / "adapters/conductor_runner.py"), process, str(directory / "input.bin")]
             env = process_environment(directory)
             proc = subprocess.Popen(command, cwd=directory, env=env, stdin=subprocess.DEVNULL,

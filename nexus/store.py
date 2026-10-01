@@ -139,7 +139,7 @@ class Store:
             state = self.state(run_id)
             if state["status"] != "RUNNING":
                 raise Blocked("A execução já terminou.")
-            if state["process_id"] == "verify" and result["ai_calls"] != 0:
+            if state["process_id"] in ("verify", "proofread") and result["ai_calls"] != 0:
                 raise Blocked("IA proibida neste processo.")
             candidate = self.path("creative", run_id)
             candidate.mkdir()

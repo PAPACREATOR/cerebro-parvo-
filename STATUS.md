@@ -1,3 +1,7 @@
+## LanguageTool integrado — 01-10-2026
+
+Revisão local por CLI ligada ao Conductor e Creative: ensaio real PASS; original intacto, IA zero, bypass BLOCK. Regressão: **94 testes passaram**. [Contrato e limites](nexus/docs/F006-LANGUAGETOOL.md).
+
 # Atualização — 01-10-2026
 
 Código Nexus publicado em [nexus/](nexus/README.md). [Revisão desta versão](nexus/docs/PUBLICACAO-2026-10-01.md): 83 testes passaram em Windows; integração completa e isolamento por conta continuam pendentes. As responsabilidades M1–M14 não são declaradas concluídas.

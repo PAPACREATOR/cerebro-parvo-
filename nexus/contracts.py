@@ -41,7 +41,7 @@ def load_policy(root=ROOT):
     expected = {
         "version": "1.0", "canonical_gate": "human_required",
         "automatic_deletion": False, "ai_authority": False,
-        "processes": ["verify", "interpret"], "max_input_bytes": 2097152,
+        "processes": ["verify", "interpret", "proofread"], "max_input_bytes": 2097152,
     }
     if policy != expected or not (root / "laws/CONSTITUTION.md").read_text("utf-8").strip():
         raise Blocked("Leis ausentes ou incompatíveis com este Host.")
