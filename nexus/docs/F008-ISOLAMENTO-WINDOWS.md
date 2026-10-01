@@ -34,3 +34,11 @@ Conta padrão Nexus criada e membro de Users, sem associação direta a Administ
 O teste por processo com credenciais ainda não produziu probe-result.json nem isolation-result.json. Serviço Secondary Logon estava ativo; não foram encontrados eventos CodeIntegrity recentes na consulta. A causa da interrupção ainda não está demonstrada; aguarda-se a mensagem da janela interativa. Não redefinir palavra-passe nem repetir criação cegamente.
 
 **Estado: CONFIGURADO PARCIALMENTE / TESTE EFETIVO PENDENTE.** DACL inspecionada não é PASS de acesso negado. Host e Notebook continuam sem integração com a conta restrita.
+
+## Diagnóstico dos lançamentos — 01-10-2026
+
+Repetição com diagnóstico automático: Start-Process -Credential devolveu InvalidOperationException «O parâmetro está incorreto». Não há prova de password errada nem execução do filho. Não redefinir credenciais.
+
+Alternativa nativa Agendador/S4U, tarefa temporária e RunLevel Limited: Register-ScheduledTask devolveu HRESULT 0x80070005 (Acesso negado), tanto com SID como nome explícito da conta. Foi confirmado admin=true, FullLanguage e serviço Schedule ativo. Não foi reduzida segurança/ACL nem desativada política. S4U evita password guardada, mas não deve ser confundido com firewall nem isolamento geral de rede.
+
+Scripts test-isolation.ps1 e test-isolation-s4u.ps1 preservam o diagnóstico e não recriam a conta. **Continua FAIL de lançamento / isolamento efetivo NOT RUN.** A inspeção das ACL é válida; o percurso de execução restrita do Host ainda não foi ligado. Próximo diagnóstico deve identificar a causa Windows do erro de lançamento e da recusa de registo antes de novas tentativas. Não declarar estes scripts como instalação pronta.
