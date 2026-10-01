@@ -42,3 +42,21 @@ Repetição com diagnóstico automático: Start-Process -Credential devolveu Inv
 Alternativa nativa Agendador/S4U, tarefa temporária e RunLevel Limited: Register-ScheduledTask devolveu HRESULT 0x80070005 (Acesso negado), tanto com SID como nome explícito da conta. Foi confirmado admin=true, FullLanguage e serviço Schedule ativo. Não foi reduzida segurança/ACL nem desativada política. S4U evita password guardada, mas não deve ser confundido com firewall nem isolamento geral de rede.
 
 Scripts test-isolation.ps1 e test-isolation-s4u.ps1 preservam o diagnóstico e não recriam a conta. **Continua FAIL de lançamento / isolamento efetivo NOT RUN.** A inspeção das ACL é válida; o percurso de execução restrita do Host ainda não foi ligado. Próximo diagnóstico deve identificar a causa Windows do erro de lançamento e da recusa de registo antes de novas tentativas. Não declarar estes scripts como instalação pronta.
+
+## PASS real — duas pastas, identidade Nexus — 01-10-2026
+
+Causa demonstrada do erro de lançamento com credenciais: o comando codificado anterior tinha **3216 caracteres**, acima do máximo de **1024** de CreateProcessWithLogonW. O teste mínimo usa comando de **610 caracteres**, sem alterar política de execução, ACL global, UAC ou antivírus.
+
+Script: windows/test-two-folders.ps1. Resultado real:
+
+- identidade do filho confere com o SID da conta Nexus: PASS;
+- escrita na pasta allowed: PASS;
+- leitura de protected/sentinel.txt: UnauthorizedAccessException;
+- escrita de protected/sentinel.txt: UnauthorizedAccessException;
+- sentinela protegida verificada pelo processo humano e intacta: PASS.
+
+**O mecanismo nativo conta padrão + ACL NTFS está demonstrado em duas pastas sintéticas.** A recusa anterior do Agendador não precisou de ser contornada: ele não é necessário para este lançamento. Não foi instalada nova dependência nem concedida administração à conta.
+
+Limites: ainda falta ligar a identidade restrita ao Host/Conductor e aos diretórios reais de trabalho. Notebook/Tiny continuam por rever sob a mesma fronteira. Este PASS não prova isolamento de rede, separação entre execuções, Job Object, backup ou restauro. Não migrar cofres reais antes dos testes. Os scripts longos anteriores ficam como evidência histórica de FAIL; usar o teste curto daqui em diante.
+
+Fonte do limite nativo: https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-createprocesswithlogonw

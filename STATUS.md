@@ -1,3 +1,7 @@
+## Windows nativo — PASS de duas pastas
+
+Conta Nexus executou comando curto (610 caracteres): escrita permitida na área de trabalho e leitura/escrita negadas por NTFS na pasta protegida; original intacto. [Prova e limites](nexus/docs/F008-ISOLAMENTO-WINDOWS.md). Integração desta identidade no Host/Conductor ainda pendente.
+
 ## Revisão do núcleo — 115 testes
 
 [Seis falhas reproduzidas/corrigidas e pendências restantes](nexus/docs/REVISAO-NUCLEO-2026-10-01.md). Teste Windows nativo preparado; PASS de ACL e ligação ao Host ainda por confirmar.
