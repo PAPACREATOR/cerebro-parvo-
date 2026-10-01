@@ -26,6 +26,8 @@ def verify_integrity():
         "processes/proofread.yaml", "processes/convert_pdf.yaml",
         "schemas/request.json", "schemas/result.json", "schemas/cognitive.json", "schemas/languagetool.json",
         "ui/index.html", "ui/app.js", "ui/style.css",
+        "adapters/constitutional.py", "processes/register_object.yaml", "schemas/multimedia.json",
+        "families/multimedia/som.md", "families/multimedia/imagem.md",
     }
     if not isinstance(manifest, dict) or set(manifest) != required:
         raise Blocked("Manifesto de integridade ausente ou incompleto.")

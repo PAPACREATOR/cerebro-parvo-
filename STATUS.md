@@ -1,3 +1,7 @@
+## Primeira família Multimédia
+
+Contratos Som/Imagem e leitura nativa pelo Conductor testados. [Wiki atual](nexus/docs/WIKI-INSTALACAO.md) e [evidência F009](nexus/docs/F009-OBJETOS-MARKDOWN.md). Geração e integração na Folha pendentes. C:\Nexos e atalho criados; 16 controlos da instalação passaram, Canonical vazio.
+
 ## Windows nativo — PASS de duas pastas
 
 Conta Nexus executou comando curto (610 caracteres): escrita permitida na área de trabalho e leitura/escrita negadas por NTFS na pasta protegida; original intacto. [Prova e limites](nexus/docs/F008-ISOLAMENTO-WINDOWS.md). Integração desta identidade no Host/Conductor ainda pendente.
