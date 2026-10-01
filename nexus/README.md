@@ -37,6 +37,8 @@ A suite combina testes reais de Conductor/PowerShell com falhas controladas. Nã
 
 ## Organização
 
+[Mapa Windows, inventário e próximas fases](docs/ORGANIZACAO-E-FASES.md).
+
 - `app.py`, `host.py`: Folha local e delegação ao Conductor.
 - `store.py`, `approval_binding.py`: Creative, gate e recuperação de aprovação.
 - `laws/`, `schemas/`, `processes/`: leis, contratos e workflows.

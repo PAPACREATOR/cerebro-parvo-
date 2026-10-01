@@ -1,3 +1,7 @@
+## Inventário e organização — 01-10-2026
+
+[Mapa de pastas, instalações confirmadas e plano por fases](nexus/docs/ORGANIZACAO-E-FASES.md). Publisher presente; Gmail/Facebook, imagens e música ainda sem integração. Conta Windows e restauro continuam pendentes.
+
 ## LanguageTool integrado — 01-10-2026
 
 Revisão local por CLI ligada ao Conductor e Creative: ensaio real PASS; original intacto, IA zero, bypass BLOCK. Regressão: **94 testes passaram**. [Contrato e limites](nexus/docs/F006-LANGUAGETOOL.md).
