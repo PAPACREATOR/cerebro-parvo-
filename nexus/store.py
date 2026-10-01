@@ -65,6 +65,16 @@ class Store:
                 state.update(status="FAIL", message="Execução interrompida. Podes iniciar um novo pedido.", updated_at=now())
                 atomic(item, state)
 
+    def verify_artifact(self, state, directory):
+        expected = state.get("artifact_sha256")
+        if expected is None:
+            return None
+        from nexus.adapters.office import pdf_bytes
+        raw = pdf_bytes(directory / "resultado.pdf")
+        if digest(raw) != expected:
+            raise Blocked("O PDF mudou; operação bloqueada.")
+        return raw
+
     def check_commit(self, state):
         """Verify an existing approval package; never create a new human decision."""
         run_id = state["run_id"]
@@ -72,6 +82,7 @@ class Store:
         for name in ("content.md", "approval.json", "provenance.json"):
             if (final / name).is_symlink():
                 raise Blocked("Pacote aprovado redirecionado.")
+        self.verify_artifact(state, final)
         content = (final / "content.md").read_bytes()
         approval = strict_json((final / "approval.json").read_bytes())
         provenance = strict_json((final / "provenance.json").read_bytes())
@@ -139,11 +150,21 @@ class Store:
             state = self.state(run_id)
             if state["status"] != "RUNNING":
                 raise Blocked("A execução já terminou.")
-            if state["process_id"] in ("verify", "proofread") and result["ai_calls"] != 0:
+            if state["process_id"] in ("verify", "proofread", "convert_pdf") and result["ai_calls"] != 0:
                 raise Blocked("IA proibida neste processo.")
+            artifact = result.get("artifact")
+            if (state["process_id"] == "convert_pdf") != (artifact is not None):
+                raise Blocked("Contrato de artefacto incompatível com o processo.")
+            raw_pdf = None
+            if artifact:
+                raw_pdf = self.verify_artifact({"artifact_sha256": artifact["sha256"]}, self.path("runs", run_id))
+                result = dict(result)
+                result["markdown"] += "\n\nPDF SHA-256: " + artifact["sha256"]
             candidate = self.path("creative", run_id)
             candidate.mkdir()
             content = result["markdown"].encode("utf-8")
+            if raw_pdf is not None:
+                atomic(candidate / "resultado.pdf", raw_pdf)
             atomic(candidate / "content.md", content)
             atomic(candidate / "result.json", result)
             provenance = {
@@ -156,8 +177,11 @@ class Store:
                 "policy_sha256": digest((ROOT / "laws/policy.json").read_bytes()),
                 "human_approval": None,
             }
+            if artifact:
+                provenance["output_references"].append({"path": "creative/" + run_id + "/resultado.pdf", "sha256": artifact["sha256"]})
             atomic(candidate / "provenance.json", provenance)
             return self.update(run_id, status="HUMAN_REQUIRED" if result["status"] in ("PASS", "UNKNOWN") else result["status"],
+                               **({"artifact_sha256": artifact["sha256"]} if artifact else {}),
                                result_status=result["status"], outcome=result["outcome"], candidate_sha256=digest(content),
                                message="Resultado candidato. A decisão de guardar como aprovado é tua.")
 
@@ -170,6 +194,7 @@ class Store:
             if state["status"] not in ("HUMAN_REQUIRED", "PASS"):
                 raise Blocked("Este resultado não está disponível para aprovação.")
             candidate = self.path("creative", run_id)
+            raw_pdf = self.verify_artifact(state, candidate)
             content = (candidate / "content.md").read_bytes()
             if digest(content) != state["candidate_sha256"]:
                 raise Blocked("O candidato mudou depois da apresentação.")
@@ -195,6 +220,9 @@ class Store:
             provenance["human_approval"] = approval
             provenance["output_references"].append({"path": "canonical/" + run_id + "/content.md", "sha256": digest(content)})
             try:
+                if raw_pdf is not None:
+                    atomic(stage / "resultado.pdf", raw_pdf)
+                    provenance["output_references"].append({"path": "canonical/" + run_id + "/resultado.pdf", "sha256": digest(raw_pdf)})
                 atomic(stage / "content.md", content)
                 atomic(stage / "approval.json", approval)
                 atomic(stage / "provenance.json", provenance)

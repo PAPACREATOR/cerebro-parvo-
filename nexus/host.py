@@ -77,6 +77,11 @@ class Host:
                 if not config.is_file():
                     raise Blocked("A revisão precisa de Java e LanguageTool configurados localmente.")
                 atomic(directory / "languagetool.json", config.read_bytes())
+            if process == "convert_pdf":
+                config = self.store.root / "libreoffice.json"
+                if not config.is_file():
+                    raise Blocked("LibreOffice precisa de configuração local.")
+                atomic(directory / "libreoffice.json", config.read_bytes())
             command = [sys.executable, "-I", str(ROOT / "adapters/conductor_runner.py"), process, str(directory / "input.bin")]
             env = process_environment(directory)
             proc = subprocess.Popen(command, cwd=directory, env=env, stdin=subprocess.DEVNULL,
@@ -125,12 +130,21 @@ class Host:
             state["content"] = (candidate / "content.md").read_text("utf-8")
         return state
 
+    def artifact(self, run_id, session):
+        self.authorize(session)
+        state = self.store.state(run_id)
+        data = self.store.verify_artifact(state, self.store.path("creative", run_id))
+        if data is None:
+            raise Blocked("Este resultado não tem PDF.")
+        return data
+
     def prepare_approval(self, run_id, session):
         self.authorize(session)
         with self.store.lock:
             state = self.store.state(run_id)
             if state["status"] != "HUMAN_REQUIRED":
                 raise Blocked("Não há candidato pendente de decisão.")
+            self.store.verify_artifact(state, self.store.path("creative", run_id))
             content = (self.store.path("creative", run_id) / "content.md").read_bytes()
             if digest(content) != state["candidate_sha256"]:
                 raise Blocked("O conteúdo mudou. A aprovação foi bloqueada.")

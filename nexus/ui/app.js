@@ -35,6 +35,7 @@ async function show(id) {
   el("status").textContent=labels[item.status] || item.status;
   el("result-title").textContent=item.result ? item.result.title : item.title;
   el("message").textContent=item.message;
+  el("pdf").hidden=!item.artifact_sha256;
   currentContent=item.content || "";
   el("content").textContent=currentContent;
   el("actions").hidden=!item.content;
@@ -82,3 +83,13 @@ el("download").onclick=()=>{
   const a=document.createElement("a");a.href=url;a.download="resultado-nexus.md";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 };
 list().catch(error=>notice(error.message));
+
+el("pdf").onclick=async()=>{
+  try {
+    const response=await fetch("/api/pdf/"+current,{headers:{"X-Nexus-Session":session}});
+    if(!response.ok) throw new Error("Não foi possível obter o PDF verificado.");
+    const url=URL.createObjectURL(await response.blob());
+    const a=document.createElement("a");a.href=url;a.download="resultado-nexus.pdf";a.click();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+  } catch(error){notice(error.message);}
+};

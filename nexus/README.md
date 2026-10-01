@@ -26,6 +26,12 @@ Com Java e LanguageTool instalados, criar no diretório de dados `languagetool.j
 
 [Evidência e limites desta integração](docs/F006-LANGUAGETOOL.md).
 
+## Conversão PDF opcional
+
+Com LibreOffice instalado, criar no diretório de dados `libreoffice.json` com o campo `executable`: caminho absoluto de `soffice.com`. Selecionar **Converter para PDF** e anexar ODT ou DOCX até 2 MB. O PDF fica em Creative e pode ser descarregado. A aprovação inclui o hash do ficheiro; PDF alterado bloqueia download/promoção. Usar inicialmente documentos confiáveis de ensaio. ODT teve prova real; DOCX ainda precisa de ensaio nesta versão.
+
+[Contrato, testes e limites](docs/F007-LIBREOFFICE.md).
+
 ## Testes
 
 ```powershell
@@ -49,6 +55,6 @@ Consultar [estado revisto](docs/PUBLICACAO-2026-10-01.md) antes dos relatórios 
 
 ## Limites conhecidos
 
-O gate protege o percurso da aplicação; ainda não há isolamento Windows por conta/ACL entre ferramentas e cofres. Um processo com os mesmos direitos do utilizador pode alterar ficheiros. O manifesto verifica alterações acidentais, não é uma raiz de confiança externa. A recuperação testada não substitui backup/restauro. Wiki, integração LibreOffice/Zotero/web, desenho e música permanecem pendentes.
+O gate protege o percurso da aplicação; ainda não há isolamento Windows por conta/ACL entre ferramentas e cofres. Um processo com os mesmos direitos do utilizador pode alterar ficheiros. O manifesto verifica alterações acidentais, não é uma raiz de confiança externa. A recuperação testada não substitui backup/restauro. Wiki, integração Zotero/web, desenho e música permanecem pendentes.
 
 Licença do código Nexus: [PolyForm Noncommercial 1.0.0](../LICENSE). Dependências mantêm as suas licenças e não são redistribuídas nesta pasta.

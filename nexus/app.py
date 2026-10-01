@@ -49,6 +49,8 @@ def make_server(host, port=0):
                 host.authorize(session)
                 if path == "/api/runs":
                     return self.reply(200, host.list_runs(session))
+                if path.startswith("/api/pdf/"):
+                    return self.reply(200, host.artifact(path.split("/")[-1], session), "application/pdf")
                 if path.startswith("/api/runs/"):
                     return self.reply(200, host.detail(path.split("/")[-1], session))
                 self.reply(404, {"error": "Não encontrado."})

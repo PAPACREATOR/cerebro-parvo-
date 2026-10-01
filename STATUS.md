@@ -1,3 +1,11 @@
+## Portão Windows — FAIL reproduzido
+
+O circuito cognitivo atual voltou a passar (10.57 s). O isolamento de OS falhou num ensaio sintético de leitura/escrita por processo filho com a mesma identidade. [Evidência e próximo contrato](nexus/docs/F008-ISOLAMENTO-WINDOWS.md). Novas capacidades aguardam correção desta fronteira.
+
+## LibreOffice — 01-10-2026
+
+ODT→PDF em Creative passou num ensaio real, com inspeção de texto e visual. **109 testes passaram**. [F007](nexus/docs/F007-LIBREOFFICE.md). Próxima prioridade humana: isolamento Windows. `interpret.yaml` já existe e tem prova cognitiva real em [F005](nexus/docs/F005-COGNICAO.md).
+
 ## Inventário e organização — 01-10-2026
 
 [Mapa de pastas, instalações confirmadas e plano por fases](nexus/docs/ORGANIZACAO-E-FASES.md). Publisher presente; Gmail/Facebook, imagens e música ainda sem integração. Conta Windows e restauro continuam pendentes.

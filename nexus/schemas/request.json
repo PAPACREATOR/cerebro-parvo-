@@ -13,7 +13,8 @@
       "enum": [
         "verify",
         "interpret",
-        "proofread"
+        "proofread",
+        "convert_pdf"
       ]
     },
     "text": {

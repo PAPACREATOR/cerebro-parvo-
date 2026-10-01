@@ -6,3 +6,4 @@ launch-url.txt
 __pycache__/
 languagetool.json
 !schemas/languagetool.json
+libreoffice.json

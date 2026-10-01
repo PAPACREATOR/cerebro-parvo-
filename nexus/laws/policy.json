@@ -6,7 +6,8 @@
   "processes": [
     "verify",
     "interpret",
-    "proofread"
+    "proofread",
+    "convert_pdf"
   ],
   "max_input_bytes": 2097152
 }

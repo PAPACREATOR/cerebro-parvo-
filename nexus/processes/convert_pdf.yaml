@@ -1,0 +1,24 @@
+workflow:
+  name: nexus-convert-pdf
+  version: 1.0.0
+  entry_point: office
+  input:
+    input_path: {type: string}
+    python: {type: string}
+    powershell: {type: string}
+  limits:
+    max_iterations: 2
+    timeout_seconds: 70
+agents:
+- name: office
+  type: script
+  command: '{{ workflow.input.python }}'
+  args:
+  - -I
+  - '{{ workflow.dir }}/../adapters/office.py'
+  - '{{ workflow.input.input_path }}'
+  timeout: 65
+  routes:
+  - to: $end
+output:
+  result: '{{ office.output.stdout }}'
