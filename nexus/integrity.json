@@ -1,8 +1,8 @@
 {
   "app.py": "171049269dcc6f13ce69b40db4430289303f4e1190639d57022048bb0812739b",
-  "contracts.py": "8c3be7f216ef84a8cb93c7a96ba92fb1509e29de75de4ef8a90b37d0fb10a98d",
-  "host.py": "9bffdbfc382f3d16fbb1c43e48ef64922d1b33c764c79a82daffe9f1c7a1701d",
-  "store.py": "de71338eabbac5e04f3d2b6bda3b9539deb1ec15499884c1748ec913a15ff067",
+  "contracts.py": "6c97ed0af3892c7dbbfe7d4b1f673c319ed9fc92c24f638161b91f2c43c02f3c",
+  "host.py": "4aa2ab32e8f68fae001a58d70ffe9e37c0127fde19ba88d6f43cc7893db623f3",
+  "store.py": "60c34e179efa40ced908f19e01d119935d5c288d2ea94db386129a8a1e497c0c",
   "__init__.py": "46cab08a37d7677c810002d394bfc5ac0729e488dc9b6920cabedf37db8dc15a",
   "adapters/conductor_runner.py": "ca7efded3f337c6b0350a41263fdbcfe2f2d986f0067ccbb92ca870575ba6660",
   "adapters/tools.py": "c77a30cd738e5fdec94d25306f34b1f0fdc49f441504259f195d0fcf2aa64826",
@@ -20,5 +20,8 @@
   "schemas/languagetool.json": "f3310c0f0d70e86ab80aa22f8deb5331ddb5ccd49bae84be0926010d2ec27afa",
   "processes/proofread.yaml": "c1fa1552629aef2c220f6f84a1a67277d304a6a25089507491573a4a7b9b536d",
   "adapters/office.py": "c4ba7167fdfacd5e2d72e1eaaadd80a8074c79a2e94bfd47758671af058f566d",
-  "processes/convert_pdf.yaml": "6acdcd8de129199ae98d6d031521f8d58c26ba08381adf28676e6f6f2cc35597"
+  "processes/convert_pdf.yaml": "6acdcd8de129199ae98d6d031521f8d58c26ba08381adf28676e6f6f2cc35597",
+  "ui/index.html": "68ffb9007c48500250924c6936d9f3f08c25dabb150e07d0ab2e92f09689e297",
+  "ui/app.js": "99b65484eecfbdb9d2ba25498e2f535ea94cb7160bc6a51224270821bcb294c5",
+  "ui/style.css": "00422a3fb94d39ec264041e66637dc14b72840b3f0f26c6f129de2a510515530"
 }

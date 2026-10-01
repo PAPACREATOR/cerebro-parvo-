@@ -1,3 +1,7 @@
+## Revisão do núcleo — 115 testes
+
+[Seis falhas reproduzidas/corrigidas e pendências restantes](nexus/docs/REVISAO-NUCLEO-2026-10-01.md). Teste Windows nativo preparado; PASS de ACL e ligação ao Host ainda por confirmar.
+
 ## Portão Windows — FAIL reproduzido
 
 O circuito cognitivo atual voltou a passar (10.57 s). O isolamento de OS falhou num ensaio sintético de leitura/escrita por processo filho com a mesma identidade. [Evidência e próximo contrato](nexus/docs/F008-ISOLAMENTO-WINDOWS.md). Novas capacidades aguardam correção desta fronteira.

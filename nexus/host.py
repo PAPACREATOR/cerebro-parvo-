@@ -17,6 +17,18 @@ from nexus.store import Store, HumanDecision, atomic, digest
 
 def verify_integrity():
     manifest = strict_json((ROOT / "integrity.json").read_bytes())
+    required = {
+        "__init__.py", "app.py", "host.py", "store.py", "contracts.py", "approval_binding.py",
+        "adapters/conductor_runner.py", "adapters/tools.py", "adapters/notebook.py",
+        "adapters/languagetool.py", "adapters/office.py",
+        "laws/CONSTITUTION.md", "laws/policy.json",
+        "processes/check.yaml", "processes/verify.yaml", "processes/interpret.yaml",
+        "processes/proofread.yaml", "processes/convert_pdf.yaml",
+        "schemas/request.json", "schemas/result.json", "schemas/cognitive.json", "schemas/languagetool.json",
+        "ui/index.html", "ui/app.js", "ui/style.css",
+    }
+    if not isinstance(manifest, dict) or set(manifest) != required:
+        raise Blocked("Manifesto de integridade ausente ou incompleto.")
     for relative, expected in manifest.items():
         target = ROOT / relative
         if target.is_symlink() or digest(target.read_bytes()) != expected:
@@ -112,8 +124,12 @@ class Host:
                               message=str(error) if isinstance(error, Blocked) else "Não foi possível concluir. O pedido foi conservado.")
             atomic(directory / "failure.json", {"type": type(error).__name__, "message": str(error)})
         finally:
-            (directory / "open-notebook.json").unlink(missing_ok=True)
-            self.busy.release()
+            try:
+                (directory / "open-notebook.json").unlink(missing_ok=True)
+            except OSError:
+                self.store.update(run_id, status="BLOCKED", message="Não foi possível remover a credencial temporária. Requer intervenção local.")
+            finally:
+                self.busy.release()
 
     def list_runs(self, session):
         self.authorize(session)

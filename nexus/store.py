@@ -150,6 +150,14 @@ class Store:
             state = self.state(run_id)
             if state["status"] != "RUNNING":
                 raise Blocked("A execução já terminou.")
+            original = self.path("runs", run_id) / "input.bin"
+            if original.is_symlink() or digest(original.read_bytes()) != state["input_sha256"]:
+                raise Blocked("O original mudou durante a execução.")
+            if state["process_id"] in ("interpret", "proofread", "convert_pdf"):
+                if result["status"] != "UNKNOWN" or result["outcome"] != "candidate":
+                    raise Blocked("Este processo só pode devolver um candidato por rever.")
+            if state["process_id"] == "interpret" and result["ai_calls"] != 1:
+                raise Blocked("Contagem cognitiva incompatível com o processo.")
             if state["process_id"] in ("verify", "proofread", "convert_pdf") and result["ai_calls"] != 0:
                 raise Blocked("IA proibida neste processo.")
             artifact = result.get("artifact")
@@ -160,6 +168,7 @@ class Store:
                 raw_pdf = self.verify_artifact({"artifact_sha256": artifact["sha256"]}, self.path("runs", run_id))
                 result = dict(result)
                 result["markdown"] += "\n\nPDF SHA-256: " + artifact["sha256"]
+                validate("result", result)
             candidate = self.path("creative", run_id)
             candidate.mkdir()
             content = result["markdown"].encode("utf-8")
