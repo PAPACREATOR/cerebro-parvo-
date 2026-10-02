@@ -1,3 +1,7 @@
+## Ponto de situação revisto
+
+[Resumo atual e ordem dos próximos microprocessos](nexus/docs/PONTO-DE-SITUACAO.md). Protótipo parcial; 1136 testes, 16 controlos da instalação e 6 ensaios cognitivos passaram. Isolamento Conductor/conta Nexus ainda sem prova.
+
 ## Primeira família Multimédia
 
 Contratos Som/Imagem e leitura nativa pelo Conductor testados. [Wiki atual](nexus/docs/WIKI-INSTALACAO.md) e [evidência F009](nexus/docs/F009-OBJETOS-MARKDOWN.md). Geração e integração na Folha pendentes. C:\Nexos e atalho criados; 16 controlos da instalação passaram, Canonical vazio.

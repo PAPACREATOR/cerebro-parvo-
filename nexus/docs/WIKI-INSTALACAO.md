@@ -1,5 +1,7 @@
 # Wiki de instalação Nexos — estado verificado
 
+**Começar pelo [ponto de situação revisto](PONTO-DE-SITUACAO.md).**
+
 ## Entrada
 Pasta: C:\Nexos. Atalho no ambiente de trabalho: Nexos.
 Aplicação em aplicacao/nexus; dados da Folha em dados; documentação em documentacao.
