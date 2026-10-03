@@ -12,10 +12,15 @@ from nexus.tests.test_store import request, candidate
 
 
 def test_no_secrets_in_child_environment(tmp_path, monkeypatch):
+    monkeypatch.setenv("SystemRoot", str(tmp_path / "synthetic-windows"))
     monkeypatch.setenv("OPENAI_API_KEY", "should-never-be-inherited")
     monkeypatch.setenv("NEXUS_SESSION", "should-never-be-inherited")
+    monkeypatch.setenv("PSModuleAnalysisCachePath", "untrusted-inherited-cache")
     assert "OPENAI_API_KEY" not in process_environment(tmp_path)
     assert "NEXUS_SESSION" not in process_environment(tmp_path)
+    assert process_environment(tmp_path)["PSModuleAnalysisCachePath"] == str(
+        (tmp_path / "powershell-module-analysis-cache").resolve()
+    )
 
 
 def test_gate_requires_session_ticket_and_explicit_action(tmp_path):

@@ -28,11 +28,11 @@ with tempfile.TemporaryDirectory(prefix="nexus-process-probe-") as directory:
     executable = str(Path(os.environ["SystemRoot"]) / "System32/WindowsPowerShell/v1.0/powershell.exe")
     minimal = process_environment(work)
     system_modules = str(Path(executable).parent / "Modules")
+    without_cache_override = {key: value for key, value in minimal.items() if key != "PSModuleAnalysisCachePath"}
     cases = [
-        ("inherited_hidden", dict(os.environ), subprocess.CREATE_NO_WINDOW),
-        ("minimal_console", minimal, 0),
-        ("minimal_hidden", minimal, subprocess.CREATE_NO_WINDOW),
-        ("minimal_hidden_system_modules", {**minimal, "PSModulePath": system_modules}, subprocess.CREATE_NO_WINDOW),
+        ("minimal_private_cache", minimal, subprocess.CREATE_NO_WINDOW),
+        ("minimal_private_cache_system_modules", {**minimal, "PSModulePath": system_modules}, subprocess.CREATE_NO_WINDOW),
+        ("minimal_without_cache_override", without_cache_override, subprocess.CREATE_NO_WINDOW),
     ]
     for label, environment, flags in cases:
         try:
