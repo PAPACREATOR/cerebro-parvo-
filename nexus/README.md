@@ -12,7 +12,9 @@ py -3.12 -m venv .venv
 .\.venv\Scripts\python.exe -m nexus.app
 ```
 
-A Folha abre no navegador, apenas em 127.0.0.1. Verificar texto/anexo calcula SHA-256 por Windows/.NET e Python e compara os resultados. Este circuito não chama IA. Os dados ficam em `nexus/runtime/`, excluído do Git. Não executar duas instâncias sobre o mesmo diretório de dados.
+A Folha abre no navegador, apenas em 127.0.0.1. Verificar texto/anexo calcula SHA-256 por Windows/.NET e Python e compara os resultados. Este circuito não chama IA. Os dados ficam em `nexus/runtime/`, excluído do Git. O arranque reserva a memória: uma segunda instância com os mesmos dados é recusada antes de recuperar ou alterar pedidos. Se a janela for encerrada normalmente, a tarefa ativa termina antes de libertar a memória. Um crash liberta o bloqueio no sistema operativo; o próximo arranque faz a recuperação existente. Não apagar `.nexus.lock`: a sua existência não indica que a aplicação esteja aberta.
+
+[Contrato e testes do arranque único](docs/F011-ARRANQUE-UNICO.md). Usar um diretório local; esta proteção não é isolamento Windows nem coordenação com versões antigas do Nexus.
 
 ## Cognição opcional
 
@@ -39,7 +41,7 @@ Com LibreOffice instalado, criar no diretório de dados `libreoffice.json` com o
 .\.venv\Scripts\python.exe -m pytest nexus/tests -q -o pythonpath=.
 ```
 
-A suite combina testes reais de Conductor/PowerShell com falhas controladas. Não exige modelo nem Notebook. O teste cognitivo real é evidência separada, descrita em `docs/F005-COGNICAO.md`.
+A suite combina testes reais de Conductor/PowerShell com falhas controladas. Não exige modelo nem Notebook. O teste cognitivo real é evidência separada, descrita em `docs/F005-COGNICAO.md`. O workflow GitHub **Nexus Windows** executa esta suite num runner Windows; a auditoria histórica continua separada. Um PASS do runner não prova as instalações do PC pessoal.
 
 ## Organização
 

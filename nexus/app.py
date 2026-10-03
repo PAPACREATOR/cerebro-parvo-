@@ -1,15 +1,16 @@
 """Loopback-only Folha Nexus server using the Python standard library."""
 import argparse
 import json
-import os
 import sys
 import webbrowser
+from contextlib import contextmanager
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlsplit
 
 from nexus.contracts import ROOT, Blocked, strict_json
 from nexus.host import Host
+from nexus.instance import data_directory_lock
 
 
 def make_server(host, port=0):
@@ -81,27 +82,45 @@ def make_server(host, port=0):
     return ThreadingHTTPServer(("127.0.0.1", port), Handler)
 
 
+@contextmanager
+def application(data_root, port=0):
+    # Acquire ownership before Store's startup reconciliation can write anything.
+    with data_directory_lock(data_root) as root:
+        host = Host(root)
+        server = make_server(host, port)
+        try:
+            yield host, server
+        finally:
+            try:
+                server.server_close()
+            finally:
+                # Normal shutdown must not release ownership while _run writes.
+                with host.busy:
+                    pass
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--data", type=Path, default=ROOT / "runtime")
     parser.add_argument("--port", type=int, default=0)
     parser.add_argument("--no-browser", action="store_true")
     args = parser.parse_args()
-    host = Host(args.data)
-    server = make_server(host, args.port)
-    url = "http://127.0.0.1:" + str(server.server_port) + "/#session=" + host.session
-    # Private local launch reference; ignored by Git, never given to tools.
-    (args.data / "launch-url.txt").write_text(url, encoding="utf-8")
-    print("Folha Nexus pronta. Mantém esta janela aberta.", flush=True)
-    if not args.no_browser:
-        webbrowser.open(url)
     try:
-        server.serve_forever()
+        with application(args.data, args.port) as (host, server):
+            url = "http://127.0.0.1:" + str(server.server_port) + "/#session=" + host.session
+            # Private local launch reference; ignored by Git, never given to tools.
+            (host.store.root / "launch-url.txt").write_text(url, encoding="utf-8")
+            print("Folha Nexus pronta. Mantém esta janela aberta.", flush=True)
+            if not args.no_browser:
+                webbrowser.open(url)
+            server.serve_forever()
     except KeyboardInterrupt:
         pass
-    finally:
-        server.server_close()
+    except Blocked as error:
+        print("Nexus: " + str(error), file=sys.stderr)
+        return 1
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

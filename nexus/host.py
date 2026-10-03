@@ -18,7 +18,7 @@ from nexus.store import Store, HumanDecision, atomic, digest
 def verify_integrity():
     manifest = strict_json((ROOT / "integrity.json").read_bytes())
     required = {
-        "__init__.py", "app.py", "host.py", "store.py", "contracts.py", "approval_binding.py",
+        "__init__.py", "app.py", "host.py", "store.py", "contracts.py", "approval_binding.py", "instance.py",
         "adapters/conductor_runner.py", "adapters/tools.py", "adapters/notebook.py",
         "adapters/languagetool.py", "adapters/office.py",
         "laws/CONSTITUTION.md", "laws/policy.json",

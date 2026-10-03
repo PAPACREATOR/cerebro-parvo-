@@ -1,7 +1,7 @@
 {
-  "app.py": "171049269dcc6f13ce69b40db4430289303f4e1190639d57022048bb0812739b",
+  "app.py": "cfa7834d1b8b56899704027483fbd0cfa9ed87160e0ee97447cf988ff0e93f61",
   "contracts.py": "6c97ed0af3892c7dbbfe7d4b1f673c319ed9fc92c24f638161b91f2c43c02f3c",
-  "host.py": "36d3f3415232f6fc9c4dc2914182ac5557c580095a6ed48020e6e5195b67f73a",
+  "host.py": "819c1d1ff9dd1f27ffbafe896ec4f26fb9a059e20f7df145e9eadf4653fbdb44",
   "store.py": "60c34e179efa40ced908f19e01d119935d5c288d2ea94db386129a8a1e497c0c",
   "__init__.py": "46cab08a37d7677c810002d394bfc5ac0729e488dc9b6920cabedf37db8dc15a",
   "adapters/conductor_runner.py": "ca7efded3f337c6b0350a41263fdbcfe2f2d986f0067ccbb92ca870575ba6660",
@@ -28,5 +28,6 @@
   "processes/register_object.yaml": "d00e8cca76d2a93d2c9b88c208ee431342baeb3dc4a4c8328dd934746ee462a0",
   "schemas/multimedia.json": "ea20b02da3c33557d42475c84e111f98a1f7048708af0e434dde4aca53154e01",
   "families/multimedia/som.md": "d31057a867080291d183e9cde486b6079e686403cf7869ed749d0f005e770462",
-  "families/multimedia/imagem.md": "4a321cdc18751a5d3e1dec770908aa5d992e17126e5569bbfd9045a2dc4583de"
+  "families/multimedia/imagem.md": "4a321cdc18751a5d3e1dec770908aa5d992e17126e5569bbfd9045a2dc4583de",
+  "instance.py": "a97ef1449ab8a2fe66dc0bcf79fe64dca93ae1b7a43bbfa296caeb90229120ac"
 }
