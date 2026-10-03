@@ -25,21 +25,36 @@ with tempfile.TemporaryDirectory(prefix="nexus-process-probe-") as directory:
         "$p = [Console]::In.ReadToEnd().TrimEnd([char]10, [char]13)\n"
         "[Console]::Error.WriteLine('AFTER_STDIN')",
     )
+    args[-1] = args[-1].replace(
+        "$algorithm = [System.Security.Cryptography.SHA256]::Create()",
+        "[Console]::Error.WriteLine('BEFORE_CREATE')\n"
+        "$algorithm = [System.Security.Cryptography.SHA256]::Create()\n"
+        "[Console]::Error.WriteLine('AFTER_CREATE')",
+    ).replace(
+        "@{status='PASS'; sha256=$hash; capability='windows.dotnet-sha256'} | ConvertTo-Json -Compress",
+        "[Console]::Error.WriteLine('BEFORE_JSON')\n"
+        "@{status='PASS'; sha256=$hash; capability='windows.dotnet-sha256'} | ConvertTo-Json -Compress\n"
+        "[Console]::Error.WriteLine('AFTER_JSON')",
+    )
     executable = str(Path(os.environ["SystemRoot"]) / "System32/WindowsPowerShell/v1.0/powershell.exe")
     minimal = process_environment(work)
     system_modules = str(Path(executable).parent / "Modules")
     without_cache_override = {key: value for key, value in minimal.items() if key != "PSModuleAnalysisCachePath"}
+    raw_json_args = list(args)
+    raw_json_args[-1] = raw_json_args[-1].replace(
+        "@{status='PASS'; sha256=$hash; capability='windows.dotnet-sha256'} | ConvertTo-Json -Compress",
+        "[Console]::Out.WriteLine('{\"status\":\"PASS\",\"sha256\":\"' + $hash + '\",\"capability\":\"windows.dotnet-sha256\"}')",
+    )
     cases = [
-        ("minimal_private_cache", minimal, subprocess.CREATE_NO_WINDOW),
-        ("minimal_private_cache_system_modules", {**minimal, "PSModulePath": system_modules}, subprocess.CREATE_NO_WINDOW),
-        ("minimal_without_cache_override", without_cache_override, subprocess.CREATE_NO_WINDOW),
+        ("minimal_progress", minimal, args),
+        ("minimal_direct_json", minimal, raw_json_args),
     ]
-    for label, environment, flags in cases:
+    for label, environment, command_args in cases:
         try:
             result = subprocess.run(
-                [executable, *args], input=str(source).encode("utf-8"),
+                [executable, *command_args], input=str(source).encode("utf-8"),
                 capture_output=True, timeout=8, env=environment, cwd=work,
-                creationflags=flags,
+                creationflags=subprocess.CREATE_NO_WINDOW,
             )
             record = dict(case=label, returncode=result.returncode,
                           stdout=result.stdout.decode("utf-8", errors="replace"),
