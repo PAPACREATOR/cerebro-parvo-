@@ -16,6 +16,8 @@ A Folha abre no navegador, apenas em 127.0.0.1. Verificar texto/anexo calcula SH
 
 [Contrato e testes do arranque único](docs/F011-ARRANQUE-UNICO.md). Usar um diretório local; esta proteção não é isolamento Windows nem coordenação com versões antigas do Nexus.
 
+[Correção do hash no ambiente reduzido e prova Windows](docs/F012-HASH-WINDOWS-ISOLADO.md): 1154 testes passaram no runner; inclui o percurso HTTP até ao gate e os dois workflows de hash, sem depender de `ConvertTo-Json`.
+
 ## Cognição opcional
 
 A opção Interpretar requer Open Notebook configurado em `http://127.0.0.1:5055`, com modelo local e transformação que devolva o contrato `schemas/cognitive.json`: título, resumo e citações exatas. Criar localmente `nexus/runtime/open-notebook.json` com quatro campos: `base_url`, `password`, `model_id`, `transformation_id`. A password é a da API local; nunca a guardar no Git. Esta versão não instala nem configura automaticamente a bancada.

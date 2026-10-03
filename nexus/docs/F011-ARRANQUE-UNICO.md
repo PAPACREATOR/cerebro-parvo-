@@ -59,9 +59,23 @@ Ficheiros descarregados conferidos pelos hashes dos blobs Git antes da alteraç�
   arranque; não somar as duas contagens. Inclui leitura real de Markdown pelo
   Conductor fixado, contratos, cofres, aprovação e recuperação.
 - Manifesto de 31 ficheiros: verificação passou. Workflow Windows: YAML validado.
-- Suite completa de Windows: **NOT RUN localmente**. O workflow `Nexus Windows`
-  foi preparado para executar `nexus/tests` num runner Windows. O resultado desse
-  runner deve ser consultado antes de atribuir PASS ao ramo `msvcrt`.
+- Suite completa num runner Windows/Python 3.12.10: **1154 passed, 28.14 s**,
+  com integridade PASS, no commit `8b8100c7b72c83c07bd4770afb2693750b2b45a4`.
+  [Execução e logs](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37158002429).
+  Inclui os 10 testes de arranque, o ramo `msvcrt`, a porta exclusiva e o E2E HTTP.
+  A contagem inclui variantes de contratos; não são 1154 tarefas de utilização.
+  Windows local e instalação de Pedro: NOT RUN por este executor.
+
+O primeiro runner reproduziu também duas Folhas a partilhar uma porta Windows:
+`SO_REUSEADDR` não garantia exclusividade. A aplicação agora reserva a porta
+com `SO_EXCLUSIVEADDRUSE` antes de bind. O teste de porta ocupada e de libertação
+da memória após falha passou. [Comportamento documentado pela Microsoft](https://learn.microsoft.com/en-us/windows/win32/winsock/using-so-reuseaddr-and-so-exclusiveaddruse).
+
+A falha independente de `verify` encontrada pelo runner foi corrigida em
+[F012](F012-HASH-WINDOWS-ISOLADO.md). A auditoria documental anterior falhava por
+faltar M1–M14 no README; a referência vigente foi reposta, sem mudar arquitetura.
+47 ficheiros históricos preservados e 89 ligações verificadas; suites histórica
+e de persistência: 34 e 11 PASS, respetivamente. Não somar às suites Nexus.
 
 Comandos reproduzíveis, a partir da raiz do repositório:
 
@@ -80,5 +94,5 @@ versões locais, preservar o trabalho não commitado e só então conciliar `app
 a nova entrada de `host.py` e o manifesto. Não copiar um manifesto antigo sobre
 um adaptador mais recente nem substituir a pasta de dados.
 
-Estado: implementado e testado em Linux; validação Windows e integração no PC
-pendentes. Não constitui aprovação de release nem conclusão do produto.
+Estado: implementado e testado em Linux e runner Windows; integração no PC
+pendente. Não constitui aprovação de release nem conclusão do produto.
