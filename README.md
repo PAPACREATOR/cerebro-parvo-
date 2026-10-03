@@ -36,6 +36,8 @@ experiência validada → processo/template candidato
 
 ## Separação de responsabilidades
 
+As responsabilidades M1–M14 continuam aplicáveis. Os contratos, testes e a evidência datada da implementação estão em `nexus/docs/`.
+
 ### Folha Nexus
 Interface inicial mínima. Texto natural, anexos, resultados e decisões humanas. YAML, JSON, Markdown, IDs e infraestrutura ficam escondidos na utilização normal.
 

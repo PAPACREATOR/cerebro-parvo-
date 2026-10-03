@@ -1,6 +1,8 @@
 """Loopback-only Folha Nexus server using the Python standard library."""
 import argparse
 import json
+import os
+import socket
 import sys
 import webbrowser
 from contextlib import contextmanager
@@ -11,6 +13,16 @@ from urllib.parse import urlsplit
 from nexus.contracts import ROOT, Blocked, strict_json
 from nexus.host import Host
 from nexus.instance import data_directory_lock
+
+
+class NexusHTTPServer(ThreadingHTTPServer):
+    # Windows SO_REUSEADDR permits two listeners on the same address/port.
+    allow_reuse_address = os.name != "nt"
+
+    def server_bind(self):
+        if os.name == "nt":
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
+        super().server_bind()
 
 
 def make_server(host, port=0):
@@ -79,7 +91,7 @@ def make_server(host, port=0):
             except (Blocked, ValueError, KeyError, FileNotFoundError) as error:
                 self.reply(403, {"error": str(error)})
 
-    return ThreadingHTTPServer(("127.0.0.1", port), Handler)
+    return NexusHTTPServer(("127.0.0.1", port), Handler)
 
 
 @contextmanager

@@ -71,7 +71,16 @@ def test_full_http_flow_and_bypasses(tmp_path):
             if state["status"] != "RUNNING":
                 break
             time.sleep(.2)
-        assert state["status"] == "HUMAN_REQUIRED", state
+        if state["status"] != "HUMAN_REQUIRED":
+            # This test uses a synthetic verify request and no credentials.
+            # Retain bounded runner diagnostics instead of hiding the tool error.
+            directory = host.store.path("runs", run)
+            diagnostics = {"state": state}
+            for name in ("failure.json", "execution.stderr.txt", "execution.stdout.json"):
+                path = directory / name
+                if path.is_file():
+                    diagnostics[name] = path.read_text("utf-8", errors="replace")[-8000:]
+            pytest.fail(json.dumps(diagnostics, ensure_ascii=False, indent=2))
         assert state["result"]["ai_calls"] == 0
         with pytest.raises(HTTPError):
             call("/api/approve", {"run_id": run, "ticket": "ai-invented", "confirmed": True})
