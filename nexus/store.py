@@ -77,6 +77,7 @@ class Store:
 
     def check_commit(self, state):
         """Verify an existing approval package; never create a new human decision."""
+        candidate_provenance = self.check_candidate(state)
         run_id = state["run_id"]
         final = self.path("canonical", run_id)
         for name in ("content.md", "approval.json", "provenance.json"):
@@ -86,6 +87,12 @@ class Store:
         content = (final / "content.md").read_bytes()
         approval = strict_json((final / "approval.json").read_bytes())
         provenance = strict_json((final / "provenance.json").read_bytes())
+        expected_provenance = dict(candidate_provenance, human_approval=approval)
+        expected_provenance["output_references"] = candidate_provenance["output_references"] + [
+            {"path": "canonical/" + run_id + "/content.md", "sha256": digest(content)}]
+        if state.get("artifact_sha256") is not None:
+            expected_provenance["output_references"].append(
+                {"path": "canonical/" + run_id + "/resultado.pdf", "sha256": state["artifact_sha256"]})
         if (digest(content) != state["candidate_sha256"]
                 or approval["sha256"] != digest(content)
                 or approval["run_id"] != run_id
@@ -93,6 +100,7 @@ class Store:
                 or approval["action"] != "APPROVE"
                 or not approval["approval_id"] or not approval["actor"]
                 or provenance["run_id"] != run_id
+                or provenance != expected_provenance
                 or provenance["human_approval"] != approval
                 or {"path": "canonical/" + run_id + "/content.md", "sha256": digest(content)}
                    not in provenance["output_references"]):
@@ -100,6 +108,55 @@ class Store:
         decision = HumanDecision(approval["approval_id"], approval["actor"], run_id, approval["sha256"], "APPROVE")
         if not promotion_allowed(decision, run_id, digest(content)):
             raise Blocked("Aprovação inválida.")
+
+    def checked_bytes(self, area, run_id, name):
+        """Only read fixed internal names, never a path supplied by provenance."""
+        path = self.path(area, run_id) / name
+        if path.is_symlink() or path.is_junction():
+            raise Blocked("Registo de proveniência redirecionado.")
+        return path.read_bytes()
+
+    def check_input(self, state):
+        run = state["run_id"]
+        original = self.checked_bytes("runs", run, "input.bin")
+        raw_request = self.checked_bytes("runs", run, "request.json")
+        request = validate("request", strict_json(raw_request))
+        expected = base64.b64decode(request["attachment"], validate=True) if request["attachment"] else request["text"].encode("utf-8")
+        if (digest(original) != state["input_sha256"] or expected != original
+                or request["process"] != state["process_id"]
+                or (request["filename"] or "Texto escrito") != state["title"]
+                or ("request_sha256" in state and digest(raw_request) != state["request_sha256"])):
+            raise Blocked("O original ou o pedido mudou; proveniência bloqueada.")
+
+    def check_candidate(self, state):
+        """Walk Creative -> result -> request/original without executing tools."""
+        try:
+            self.check_input(state)
+            run = state["run_id"]
+            content = self.checked_bytes("creative", run, "content.md")
+            raw_result = self.checked_bytes("creative", run, "result.json")
+            raw_provenance = self.checked_bytes("creative", run, "provenance.json")
+            result = validate("result", strict_json(raw_result))
+            provenance = strict_json(raw_provenance)
+            references = [{"path": "creative/" + run + "/content.md", "sha256": digest(content)}]
+            if state.get("artifact_sha256") is not None:
+                self.verify_artifact(state, self.path("creative", run))
+                references.append({"path": "creative/" + run + "/resultado.pdf", "sha256": state["artifact_sha256"]})
+            if (digest(content) != state["candidate_sha256"] or result["markdown"].encode("utf-8") != content
+                    or result["status"] != state["result_status"] or result["outcome"] != state["outcome"]
+                    or result.get("artifact", {}).get("sha256") != state.get("artifact_sha256")
+                    or provenance["run_id"] != run or provenance["process_id"] != state["process_id"]
+                    or provenance["process_version"] != state["process_version"]
+                    or provenance["status"] != result["status"] or provenance["human_approval"] is not None
+                    or provenance["input_references"] != [{"path": "runs/" + run + "/input.bin", "sha256": state["input_sha256"]}]
+                    or provenance["output_references"] != references
+                    or provenance["tools"] != [item["capability"] for item in result["evidence"]]
+                    or ("result_sha256" in state and digest(raw_result) != state["result_sha256"])
+                    or ("provenance_sha256" in state and digest(raw_provenance) != state["provenance_sha256"])):
+                raise Blocked("A ligação inversa do resultado é incoerente.")
+            return provenance
+        except (OSError, ValueError, KeyError, TypeError) as error:
+            raise Blocked("Não foi possível verificar a ligação ao original. Conteúdo conservado.") from error
 
     def path(self, area, run_id):
         if area not in ("runs", "creative", "canonical") or not isinstance(run_id, str) or not re.fullmatch(r"[0-9a-f]{32}", run_id):
@@ -141,6 +198,7 @@ class Store:
             "run_id": run_id, "process_id": request["process"], "process_version": "1.0.0",
             "title": name, "status": "RUNNING", "created_at": now(), "updated_at": now(),
             "message": "A executar o processo.", "input_sha256": digest(content),
+            "request_sha256": digest((directory / "request.json").read_bytes()),
         })
         return run_id
 
@@ -150,9 +208,7 @@ class Store:
             state = self.state(run_id)
             if state["status"] != "RUNNING":
                 raise Blocked("A execução já terminou.")
-            original = self.path("runs", run_id) / "input.bin"
-            if original.is_symlink() or digest(original.read_bytes()) != state["input_sha256"]:
-                raise Blocked("O original mudou durante a execução.")
+            self.check_input(state)
             if state["process_id"] in ("interpret", "proofread", "convert_pdf"):
                 if result["status"] != "UNKNOWN" or result["outcome"] != "candidate":
                     raise Blocked("Este processo só pode devolver um candidato por rever.")
@@ -192,6 +248,8 @@ class Store:
             return self.update(run_id, status="HUMAN_REQUIRED" if result["status"] in ("PASS", "UNKNOWN") else result["status"],
                                **({"artifact_sha256": artifact["sha256"]} if artifact else {}),
                                result_status=result["status"], outcome=result["outcome"], candidate_sha256=digest(content),
+                               result_sha256=digest((candidate / "result.json").read_bytes()),
+                               provenance_sha256=digest((candidate / "provenance.json").read_bytes()),
                                message="Resultado candidato. A decisão de guardar como aprovado é tua.")
 
     def promote(self, run_id, decision, destination="canonical"):
@@ -202,6 +260,7 @@ class Store:
             state = self.state(run_id)
             if state["status"] not in ("HUMAN_REQUIRED", "PASS"):
                 raise Blocked("Este resultado não está disponível para aprovação.")
+            provenance = self.check_candidate(state)
             candidate = self.path("creative", run_id)
             raw_pdf = self.verify_artifact(state, candidate)
             content = (candidate / "content.md").read_bytes()
@@ -225,7 +284,6 @@ class Store:
                 "run_id": run_id, "sha256": digest(content), "destination": destination,
                 "action": decision.action, "timestamp": now(),
             }
-            provenance = strict_json((candidate / "provenance.json").read_bytes())
             provenance["human_approval"] = approval
             provenance["output_references"].append({"path": "canonical/" + run_id + "/content.md", "sha256": digest(content)})
             try:

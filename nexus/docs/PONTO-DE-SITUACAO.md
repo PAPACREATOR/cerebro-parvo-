@@ -1,5 +1,23 @@
 # Nexus — ponto de situação revisto
 
+## Revisão do repositório — 04-10-2026
+
+As provas abaixo da instalação Windows são históricas, não uma nova inspeção do PC.
+No [PR #7](https://github.com/PAPACREATOR/cerebro-parvo-/pull/7), o arranque único e
+o hash no ambiente reduzido passaram numa suite completa de **1154 testes em
+Windows do GitHub**. [Arranque](F011-ARRANQUE-UNICO.md) · [Hash](F012-HASH-WINDOWS-ISOLADO.md).
+
+Pedido atual: **resultados ligados, sentido inverso e wikis coerentes**.
+[F013](F013-PROVENIENCIA-INVERSA.md) documenta falhas observadas na ligação
+Canonical → Creative → evidência/processo → fonte/pedido e a correção.
+Regressão aplicável Linux: 1144 PASS; suite Windows desta correção ainda NOT RUN.
+Não confundir a prova mínima de proveniência com uma wiki relacional concluída.
+
+Prioridades da instalação mantidas: ligar a conta Nexus ao executor, configurar
+Open Notebook/tiny na entrada Nexos, provar restauro e integrar ferramentas por
+circuito real. Essas operações exigem acesso à cópia/configuração do PC; este
+trabalho atua no repositório e não substitui alterações Spiff/Conductor locais.
+
 ## Conclusão
 Existe um protótipo parcial funcional. A arquitetura já tem vários circuitos
 com prova real; a integração completa e o isolamento de produção continuam
@@ -32,7 +50,7 @@ equipamento nem verificação automática de todos os links e instalações.
 Os relatórios históricos mantêm estados antigos; este documento resume o estado
 mais recente e deve ser lido primeiro.
 
-Código publicado até caf6858, com família Multimédia e prompt literal v2.
+Na revisão anterior, código publicado até caf6858, com família Multimédia e prompt literal v2.
 Licença: PolyForm Noncommercial 1.0.0. Credenciais fora do GitHub.
 Há dois scripts Windows novos locais e diferenças locais que não devem ser
 confundidas com código já publicado. Nenhum trabalho anterior foi apagado.

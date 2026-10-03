@@ -142,6 +142,10 @@ class Host:
         self.authorize(session)
         state = self.store.state(run_id)
         candidate = self.store.path("creative", run_id)
+        if state["status"] == "PASS":
+            self.store.check_commit(state)
+        elif state["status"] == "HUMAN_REQUIRED":
+            self.store.check_candidate(state)
         if (candidate / "result.json").exists():
             result = strict_json((candidate / "result.json").read_bytes())
             state["result"] = result
@@ -162,6 +166,7 @@ class Host:
             state = self.store.state(run_id)
             if state["status"] != "HUMAN_REQUIRED":
                 raise Blocked("Não há candidato pendente de decisão.")
+            self.store.check_candidate(state)
             self.store.verify_artifact(state, self.store.path("creative", run_id))
             content = (self.store.path("creative", run_id) / "content.md").read_bytes()
             if digest(content) != state["candidate_sha256"]:
