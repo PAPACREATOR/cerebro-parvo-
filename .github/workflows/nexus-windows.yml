@@ -1,0 +1,45 @@
+name: Nexus Windows
+
+on:
+  push:
+    branches: [main, 'work/**', 'nexus-startup-*']
+    paths: ['nexus/**', '.github/workflows/nexus-windows.yml']
+  pull_request:
+    paths: ['nexus/**', '.github/workflows/nexus-windows.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nexus-windows-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  nexus:
+    name: Nexus atual — Windows, contratos e arranque
+    runs-on: windows-latest
+    timeout-minutes: 15
+    env:
+      PYTHONUTF8: '1'
+      PYTHONIOENCODING: utf-8
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Instalar dependencias Nexus fixadas
+        shell: pwsh
+        run: python -m pip install -r nexus/requirements-test.txt
+      - name: Verificar manifesto da aplicacao
+        shell: pwsh
+        run: python -c "from nexus.host import verify_integrity; verify_integrity(); print('INTEGRITY=PASS')"
+      - name: Testar Nexus atual com PowerShell e Conductor
+        shell: pwsh
+        run: python -m pytest nexus/tests -q --color=no -p no:cacheprovider -o pythonpath=. --junitxml=nexus-windows-results.xml
+      - name: Delimitar evidencia
+        shell: pwsh
+        run: |
+          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value 'Suite Nexus executada num runner Windows, com ferramentas deterministicas reais e falhas controladas. Nao prova a instalacao no PC de Pedro, Open Notebook/tiny, LibreOffice real, ACL da conta Nexus ou o produto completo.'
