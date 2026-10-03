@@ -149,6 +149,7 @@ def test_http_never_returns_stale_approved_or_reviewable_content(tmp_path, appro
         approve(host.store, run)
     damage(tmp_path, run, "changed-draft")
     with http(host) as call:
+        assert call("/api/runs")[0]["status"] == "BLOCKED"
         with pytest.raises(HTTPError) as error:
             call("/api/runs/" + run)
         assert error.value.code == 403

@@ -136,16 +136,25 @@ class Host:
     def list_runs(self, session):
         self.authorize(session)
         values = [strict_json(p.read_bytes()) for p in (self.store.root / "runs").glob("*/state.json")]
+        for state in values:
+            try:
+                self.check_visible_result(state)
+            except (Blocked, OSError, KeyError, TypeError):
+                # Read-only presentation: preserve persisted records for reconciliation.
+                state.update(status="BLOCKED", message="A ligação ao original precisa de reconciliação. Conteúdo conservado.")
         return sorted(values, key=lambda item: item["created_at"], reverse=True)
+
+    def check_visible_result(self, state):
+        if state["status"] == "PASS":
+            self.store.check_commit(state)
+        elif state["status"] == "HUMAN_REQUIRED":
+            self.store.check_candidate(state)
 
     def detail(self, run_id, session):
         self.authorize(session)
         state = self.store.state(run_id)
         candidate = self.store.path("creative", run_id)
-        if state["status"] == "PASS":
-            self.store.check_commit(state)
-        elif state["status"] == "HUMAN_REQUIRED":
-            self.store.check_candidate(state)
+        self.check_visible_result(state)
         if (candidate / "result.json").exists():
             result = strict_json((candidate / "result.json").read_bytes())
             state["result"] = result

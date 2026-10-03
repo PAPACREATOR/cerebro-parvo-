@@ -45,13 +45,17 @@ Os dois SKIP eram ensaios reais Windows explicitamente marcados, não PASS.
 - Folha podia devolver conteúdo Creative alterado junto do estado PASS.
 - Fonte alterada depois de obter ticket não bloqueava a confirmação.
 
+Ao alargar o mesmo teste à listagem HTTP, **dois casos falharam**: o histórico
+ainda mostrava PASS/HUMAN_REQUIRED apesar de a abertura já bloquear. A listagem
+agora verifica a cadeia e apresenta BLOCKED sem reescrever os dados conservados.
+
 Nenhum ensaio usou dados pessoais, conta externa, modelo ou acervo real.
 
 ## Correção mínima
 
 Store verifica original e pedido; verifica candidato, resultado, referências e
 metadados; confere equivalência da proveniência Creative/Canonical. A leitura
-HTTP e preparação/confirmação humanas reutilizam estas verificações. Os caminhos
+HTTP (histórico e detalhe) e preparação/confirmação humanas reutilizam estas verificações. Os caminhos
 de proveniência são comparados com nomes esperados, nunca abertos livremente.
 
 Pedidos novos registam `request_sha256`; resultados novos registam
