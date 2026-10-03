@@ -25,9 +25,11 @@ agents:
           $algorithm = [System.Security.Cryptography.SHA256]::Create()
           try { $hash = [BitConverter]::ToString($algorithm.ComputeHash([System.IO.File]::ReadAllBytes($p))).Replace('-', '').ToLowerInvariant() }
           finally { $algorithm.Dispose() }
-          @{status='PASS'; sha256=$hash; capability='windows.dotnet-sha256'} | ConvertTo-Json -Compress
+          # Fixed JSON tokens and a hexadecimal digest need no command discovery.
+          [Console]::Out.WriteLine('{"status":"PASS","sha256":"' + $hash + '","capability":"windows.dotnet-sha256"}')
         } catch {
-          @{status='FAIL'; sha256=$null; capability='windows.dotnet-sha256'; error=$_.Exception.Message} | ConvertTo-Json -Compress
+          [Console]::Error.WriteLine($_.Exception.Message)
+          [Console]::Out.WriteLine('{"status":"FAIL","sha256":null,"capability":"windows.dotnet-sha256","error":"Não foi possível ler o ficheiro."}')
         }
     stdin: "{{ workflow.input.input_path }}"
     timeout: 15

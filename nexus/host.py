@@ -45,7 +45,6 @@ def process_environment(run_directory):
     environment.update(
         PATH=str(Path(sys.executable).parent) + os.pathsep + str(Path(os.environ["SystemRoot"]) / "System32"),
         TEMP=str(run_directory), TMP=str(run_directory), PYTHONUTF8="1", PYTHONIOENCODING="utf-8",
-        PSModuleAnalysisCachePath=str((Path(run_directory) / "powershell-module-analysis-cache").resolve()),
     )
     return environment
 

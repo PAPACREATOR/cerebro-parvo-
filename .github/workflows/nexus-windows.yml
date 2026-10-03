@@ -36,9 +36,6 @@ jobs:
       - name: Verificar manifesto da aplicacao
         shell: pwsh
         run: python -c "from nexus.host import verify_integrity; verify_integrity(); print('INTEGRITY=PASS')"
-      - name: Diagnosticar PowerShell com entrada sintetica
-        shell: pwsh
-        run: python nexus/windows/probe-process-environment.py
       - name: Testar Nexus atual com PowerShell e Conductor
         shell: pwsh
         run: python -m pytest nexus/tests -q --color=no -p no:cacheprovider -o pythonpath=. --junitxml=nexus-windows-results.xml
