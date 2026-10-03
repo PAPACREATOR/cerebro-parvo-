@@ -158,6 +158,24 @@ def test_http_never_returns_stale_approved_or_reviewable_content(tmp_path, appro
                 call("/api/prepare", {"run_id": run})
 
 
+@pytest.mark.parametrize("name,value", [("approval.json", {}), ("approval.json", None),
+                                        ("provenance.json", {}), ("provenance.json", None)])
+def test_damaged_canonical_json_returns_explicit_http_block(tmp_path, name, value):
+    host = Host(tmp_path)
+    run = candidate(host.store)
+    approve(host.store, run)
+    path = host.store.path("canonical", run) / name
+    path.write_text(json.dumps(value), encoding="utf-8")
+    preserved = path.read_bytes()
+    with http(host) as call:
+        assert call("/api/runs")[0]["status"] == "BLOCKED"
+        with pytest.raises(HTTPError) as error:
+            call("/api/runs/" + run)
+        assert error.value.code == 403
+        assert "error" in json.loads(error.value.read())
+    assert path.read_bytes() == preserved
+
+
 def test_restart_returns_saved_result_without_reexecuting_provider(tmp_path, monkeypatch):
     host = Host(tmp_path)
     run = candidate(host.store)

@@ -77,6 +77,12 @@ class Store:
 
     def check_commit(self, state):
         """Verify an existing approval package; never create a new human decision."""
+        try:
+            self._check_commit(state)
+        except (OSError, ValueError, KeyError, TypeError) as error:
+            raise Blocked("O pacote aprovado precisa de reconciliação. Conteúdo conservado.") from error
+
+    def _check_commit(self, state):
         candidate_provenance = self.check_candidate(state)
         run_id = state["run_id"]
         final = self.path("canonical", run_id)

@@ -2,6 +2,13 @@
 
 01/10/2026. Cada linha distingue regra, prova e trabalho pendente.
 
+Quadro histórico. Evolução posterior: [conta Nexus em duas pastas](F008-ISOLAMENTO-WINDOWS.md)
+demonstrada, ainda sem ligação ao Host; [ODT→PDF](F007-LIBREOFFICE.md) integrado;
+[circuito cognitivo textual](F005-COGNICAO.md) demonstrado no laboratório,
+ainda sem configuração da nova entrada. Ver [ponto de situação](PONTO-DE-SITUACAO.md)
+e [proveniência inversa](F013-PROVENIENCIA-INVERSA.md) antes de usar as pendências
+antigas desta tabela como estado atual. Não houve nova inspeção do PC.
+
 | Etapa | Entrada | Regra/validação | Saída/destino | Evidência atual |
 |---|---|---|---|---|
 | Receber | Texto/anexo | Schema, tamanho, processo permitido | Original conservado | Testado |

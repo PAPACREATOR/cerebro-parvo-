@@ -2,6 +2,11 @@
 
 Revisão de 01-10-2026. O código atual está na pasta `nexus/` do repositório público. Não está tudo instalado nem tudo integrado.
 
+Inventário histórico dessa revisão. Para o estado revisto, começar pelo
+[ponto de situação](PONTO-DE-SITUACAO.md): a conta Nexus foi depois demonstrada
+em duas pastas, ODT→PDF foi integrado e o manifesto atual tem 31 ficheiros.
+Os números/pendências do quadro abaixo não são nova inspeção do PC em 04-10.
+
 ## Inventário confirmado nesta revisão
 
 | Componente | Instalado / presente | Integração e teste |

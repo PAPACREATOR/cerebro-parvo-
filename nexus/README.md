@@ -55,7 +55,7 @@ A suite combina testes reais de Conductor/PowerShell com falhas controladas. Nã
 - `adapters/`: ferramentas determinísticas e chamada delimitada ao Notebook.
 - `ui/`: interface; `tests/`: verificação; `docs/`: contratos e evidência histórica datada.
 
-Consultar [estado revisto](docs/PUBLICACAO-2026-10-01.md) antes dos relatórios anteriores. Preferência: self-hosted, serviços opcionais e mínimo consumo. O Host não incorpora um motor de agentes nem um modelo.
+Consultar primeiro o [ponto de situação revisto](docs/PONTO-DE-SITUACAO.md) e os contratos [F011](docs/F011-ARRANQUE-UNICO.md), [F012](docs/F012-HASH-WINDOWS-ISOLADO.md) e [F013](docs/F013-PROVENIENCIA-INVERSA.md). O [relatório de publicação](docs/PUBLICACAO-2026-10-01.md) conserva a revisão de 01-10. Preferência: self-hosted, serviços opcionais e mínimo consumo. O Host não incorpora um motor de agentes nem um modelo.
 
 ## Limites conhecidos
 

@@ -49,6 +49,12 @@ Ao alargar o mesmo teste à listagem HTTP, **dois casos falharam**: o histórico
 ainda mostrava PASS/HUMAN_REQUIRED apesar de a abertura já bloquear. A listagem
 agora verifica a cadeia e apresenta BLOCKED sem reescrever os dados conservados.
 
+A revisão cruzada encontrou outra falha: `approval.json` ou `provenance.json`
+contendo `{}`/`null` bloqueava o histórico mas encerrava a ligação HTTP ao abrir
+o resultado. Quatro casos novos reproduziram o erro. A verificação Canonical
+agora normaliza estes erros para BLOCKED; o detalhe devolve HTTP 403 com JSON de
+erro e conserva o ficheiro danificado.
+
 Nenhum ensaio usou dados pessoais, conta externa, modelo ou acervo real.
 
 ## Correção mínima
@@ -69,7 +75,7 @@ reexecução de providers, nova dependência ou aumento de permissões.
 
 ## Evidência desta revisão
 
-- Linux: **1144 passed, 4 deselected em 7.80 s** na regressão aplicável.
+- Linux após revisão cruzada: **1148 passed, 4 deselected em 10.25 s** na regressão aplicável.
   Foram excluídos dois ensaios reais Windows novos e dois mocks antigos de
   LibreOffice que dependem de `CREATE_NO_WINDOW`, inexistente em Linux. Tentativa
   prévia incluindo esses dois mocks: 113 passed, 2 failed, 2 skipped em 3.66 s;
@@ -80,6 +86,9 @@ reexecução de providers, nova dependência ou aumento de permissões.
   retorno após reinício com provider proibido; cópia para outra raiz e leitura;
   compatibilidade com pacotes antigos; dois circuitos nativos texto/anexo.
 - Regressão Windows desta revisão: **NOT RUN** até conclusão do workflow.
+
+Uma revisão intermédia anterior à normalização dos quatro erros HTTP passou
+**1190 testes em Windows em 43.25 s**; não cobre a última correção.
 
 Comando Linux usado:
 
@@ -92,12 +101,26 @@ os dois ensaios reais novos. O teste entra por HTTP, executa Conductor/PowerShel
 aprova com confirmação sintética, percorre referências até aos bytes originais e
 reinicia Host para voltar à Folha sem ferramenta. Não é teste visual do navegador.
 
+Verificação adicional dos ficheiros de documentação: 25 Markdown em `nexus/docs`,
+nove ligações locais a ficheiros e nenhuma ligação partida. Isto não valida
+âncoras, links externos, instalações ou a verdade dos relatos históricos.
+
 ## O que falta para a wiki e o programa
 
 Esta prova é rastreabilidade de um pacote, não a wiki relacional completa:
 identidade estável de blocos, backlinks, relações entre projetos, contradições,
 renomeações e espelho automático continuam por implementar/provar. Os dois hashes
 do workflow verificam bytes; não são comparadores semânticos nem verdade factual.
+
+A Folha ainda não apresenta navegação clicável pela proveniência; mostra o
+resultado e o histórico. Um resultado explicitamente BLOCKED pode continuar a
+apresentar material conservado para inspeção; a descarga PDF verifica os bytes do
+artefacto, não promete validar toda a genealogia. Não interpretar esses acessos
+como aprovação. O próximo contrato de wiki deve definir a leitura das fontes.
+
+Os hashes novos vinculam o resultado e o trace guardados no pacote Creative.
+Os ficheiros brutos `execution.stdout.json`/stderr são diagnósticos separados;
+a alteração isolada desses logs não é detetada por esta cadeia de hashes.
 
 A cópia/restauro usa um pacote sintético para outra pasta. Não valida estratégia
 de backup do PC, disco externo, toda a instalação ou recuperação de todas as falhas.
