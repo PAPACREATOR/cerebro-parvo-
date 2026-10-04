@@ -7,6 +7,8 @@ on:
       - 'nexus/frontdoor.py'
       - 'nexus/tests/test_frontdoor_prefixes.py'
       - 'nexus/tests/test_frontdoor_natural.py'
+      - 'nexus/tests/test_frontdoor_adversarial.py'
+      - 'nexus/tests/test_frontdoor_boundaries.py'
       - 'nexus/docs/PLANO-TESTES-FRONTDOOR-10000-2026-10-04.md'
       - '.github/workflows/frontdoor-lab.yml'
   pull_request:
@@ -36,3 +38,7 @@ jobs:
         run: python -m pytest nexus/tests/test_frontdoor_prefixes.py -q -o pythonpath=.
       - name: L1 L2 natural and ambiguity
         run: python -m pytest nexus/tests/test_frontdoor_natural.py -q -o pythonpath=.
+      - name: L3 adversarial
+        run: python -m pytest nexus/tests/test_frontdoor_adversarial.py -q -o pythonpath=.
+      - name: L4 boundaries and malformed
+        run: python -m pytest nexus/tests/test_frontdoor_boundaries.py -q -o pythonpath=.
