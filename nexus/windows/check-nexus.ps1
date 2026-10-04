@@ -80,6 +80,7 @@ try {
             'nexus/tests/test_open_notebook_kernel_e2e.py'
             'nexus/tests/test_media_tools.py',
             'nexus/tests/test_media_tools_mcp.py'
+            'nexus/tests/test_media_tools_checker.py'
         ) }
         default { @('nexus/tests') }
     }
