@@ -1,11 +1,31 @@
-"""Reuse the pinned Conductor Markdown reader; enforce Nexus data contracts."""
+"""Read Nexus Markdown frontmatter with a local deterministic parser."""
 import json
+import re
 import sys
 from pathlib import Path
 
+from ruamel.yaml import YAML
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-from conductor.config.instructions import _parse_frontmatter, _FRONTMATTER_RE
 from nexus.contracts import Blocked, validate
+
+
+_FRONTMATTER_RE = re.compile(r"\A---[ \t]*\r?\n(.*?)\r?\n---[ \t]*(?:\r?\n|\Z)", re.DOTALL)
+
+
+def _frontmatter(text):
+    match = _FRONTMATTER_RE.match(text)
+    if match is None:
+        raise Blocked("Metadados nativos ausentes.")
+    parser = YAML(typ="safe")
+    parser.allow_duplicate_keys = False
+    try:
+        data = parser.load(match.group(1))
+    except Exception as error:
+        raise Blocked("Frontmatter inválido.") from error
+    if not isinstance(data, dict):
+        raise Blocked("Frontmatter inválido.")
+    return data, match.end()
 
 
 def read_object(path):
@@ -19,13 +39,13 @@ def read_object(path):
         text = raw.decode("utf-8-sig")
     except UnicodeError as error:
         raise Blocked("Markdown precisa de UTF-8.") from error
-    data = _parse_frontmatter(path)
+    data, end = _frontmatter(text)
     validate("multimedia", data)
-    match = _FRONTMATTER_RE.match(text)
-    if match is None:
-        raise Blocked("Metadados nativos ausentes.")
-    return {"nome_ficheiro": path.name, "dados_yaml": data,
-            "notas_markdown": text[match.end():]}
+    return {
+        "nome_ficheiro": path.name,
+        "dados_yaml": data,
+        "notas_markdown": text[end:],
+    }
 
 
 if __name__ == "__main__":
