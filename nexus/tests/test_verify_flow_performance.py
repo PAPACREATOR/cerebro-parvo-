@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import asyncio
 import os
+
+import pytest
 import statistics
 import sys
 import time
@@ -11,6 +13,9 @@ from pathlib import Path
 from conductor.config.loader import load_workflow
 from conductor.engine.workflow import WorkflowEngine
 
+
+if os.environ.get("NEXUS_VERIFY_PERF") != "1":
+    pytest.skip("Verify performance Lab is opt-in", allow_module_level=True)
 
 ROOT = Path(__file__).resolve().parents[1]
 OFFICIAL = ROOT / "processes" / "verify.yaml"
