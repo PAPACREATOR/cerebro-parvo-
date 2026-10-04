@@ -13,6 +13,7 @@ import re
 from nexus.contracts import Blocked
 from nexus.frontdoor import ParsedInput, parse, parse_with_languagetool
 from nexus.adapters.notebook import prepare_source
+from nexus.tiny_classifier import TinyLocalSpec, classify as classify_tiny
 
 HEADER_RE = re.compile(r"\A<!-- nexus-natural-v1 (\{[^\n]*\}) -->\n", re.ASCII)
 INTENTS = {"arquivo", "web", "fontes", "trabalhar", "perguntar", "calcular", "tema"}
@@ -143,4 +144,25 @@ def resolve_natural(text: str, *, languagetool_raw=None, tiny_hints=None) -> Par
         text,
         "human-clarification-v1",
         False,
+    )
+
+
+def resolve_natural_with_tiny(
+    text: str,
+    tiny_spec: TinyLocalSpec,
+    *,
+    languagetool_raw=None,
+) -> ParsedInput:
+    """ELIZA -> LanguageTool shadow -> local tiny -> human clarification."""
+    deterministic = resolve_natural(text, languagetool_raw=languagetool_raw)
+    if deterministic.status != "ASK_HUMAN":
+        return deterministic
+    try:
+        hints = classify_tiny(text, tiny_spec)
+    except Blocked:
+        hints = []
+    return resolve_natural(
+        text,
+        languagetool_raw=languagetool_raw,
+        tiny_hints=hints,
     )
