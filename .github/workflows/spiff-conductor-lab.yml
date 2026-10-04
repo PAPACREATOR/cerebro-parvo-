@@ -7,6 +7,7 @@ on:
       - 'nexus/tests/test_spiff_conductor_bidirectional_5000.py'
       - 'nexus/tests/fixtures/spiff_conductor_echo.yaml'
       - 'nexus/requirements-spiff-test.txt'
+      - 'nexus/tests/test_conductor_flow_performance.py'
       - '.github/workflows/spiff-conductor-lab.yml'
   pull_request:
     paths:
@@ -47,3 +48,5 @@ jobs:
         run: python -m pytest nexus/tests/test_spiff_conductor_bidirectional_5000.py::test_s4_1000_status_transport_without_authority -q -o pythonpath=.
       - name: S5 1000 seeded stress
         run: python -m pytest nexus/tests/test_spiff_conductor_bidirectional_5000.py::test_s5_1000_seeded_joint_stress -q -o pythonpath=.
+      - name: P0 Conductor flow performance
+        run: python -m pytest nexus/tests/test_conductor_flow_performance.py -q -s -o pythonpath=.
