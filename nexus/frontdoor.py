@@ -5,7 +5,7 @@ from dataclasses import dataclass
 import re
 import unicodedata
 
-from nexus.contracts import ROOT, strict_json, validate
+from nexus.contracts import ROOT, Blocked, strict_json, validate
 from nexus.adapters.languagetool import correction_shadow
 
 
@@ -92,7 +92,7 @@ def parse_with_languagetool(text: str, raw) -> ParsedInput:
         return first
     try:
         shadow = correction_shadow(text, raw)
-    except (TypeError, ValueError, KeyError):
+    except (Blocked, TypeError, ValueError, KeyError):
         return first
     if shadow == text:
         return first
