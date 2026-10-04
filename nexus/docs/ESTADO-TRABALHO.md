@@ -64,7 +64,7 @@ Estado: falha intermitente por investigar; não declarada resolvida.
 Próximo microprocesso: reproduzir a leitura durante publicação da URL e corrigir
 conforme a causa; depois validar o modo de criação automática do ambiente.
 
-## F014 — publicação atómica da URL (em validação Windows)
+## F014 — publicação atómica da URL (PASS nos contratos testados)
 Falha do run 37194459860 reproduzida deterministicamente: o leitor observa
 string vazia quando write_text abre/trunca launch-url.txt antes de terminar.
 Antes: 2 testes novos FAIL; o primeiro observa literalmente uma URL vazia.
@@ -72,6 +72,13 @@ Correção: app.py reutiliza store.atomic com bytes UTF-8. Manifesto atualizado.
 Depois: 12 testes de arranque PASS em Linux/Python 3.12.14 (0,67 s).
 Inclui leitura do valor anterior durante publicação, novo valor completo,
 falha de substituição conservando valor anterior e limpeza do temporário.
-Suite Windows: em curso após publicação; não declarar PASS até consultar logs.
+Suite Windows: **1196 passed in 37.34s**, PowerShell wrapper PASS, commit
+`f6694ab82fa9a3c6db5931399221b557587bd3d8`.
+[Execução](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37195044187).
+Regressão Linux: 68 PASS em 0,93 s. A primeira recolha dessa regressão foi
+interrompida por ausência de ruamel.yaml; depois de instalar 0.19.1, passou.
+Código e manifesto testados; atualização posterior apenas documental.
+Próximo passo: validar o ramo de criação automática do venv no script e conferir
+o snapshot oficial quando disponibilizado. F014 não prova funcionalidades externas.
 Pedro informou que disponibilizará a pasta oficial via Drive. Acesso/conteúdo
 ainda não verificados; GitHub mantém código, testes e coordenação.
