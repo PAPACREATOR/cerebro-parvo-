@@ -289,3 +289,37 @@ def test_real_windows_result_back_to_original_and_folha_after_restart(tmp_path, 
         assert returned["result"] == envelope["result"]
         assert returned["input_sha256"] == expected_hash
         assert call("/api/runs")[0]["run_id"] == run
+
+
+def test_restart_reconciles_saved_executor_result_without_reexecution(tmp_path, monkeypatch):
+    """Crash window: executor output is durable but Kernel has not accepted it yet."""
+    store = Store(tmp_path)
+    run = store.create(request())
+    directory = store.path("runs", run)
+    envelope = {
+        "result": {
+            "status": "PASS",
+            "outcome": "agreement",
+            "title": "Verificação",
+            "markdown": "# Verificação\n\nDois métodos concordam.",
+            "evidence": [{"capability": "test", "status": "PASS", "value": "abc"}],
+            "ai_calls": 0,
+        },
+        "trace": {"engine": "synthetic-disposable-executor", "events": []},
+    }
+    raw = json.dumps(envelope, ensure_ascii=False).encode("utf-8")
+    (directory / "execution.stdout.json").write_bytes(raw)
+    original = (directory / "input.bin").read_bytes()
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("Kernel restart must reconcile saved executor output, not execute a provider")
+
+    monkeypatch.setattr("nexus.host.subprocess.Popen", forbidden)
+    restored = Store(tmp_path)
+    state = restored.state(run)
+
+    assert state["status"] == "HUMAN_REQUIRED"
+    assert (directory / "execution.stdout.json").read_bytes() == raw
+    assert (directory / "input.bin").read_bytes() == original
+    assert not restored.path("canonical", run).exists()
+    assert restored.check_candidate(state)["execution"] == envelope["trace"]
