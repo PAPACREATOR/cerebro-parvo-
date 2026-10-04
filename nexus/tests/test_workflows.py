@@ -1,8 +1,11 @@
 import asyncio
-import json
+import os
+import subprocess
 import sys
 from pathlib import Path
+
 import pytest
+
 from nexus.adapters.conductor_runner import execute
 from nexus.adapters.tools import compare, report
 from nexus.contracts import ROOT, validate, Blocked
@@ -25,43 +28,50 @@ def test_comparison_preserves_both_sides(left, right, outcome, status):
     assert [v["value"] for v in value["evidence"]] == [left[1], right[1]]
 
 
-def test_real_redundant_workflow(tmp_path, monkeypatch):
-    from conductor.engine.workflow import WorkflowEngine
-    async def forbidden(*args, **kwargs):
-        pytest.fail("Tentativa de obter provider de IA")
-    monkeypatch.setattr(WorkflowEngine, "_get_provider_for_agent", forbidden)
+@pytest.mark.skipif(os.name != "nt", reason="Requires real Windows PowerShell")
+def test_real_redundant_workflow(tmp_path):
     source = tmp_path / "input.txt"
     source.write_text("Olá Nexus", encoding="utf-8")
-    response = asyncio.run(execute(ROOT / "processes/verify.yaml",
-        dict(input_path=str(source), python=sys.executable, powershell=PS)))
+    response = asyncio.run(execute(
+        ROOT / "processes/verify.yaml",
+        dict(input_path=str(source), python=sys.executable, powershell=PS),
+    ))
     value = validate("result", response["result"])
     assert value["outcome"] == "agreement"
     assert value["ai_calls"] == 0
+    assert response["trace"]["engine"] == "nexus/python-deterministic"
     assert response["trace"]["summary"]["usage"]["total_tokens"] == 0
     assert value["evidence"][0]["value"] == value["evidence"][1]["value"]
-    assert "hash_windows" in response["trace"]["summary"]["agents_executed"]
-    assert "hash_python" in response["trace"]["summary"]["agents_executed"]
-
-
-def test_failure_paths_through_real_engine(tmp_path):
-    # Small artificial workflow uses the real engine to verify failure semantics.
-    from ruamel.yaml import YAML
-    cases = [
-        (str(tmp_path / "no-such-tool.exe"), [], 1),
-        (sys.executable, ["-c", "import time; time.sleep(5)"], 1),
+    assert response["trace"]["summary"]["agents_executed"] == [
+        "hash_windows", "hash_python", "compare", "report"
     ]
-    for index, (command, args, timeout) in enumerate(cases):
-        path = tmp_path / (str(index) + ".yaml")
-        config = {"workflow": {"name": "failure-test", "entry_point": "tool"},
-            "agents": [{"name": "tool", "type": "script", "command": command,
-                "args": args, "timeout": timeout, "routes": [{"to": "$end"}]}],
-            "output": {"result": "{{ tool.output.stdout }}"}}
-        with path.open("w", encoding="utf-8") as file:
-            YAML().dump(config, file)
-        with pytest.raises(Exception):
-            asyncio.run(execute(path, {}))
+
+
+def test_missing_tool_is_blocked(tmp_path):
+    source = tmp_path / "input.txt"
+    source.write_text("Nexus", encoding="utf-8")
+    with pytest.raises(Blocked):
+        asyncio.run(execute(
+            ROOT / "processes/verify.yaml",
+            {"input_path": str(source), "python": sys.executable, "powershell": str(tmp_path / "missing.exe")},
+        ))
+
+
+def test_timeout_is_blocked(tmp_path, monkeypatch):
+    source = tmp_path / "input.txt"
+    source.write_text("Nexus", encoding="utf-8")
+
+    def timeout(*args, **kwargs):
+        raise subprocess.TimeoutExpired(cmd="powershell", timeout=15)
+
+    monkeypatch.setattr("nexus.adapters.conductor_runner.subprocess.run", timeout)
+    with pytest.raises(Blocked):
+        asyncio.run(execute(
+            ROOT / "processes/verify.yaml",
+            {"input_path": str(source), "python": sys.executable, "powershell": "powershell.exe"},
+        ))
 
 
 def test_unknown_workflow(tmp_path):
-    with pytest.raises(Exception):
+    with pytest.raises(Blocked):
         asyncio.run(execute(tmp_path / "missing.yaml", {}))
