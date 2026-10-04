@@ -77,6 +77,35 @@ async def list_tools_async(spec: MCPServerSpec) -> list[dict[str, Any]]:
         ]
 
 
+def _payload_from_result(result) -> dict[str, Any]:
+    structured = getattr(result, "structuredContent", None)
+    if structured is not None:
+        payload = structured
+    else:
+        texts = [
+            part.text for part in result.content
+            if getattr(part, "type", None) == "text"
+        ]
+        if len(texts) != 1:
+            raise Blocked("Resposta MCP sem envelope único.")
+        try:
+            payload = json.loads(texts[0])
+        except (TypeError, ValueError) as error:
+            raise Blocked("Resposta MCP não é JSON estruturado.") from error
+
+    if not isinstance(payload, dict):
+        raise Blocked("Resposta MCP deve ser objeto JSON.")
+    raw = json.dumps(
+        payload,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    if len(raw) > MAX_RESULT_BYTES:
+        raise Blocked("Resposta MCP excede o limite Nexus.")
+    return payload
+
+
 async def call_tool_async(
     spec: MCPServerSpec,
     tool_name: str,
@@ -90,41 +119,31 @@ async def call_tool_async(
     if not isinstance(arguments, dict):
         raise TypeError("MCP arguments must be dict")
 
+    pending_error: Blocked | None = None
+    payload: dict[str, Any] | None = None
+
     async with AsyncExitStack() as stack:
         session = await _open_session(stack, spec)
-        available = {tool.name for tool in (await session.list_tools()).tools}
-        if tool_name not in available:
-            raise Blocked("Tool MCP não existe no servidor.")
-        result = await session.call_tool(tool_name, arguments)
-        if result.isError:
-            raise Blocked("Tool MCP devolveu erro.")
+        try:
+            available = {tool.name for tool in (await session.list_tools()).tools}
+            if tool_name not in available:
+                pending_error = Blocked("Tool MCP não existe no servidor.")
+            else:
+                result = await session.call_tool(tool_name, arguments)
+                if result.isError:
+                    pending_error = Blocked("Tool MCP devolveu erro.")
+                else:
+                    payload = _payload_from_result(result)
+        except Blocked as error:
+            pending_error = error
+        except Exception as error:
+            pending_error = Blocked("Tool MCP falhou de forma controlada.")
 
-        structured = getattr(result, "structuredContent", None)
-        if structured is not None:
-            payload = structured
-        else:
-            texts = [
-                part.text for part in result.content
-                if getattr(part, "type", None) == "text"
-            ]
-            if len(texts) != 1:
-                raise Blocked("Resposta MCP sem envelope único.")
-            try:
-                payload = json.loads(texts[0])
-            except (TypeError, ValueError) as error:
-                raise Blocked("Resposta MCP não é JSON estruturado.") from error
-
-        if not isinstance(payload, dict):
-            raise Blocked("Resposta MCP deve ser objeto JSON.")
-        raw = json.dumps(
-            payload,
-            ensure_ascii=False,
-            sort_keys=True,
-            separators=(",", ":"),
-        ).encode("utf-8")
-        if len(raw) > MAX_RESULT_BYTES:
-            raise Blocked("Resposta MCP excede o limite Nexus.")
-        return payload
+    if pending_error is not None:
+        raise pending_error
+    if payload is None:
+        raise Blocked("Tool MCP terminou sem resultado.")
+    return payload
 
 
 def list_tools(spec: MCPServerSpec) -> list[dict[str, Any]]:
