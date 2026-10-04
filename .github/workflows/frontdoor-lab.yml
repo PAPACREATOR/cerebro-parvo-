@@ -6,6 +6,7 @@ on:
     paths:
       - 'nexus/frontdoor.py'
       - 'nexus/tests/test_frontdoor_prefixes.py'
+      - 'nexus/tests/test_frontdoor_natural.py'
       - 'nexus/docs/PLANO-TESTES-FRONTDOOR-10000-2026-10-04.md'
       - '.github/workflows/frontdoor-lab.yml'
   pull_request:
@@ -33,3 +34,5 @@ jobs:
         run: python -m pip install -r nexus/requirements-test.txt
       - name: L0 prefix parser
         run: python -m pytest nexus/tests/test_frontdoor_prefixes.py -q -o pythonpath=.
+      - name: L1 L2 natural and ambiguity
+        run: python -m pytest nexus/tests/test_frontdoor_natural.py -q -o pythonpath=.
