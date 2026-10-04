@@ -32,7 +32,7 @@ def test_real_redundant_workflow(tmp_path):
     expected = hashlib.sha256(source.read_bytes()).hexdigest()
     assert value["outcome"] == "agreement"
     assert value["ai_calls"] == 0
-    assert response["trace"]["engine"] == "nexus/python-direct"
+    assert response["trace"]["engine"] == "nexus/python-mcp"
     assert response["trace"]["summary"]["usage"]["total_tokens"] == 0
     assert [item["value"] for item in value["evidence"]] == [expected, expected]
 
