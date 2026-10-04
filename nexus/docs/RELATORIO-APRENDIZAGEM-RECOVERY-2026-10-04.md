@@ -161,3 +161,42 @@ Windows run `37202001479`:
 > Antes de qualquer ação externa, o Kernel deve persistir uma fronteira de execução. Em resultado incerto, segurança significa conservar a incerteza e bloquear, não repetir automaticamente nem declarar um FAIL simplificado.
 
 Isto prepara o Nexus para capacidades futuras Windows/homelab com efeitos externos sem dar memória ou autoridade ao Conductor.
+
+
+## T03C — fecho coerente da fase após aceitação do resultado
+
+### FAIL reproduzido
+Windows run `37202233746`:
+- `1 failed, 1216 passed`;
+- teste: `test_accepted_result_closes_external_execution_phase`;
+- estado observado após `Store.accept`: `execution_phase=PREPARED` em vez de `RESULT_ACCEPTED`.
+
+Causa:
+- o checkpoint de entrada na capability tinha sido introduzido, mas as duas saídas de `Store.accept` não fechavam a fase operacional.
+
+### Correção mínima
+As duas vias idempotentes de `Store.accept` passam a persistir:
+- `execution_phase=RESULT_ACCEPTED`.
+
+Não foi alterado:
+- Human Gate;
+- Creative/Canonical;
+- leis;
+- schemas públicos;
+- autoridade do executor.
+
+### PASS após correção
+Windows run `37202434881`:
+- **1217 passed in 36.30s**;
+- `NEXUS PASS | COMPLETE`;
+- `POWERSHELL_WRAPPER=PASS`;
+- auditoria GitHub SUCCESS.
+
+### Estado resultante do checkpoint Kernel-owned
+
+`PREPARED -> EXECUTING -> RESULT_ACCEPTED -> HUMAN_REQUIRED/PASS`
+
+Em crash durante `EXECUTING` sem resultado durável:
+`BLOCKED + RECOVERY_REQUIRED`.
+
+A fase operacional é agora coerente com o estado auditável da execução nos contratos cobertos.
