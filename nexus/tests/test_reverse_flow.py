@@ -241,7 +241,7 @@ def test_legacy_packets_are_checked_without_inventing_old_hashes(tmp_path):
     assert Store(tmp_path).state(run)["status"] == "BLOCKED"
 
 
-@pytest.mark.skipif(os.name != "nt", reason="Real Windows/.NET hash and Conductor required")
+@pytest.mark.skipif(os.name != "nt", reason="Real Windows/.NET hash required")
 @pytest.mark.parametrize("mode", ["text", "binary-attachment"])
 def test_real_windows_result_back_to_original_and_folha_after_restart(tmp_path, monkeypatch, mode):
     raw = "Ação, memória e proveniência 日本語.\n".encode("utf-8") if mode == "text" else bytes(range(256)) * 4
@@ -278,7 +278,7 @@ def test_real_windows_result_back_to_original_and_folha_after_restart(tmp_path, 
     assert envelope["result"]["ai_calls"] == 0
 
     def forbidden(*args, **kwargs):
-        pytest.fail("Restored result must use saved evidence, never execute Conductor again")
+        pytest.fail("Restored result must use saved evidence, never execute the external capability again")
 
     monkeypatch.setattr("nexus.host.subprocess.Popen", forbidden)
     restored = Host(tmp_path)
