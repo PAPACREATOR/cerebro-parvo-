@@ -272,8 +272,8 @@ def test_real_windows_result_back_to_original_and_folha_after_restart(tmp_path, 
     assert json.loads((source.parent / "request.json").read_bytes()) == payload
     envelope = json.loads((source.parent / "execution.stdout.json").read_bytes())
     assert [item["value"] for item in envelope["result"]["evidence"]] == [expected_hash, expected_hash]
-    assert provenance["execution"]["workflow_sha256"] == hashlib.sha256(
-        (ROOT / "processes/verify.yaml").read_bytes()).hexdigest()
+    from nexus.adapters.runner import process_fingerprint
+    assert provenance["execution"]["process_sha256"] == process_fingerprint("verify")
     assert provenance["human_approval"]["sha256"] == hashlib.sha256((final / "content.md").read_bytes()).hexdigest()
     assert envelope["result"]["ai_calls"] == 0
 
@@ -325,7 +325,7 @@ def test_restart_reconciles_saved_executor_result_without_reexecution(tmp_path, 
     recovered_trace = restored.check_candidate(state)["execution"]
     assert recovered_trace["engine"] == envelope["trace"]["engine"]
     assert recovered_trace["events"] == envelope["trace"]["events"]
-    assert recovered_trace["workflow_sha256"] == state["workflow_sha256"]
+    assert recovered_trace["process_sha256"] == state["process_sha256"]
 
 
 def test_restart_reconciles_complete_creative_after_crash_before_state_update(tmp_path, monkeypatch):
@@ -346,7 +346,7 @@ def test_restart_reconciles_complete_creative_after_crash_before_state_update(tm
     envelope = {"result": result_payload, "trace": raw_trace}
     raw_execution = json.dumps(envelope, ensure_ascii=False).encode("utf-8")
     (directory / "execution.stdout.json").write_bytes(raw_execution)
-    accepted_trace = dict(raw_trace, workflow_sha256=initial["workflow_sha256"])
+    accepted_trace = dict(raw_trace, process_sha256=initial["process_sha256"])
 
     def crash_before_state_update(*args, **kwargs):
         raise RuntimeError("synthetic crash after Creative")
@@ -368,7 +368,7 @@ def test_restart_reconciles_complete_creative_after_crash_before_state_update(tm
     assert (directory / "execution.stdout.json").read_bytes() == raw_execution
     assert {name: (creative / name).read_bytes() for name in preserved} == preserved
     provenance = restored.check_candidate(state)
-    assert provenance["execution"]["workflow_sha256"] == state["workflow_sha256"]
+    assert provenance["execution"]["process_sha256"] == state["process_sha256"]
 
 
 @pytest.mark.parametrize("kind", [
@@ -393,7 +393,7 @@ def test_crash_recovery_blocks_and_preserves_damaged_creative(tmp_path, monkeypa
     envelope = {"result": result_payload, "trace": raw_trace}
     (directory / "execution.stdout.json").write_bytes(
         json.dumps(envelope, ensure_ascii=False).encode("utf-8"))
-    accepted_trace = dict(raw_trace, workflow_sha256=initial["workflow_sha256"])
+    accepted_trace = dict(raw_trace, process_sha256=initial["process_sha256"])
 
     def crash_before_state_update(*args, **kwargs):
         raise RuntimeError("synthetic crash after Creative")
