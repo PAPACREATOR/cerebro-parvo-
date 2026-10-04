@@ -13,6 +13,7 @@ import sys
 import time
 
 import pytest
+pytest.importorskip("conductor", reason="Historical Conductor performance Lab only")
 from conductor.config.schema import (
     ForEachDef,
     LimitsConfig,
