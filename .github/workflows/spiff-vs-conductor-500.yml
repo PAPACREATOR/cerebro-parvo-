@@ -5,10 +5,12 @@ on:
     branches: ['lab-spiff-conductor-compare-*']
     paths:
       - 'nexus/tests/test_spiff_vs_conductor_500.py'
+      - 'TESTAR-NEXUS-PESADO.bat'
       - '.github/workflows/spiff-vs-conductor-500.yml'
   pull_request:
     paths:
       - 'nexus/tests/test_spiff_vs_conductor_500.py'
+      - 'TESTAR-NEXUS-PESADO.bat'
       - '.github/workflows/spiff-vs-conductor-500.yml'
   workflow_dispatch:
 
@@ -33,5 +35,6 @@ jobs:
         run: |
           python -m pip install -r nexus/requirements-spiff-test.txt
           python -m pip install "open-notebook-mcp @ git+https://github.com/Epochal-dev/open-notebook-mcp.git@a2cddbf65cba8c4c8de7be16566781b7612a9545"
-      - name: Compare identical 500 cases
-        run: python -m pytest nexus/tests/test_spiff_vs_conductor_500.py -q -s -o pythonpath=.
+      - name: Heavy Windows BAT battery
+        shell: cmd
+        run: TESTAR-NEXUS-PESADO.bat
