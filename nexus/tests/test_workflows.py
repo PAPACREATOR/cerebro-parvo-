@@ -1,12 +1,10 @@
-import asyncio
-import json
-import sys
-from pathlib import Path
+import hashlib
+
 import pytest
-from nexus.adapters.conductor_runner import execute
+
+from nexus.adapters.runner import VERIFY_POLICY, execute
 from nexus.adapters.tools import compare, report
-from nexus.contracts import ROOT, validate, Blocked
-from nexus.tests.test_conductor import PS
+from nexus.contracts import Blocked, validate
 
 
 @pytest.mark.parametrize("left,right,outcome,status", [
@@ -25,43 +23,41 @@ def test_comparison_preserves_both_sides(left, right, outcome, status):
     assert [v["value"] for v in value["evidence"]] == [left[1], right[1]]
 
 
-def test_real_redundant_workflow(tmp_path, monkeypatch):
-    from conductor.engine.workflow import WorkflowEngine
-    async def forbidden(*args, **kwargs):
-        pytest.fail("Tentativa de obter provider de IA")
-    monkeypatch.setattr(WorkflowEngine, "_get_provider_for_agent", forbidden)
+def test_real_redundant_workflow(tmp_path):
     source = tmp_path / "input.txt"
     source.write_text("Olá Nexus", encoding="utf-8")
-    response = asyncio.run(execute(ROOT / "processes/verify.yaml",
-        dict(input_path=str(source), python=sys.executable, powershell=PS)))
+    response = execute("verify", source)
     value = validate("result", response["result"])
+    expected = hashlib.sha256(source.read_bytes()).hexdigest()
     assert value["outcome"] == "agreement"
     assert value["ai_calls"] == 0
+    assert response["trace"]["engine"] == "nexus/python"
     assert response["trace"]["summary"]["usage"]["total_tokens"] == 0
-    assert value["evidence"][0]["value"] == value["evidence"][1]["value"]
-    assert "hash_windows" in response["trace"]["summary"]["agents_executed"]
-    assert "hash_python" in response["trace"]["summary"]["agents_executed"]
-
-
-def test_failure_paths_through_real_engine(tmp_path):
-    # Small artificial workflow uses the real engine to verify failure semantics.
-    from ruamel.yaml import YAML
-    cases = [
-        (str(tmp_path / "no-such-tool.exe"), [], 1),
-        (sys.executable, ["-c", "import time; time.sleep(5)"], 1),
+    assert [item["value"] for item in value["evidence"]] == [expected, expected]
+    assert response["trace"]["summary"]["agents_executed"] == [
+        "hash_windows", "hash_python", "compare", "report"
     ]
-    for index, (command, args, timeout) in enumerate(cases):
-        path = tmp_path / (str(index) + ".yaml")
-        config = {"workflow": {"name": "failure-test", "entry_point": "tool"},
-            "agents": [{"name": "tool", "type": "script", "command": command,
-                "args": args, "timeout": timeout, "routes": [{"to": "$end"}]}],
-            "output": {"result": "{{ tool.output.stdout }}"}}
-        with path.open("w", encoding="utf-8") as file:
-            YAML().dump(config, file)
-        with pytest.raises(Exception):
-            asyncio.run(execute(path, {}))
 
 
-def test_unknown_workflow(tmp_path):
-    with pytest.raises(Exception):
-        asyncio.run(execute(tmp_path / "missing.yaml", {}))
+def test_missing_file_is_preserved_as_failure(tmp_path):
+    response = execute("verify", tmp_path / "missing.txt")
+    value = validate("result", response["result"])
+    assert value["status"] == "FAIL"
+    assert value["outcome"] == "failure"
+    assert value["ai_calls"] == 0
+
+
+def test_unknown_process_is_blocked(tmp_path):
+    with pytest.raises(Blocked):
+        execute("unknown", tmp_path / "input.txt")
+
+
+def test_verify_policy_matches_contract():
+    sample = {
+        "status": "PASS", "outcome": "agreement", "title": "x",
+        "markdown": "x", "evidence": [
+            {"capability": "x", "status": "PASS", "value": "x"}
+        ], "ai_calls": 0,
+    }
+    for outcome, status in VERIFY_POLICY.items():
+        validate("result", {**sample, "outcome": outcome, "status": status})
