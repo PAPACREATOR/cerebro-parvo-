@@ -24,7 +24,7 @@ Regra: não alterar leis nem arquitetura congelada sem FAIL estrutural reproduzi
 | T02 | Crash antes da execução externa | GPT/revisor | PASS | teste Work existente conserva input, marca interrupção e não cria Canonical |
 | T03 | Crash depois de Creative e antes do estado final | GPT/revisor | PASS | run 37198248236: 1206 PASS; Creative completo reconciliado; 8 danos ficam BLOCKED e preservados |
 | T04 | Idempotência de reentrada | GPT/revisor | PARCIAL | accept idempotente após crash e promoção repetida já cobertos; escala/property-based pendente |
-| T04A | Binding resultado ↔ workflow fixado | GPT/revisor | PASS | run 37198721444: 1207 PASS; trace com hash diferente é rejeitado |\n| T05 | Human Gate adversarial | GPT/revisor | PENDENTE | bypass, ticket antigo, conteúdo alterado e restart bloqueados |
+| T04A | Binding resultado ↔ workflow fixado | GPT/revisor | PASS | run 37198721444: 1207 PASS; trace com hash diferente é rejeitado |\n| T05 | Human Gate adversarial | GPT/revisor | PASS | run 37199085733: 1210 PASS; sessão inválida não consome ticket, ticket cruzado bloqueado, restart invalida ticket pendente |
 | T06 | Comparação Conductor-only vs Spiff+Conductor | GPT/Work | BLOQUEADO PELO ESPELHO LOCAL | mesmos contratos efémeros; persistência fora da comparação |
 | T07 | Integração Windows LAB | Codex/PC | NOT RUN | commit testado em C:\Nexus-Lab, relatório PASS/FAIL devolvido |
 | T08 | Isolamento Windows por capability | Work/PC | PENDENTE | mínimo privilégio + ACL/processo + bypass testado |
@@ -52,3 +52,5 @@ Regra: não alterar leis nem arquitetura congelada sem FAIL estrutural reproduzi
 - FAIL real binding de workflow: `1 failed, 1206 passed` — run 37198491684.
 - Binding corrigido: `1207 passed in 39.51s` — run 37198721444.
 - Em todos os PASS finais: `NEXUS PASS | COMPLETE` e wrapper PowerShell PASS.
+
+- T05 Human Gate adicional: `1210 passed in 51.73s` — run 37199085733; nenhuma alteração ao Host necessária.
