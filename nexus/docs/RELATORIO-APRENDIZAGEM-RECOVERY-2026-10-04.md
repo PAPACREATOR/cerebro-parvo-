@@ -126,3 +126,38 @@ Isto é extensão do contrato já decidido de checkpoints Kernel-owned; não dá
 ## Estado de aprendizagem
 
 Os padrões acima passam a ser referência para os próximos microprocessos. Não repetir soluções já provadas; reutilizar o contrato e variar apenas a capability específica.
+
+
+## T03B — crash durante capability externa sem resultado durável
+
+### FAIL reproduzido
+Windows run `37201693913`:
+- `1 failed, 1215 passed`;
+- teste: `test_restart_after_kernel_dies_during_executor_is_recovery_required`;
+- observado: `execution_phase == None` no momento de entrada no executor.
+
+Causa:
+- o Kernel fixava input e workflow, mas não persistia uma fronteira entre pedido apenas preparado e capability externa já iniciada.
+
+### Correção mínima
+- `Store.create` grava `execution_phase=PREPARED`;
+- imediatamente antes de `subprocess.Popen`, o Host grava atomicamente `execution_phase=EXECUTING`;
+- restart de `RUNNING + EXECUTING` sem `execution.stdout.json` passa para:
+  - `BLOCKED`;
+  - `commit_status=RECOVERY_REQUIRED`;
+  - sem retry automático;
+  - sem Canonical;
+  - input conservado;
+- `PREPARED` sem resultado mantém o comportamento anterior de interrupção antes de execução externa.
+
+### PASS após correção
+Windows run `37202001479`:
+- **1216 passed in 64.51s**;
+- `NEXUS PASS | COMPLETE`;
+- `POWERSHELL_WRAPPER=PASS`;
+- auditoria GitHub também SUCCESS.
+
+### Aprendizagem
+> Antes de qualquer ação externa, o Kernel deve persistir uma fronteira de execução. Em resultado incerto, segurança significa conservar a incerteza e bloquear, não repetir automaticamente nem declarar um FAIL simplificado.
+
+Isto prepara o Nexus para capacidades futuras Windows/homelab com efeitos externos sem dar memória ou autoridade ao Conductor.
