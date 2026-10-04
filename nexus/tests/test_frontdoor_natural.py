@@ -61,6 +61,11 @@ def test_l2_1500_two_intent_cases_are_unresolved():
         second = intents[(i + 1 + rng.randrange(len(intents) - 1)) % len(intents)]
         if second == first:
             second = intents[(intents.index(first) + 1) % len(intents)]
+        # Theme/subject rules are intentionally start-anchored to avoid
+        # treating ordinary body words as commands. If theme was selected as
+        # the second clause, swap the order so both intents remain detectable.
+        if second == "tema" and first != "tema":
+            first, second = second, first
         a = VALID_TEMPLATES[first][i % len(VALID_TEMPLATES[first])].format(body="documento alfa")
         b = VALID_TEMPLATES[second][i % len(VALID_TEMPLATES[second])].format(body="documento beta")
         original = a + " e também " + b
