@@ -75,3 +75,45 @@ Nenhum PASS remoto ou parcial promove automaticamente a versão antiga.
 
 O `C:\Nexus-Lab` aprovado integralmente será a nova versão oficial.
 `C:\Nexus` atual permanece congelado até decisão humana de promoção.
+
+
+## Evidência de validação do harness
+
+### FAIL 1 — manifesto de integridade desatualizado
+- Work HEAD alterou `store.py` para bloquear `state.json` redirecionado.
+- `integrity.json` ficou com o hash anterior.
+- Resultado: Windows bloqueou em `INTEGRITY`.
+- Interpretação: a proteção funcionou corretamente.
+- Correção no Lab: alinhar o hash SHA-256 de `store.py` com o conteúdo atual.
+- Foi comunicado no PR #8 para o Work incorporar.
+
+### FAIL 2 — nome de relatório incompatível
+- O Nexus terminou com `NEXUS PASS | COMPLETE`.
+- O workflow existente procurava `TESTS.stdout.txt`.
+- O novo harness tinha renomeado a suite completa para `TESTS-ALL.stdout.txt`.
+- Correção: `Suite=all` conserva os nomes `TESTS.*`; só as suites adicionais usam nomes próprios.
+
+### PASS final remoto
+HEAD validado:
+`9799858b61d4e9a392df0827fd13ea7c07d841e9`
+
+GitHub Windows run:
+`37204485220`
+
+Resultado:
+- **1219 passed in 54.67s**
+- `NEXUS PASS | COMPLETE`
+- `POWERSHELL_WRAPPER=PASS`
+- Auditoria e suites: SUCCESS
+
+Estado:
+- harness por fases: **PASS REMOTO**
+- execução em `C:\Nexus-Lab` físico: **NOT RUN**
+- promoção: **não autorizada / não executada**
+
+## Aprendizagem
+
+1. O manifesto de integridade deve acompanhar qualquer alteração a ficheiro protegido.
+2. Extensões do harness devem manter compatibilidade com nomes/contratos já consumidos por CI.
+3. Um FAIL posterior ao `NEXUS PASS` pode pertencer ao harness, não ao núcleo; separar as duas camadas no diagnóstico.
+4. Cada novo nível de testes deve reaproveitar o verificador existente, não duplicar lógica.
