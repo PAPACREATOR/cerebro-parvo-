@@ -1,0 +1,47 @@
+{
+  "format_version": "1.0",
+  "snapshot_id": null,
+  "created_at_utc": null,
+  "status": "PREPARING",
+  "machine": {
+    "hostname": null,
+    "os": null
+  },
+  "source": {
+    "root": "C:\\Nexus",
+    "repository": "C:\\Nexus\\repositorio",
+    "git_branch": null,
+    "git_commit": null,
+    "git_dirty": null
+  },
+  "cloud": {
+    "provider": "Google Drive",
+    "root": "Nexus-Mirror",
+    "snapshot_folder": null,
+    "access_verified": false
+  },
+  "inventory": {
+    "software": "NOT_RUN",
+    "python": "NOT_RUN",
+    "git": "NOT_RUN",
+    "services": "NOT_RUN",
+    "ports": "NOT_RUN",
+    "acl": "NOT_RUN"
+  },
+  "copy": {
+    "status": "NOT_RUN",
+    "files": null,
+    "bytes": null
+  },
+  "hashes": {
+    "status": "NOT_RUN",
+    "algorithm": "SHA-256",
+    "manifest": null
+  },
+  "tests": {
+    "status": "NOT_RUN",
+    "results": []
+  },
+  "exclusions": [],
+  "notes": []
+}
