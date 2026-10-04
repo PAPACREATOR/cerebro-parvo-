@@ -7,7 +7,7 @@ import pytest
 from nexus.adapters.office import document_kind, pdf_bytes, run as convert
 from nexus.contracts import Blocked
 from nexus.store import Store, HumanDecision, digest
-from nexus.tests.test_store import request, result
+from nexus.tests.test_store import request, result, execution_trace
 
 
 def odt(extra=None):
@@ -42,7 +42,7 @@ def candidate_pdf(store):
     raw = b"%PDF-1.4\nsynthetic gate fixture\n%%EOF\n"
     (store.path("runs", run) / "resultado.pdf").write_bytes(raw)
     value = result(); value.update(status="UNKNOWN", outcome="candidate", artifact={"name": "resultado.pdf", "sha256": digest(raw)})
-    store.accept(run, value, {"test": True})
+    store.accept(run, value, execution_trace(store, run, test=True))
     return run, raw
 
 
@@ -69,7 +69,7 @@ def test_changed_pdf_blocks_approval(tmp_path):
 def test_missing_pdf_blocks_acceptance(tmp_path):
     store = Store(tmp_path); req = request(); req["process"] = "convert_pdf"
     run = store.create(req)
-    with pytest.raises(Blocked): store.accept(run, result(), {})
+    with pytest.raises(Blocked): store.accept(run, result(), execution_trace(store, run))
 
 
 def configure(tmp_path):
