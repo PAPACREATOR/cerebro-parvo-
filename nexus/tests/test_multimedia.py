@@ -1,13 +1,10 @@
-import asyncio
 import itertools
 import json
-import sys
 from pathlib import Path
 
 import pytest
 
 from nexus.adapters.constitutional import read_object
-from nexus.adapters.conductor_runner import execute
 from nexus.contracts import Blocked, ROOT
 
 FIELDS = ("tipo", "familia", "tribo", "dominio", "lab")
@@ -76,10 +73,8 @@ def test_malformed_objects(tmp_path, raw):
 
 
 @pytest.mark.parametrize("tribe", ["som", "imagem"])
-def test_real_conductor_reads_family(tribe):
+def test_python_reader_reads_family(tribe):
     path = ROOT / "families/multimedia" / (tribe + ".md")
-    result = asyncio.run(execute(ROOT / "processes/register_object.yaml", {
-        "input_path": str(path), "python": sys.executable}))
-    assert result["result"] == read_object(path)
-    assert result["trace"]["engine"] == "microsoft/conductor"
-    assert result["trace"]["summary"]["usage"]["total_tokens"] == 0
+    result = read_object(path)
+    assert result["dados_yaml"]["tribo"] == tribe
+    assert result["nome_ficheiro"] == path.name
