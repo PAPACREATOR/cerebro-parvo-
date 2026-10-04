@@ -5,6 +5,7 @@ This is evidence only. It does not alter Kernel authority, Creative/Canonical or
 import asyncio
 import hashlib
 import random
+import subprocess
 import time
 from pathlib import Path
 
@@ -122,3 +123,26 @@ def test_same_500_cases_spiff_vs_conductor_vs_joint():
         print(f"{name}_total_seconds={seconds:.6f} {name}_mean_ms={(seconds/CASES)*1000:.6f}")
 
     assert not mismatches, mismatches[:5]
+
+
+def test_real_powershell_tool_opens_and_returns_output():
+    """Real external-tool call: start PowerShell, execute code, capture exit/output."""
+    completed = subprocess.run(
+        [
+            "powershell.exe",
+            "-NoProfile",
+            "-NonInteractive",
+            "-Command",
+            "$PSVersionTable.PSVersion.ToString()",
+        ],
+        capture_output=True,
+        text=True,
+        timeout=20,
+        check=False,
+    )
+    print("NEXUS_REAL_TOOL_POWERSHELL")
+    print(f"exit_code={completed.returncode}")
+    print(f"stdout={completed.stdout.strip()}")
+    print(f"stderr={completed.stderr.strip()}")
+    assert completed.returncode == 0
+    assert completed.stdout.strip()
