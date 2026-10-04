@@ -1,0 +1,49 @@
+name: Spiff + Conductor Lab
+
+on:
+  push:
+    branches: ['lab-spiff-conductor-*']
+    paths:
+      - 'nexus/tests/test_spiff_conductor_bidirectional_5000.py'
+      - 'nexus/tests/fixtures/spiff_conductor_echo.yaml'
+      - 'nexus/requirements-spiff-test.txt'
+      - '.github/workflows/spiff-conductor-lab.yml'
+  pull_request:
+    paths:
+      - 'nexus/tests/test_spiff_conductor_bidirectional_5000.py'
+      - 'nexus/tests/fixtures/spiff_conductor_echo.yaml'
+      - 'nexus/requirements-spiff-test.txt'
+      - '.github/workflows/spiff-conductor-lab.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  phased:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    env:
+      PYTHONUTF8: '1'
+      PYTHONIOENCODING: utf-8
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Install fixed test dependencies
+        run: python -m pip install -r nexus/requirements-spiff-test.txt
+      - name: S0 smoke
+        run: python -m pytest nexus/tests/test_spiff_conductor_bidirectional_5000.py -q -k "test_s0" -o pythonpath=.
+      - name: S1 1000 forward
+        run: python -m pytest nexus/tests/test_spiff_conductor_bidirectional_5000.py::test_s1_1000_forward_kernel_spiff_conductor -q -o pythonpath=.
+      - name: S2 1000 reverse
+        run: python -m pytest nexus/tests/test_spiff_conductor_bidirectional_5000.py::test_s2_1000_reverse_result_to_original -q -o pythonpath=.
+      - name: S3 1000 limits
+        run: python -m pytest nexus/tests/test_spiff_conductor_bidirectional_5000.py::test_s3_1000_kernel_limits_and_single_dispatch -q -o pythonpath=.
+      - name: S4 1000 classifications
+        run: python -m pytest nexus/tests/test_spiff_conductor_bidirectional_5000.py::test_s4_1000_status_transport_without_authority -q -o pythonpath=.
+      - name: S5 1000 seeded stress
+        run: python -m pytest nexus/tests/test_spiff_conductor_bidirectional_5000.py::test_s5_1000_seeded_joint_stress -q -o pythonpath=.
