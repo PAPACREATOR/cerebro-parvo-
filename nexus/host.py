@@ -22,11 +22,9 @@ def verify_integrity():
         "adapters/runner.py", "adapters/verify_direct.py", "adapters/tools.py", "adapters/notebook.py",
         "adapters/languagetool.py", "adapters/office.py",
         "laws/CONSTITUTION.md", "laws/policy.json",
-        "processes/check.yaml", "processes/verify.yaml", "processes/interpret.yaml",
-        "processes/proofread.yaml", "processes/convert_pdf.yaml",
         "schemas/request.json", "schemas/result.json", "schemas/cognitive.json", "schemas/languagetool.json",
         "ui/index.html", "ui/app.js", "ui/style.css",
-        "adapters/constitutional.py", "processes/register_object.yaml", "schemas/multimedia.json",
+        "adapters/constitutional.py", "schemas/multimedia.json",
         "families/multimedia/som.md", "families/multimedia/imagem.md",
     }
     if not isinstance(manifest, dict) or set(manifest) != required:
@@ -123,7 +121,8 @@ class Host:
             envelope = strict_json(stdout)
             if not isinstance(envelope, dict) or set(envelope) != {"result", "trace"}:
                 raise Blocked("Resposta de execução inválida.")
-            envelope["trace"]["workflow_sha256"] = digest((ROOT / "processes" / (process + ".yaml")).read_bytes())
+            from nexus.adapters.runner import process_fingerprint
+            envelope["trace"]["process_sha256"] = process_fingerprint(process)
             self.store.accept(run_id, envelope["result"], envelope["trace"])
         except Exception as error:
             self.store.update(run_id, status="BLOCKED" if isinstance(error, Blocked) else "FAIL",
