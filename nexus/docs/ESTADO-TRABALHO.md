@@ -6,9 +6,9 @@ Branch: nexus-startup-lock-20261003. PR: #7.
 | Trabalho | Estado | Evidência / próximo passo |
 |---|---|---|
 | F011/F012/F013 | Testado no runner Windows | 1194 PASS, run 37162599479, commit 2870e336 |
-| Script PowerShell único com relatório | Implementado; teste Windows em curso | nexus/windows/check-nexus.ps1; workflow Nexus Windows |
+| Script PowerShell único com relatório | PASS com Python preparado | 1194 PASS + falha por Python ausente; run 37194297587 |
 | Instalação pessoal | A cargo de Pedro | Não bloqueia tarefas do repositório |
-| Spiff local / conciliação | Código local indisponível neste repositório | Não substituir nem declarar testado |
+| Executor | Conductor; Spiff retirado do plano por Pedro | 36 ficheiros de código/workflows/dependências conferidos sem referência Spiff |
 | Wiki relacional / navegação | Por iniciar | F013 cobre validação de pacotes, não navegação completa |
 
 ## Regra de continuidade pedida por Pedro
@@ -36,3 +36,15 @@ Este script verifica e prepara o ambiente de ensaio. As correções de produto
 são F011–F013 no código da branch. Não aplica patches cegos a versões divergentes.
 Falha de criação do diretório de relatório ou interrupção forçada pode impedir
 o relatório final; estado RUNNING não significa PASS.
+
+## Evidência desta entrega
+Commit de código: 38df949ff375f99f76d0519a994291a9938838b9.
+[Runner Windows / PowerShell 5](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37194297587):
+1194 passed in 48.99s. Script devolveu PASS/COMPLETE e criou state.json.
+Executável ausente devolveu exit != 0 e FAIL com diagnóstico; teste do wrapper PASS.
+Auditoria histórica: SUCCESS, run 37194297574.
+O modo de criação automática de venv não foi exercitado neste run; usa-se -PythonPath
+preparado pelo runner. Esse modo mantém NOT RUN até teste específico.
+A suite inclui ida/retorno F013, fontes danificadas e reinício; não prova todas
+as capabilities externas. Próximo passo: validar preparação automática de ambiente
+e alargar cobertura bidirecional por capability, um contrato de cada vez.

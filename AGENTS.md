@@ -54,3 +54,18 @@ Não transformar um PASS unitário em release.
 Para G10 usar o desenho PREPARED -> materialização Markdown -> verificação de hash -> COMMITTED -> reconcile, mas não declarar fechado antes dos testes de crash/replay.
 
 Não aceitar segredos em prompts, publicar automaticamente, dar auto-approve global ou aumentar permissões silenciosamente.
+
+## Continuidade e testes — instrução humana de 04-10-2026
+
+- Trabalhar no GitHub; Pedro executa os scripts no PC. Validação pessoal pendente
+  não bloqueia implementação e testes que possam ser concluídos no repositório.
+- Registar cada etapa em nexus/docs/ESTADO-TRABALHO.md: pedido, branch/commit,
+  ficheiros, evidência, PASS/FAIL/NOT RUN, bloqueio e próximo passo.
+- Para cada ligação alterada, testar ida (pedido -> execução -> resultado) e
+  retorno (resultado -> processo/evidência -> fonte/pedido), além de erro,
+  timeout/indisponibilidade quando aplicável, saída inválida e recuperação.
+- Conferir que o retorno não repete ferramentas nem cria aprovação humana nova.
+  Usar dados sintéticos e testar que falhas não promovem nem eliminam conhecimento.
+- Declarar a cobertura e as exclusões; nenhum PASS parcial prova todas as ligações.
+- Conductor mantém-se executor do Nexus publicado. Spiff sai do plano de execução.
+  Não introduzir segundo motor; preservar referências históricas como história.

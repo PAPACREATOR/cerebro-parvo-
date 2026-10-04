@@ -69,3 +69,9 @@ uma versão divergente.
 F013 valida pacotes existentes; navegação clicável e wiki relacional completa
 continuam pendentes. Instalação pessoal, Spiff local, tiny e ACL não foram
 novamente testados pelo runner. O produto completo não está concluído.
+
+## Atualização posterior — script e regras de trabalho
+[Estado atual](ESTADO-TRABALHO.md) contém o script de comando único, a evidência
+Windows e as exclusões. Decisão humana de 04/10: Conductor mantém a execução;
+Spiff sai do plano. As referências anteriores à conciliação Spiff são históricas.
+Regra permanente: testes de ida e retorno, falhas e recuperação por ligação.
