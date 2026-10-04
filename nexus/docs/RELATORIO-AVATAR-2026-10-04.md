@@ -20,7 +20,9 @@ Dependências efetivamente instaladas e verificadas no laboratório Linux: Torch
 | Aceitação nativa offline | PASS, render 5,06 s, MP4 0,52 s | Open Notebook + SurrealDB + SFD/Wav2Lip CPU + FFmpeg reais |
 | Aceitação nativa com áudio repetido | PASS, render 8,01 s, MP4 3,76 s | Segundo circuito real com amostra de fala repetida, duração de entrada 3,87225 s |
 | Regressão geral Nexus em Linux | 1319 PASS / 14 FAIL / 7 SKIP, 27,71 s | Não permite declarar PASS global; código ativo idêntico à base |
-| Windows/GPU/PC de Pedro | NOT RUN local | Instalador preparado; CI de contratos Windows/Linux incluído, resultado externo separado |
+| CI Ubuntu | 165 PASS / 0 FAIL / 0 SKIP, 11,40 s | Contratos com FFmpeg e autenticação nativa reais |
+| CI Windows | 165 PASS / 0 FAIL / 0 SKIP, 11,46 s | Mesma suite em runner Windows; modelo aprendido substituído |
+| GPU/instalador no PC de Pedro | NOT RUN | Não confundir runner de testes com instalação física |
 
 As duas aceitações nativas persistem episódio sintético, rejeitam auth/payload inválidos, geram e descarregam vídeo, conferem hashes em sentido inverso, repetem o mesmo job, usam MCP real, reiniciam API e recuperam proveniência; rejeitam vídeo adulterado e recuperam após restauração. Não geram TTS. A imagem de teste é astronauta NASA via skimage; fala fornecida pelo próprio upstream Open Notebook. O vídeo foi inspecionado visualmente, sem métrica quantitativa de sincronização.
 
@@ -37,3 +39,7 @@ Consultar [README](../lab/open_notebook_avatar/README.md), `requirements-worker.
 Ainda não existe botão no frontend. API/MCP funcionam. Resultado continua `UNTRUSTED/candidate`, sujeito a revisão humana; não existe promoção automática no Store. Não prova integração Folha/Kernel/Creative/Human Gate, instalação física, OS sandbox, ACL Windows, crash/power loss ou qualidade final. Wav2Lip tem restrições de uso pessoal/investigação/não comercial.
 
 Próximo gate: executar instalador no checkout Windows de laboratório, validar episódio real e qualidade, depois rever integração limitada no Kernel. Não integrar em main por este relatório.
+
+## Fecho de CI remoto
+
+[Run 37233045607](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37233045607): os dois jobs terminaram SUCCESS sobre commit `ca8b034e1fd68cfdc78ba1368485c5b054472a65`. Logs conferidos: 165 PASS em cada OS, sem skips. [Índice de evidência CI](AVATAR-CI-2026-10-04.json) contém IDs e hashes dos ZIP JUnit. Esta atualização é apenas documental; fonte executada inalterada. PR de entrega: [#23](https://github.com/PAPACREATOR/cerebro-parvo-/pull/23).
