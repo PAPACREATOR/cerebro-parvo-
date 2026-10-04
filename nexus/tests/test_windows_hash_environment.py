@@ -17,7 +17,7 @@ pytestmark = pytest.mark.skipif(os.name != "nt", reason="Requires native Windows
 def execute_hash(source, work):
     code = (
         "import json,sys;"
-        "sys.path.insert(0, " + repr(str(ROOT)) + ");"
+        "sys.path.insert(0, " + repr(str(ROOT.parent)) + ");"
         "from nexus.adapters.verify_direct import hash_windows;"
         "print(json.dumps(hash_windows(sys.argv[1])))"
     )
