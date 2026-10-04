@@ -1,2 +1,3 @@
 -r requirements.txt
 pytest==9.1.1
+open-notebook-mcp @ git+https://github.com/Epochal-dev/open-notebook-mcp.git@a2cddbf65cba8c4c8de7be16566781b7612a9545
