@@ -19,7 +19,7 @@ def verify_integrity():
     manifest = strict_json((ROOT / "integrity.json").read_bytes())
     required = {
         "__init__.py", "app.py", "host.py", "store.py", "contracts.py", "approval_binding.py", "instance.py",
-        "adapters/runner.py", "adapters/verify_direct.py", "adapters/tools.py", "adapters/notebook.py",
+        "adapters/runner.py", "mcp_client.py", "mcp_tools_server.py", "adapters/verify_direct.py", "adapters/tools.py", "adapters/notebook.py",
         "adapters/languagetool.py", "adapters/office.py",
         "laws/CONSTITUTION.md", "laws/policy.json",
         "schemas/request.json", "schemas/result.json", "schemas/cognitive.json", "schemas/languagetool.json",

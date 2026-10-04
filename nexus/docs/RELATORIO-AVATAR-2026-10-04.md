@@ -43,3 +43,7 @@ Próximo gate: executar instalador no checkout Windows de laboratório, validar 
 ## Fecho de CI remoto
 
 [Run 37233045607](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37233045607): os dois jobs terminaram SUCCESS sobre commit `ca8b034e1fd68cfdc78ba1368485c5b054472a65`. Logs conferidos: 165 PASS em cada OS, sem skips. [Índice de evidência CI](AVATAR-CI-2026-10-04.json) contém IDs e hashes dos ZIP JUnit. Esta atualização é apenas documental; fonte executada inalterada. PR de entrega: [#23](https://github.com/PAPACREATOR/cerebro-parvo-/pull/23).
+
+## Sincronização posterior — 23h Lisboa
+
+PR22 foi fechada sem merge por outra sessão. A entrega avatar é reaplicada sobre PR21 atual `0753f573f2dee739a4e43a5e255a4999319cc605`, mantendo as versões novas MCP/tiny intactas. Proveniência histórica acima permanece; os 14 FAIL Linux referem a base antiga, não são resultado da combinação nova. Regressão nova PENDING até CI. Não integrar antes de conferir esta combinação.

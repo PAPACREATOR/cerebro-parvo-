@@ -25,14 +25,16 @@ def test_comparison_preserves_both_sides(left, right, outcome, status):
 
 
 def test_real_redundant_workflow(tmp_path):
-    source = tmp_path / "input.txt"
+    run = tmp_path / "runs" / ("a" * 32)
+    run.mkdir(parents=True)
+    source = run / "input.bin"
     source.write_text("Olá Nexus", encoding="utf-8")
     response = execute("verify", source)
     value = validate("result", response["result"])
     expected = hashlib.sha256(source.read_bytes()).hexdigest()
     assert value["outcome"] == "agreement"
     assert value["ai_calls"] == 0
-    assert response["trace"]["engine"] == "nexus/python-direct"
+    assert response["trace"]["engine"] == "nexus/python-mcp"
     assert response["trace"]["summary"]["usage"]["total_tokens"] == 0
     assert [item["value"] for item in value["evidence"]] == [expected, expected]
 

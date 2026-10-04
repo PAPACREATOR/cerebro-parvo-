@@ -1,13 +1,13 @@
 from mcp.server.fastmcp import FastMCP
 
-mcp = FastMCP("nexus-test-mcp")
+mcp = FastMCP("nexus-test")
 
 @mcp.tool()
 def ping(value: str) -> dict:
     return {"echo": value, "authority": "NONE"}
 
 @mcp.tool()
-def second(value: int = 1) -> dict:
+def double(value: int) -> dict:
     return {"value": value * 2}
 
 @mcp.tool()

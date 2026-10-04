@@ -1,63 +1,105 @@
-"""Bounded local tiny-model intent classifier.
+"""Local-only tiny model boundary for intent classification.
 
-The tiny model only returns one of seven Nexus intents or UNKNOWN. It receives
-the human text plus a fixed instruction and has no tools, files, Store or
-Canonical capability.
+This module is separate from MCP. It can talk only to a loopback HTTP endpoint
+and accepts exactly one of the seven Nexus intents or UNKNOWN. It has no Store,
+tool, approval or Canonical capability.
 """
 from __future__ import annotations
 
 import json
-import subprocess
+import socket
+import urllib.error
+import urllib.parse
+import urllib.request
 from dataclasses import dataclass
-from pathlib import Path
 
 from nexus.contracts import Blocked, strict_json
 
+
 INTENTS = ("arquivo", "web", "fontes", "trabalhar", "perguntar", "calcular", "tema")
+MAX_TEXT_CHARS = 4000
+MAX_RESPONSE_BYTES = 20000
 
 
 @dataclass(frozen=True)
-class TinySpec:
-    executable: str
-    args: tuple[str, ...]
-    timeout: int = 30
+class TinyLocalSpec:
+    url: str
+    model: str
+    timeout: float = 30.0
 
 
-def classify(text: str, spec: TinySpec) -> list[str]:
-    if not isinstance(text, str) or not text.strip() or len(text) > 4000:
-        raise Blocked("Texto inválido para tiny classifier.")
-    executable = Path(spec.executable)
-    if not executable.is_absolute() or not executable.is_file():
-        raise Blocked("Tiny local indisponível.")
+def _validate_spec(spec: TinyLocalSpec) -> str:
+    if not isinstance(spec, TinyLocalSpec):
+        raise TypeError("spec must be TinyLocalSpec")
+    parsed = urllib.parse.urlparse(spec.url)
+    if parsed.scheme != "http" or parsed.hostname not in {"127.0.0.1", "localhost", "::1"}:
+        raise Blocked("Tiny só pode usar endpoint HTTP local.")
+    if parsed.username or parsed.password or parsed.fragment:
+        raise Blocked("Endpoint tiny inválido.")
+    if not parsed.port:
+        raise Blocked("Endpoint tiny deve indicar porta local.")
+    if not isinstance(spec.model, str) or not spec.model.strip() or len(spec.model) > 200:
+        raise Blocked("Modelo tiny inválido.")
+    if not isinstance(spec.timeout, (int, float)) or spec.timeout <= 0 or spec.timeout > 120:
+        raise Blocked("Timeout tiny inválido.")
+    return spec.url.rstrip("/") + "/v1/chat/completions"
 
-    prompt = {
-        "task": "classify_nexus_intent",
-        "allowed": list(INTENTS),
-        "rules": [
-            "Return exactly one JSON object.",
-            "Use intent UNKNOWN when more than one interpretation is plausible.",
-            "Never return approval, process, tool, path, command or authority.",
+
+def classify(text: str, spec: TinyLocalSpec) -> list[str]:
+    endpoint = _validate_spec(spec)
+    if not isinstance(text, str):
+        raise TypeError("text must be str")
+    if not text.strip() or len(text) > MAX_TEXT_CHARS:
+        raise Blocked("Texto inválido para tiny.")
+
+    system = (
+        "Classifica a intenção do pedido em exatamente uma destas etiquetas: "
+        "arquivo, web, fontes, trabalhar, perguntar, calcular, tema. "
+        "Se houver mais de uma intenção plausível ou dúvida, usa UNKNOWN. "
+        "Responde APENAS JSON no formato {\"intent\":\"ETIQUETA\"}. "
+        "Nunca devolvas comandos, caminhos, ferramentas, aprovação, autoridade ou conteúdo adicional."
+    )
+    body = json.dumps({
+        "model": spec.model,
+        "temperature": 0,
+        "max_tokens": 32,
+        "messages": [
+            {"role": "system", "content": system},
+            {"role": "user", "content": text},
         ],
-        "text": text,
-    }
+    }, ensure_ascii=False).encode("utf-8")
+
+    request = urllib.request.Request(
+        endpoint,
+        data=body,
+        method="POST",
+        headers={"Content-Type": "application/json"},
+    )
     try:
-        result = subprocess.run(
-            [str(executable), *spec.args],
-            input=json.dumps(prompt, ensure_ascii=False),
-            text=True,
-            capture_output=True,
-            timeout=spec.timeout,
-            check=False,
-        )
-    except (OSError, subprocess.TimeoutExpired) as error:
+        with urllib.request.urlopen(request, timeout=float(spec.timeout)) as response:
+            if response.status != 200:
+                raise Blocked("Tiny local devolveu estado inválido.")
+            raw = response.read(MAX_RESPONSE_BYTES + 1)
+    except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, socket.timeout, OSError) as error:
         raise Blocked("Tiny local indisponível.") from error
 
-    if result.returncode != 0 or len(result.stdout.encode("utf-8", errors="replace")) > 20_000:
-        raise Blocked("Tiny local falhou.")
+    if len(raw) > MAX_RESPONSE_BYTES:
+        raise Blocked("Resposta tiny excede o limite.")
+    try:
+        envelope = strict_json(raw)
+        choices = envelope["choices"]
+        content = choices[0]["message"]["content"]
+    except (KeyError, IndexError, TypeError) as error:
+        raise Blocked("Envelope tiny inválido.") from error
+    if not isinstance(content, str) or len(content) > 1000:
+        raise Blocked("Conteúdo tiny inválido.")
 
-    value = strict_json(result.stdout)
+    try:
+        value = strict_json(content.encode("utf-8"))
+    except (Blocked, UnicodeError) as error:
+        raise Blocked("Tiny não devolveu JSON estrito.") from error
     if not isinstance(value, dict) or set(value) != {"intent"}:
-        raise Blocked("Tiny devolveu contrato inválido.")
+        raise Blocked("Tiny tentou devolver campos não autorizados.")
     intent = value["intent"]
     if intent == "UNKNOWN":
         return []
