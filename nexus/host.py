@@ -1,4 +1,4 @@
-"""Minimal local Host: contracts, Conductor delegation, gate and presentation."""
+"""Minimal local Host: contracts, deterministic Python delegation, gate and presentation."""
 import getpass
 import hmac
 import json
@@ -19,7 +19,7 @@ def verify_integrity():
     manifest = strict_json((ROOT / "integrity.json").read_bytes())
     required = {
         "__init__.py", "app.py", "host.py", "store.py", "contracts.py", "approval_binding.py", "instance.py",
-        "adapters/conductor_runner.py", "adapters/tools.py", "adapters/notebook.py",
+        "adapters/runner.py", "adapters/verify_direct.py", "adapters/tools.py", "adapters/notebook.py",
         "adapters/languagetool.py", "adapters/office.py",
         "laws/CONSTITUTION.md", "laws/policy.json",
         "processes/check.yaml", "processes/verify.yaml", "processes/interpret.yaml",
@@ -96,7 +96,7 @@ class Host:
                 if not config.is_file():
                     raise Blocked("LibreOffice precisa de configuração local.")
                 atomic(directory / "libreoffice.json", config.read_bytes())
-            command = [sys.executable, "-I", str(ROOT / "adapters/conductor_runner.py"), process, str(directory / "input.bin")]
+            command = [sys.executable, "-I", str(ROOT / "adapters/runner.py"), process, str(directory / "input.bin")]
             env = process_environment(directory)
             # Kernel-owned durable checkpoint before entering an external capability.
             # If the process dies after this point and before a durable result exists,
