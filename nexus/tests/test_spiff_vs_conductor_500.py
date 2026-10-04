@@ -486,3 +486,220 @@ def test_complex_bidirectional_verify_three_paths(tmp_path):
         print(f"| {name} | {len(cases)} | {result} | {totals[name]:.6f} | {(totals[name]/len(cases))*1000:.3f} | PASS |")
     print(f"complex_mismatches={len(mismatches)}")
     assert not mismatches, mismatches[:3]
+
+
+def _normalized_open_notebook_result(value):
+    value = dict(value)
+    value.pop("request_id", None)
+    return value
+
+
+async def _python_mcp_open_notebook_search_async(query, detail="summary", limit=20):
+    from mcp import ClientSession, StdioServerParameters
+    from mcp.client.stdio import stdio_client
+
+    params = StdioServerParameters(
+        command=sys.executable,
+        args=["-m", "open_notebook_mcp.server"],
+    )
+    async with stdio_client(params) as (read, write):
+        async with ClientSession(read, write) as session:
+            await session.initialize()
+            tools = await session.list_tools()
+            names = [tool.name for tool in tools.tools]
+            assert "search_capabilities" in names
+            result = await session.call_tool(
+                "search_capabilities",
+                arguments={"query": query, "detail": detail, "limit": limit},
+            )
+            assert not result.isError
+            value = result.structured_content
+            if value is None:
+                texts = [getattr(item, "text", None) for item in result.content]
+                texts = [item for item in texts if item]
+                assert texts, result
+                value = json.loads(texts[0])
+            return _normalized_open_notebook_result(value)
+
+
+def _python_mcp_open_notebook_search(query, detail="summary", limit=20):
+    return asyncio.run(_python_mcp_open_notebook_search_async(query, detail, limit))
+
+
+def _spiff_mcp_open_notebook_search(query, detail="summary", limit=20):
+    spec = WorkflowSpec("nexus-spiff-python-mcp-open-notebook", addstart=True)
+    task = Simple(spec, "open_notebook_mcp")
+    spec.start.connect(task)
+
+    def invoke(workflow, _task):
+        workflow.data["result"] = _python_mcp_open_notebook_search(
+            workflow.data["query"], workflow.data["detail"], workflow.data["limit"]
+        )
+        workflow.data["calls"] = workflow.data.get("calls", 0) + 1
+
+    task.completed_event.connect(invoke)
+    workflow = Workflow(spec)
+    workflow.set_data(query=query, detail=detail, limit=limit, calls=0)
+    workflow.run_all()
+    assert workflow.is_completed()
+    assert workflow.get_data("calls") == 1
+    return workflow.get_data("result")
+
+
+def _write_conductor_open_notebook_mcp_flow(path):
+    path.write_text(
+        """workflow:
+  name: nexus-open-notebook-mcp-compare
+  version: "1.0.0"
+  entry_point: search
+  runtime:
+    provider: copilot
+    mcp_servers:
+      open-notebook:
+        type: stdio
+        command: python
+        args: ["-m", "open_notebook_mcp.server"]
+        tools: ["search_capabilities"]
+  limits:
+    max_iterations: 3
+    timeout_seconds: 45
+agents:
+  - name: search
+    type: mcp
+    server: open-notebook
+    tool: search_capabilities
+    arguments:
+      query: "{{ workflow.input.query }}"
+      detail: "{{ workflow.input.detail }}"
+      limit: "{{ workflow.input.limit }}"
+    timeout: 30
+    routes:
+      - to: $end
+output:
+  done: true
+""",
+        encoding="utf-8",
+    )
+
+
+async def _conductor_mcp_open_notebook_async(flow, query, detail="summary", limit=20):
+    config = load_workflow(flow)
+    engine = WorkflowEngine(config, workflow_path=flow)
+    await engine.run({"query": query, "detail": detail, "limit": limit})
+    value = engine.context.agent_outputs["search"]
+    # Conductor's MCP envelope merges structured keys onto the output.
+    semantic = {
+        key: value[key]
+        for key in ("query", "detail", "count", "matches", "hint")
+        if key in value
+    }
+    return _normalized_open_notebook_result(semantic), engine.get_execution_summary()
+
+
+def _conductor_mcp_open_notebook_search(flow, query, detail="summary", limit=20):
+    return asyncio.run(_conductor_mcp_open_notebook_async(flow, query, detail, limit))
+
+
+def test_minimal_python_mcp_vs_spiff_vs_conductor_open_notebook(tmp_path):
+    queries = [
+        "", "notebook", "source", "notes", "search", "vector",
+        "question", "chat", "models", "settings", "create", "delete",
+    ]
+    flow = tmp_path / "open-notebook-mcp-conductor.yaml"
+    _write_conductor_open_notebook_mcp_flow(flow)
+    totals = {"python-mcp": 0.0, "spiff+mcp": 0.0, "conductor+mcp": 0.0}
+    mismatches = []
+
+    for query in queries:
+        t0 = time.perf_counter()
+        pure = _python_mcp_open_notebook_search(query)
+        totals["python-mcp"] += time.perf_counter() - t0
+
+        t0 = time.perf_counter()
+        spiff = _spiff_mcp_open_notebook_search(query)
+        totals["spiff+mcp"] += time.perf_counter() - t0
+
+        t0 = time.perf_counter()
+        conductor, summary = _conductor_mcp_open_notebook_search(flow, query)
+        totals["conductor+mcp"] += time.perf_counter() - t0
+
+        if not (pure == spiff == conductor):
+            mismatches.append((query, pure, spiff, conductor))
+
+        assert summary["usage"]["total_tokens"] == 0
+        assert "search" in summary["agents_executed"]
+
+    print("NEXUS_MINIMAL_MCP_OPEN_NOTEBOOK")
+    print("| Stack | Queries | Result | Total s | Mean ms | LLM tokens |")
+    print("|---|---:|---|---:|---:|---:|")
+    for name in ("python-mcp", "spiff+mcp", "conductor+mcp"):
+        result = "PASS" if not mismatches else "FAIL"
+        print(f"| {name} | {len(queries)} | {result} | {totals[name]:.6f} | {(totals[name]/len(queries))*1000:.3f} | 0 |")
+    print(f"mcp_semantic_mismatches={len(mismatches)}")
+    assert not mismatches, mismatches[:3]
+
+
+def test_minimal_mcp_failure_and_repeatability():
+    # Repeat the same deterministic tool request three times. request_id is
+    # transport metadata and is deliberately excluded from semantic equality.
+    values = [_python_mcp_open_notebook_search("podcast", detail="summary", limit=50) for _ in range(3)]
+    assert values[0] == values[1] == values[2]
+    assert values[0]["query"] == "podcast"
+    # Current OpenNotebook MCP has no podcast capability exposed in its 39-tool
+    # index, so this must be an explicit empty result rather than an invented tool.
+    assert values[0]["count"] == 0
+
+
+def _dependency_closure(root_names):
+    import importlib.metadata as md
+    from packaging.requirements import Requirement
+    from packaging.utils import canonicalize_name
+
+    dists = {canonicalize_name(d.metadata["Name"]): d for d in md.distributions() if d.metadata.get("Name")}
+    seen = set()
+    pending = [canonicalize_name(name) for name in root_names]
+    while pending:
+        name = pending.pop()
+        if name in seen:
+            continue
+        dist = dists.get(name)
+        assert dist is not None, (name, sorted(dists)[:20])
+        seen.add(name)
+        for raw in dist.requires or []:
+            req = Requirement(raw)
+            if req.marker is not None and not req.marker.evaluate({"extra": ""}):
+                continue
+            dep = canonicalize_name(req.name)
+            if dep in dists and dep not in seen:
+                pending.append(dep)
+    total = 0
+    for name in seen:
+        dist = dists[name]
+        for item in dist.files or []:
+            try:
+                target = dist.locate_file(item)
+                if target.is_file():
+                    total += target.stat().st_size
+            except OSError:
+                pass
+    return seen, total
+
+
+def test_dependency_footprint_python_mcp_spiff_conductor():
+    stacks = {
+        "python-mcp": ["open-notebook-mcp", "mcp"],
+        "spiff+mcp": ["open-notebook-mcp", "mcp", "SpiffWorkflow"],
+        "conductor+mcp": ["open-notebook-mcp", "mcp", "conductor-cli"],
+    }
+    values = {}
+    print("NEXUS_DEPENDENCY_FOOTPRINT")
+    print("| Stack | Distribution closure | Installed MiB |")
+    print("|---|---:|---:|")
+    for name, roots in stacks.items():
+        closure, size = _dependency_closure(roots)
+        values[name] = (closure, size)
+        print(f"| {name} | {len(closure)} | {size/(1024*1024):.2f} |")
+    assert values["python-mcp"][0].issubset(values["spiff+mcp"][0])
+    assert values["python-mcp"][0].issubset(values["conductor+mcp"][0])
+    assert values["python-mcp"][1] <= values["spiff+mcp"][1]
+    assert values["python-mcp"][1] <= values["conductor+mcp"][1]
