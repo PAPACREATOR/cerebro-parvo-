@@ -78,6 +78,8 @@ try {
             'nexus/tests/test_multimedia.py::test_python_reader_reads_family',
             'nexus/tests/test_lab_practical_boundaries.py',
             'nexus/tests/test_open_notebook_kernel_e2e.py'
+            'nexus/tests/test_media_tools.py',
+            'nexus/tests/test_media_tools_mcp.py'
         ) }
         default { @('nexus/tests') }
     }
