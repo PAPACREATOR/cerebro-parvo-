@@ -98,3 +98,38 @@ def test_accepted_result_closes_external_execution_phase(tmp_path):
     assert state["execution_phase"] == "RESULT_ACCEPTED"
     assert store.check_candidate(state)["execution"]["workflow_sha256"] == prepared["workflow_sha256"]
     assert not store.path("canonical", run_id).exists()
+
+
+def test_restart_never_reconciles_redirected_executor_output(tmp_path):
+    """FAIL-first security: recovery must not follow executor-output symlinks."""
+    store = Store(tmp_path / "data")
+    run_id = store.create(request())
+    state = store.state(run_id)
+    store.update(run_id, execution_phase="EXECUTING")
+
+    outside = tmp_path / "outside-result.json"
+    envelope = {
+        "result": result(),
+        "trace": {
+            "engine": "synthetic-outside",
+            "events": [],
+            "workflow_sha256": state["workflow_sha256"],
+        },
+    }
+    outside.write_text(json.dumps(envelope, ensure_ascii=False), encoding="utf-8")
+
+    execution = store.path("runs", run_id) / "execution.stdout.json"
+    try:
+        execution.symlink_to(outside)
+    except (OSError, NotImplementedError) as error:
+        pytest.skip(f"symlink unavailable on this platform: {error}")
+
+    restarted = Store(tmp_path / "data")
+    recovered = restarted.state(run_id)
+
+    assert recovered["status"] == "BLOCKED"
+    assert recovered["commit_status"] == "RECOVERY_REQUIRED"
+    assert execution.is_symlink()
+    assert outside.read_text("utf-8") == json.dumps(envelope, ensure_ascii=False)
+    assert not restarted.path("creative", run_id).exists()
+    assert not restarted.path("canonical", run_id).exists()
