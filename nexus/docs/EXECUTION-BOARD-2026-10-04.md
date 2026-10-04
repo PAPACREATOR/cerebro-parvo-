@@ -29,7 +29,7 @@ Nenhum PASS de CI substitui o teste no Windows real em `C:\Nexus-Lab`.
 |---|---|---|---|
 | 01 | Crash depois de resultado externo persistido e antes de `Store.accept` | PASS REMOTO | Work: T01 1197 PASS; teste revisor independente adicionado; falta PC LAB |
 | 02 | Crash antes de chamar executor | PASS REMOTO | teste existente conserva input, não cria Canonical; falta PC LAB |
-| 03 | Crash durante executor | PARCIAL | falha/interrupção coberta; matriz de janelas adicionais ainda a expandir |
+| 03 | Crash durante executor | PASS REMOTO | run 37202001479: 1216 PASS; PREPARED/EXECUTING + RECOVERY_REQUIRED; falta PC LAB |
 | 04 | Crash depois de Creative e antes de Human Gate | PASS REMOTO | Work: Creative completo reconciliado; adulterado BLOCKED; falta PC LAB |
 | 05 | Crash durante promoção Canonical | PASS REMOTO | recovery Canonical existente + regressões; falta PC LAB |
 | 06 | Idempotência de reexecução | PARCIAL | reentrada e promoção repetida cobertas; stress/property-based pendente |
