@@ -1,7 +1,7 @@
 {
   "app.py": "a0cec14cb307cd4401b38614859a3541ddb9ce96576ffd7492137a4b502a94df",
   "contracts.py": "6c97ed0af3892c7dbbfe7d4b1f673c319ed9fc92c24f638161b91f2c43c02f3c",
-  "host.py": "a89a48c0ecbceb97aa277eca19d1caefac86d271532c6df4918acac905d77d20",
+  "host.py": "199d63ec657d24d9d11e887dd1f26b33c393e09ed5cd61fb40434bcd9167ecaf",
   "store.py": "d6f34143a79008d99b89bf188207cc7582d72028d075f37753bd8ed515c17a09",
   "__init__.py": "46cab08a37d7677c810002d394bfc5ac0729e488dc9b6920cabedf37db8dc15a",
   "adapters/tools.py": "c77a30cd738e5fdec94d25306f34b1f0fdc49f441504259f195d0fcf2aa64826",
@@ -26,5 +26,6 @@
   "adapters/runner.py": "72c8e7970f4c93b9d7fd46350c86d55488345ae4a3de0054f2a41750a86fe7eb",
   "adapters/verify_direct.py": "ba0bb3571eeff8f5ad9e3134abc25274164cddf4e6d6ffc2cce051beb8129173",
   "mcp_client.py": "d18fec738ab3760a926aa34cc278cc939fb79bff28c37e4ea83c8478e58b8010",
-  "mcp_tools_server.py": "6a64f0f0b0984fd0b032429163e01ad1db6eadd258b2900005bcc2aa33a8e80f"
+  "mcp_tools_server.py": "2dc3b6abb0e586327c5214c2e6fc168a4d811b3818016ba53064043befa5ddf8",
+  "adapters/media_tools.py": "d4eedf365080c7eb4018097bc660606e3904d0de4784782265949af8a60f2e80"
 }
