@@ -117,3 +117,33 @@ Estado:
 2. Extensões do harness devem manter compatibilidade com nomes/contratos já consumidos por CI.
 3. Um FAIL posterior ao `NEXUS PASS` pode pertencer ao harness, não ao núcleo; separar as duas camadas no diagnóstico.
 4. Cada novo nível de testes deve reaproveitar o verificador existente, não duplicar lógica.
+
+
+## Baseline prática v2 — fronteiras de entrada
+
+HEAD funcional testado antes do reforço Conductor:
+`f275c49f9ab88790ff722dbb768ff11f855646c1`
+
+Windows run:
+`37205291446`
+
+Resultados:
+- núcleo: **140 PASS**;
+- blocos: **1075 PASS**;
+- Nexus completo: **1222 PASS**;
+- prático: **16 PASS**;
+- `POWERSHELL_WRAPPER=PASS`;
+- auditoria: SUCCESS.
+
+Novos contratos provados:
+- attachment de **2 MiB exatos** atravessa Folha/Host/Conductor/Windows hash, chega a Human Gate, é aprovado e sobrevive restart;
+- **2 MiB + 1 byte** é bloqueado antes de criar run;
+- Unicode no limite de 100000 caracteres é aceite;
+- 100001 caracteres são bloqueados;
+- restart do caso 2 MiB usa evidência durável e não reexecuta a ferramenta;
+- IA usada no fluxo verify: zero.
+
+Próximo reforço:
+- incluir no prático a via real Conductor de ficheiro ausente -> FAIL determinístico;
+- conservar o teste de workflow inválido;
+- depois expandir falhas controladas por capability.
