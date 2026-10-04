@@ -76,3 +76,31 @@ def kernel_to_notebook(markdown: str) -> dict:
         "target": "open-notebook",
         "authority": "UNTRUSTED_REQUEST",
     }
+
+
+def kernel_from_notebook_boundary(packet: dict) -> str:
+    """Reverse the bounded Notebook handoff back to the exact internal Markdown."""
+    required = {"intent", "parser", "explicit", "input_text", "input_sha256", "target", "authority"}
+    if not isinstance(packet, dict) or set(packet) != required:
+        raise Blocked("Pacote de retorno Notebook inválido.")
+    if packet["target"] != "open-notebook" or packet["authority"] != "UNTRUSTED_REQUEST":
+        raise Blocked("Pacote Notebook com destino ou autoridade inválidos.")
+    if packet["intent"] not in INTENTS:
+        raise Blocked("Intenção Notebook inválida.")
+    if not isinstance(packet["parser"], str) or not packet["parser"] or len(packet["parser"]) > 100:
+        raise Blocked("Parser Notebook inválido.")
+    if type(packet["explicit"]) is not bool or not isinstance(packet["input_text"], str):
+        raise Blocked("Pacote Notebook inválido.")
+    if _digest(packet["input_text"]) != packet["input_sha256"]:
+        raise Blocked("O texto mudou durante a passagem pelo Notebook.")
+    meta = {
+        "version": 1,
+        "intent": packet["intent"],
+        "parser": packet["parser"],
+        "explicit": packet["explicit"],
+        "sha256": packet["input_sha256"],
+    }
+    header = json.dumps(meta, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    markdown = "<!-- nexus-natural-v1 " + header + " -->\n" + packet["input_text"]
+    from_markdown(markdown)
+    return markdown
