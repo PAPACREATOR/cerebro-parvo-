@@ -115,6 +115,7 @@ $report = [ordered]@{
     architecture = 'Kernel is the brain; ACE-Step and Forge are external tools.'
     ace_step = $null
     forge = $null
+    health_check_launcher = $null
 }
 
 if (-not $SkipAceStep) {
@@ -228,9 +229,22 @@ endlocal
     }
 }
 
+$healthScript = Join-Path $PSScriptRoot 'check-media-tools.ps1'
+if (-not (Test-Path -LiteralPath $healthScript)) {
+    throw 'Nexus media health checker is missing.'
+}
+$healthLauncherPath = Join-Path $BinRoot 'Check-Nexus-Media-Tools.cmd'
+$healthLauncher = @"
+@echo off
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$healthScript" -ToolsRoot "$ToolsRoot"
+"@
+Set-Content -LiteralPath $healthLauncherPath -Value $healthLauncher -Encoding ASCII
+$report.health_check_launcher = $healthLauncherPath
+
 $reportPath = Join-Path $ToolsRoot 'nexus-media-tools.json'
 $report | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $reportPath -Encoding UTF8
 Write-Host 'NEXUS MEDIA TOOLS = PASS'
 Write-Host "Report: $reportPath"
 if ($report.ace_step) { Write-Host "ACE-Step launcher: $($report.ace_step.launcher)" }
 if ($report.forge) { Write-Host "Forge launcher: $($report.forge.launcher)" }
+Write-Host "Health checker: $healthLauncherPath"
