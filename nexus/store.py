@@ -83,7 +83,12 @@ class Store:
                                      updated_at=now())
                         atomic(item, state)
                 else:
-                    state.update(status="FAIL", message="Execução interrompida. Podes iniciar um novo pedido.", updated_at=now())
+                    if state.get("execution_phase") == "EXECUTING":
+                        state.update(status="BLOCKED", commit_status="RECOVERY_REQUIRED",
+                                     message="A execução externa foi iniciada, mas não existe resultado durável. Requer reconciliação.",
+                                     updated_at=now())
+                    else:
+                        state.update(status="FAIL", message="Execução interrompida. Podes iniciar um novo pedido.", updated_at=now())
                     atomic(item, state)
 
     def verify_artifact(self, state, directory):
@@ -225,7 +230,8 @@ class Store:
         atomic(directory / "state.json", {
             "run_id": run_id, "process_id": request["process"], "process_version": "1.0.0",
             "title": name, "status": "RUNNING", "created_at": now(), "updated_at": now(),
-            "message": "A executar o processo.", "input_sha256": digest(content),
+            "message": "A executar o processo.", "execution_phase": "PREPARED",
+            "input_sha256": digest(content),
             "request_sha256": digest((directory / "request.json").read_bytes()),
             "workflow_sha256": workflow_sha256,
         })
