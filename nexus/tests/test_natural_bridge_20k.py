@@ -5,7 +5,7 @@ import random
 import pytest
 
 from nexus.contracts import Blocked
-from nexus.natural_bridge import from_markdown, kernel_to_notebook, to_markdown
+from nexus.natural_bridge import from_markdown, kernel_from_notebook_boundary, kernel_to_notebook, to_markdown
 
 
 TEMPLATES = [
@@ -76,6 +76,11 @@ def test_block2_20000_natural_markdown_kernel_reaches_notebook_boundary():
         assert packet["intent"] == intent, i
         assert packet["input_text"] == human, i
         assert packet["input_sha256"] == hashlib.sha256(human.encode("utf-8")).hexdigest(), i
+        returned = kernel_from_notebook_boundary(packet)
+        assert returned == markdown, i
+        returned_packet = from_markdown(returned)
+        assert returned_packet["text"] == human, i
+        assert returned_packet["intent"] == intent, i
 
 
 def test_block2_notebook_limit_is_not_silently_truncated():
@@ -89,3 +94,18 @@ def test_unresolved_natural_language_never_becomes_internal_markdown():
     for human in ["olá", "talvez amanhã", "um texto sem ordem", "não sei"]:
         with pytest.raises(Blocked, match="não está resolvida"):
             to_markdown(human)
+
+
+@pytest.mark.parametrize(("field", "value"), [
+    ("target", "other"),
+    ("authority", "CANONICAL"),
+    ("intent", "canonical"),
+    ("input_sha256", "0" * 64),
+    ("input_text", "texto adulterado"),
+])
+def test_block2_reverse_rejects_tampering(field, value):
+    markdown = to_markdown("explica a proveniência do documento")
+    packet = kernel_to_notebook(markdown)
+    packet[field] = value
+    with pytest.raises(Blocked):
+        kernel_from_notebook_boundary(packet)
