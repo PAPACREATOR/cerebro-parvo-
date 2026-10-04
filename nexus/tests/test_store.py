@@ -97,3 +97,13 @@ def test_unregistered_process_and_path(tmp_path):
         store.create(dict(process="shell", text="hello", filename="", attachment=""))
     with pytest.raises(Blocked):
         store.state("../canonical")
+
+
+def test_accept_rejects_trace_from_different_workflow_version(tmp_path):
+    """A result cannot be accepted if its execution trace is not bound to the pinned workflow."""
+    store = Store(tmp_path)
+    run = store.create(request())
+    with pytest.raises(Blocked):
+        store.accept(run, result(), {"workflow_sha256": "0" * 64})
+    assert not store.path("creative", run).exists()
+    assert store.state(run)["status"] == "RUNNING"
