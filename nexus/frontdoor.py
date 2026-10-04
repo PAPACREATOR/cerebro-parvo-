@@ -84,15 +84,17 @@ class ParsedInput:
     shadow: str | None = None
 
     def as_dict(self) -> dict:
-        return {
+        value = {
             "status": self.status,
             "intent": self.intent,
             "original": self.original,
             "content": self.content,
             "parser": self.parser,
             "explicit": self.explicit,
-            "shadow": self.shadow,
         }
+        if self.shadow is not None:
+            value["shadow"] = self.shadow
+        return value
 
 
 def _normalise(text: str) -> str:
