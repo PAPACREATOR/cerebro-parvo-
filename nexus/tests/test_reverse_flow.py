@@ -369,3 +369,49 @@ def test_restart_reconciles_complete_creative_after_crash_before_state_update(tm
     assert {name: (creative / name).read_bytes() for name in preserved} == preserved
     provenance = restored.check_candidate(state)
     assert provenance["execution"]["workflow_sha256"] == state["workflow_sha256"]
+
+
+@pytest.mark.parametrize("kind", [
+    "changed-draft", "missing-draft", "changed-result", "missing-result",
+    "wrong-source-path", "wrong-source-hash", "wrong-process", "changed-trace",
+])
+def test_crash_recovery_blocks_and_preserves_damaged_creative(tmp_path, monkeypatch, kind):
+    """Recovery may validate a complete Creative, never repair or overwrite damaged evidence."""
+    store = Store(tmp_path)
+    run = store.create(request())
+    initial = store.state(run)
+    directory = store.path("runs", run)
+    result_payload = {
+        "status": "PASS",
+        "outcome": "agreement",
+        "title": "Verificação",
+        "markdown": "# Verificação\n\nDois métodos concordam.",
+        "evidence": [{"capability": "test", "status": "PASS", "value": "abc"}],
+        "ai_calls": 0,
+    }
+    raw_trace = {"engine": "synthetic-disposable-executor", "events": []}
+    envelope = {"result": result_payload, "trace": raw_trace}
+    (directory / "execution.stdout.json").write_bytes(
+        json.dumps(envelope, ensure_ascii=False).encode("utf-8"))
+    accepted_trace = dict(raw_trace, workflow_sha256=initial["workflow_sha256"])
+
+    def crash_before_state_update(*args, **kwargs):
+        raise RuntimeError("synthetic crash after Creative")
+
+    monkeypatch.setattr(store, "update", crash_before_state_update)
+    with pytest.raises(RuntimeError, match="synthetic crash after Creative"):
+        store.accept(run, result_payload, accepted_trace)
+
+    damage(tmp_path, run, kind)
+    preserved = {str(path.relative_to(tmp_path)): path.read_bytes()
+                 for path in tmp_path.rglob("*")
+                 if path.is_file() and path.name != "state.json"}
+
+    restored = Store(tmp_path)
+    state = restored.state(run)
+
+    assert state["status"] == "BLOCKED"
+    assert not restored.path("canonical", run).exists()
+    assert {str(path.relative_to(tmp_path)): path.read_bytes()
+            for path in tmp_path.rglob("*")
+            if path.is_file() and path.name != "state.json"} == preserved
