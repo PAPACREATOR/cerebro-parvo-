@@ -7,7 +7,7 @@ from contextlib import AsyncExitStack
 from pathlib import Path
 import sys
 
-from nexus.mcp_client import MCPServerSpec, _open_session
+from nexus.mcp_client import MCPServerSpec, _open_session, _payload_from_result
 
 ROOT = Path(__file__).resolve().parents[1]
 PYTHON = Path(sys.executable).resolve()
@@ -34,7 +34,7 @@ async def _run_1000():
             )
             result = await session.call_tool("ping", {"value": original})
             assert result.isError is False, i
-            payload = result.structuredContent
+            payload = _payload_from_result(result)
             assert payload == {"echo": original, "authority": "NONE"}, i
             assert payload["echo"].encode("utf-8") == original.encode("utf-8"), i
             count += 1
@@ -44,7 +44,7 @@ async def _run_1000():
             value = (i - 100) * 1000003
             result = await session.call_tool("double", {"value": value})
             assert result.isError is False, i
-            assert result.structuredContent == {"value": value * 2}, i
+            assert _payload_from_result(result) == {"value": value * 2}, i
             count += 1
 
         # 100 live rediscoveries: server stays stable and tool inventory does not drift.
