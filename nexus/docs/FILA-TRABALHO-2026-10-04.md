@@ -20,11 +20,11 @@ Regra: não alterar leis nem arquitetura congelada sem FAIL estrutural reproduzi
 
 | ID | Tarefa | Dono | Estado | Critério de fecho |
 |---|---|---|---|---|
-| T01 | Crash após resultado do executor e antes de Store.accept | GPT/revisor | EM CURSO | restart reconcilia sem reexecutar Conductor, preserva proveniência, PASS bidirecional |
-| T02 | Crash antes da execução externa | GPT/revisor | PENDENTE | reinício conserva pedido e não inventa resultado |
-| T03 | Crash depois de Creative e antes do estado final | GPT/revisor | PENDENTE | estado reconciliado sem duplicar efeitos |
-| T04 | Idempotência de reentrada | GPT/revisor | PENDENTE | mesmo operation/run não duplica Creative/Canonical |
-| T05 | Human Gate adversarial | GPT/revisor | PENDENTE | bypass, ticket antigo, conteúdo alterado e restart bloqueados |
+| T01 | Crash após resultado do executor e antes de Store.accept | GPT/revisor | PASS | run 37197610565: 1197 PASS; sem reexecução, workflow fixado, Canonical vazio |
+| T02 | Crash antes da execução externa | GPT/revisor | PASS | teste Work existente conserva input, marca interrupção e não cria Canonical |
+| T03 | Crash depois de Creative e antes do estado final | GPT/revisor | PASS | run 37198248236: 1206 PASS; Creative completo reconciliado; 8 danos ficam BLOCKED e preservados |
+| T04 | Idempotência de reentrada | GPT/revisor | PARCIAL | accept idempotente após crash e promoção repetida já cobertos; escala/property-based pendente |
+| T04A | Binding resultado ↔ workflow fixado | GPT/revisor | PASS | run 37198721444: 1207 PASS; trace com hash diferente é rejeitado |\n| T05 | Human Gate adversarial | GPT/revisor | PENDENTE | bypass, ticket antigo, conteúdo alterado e restart bloqueados |
 | T06 | Comparação Conductor-only vs Spiff+Conductor | GPT/Work | BLOQUEADO PELO ESPELHO LOCAL | mesmos contratos efémeros; persistência fora da comparação |
 | T07 | Integração Windows LAB | Codex/PC | NOT RUN | commit testado em C:\Nexus-Lab, relatório PASS/FAIL devolvido |
 | T08 | Isolamento Windows por capability | Work/PC | PENDENTE | mínimo privilégio + ACL/processo + bypass testado |
@@ -41,3 +41,14 @@ Regra: não alterar leis nem arquitetura congelada sem FAIL estrutural reproduzi
 - `C:\Nexus-Lab` é destino para testes Windows reais.
 - GitHub = coordenação e código; Drive = snapshots/artefactos; PC = execução real.
 - Persistência/restart/reconciliação pertencem ao Kernel/Store, nunca ao executor.
+
+
+## Evidência desta sessão
+
+- FAIL real T01: `1 failed, 1196 passed` — run 37197119992.
+- T01 corrigido: `1197 passed in 55.49s` — run 37197610565.
+- FAIL real T03: `1 failed, 1197 passed` — run 37197826991.
+- T03 + adversarial: `1206 passed in 47.22s` — run 37198248236.
+- FAIL real binding de workflow: `1 failed, 1206 passed` — run 37198491684.
+- Binding corrigido: `1207 passed in 39.51s` — run 37198721444.
+- Em todos os PASS finais: `NEXUS PASS | COMPLETE` e wrapper PowerShell PASS.
