@@ -47,5 +47,7 @@ jobs:
           $raw = Get-Content -LiteralPath nexus/windows/install-media-tools.ps1 -Raw
           [void][scriptblock]::Create($raw)
           Write-Output 'MEDIA_INSTALLER_PARSE=PASS'
-      - name: Block F — complete Nexus regression
+      - name: Block F — ACE-Step and Forge bounded local MCP health
+        run: python -m pytest nexus/tests/test_media_tools.py nexus/tests/test_media_tools_mcp.py -q -p no:cacheprovider -o pythonpath=.
+      - name: Block G — complete Nexus regression
         run: python -m pytest nexus/tests -q -p no:cacheprovider -o pythonpath=.
