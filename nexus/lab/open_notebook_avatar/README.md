@@ -1,7 +1,7 @@
 # Open Notebook — capacidade local de avatar
 
-Extensão opcional para **Open Notebook 1.14.0**, source checkout
-`lfnovo/open-notebook@30c7e2a63e43b7f270fc2c638f0b6246934a53f4`.
+Extensão opcional validada contra **Open Notebook 1.15.0**, source checkout
+`lfnovo/open-notebook@315d5255af2a5132aada41c94d5c3c5dc8e837aa`.
 Não reconstrói podcast, outline, transcript, speakers, TTS ou mistura de áudio.
 Usa o áudio de um episódio existente e um retrato fornecido pelo operador.
 
@@ -110,6 +110,12 @@ Argumentos: `--source-root`, `--python-api`, `--python-worker`, `--surreal`,
 `--checkpoint`, `--audio`, `--portrait`, `--report` (pasta nova).
 Usar apenas um checkout/DB de laboratório: o ensaio cria um episódio sintético.
 
+A integração Nexus dispõe ainda de um gate separado:
+`Kernel/Host → MCP stdio → fronteira OpenNotebook loopback → Creative → Human Gate → Canonical → restart`.
+Esse gate testa o encadeamento e rejeições de respostas inválidas, mas a peer HTTP
+é determinística e não substitui um teste do backend Open Notebook completo com
+SurrealDB e modelo local físico.
+
 ## Licenças e fontes
 
 - Código da extensão: licença do repositório Nexus, PolyForm Noncommercial 1.0.0.
@@ -121,6 +127,6 @@ Usar apenas um checkout/DB de laboratório: o ensaio cria um episódio sintétic
 - Fontes: https://github.com/mowshon/lipsync ; https://github.com/Rudrabha/Wav2Lip ;
   https://github.com/1adrianb/face-alignment ; https://ffmpeg.org/ffmpeg.html .
 
-Consultar o relatório versionado para resultados e limites. A instalação física
-de Pedro e o circuito oficial Folha/Kernel/Creative/Human Gate não são provados
-por esta extensão isolada.
+Consultar o relatório versionado para a evidência histórica e o comentário de
+baseline mais recente da PR #23 para o HEAD atual. PC físico/GPU e Open Notebook
+completo + SurrealDB + modelo local no mesmo E2E continuam gates distintos.
