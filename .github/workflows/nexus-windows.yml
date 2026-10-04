@@ -37,7 +37,7 @@ jobs:
         shell: pwsh
         run: |
           $python = (Get-Command python).Source
-          foreach ($suite in @('core', 'blocks', 'practical', 'all')) {
+          foreach ($suite in @('core', 'blocks', 'all', 'practical')) {
             $report = Join-Path $env:RUNNER_TEMP ('nexus-' + $suite)
             powershell.exe -NoProfile -File nexus/windows/check-nexus.ps1 -PythonPath $python -Suite $suite -ReportDirectory $report
             if ($LASTEXITCODE -ne 0) {
