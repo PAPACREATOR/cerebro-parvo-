@@ -78,11 +78,12 @@ class Store:
                             raise Blocked("Resposta de execução inválida.")
                         if not isinstance(envelope["trace"], dict):
                             raise Blocked("Trace de execução inválido.")
-                        expected_workflow = state.get("workflow_sha256")
-                        current_workflow = digest((ROOT / "processes" / (state["process_id"] + ".yaml")).read_bytes())
-                        if expected_workflow is None or current_workflow != expected_workflow:
+                        from nexus.adapters.runner import process_fingerprint
+                        expected_process = state.get("process_sha256")
+                        current_process = process_fingerprint(state["process_id"])
+                        if expected_process is None or current_process != expected_process:
                             raise Blocked("O processo mudou; o resultado conservado não pode ser reconciliado automaticamente.")
-                        trace = dict(envelope["trace"], workflow_sha256=expected_workflow)
+                        trace = dict(envelope["trace"], process_sha256=expected_process)
                         self.accept(state["run_id"], envelope["result"], trace)
                         continue
                     except (Blocked, OSError, ValueError, KeyError, TypeError):
@@ -234,14 +235,15 @@ class Store:
         directory.mkdir()
         atomic(directory / "input.bin", content)
         atomic(directory / "request.json", request)
-        workflow_sha256 = digest((ROOT / "processes" / (request["process"] + ".yaml")).read_bytes())
+        from nexus.adapters.runner import process_fingerprint
+        process_sha256 = process_fingerprint(request["process"])
         atomic(directory / "state.json", {
             "run_id": run_id, "process_id": request["process"], "process_version": "1.0.0",
             "title": name, "status": "RUNNING", "created_at": now(), "updated_at": now(),
             "message": "A executar o processo.", "execution_phase": "PREPARED",
             "input_sha256": digest(content),
             "request_sha256": digest((directory / "request.json").read_bytes()),
-            "workflow_sha256": workflow_sha256,
+            "process_sha256": process_sha256,
         })
         return run_id
 
@@ -252,7 +254,7 @@ class Store:
             if state["status"] != "RUNNING":
                 raise Blocked("A execução já terminou.")
             self.check_input(state)
-            if not isinstance(trace, dict) or trace.get("workflow_sha256") != state.get("workflow_sha256"):
+            if not isinstance(trace, dict) or trace.get("process_sha256") != state.get("process_sha256"):
                 raise Blocked("O resultado não corresponde à versão do processo fixada no pedido.")
             if state["process_id"] in ("interpret", "proofread", "convert_pdf"):
                 if result["status"] != "UNKNOWN" or result["outcome"] != "candidate":
