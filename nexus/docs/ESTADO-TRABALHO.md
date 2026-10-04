@@ -123,3 +123,13 @@ Gravação local autorizada. Envio ao GitHub continua pendente de autorização 
 Implementação pausada por instrução explícita. Consultadas todas as refs remotas disponíveis, PRs #7–#13/comentários, planos e Actions. Ver `SYNC-EQUIPA-2026-10-04.md` e inventário JSON para commits, falhas, estados em curso e fronteira partilhada parser/contexto/Kernel.
 
 O pedido atual autoriza sincronizar/publicar esta branch no GitHub; a pendência de autorização nas entradas anteriores é histórica e fica levantada para esta publicação. Push CLI falhou por falta de credenciais; utilizar conector autenticado e verificar igualdade das árvores. Não alterar branches de outras sessões nem integrar experiências falhadas em main. Próxima implementação permanece em pausa até novo pedido.
+
+## Open Notebook — avatar/FFmpeg, pedido de 04/10/2026
+
+Pedido de Pedro: corrigir código, instalar dependências e implementar avatar no Open Notebook com muitos testes. Branch isolada `lab-open-notebook-avatar-20261004`, base PR #22 / `b0b95076c94b4752db8955744e3fe4ed8e4fcb68`.
+
+Entrega: router nativo opcional Open Notebook 1.14, worker SFD/Wav2Lip/FFmpeg, proveniência atómica, MCP adicional, instaladores/provisionamento e CI Linux/Windows. Áudio do episódio existente; código ativo Nexus e main intocados.
+
+PASS Linux: 165 testes da extensão (11,93 s), dois circuitos nativos reais com SurrealDB/API/SFD/Wav2Lip CPU/FFmpeg/MCP, repetição, restart e adulteração. Dependências instaladas, pip check e integridade host PASS. Regressão geral Nexus: 1319 PASS/14 FAIL/7 SKIP; não atribuir PASS global. Falhas e correções de desenvolvimento preservadas.
+
+Relatório: `RELATORIO-AVATAR-2026-10-04.md`; evidência: `nexus/lab/open_notebook_avatar/evidence/`. Windows/GPU/PC, qualidade quantitativa, novo frontend e integração Kernel oficial NOT RUN local. CI remoto tem resultado próprio. Próximo gate: instalação e episódio reais no Windows de laboratório, revisão humana e integração limitada. Este commit identifica a entrega; não promove resultados nem autoriza merge em main.
