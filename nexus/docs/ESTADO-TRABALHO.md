@@ -99,3 +99,21 @@ Ficheiros: `nexus/lab/wiki/`, `nexus/docs/RELATORIO-FINAL-WIKI-100K.md`, `nexus/
 
 NOT RUN: integração Nexus/Windows, IA/web reais, histórico de versões, UI, crash/concorrência, Human Gate integrado. Não atribuir PASS global à wiki nem melhoria percentual por reutilização.
 Próximo: rever contrato do objeto de conhecimento e mapping F013/Store; depois validar integração autorizada, sem tocar em produção.
+
+## Kernel → wiki → flow — continuação de 04/10/2026
+
+Pedido atual: descobrir como ligar/guardar o estudo e como o Kernel o usa para organizar informação e flows.
+Base `74f6857`, mesma branch isolada `lab-wiki-complemento-20261004`.
+
+Implementado no laboratório: bridge de leitura do Store real, FTS5 derivado, escopo explícito, separação Creative/Canonical, pacote de contexto até 6000 caracteres/oito fontes, flow Conductor real de inventário, gravação experimental e relações fonte ↔ utilização. Núcleo e flows oficiais intocados.
+
+PASS: 1098 testes em 16,59s (1024 variantes de seleção e 74 controlos/integrações); regressão dos componentes Store/portão/proveniência/notebook/schema: 101 PASS em 4,55s, dois casos Windows excluídos. Auditoria documental PASS.
+
+Falhas preservadas: fixture que reescrevia bytes iguais corrigido; expectativa errada de exceção Conductor corrigida para provar rejeição do resultado inválido na fronteira. Ensaio completo inicial: 1096 PASS/1 FAIL; final: 1098 PASS.
+Evidência: `nexus/lab/wiki/evidence/kernel-20261004/summary.json`, XML/logs, hashes e ambiente.
+Estudo: `nexus/docs/ESTUDO-LIGACAO-WIKI-KERNEL-FLOWS-2026-10-04.md`. Contrato: `CONTRATO-LAB-WIKI-KERNEL-FLOWS.md`.
+
+NOT RUN: Windows, IA real, interface nova, integração no Host oficial, concorrência externa/power loss. O flow transporta contexto, não interpreta semanticamente.
+Próximo microprocesso: contrato de request/contexto e vínculo do output às referências consultadas; depois integração limitada no Host com testes. Não passar hash do flow oficial para aceitar saída de flow diferente.
+
+Gravação local autorizada. Envio ao GitHub continua pendente de autorização explícita após a rejeição automática anterior; nenhuma nova tentativa de push nesta etapa. O commit desta entrada identifica a entrega.

@@ -1,0 +1,23 @@
+workflow:
+  name: lab-wiki-context-transport
+  version: 1.0.0
+  entry_point: inventory
+  input:
+    input_path: {type: string}
+    python: {type: string}
+  limits:
+    max_iterations: 2
+    timeout_seconds: 15
+agents:
+- name: inventory
+  type: script
+  command: '{{ workflow.input.python }}'
+  args:
+  - -I
+  - '{{ workflow.dir }}/context_packet.py'
+  - '{{ workflow.input.input_path }}'
+  timeout: 5
+  routes:
+  - to: $end
+output:
+  result: '{{ inventory.output.stdout }}'

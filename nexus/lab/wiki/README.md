@@ -15,3 +15,10 @@ O resultado não autoriza integração automática em nenhuma branch oficial.
 Ver `../../docs/COMPLEMENTO-WIKI-INFORMACAO-GERADA-2026-10-04.md` e `../../docs/RELATORIO-FINAL-WIKI-100K.md`.
 
 Comando: `python nexus/lab/wiki/test_web_research_wiki_100k.py --cases 100000 --output nexus/lab/wiki/results`. A contagem é de objetos sintéticos, não de cenários independentes. O envelope experimental não é o contrato F009. Resultados de execução ficam em `summary.json`; falha devolve código diferente de zero.
+
+## Ligação experimental ao Kernel e flows
+
+Ver `../../docs/ESTUDO-LIGACAO-WIKI-KERNEL-FLOWS-2026-10-04.md`.
+`kernel_bridge.py` usa Store real em leitura; `context_flow.yaml` prova transporte pelo Conductor real. Ainda não registados no Host oficial.
+Reproduzir: `python -m pytest nexus/lab/wiki/test_kernel_bridge.py -q`, com dependências de `nexus/requirements-test.txt` num ambiente separado.
+Evidência: `evidence/kernel-20261004/summary.json`.
