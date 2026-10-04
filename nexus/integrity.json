@@ -1,10 +1,9 @@
 {
   "app.py": "a0cec14cb307cd4401b38614859a3541ddb9ce96576ffd7492137a4b502a94df",
   "contracts.py": "6c97ed0af3892c7dbbfe7d4b1f673c319ed9fc92c24f638161b91f2c43c02f3c",
-  "host.py": "bdd8e4cf505bb481db479e754461d264930a5ec39e754f5743be98391507f139",
+  "host.py": "8ff5d4bf44fa998d4bd3235036cb36b509dabcaf7bb64565e8b6666b2c6dfd12",
   "store.py": "0a19cca3d8cd53d32c5d20258574aa9f003c112caeb5681f228021897e5ff9f5",
   "__init__.py": "46cab08a37d7677c810002d394bfc5ac0729e488dc9b6920cabedf37db8dc15a",
-  "adapters/conductor_runner.py": "ca7efded3f337c6b0350a41263fdbcfe2f2d986f0067ccbb92ca870575ba6660",
   "adapters/tools.py": "c77a30cd738e5fdec94d25306f34b1f0fdc49f441504259f195d0fcf2aa64826",
   "laws/CONSTITUTION.md": "addac01c2f907daeb69e5c393afb19f5ed4324dad6956a9259520b1d864c4851",
   "laws/policy.json": "d6d8ae28a42d3dbe36a67b6b0b8408f92b25912a4807c9a777c4236d337e9088",
@@ -29,5 +28,7 @@
   "schemas/multimedia.json": "ea20b02da3c33557d42475c84e111f98a1f7048708af0e434dde4aca53154e01",
   "families/multimedia/som.md": "d31057a867080291d183e9cde486b6079e686403cf7869ed749d0f005e770462",
   "families/multimedia/imagem.md": "4a321cdc18751a5d3e1dec770908aa5d992e17126e5569bbfd9045a2dc4583de",
-  "instance.py": "a97ef1449ab8a2fe66dc0bcf79fe64dca93ae1b7a43bbfa296caeb90229120ac"
+  "instance.py": "a97ef1449ab8a2fe66dc0bcf79fe64dca93ae1b7a43bbfa296caeb90229120ac",
+  "adapters/runner.py": "0021d7dd66740a4c3222ae54a378761a7a08e32f6287868a3fbb0cf0dda6e78f",
+  "adapters/verify_direct.py": "ba0bb3571eeff8f5ad9e3134abc25274164cddf4e6d6ffc2cce051beb8129173"
 }
