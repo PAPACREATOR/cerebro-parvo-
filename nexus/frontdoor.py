@@ -41,7 +41,7 @@ NATURAL_RULES = {
         r"\bda(?:-me)?\b.*\bfontes?\b",
     ),
     "trabalhar": (
-        r"\btrabalha(?:r)?\b", r"\breve(?:r)?\b", r"\bmelhora(?:r)?\b",
+        r"\btrabalha(?:r)?\b", r"\b(?:reve|revê|rever)\b", r"\bmelhora(?:r)?\b",
         r"\breescreve(?:r)?\b", r"\bcorrige(?:r)?\b",
     ),
     "perguntar": (
