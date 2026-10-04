@@ -1,2 +1,1 @@
-# Deterministic isolated 100k writer web-research/wiki study.
-# Full implementation to be supplied in this lab branch.
+# Real deterministic implementation of the isolated 100k wiki study will be written here.
