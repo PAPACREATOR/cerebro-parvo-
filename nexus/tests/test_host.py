@@ -131,3 +131,44 @@ def test_invalid_reference_is_blocked(tmp_path, reference):
     host = Host(tmp_path)
     with pytest.raises(Blocked):
         host.prepare_approval(reference, host.session)
+
+
+def test_wrong_session_cannot_consume_valid_ticket(tmp_path):
+    host = Host(tmp_path)
+    run = candidate(host.store)
+    ticket = host.prepare_approval(run, host.session)["ticket"]
+
+    with pytest.raises(Blocked):
+        host.approve(run, ticket, True, "wrong-session")
+
+    assert ticket in host.tickets
+    assert not host.store.path("canonical", run).exists()
+    assert host.approve(run, ticket, True, host.session)["status"] == "PASS"
+
+
+def test_ticket_is_bound_to_one_run_and_cannot_approve_another(tmp_path):
+    host = Host(tmp_path)
+    first = candidate(host.store)
+    second = candidate(host.store)
+    ticket = host.prepare_approval(first, host.session)["ticket"]
+
+    with pytest.raises(Blocked):
+        host.approve(second, ticket, True, host.session)
+
+    assert not host.store.path("canonical", first).exists()
+    assert not host.store.path("canonical", second).exists()
+
+
+def test_pending_approval_ticket_does_not_survive_host_restart(tmp_path):
+    first_host = Host(tmp_path)
+    run = candidate(first_host.store)
+    stale_ticket = first_host.prepare_approval(run, first_host.session)["ticket"]
+
+    restarted = Host(tmp_path)
+    assert restarted.tickets == {}
+    with pytest.raises(Blocked):
+        restarted.approve(run, stale_ticket, True, restarted.session)
+    assert not restarted.store.path("canonical", run).exists()
+
+    fresh_ticket = restarted.prepare_approval(run, restarted.session)["ticket"]
+    assert restarted.approve(run, fresh_ticket, True, restarted.session)["status"] == "PASS"
