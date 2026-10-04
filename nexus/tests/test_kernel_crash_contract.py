@@ -91,13 +91,13 @@ def test_accepted_result_closes_external_execution_phase(tmp_path):
     trace = {
         "engine": "synthetic-disposable-executor",
         "events": [],
-        "workflow_sha256": prepared["workflow_sha256"],
+        "process_sha256": prepared["process_sha256"],
     }
     state = store.accept(run_id, result(), trace)
 
     assert state["status"] == "HUMAN_REQUIRED"
     assert state["execution_phase"] == "RESULT_ACCEPTED"
-    assert store.check_candidate(state)["execution"]["workflow_sha256"] == prepared["workflow_sha256"]
+    assert store.check_candidate(state)["execution"]["process_sha256"] == prepared["process_sha256"]
     assert not store.path("canonical", run_id).exists()
 
 
@@ -114,7 +114,7 @@ def test_restart_never_reconciles_redirected_executor_output(tmp_path):
         "trace": {
             "engine": "synthetic-outside",
             "events": [],
-            "workflow_sha256": state["workflow_sha256"],
+            "process_sha256": state["process_sha256"],
         },
     }
     outside.write_text(json.dumps(envelope, ensure_ascii=False), encoding="utf-8")
