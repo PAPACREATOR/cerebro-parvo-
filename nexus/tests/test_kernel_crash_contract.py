@@ -78,3 +78,23 @@ def test_restart_after_kernel_dies_during_executor_is_recovery_required(tmp_path
     assert (restarted.path("runs", run_id) / "input.bin").is_file()
     assert not (restarted.path("runs", run_id) / "execution.stdout.json").exists()
     assert not restarted.path("canonical", run_id).exists()
+
+
+def test_accepted_result_closes_external_execution_phase(tmp_path):
+    """FAIL-first: a durable accepted result must not remain marked EXECUTING."""
+    store = Store(tmp_path)
+    run_id = store.create(request())
+    prepared = store.state(run_id)
+    assert prepared["execution_phase"] == "PREPARED"
+
+    trace = {
+        "engine": "synthetic-disposable-executor",
+        "events": [],
+        "workflow_sha256": prepared["workflow_sha256"],
+    }
+    state = store.accept(run_id, result(), trace)
+
+    assert state["status"] == "HUMAN_REQUIRED"
+    assert state["execution_phase"] == "RESULT_ACCEPTED"
+    assert store.check_candidate(state)["execution"]["workflow_sha256"] == prepared["workflow_sha256"]
+    assert not store.path("canonical", run_id).exists()
