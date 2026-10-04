@@ -40,7 +40,19 @@ echo.
 echo ------------------------------------------------------------
 echo RUNNING: %NAME%
 echo ------------------------------------------------------------
-%* > "%REPORT_DIR%\%NAME%.log" 2>&1
+set "CMDLINE="
+:build_cmd
+if "%~1"=="" goto exec_cmd
+if defined CMDLINE (
+  set "CMDLINE=!CMDLINE! %1"
+) else (
+  set "CMDLINE=%1"
+)
+shift
+goto build_cmd
+
+:exec_cmd
+call !CMDLINE! > "%REPORT_DIR%\%NAME%.log" 2>&1
 set RC=!ERRORLEVEL!
 type "%REPORT_DIR%\%NAME%.log"
 if not "!RC!"=="0" (
