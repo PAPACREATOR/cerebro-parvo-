@@ -5,6 +5,8 @@ already-implemented T01 contract from the Work branch.
 """
 import json
 
+import pytest
+
 from nexus.store import Store
 from nexus.tests.test_store import request, result
 
@@ -39,4 +41,40 @@ def test_restart_reconciles_durable_executor_result_without_generic_fail(tmp_pat
     assert state["status"] != "FAIL"
     assert (run / "execution.stdout.json").read_bytes() == raw
     assert restarted.check_candidate(state)["execution"]["engine"] == "synthetic-disposable-executor"
+    assert not restarted.path("canonical", run_id).exists()
+
+
+def test_restart_after_kernel_dies_during_executor_is_recovery_required(tmp_path, monkeypatch):
+    """FAIL-first: distinguish PREPARED from an external execution already entered.
+
+    If the Kernel dies after declaring entry into an external capability but before
+    a durable result exists, restart must preserve uncertainty. It must not claim a
+    generic FAIL and must not retry automatically.
+    """
+    from nexus.host import Host
+
+    host = Host(tmp_path)
+    run_id = host.store.create(request())
+    seen_phase = []
+
+    def crash_after_external_entry(*args, **kwargs):
+        seen_phase.append(host.store.state(run_id).get("execution_phase"))
+        raise SystemExit("synthetic hard crash during executor")
+
+    monkeypatch.setattr("nexus.host.subprocess.Popen", crash_after_external_entry)
+
+    host.busy.acquire()
+    with pytest.raises(SystemExit, match="synthetic hard crash"):
+        host._run(run_id)
+
+    assert seen_phase == ["EXECUTING"]
+
+    restarted = Store(tmp_path)
+    state = restarted.state(run_id)
+
+    assert state["status"] == "BLOCKED"
+    assert state["commit_status"] == "RECOVERY_REQUIRED"
+    assert state["execution_phase"] == "EXECUTING"
+    assert (restarted.path("runs", run_id) / "input.bin").is_file()
+    assert not (restarted.path("runs", run_id) / "execution.stdout.json").exists()
     assert not restarted.path("canonical", run_id).exists()
