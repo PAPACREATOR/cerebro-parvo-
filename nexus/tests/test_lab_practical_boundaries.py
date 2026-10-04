@@ -52,7 +52,7 @@ def test_unicode_text_schema_boundary_is_exact(tmp_path):
     assert not list((tmp_path / "canonical").iterdir())
 
 
-@pytest.mark.skipif(os.name != "nt", reason="Requires real Windows PowerShell/Conductor")
+@pytest.mark.skipif(os.name != "nt", reason="Requires real Windows PowerShell")
 def test_real_windows_exact_2mib_attachment_roundtrip_and_restart(tmp_path, monkeypatch):
     raw = bytes(range(256)) * 8192
     assert len(raw) == MIB2
