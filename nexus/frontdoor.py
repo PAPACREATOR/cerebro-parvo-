@@ -10,6 +10,8 @@ from dataclasses import dataclass
 import re
 import unicodedata
 
+from nexus.contracts import Blocked, strict_json, validate
+
 
 PREFIXES = (
     ("@@", "arquivo"),
@@ -66,6 +68,7 @@ class ParsedInput:
     content: str
     parser: str
     explicit: bool
+    shadow: str | None = None
 
     def as_dict(self) -> dict:
         return {
@@ -75,6 +78,7 @@ class ParsedInput:
             "content": self.content,
             "parser": self.parser,
             "explicit": self.explicit,
+            "shadow": self.shadow,
         }
 
 
@@ -125,3 +129,76 @@ def parse_natural(text: str) -> ParsedInput:
 def parse(text: str) -> ParsedInput:
     """Public front-door parser: explicit prefix first, natural rules second."""
     return parse_natural(text)
+
+
+
+def _parse_natural_rules(text: str, *, original: str | None = None, parser: str = "eliza-rules-v1",
+                         shadow: str | None = None) -> ParsedInput:
+    normal = _normalise_for_matching(text)
+    matches = []
+    for intent, patterns in NATURAL_RULES.items():
+        if any(re.search(pattern, normal) for pattern in patterns):
+            matches.append(intent)
+    source = text if original is None else original
+    if len(matches) != 1:
+        return ParsedInput("UNRESOLVED", None, source, source, parser, False, shadow)
+    return ParsedInput("RESOLVED", matches[0], source, source, parser, False, shadow)
+
+
+def languagetool_shadow(text: str, raw) -> str:
+    """Apply only unambiguous LanguageTool replacements to a non-authoritative shadow.
+
+    The original is never changed. Invalid or overlapping diagnostics are rejected
+    so LanguageTool cannot silently manufacture a command.
+    """
+    value = strict_json(raw) if isinstance(raw, (str, bytes, bytearray)) else raw
+    validate("languagetool", value)
+    if value["warnings"]["incompleteResults"]:
+        raise Blocked("LanguageTool devolveu resultados incompletos.")
+
+    edits = []
+    for match in value["matches"]:
+        offset = match.get("offset")
+        length = match.get("length")
+        replacements = match.get("replacements", [])
+        if not isinstance(offset, int) or isinstance(offset, bool) or not isinstance(length, int) or isinstance(length, bool):
+            continue
+        if offset < 0 or length <= 0 or offset + length > len(text):
+            raise Blocked("LanguageTool devolveu posições inválidas.")
+        # Multiple alternatives are semantically ambiguous: do not guess.
+        if len(replacements) != 1:
+            continue
+        replacement = replacements[0].get("value")
+        if not isinstance(replacement, str) or len(replacement) > 200 or any(ord(ch) < 32 for ch in replacement):
+            continue
+        edits.append((offset, offset + length, replacement))
+
+    edits.sort()
+    for previous, current in zip(edits, edits[1:]):
+        if current[0] < previous[1]:
+            raise Blocked("LanguageTool devolveu correções sobrepostas.")
+
+    shadow = text
+    for start, end, replacement in reversed(edits):
+        shadow = shadow[:start] + replacement + shadow[end:]
+    return shadow
+
+
+def parse_with_languagetool(text: str, raw) -> ParsedInput:
+    """Retry unresolved Portuguese through a LanguageTool correction shadow."""
+    first = parse(text)
+    if first.status != "UNRESOLVED" or first.explicit:
+        return first
+    try:
+        shadow = languagetool_shadow(text, raw)
+    except (Blocked, TypeError, ValueError, KeyError):
+        return first
+    if shadow == text:
+        return first
+    # Never treat a LanguageTool-created prefix as explicit authority.
+    return _parse_natural_rules(
+        shadow,
+        original=text,
+        parser="languagetool-shadow+eliza-v1",
+        shadow=shadow,
+    )
