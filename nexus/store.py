@@ -79,7 +79,8 @@ class Store:
                         if not isinstance(envelope["trace"], dict):
                             raise Blocked("Trace de execução inválido.")
                         expected_workflow = state.get("workflow_sha256")
-                        current_workflow = digest((ROOT / "processes" / (state["process_id"] + ".yaml")).read_bytes())
+                        from nexus.adapters.runner import process_fingerprint
+                        current_workflow = process_fingerprint(state["process_id"])
                         if expected_workflow is None or current_workflow != expected_workflow:
                             raise Blocked("O processo mudou; o resultado conservado não pode ser reconciliado automaticamente.")
                         trace = dict(envelope["trace"], workflow_sha256=expected_workflow)
@@ -234,7 +235,8 @@ class Store:
         directory.mkdir()
         atomic(directory / "input.bin", content)
         atomic(directory / "request.json", request)
-        workflow_sha256 = digest((ROOT / "processes" / (request["process"] + ".yaml")).read_bytes())
+        from nexus.adapters.runner import process_fingerprint
+        workflow_sha256 = process_fingerprint(request["process"])
         atomic(directory / "state.json", {
             "run_id": run_id, "process_id": request["process"], "process_version": "1.0.0",
             "title": name, "status": "RUNNING", "created_at": now(), "updated_at": now(),
