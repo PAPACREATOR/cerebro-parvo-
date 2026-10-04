@@ -1,12 +1,13 @@
 """Empirical Conductor flow-performance probes for Nexus Lab.
 
-These are comparative measurements, not architecture changes. Each pair performs
-the same logical class of work using different Conductor flow shapes.
+Experimental benchmark only. The normal Nexus suite skips this module unless
+NEXUS_CONDUCTOR_PERF=1 is explicitly set by the dedicated Lab workflow.
 """
 from __future__ import annotations
 
 import asyncio
 import json
+import os
 import statistics
 import sys
 import time
@@ -21,11 +22,13 @@ from conductor.config.schema import (
     RuntimeConfig,
     ScriptStepDef,
     SetStepDef,
-    WaitStepDef,
     WorkflowConfig,
     WorkflowDef,
 )
 from conductor.engine.workflow import WorkflowEngine
+
+if os.environ.get("NEXUS_CONDUCTOR_PERF") != "1":
+    pytest.skip("Conductor performance Lab is opt-in", allow_module_level=True)
 
 
 def engine(config: WorkflowConfig) -> WorkflowEngine:
@@ -50,16 +53,16 @@ def stats(samples: list[float]) -> dict[str, float]:
     }
 
 
-def emit(name: str, baseline: list[float], optimized: list[float]) -> None:
+def emit(name: str, baseline: list[float], candidate: list[float]) -> None:
     b = statistics.median(baseline)
-    o = statistics.median(optimized)
-    improvement = ((b - o) / b * 100.0) if b else 0.0
+    c = statistics.median(candidate)
+    improvement = ((b - c) / b * 100.0) if b else 0.0
     print("PERF " + json.dumps({
         "case": name,
         "baseline": stats(baseline),
-        "optimized": stats(optimized),
+        "candidate": stats(candidate),
         "median_improvement_pct": round(improvement, 2),
-        "speedup_x": round((b / o), 3) if o else None,
+        "speedup_x": round((b / c), 3) if c else None,
     }, sort_keys=True))
 
 
@@ -121,71 +124,84 @@ def chained_set_config() -> WorkflowConfig:
     )
 
 
-def sequential_wait_config() -> WorkflowConfig:
+def sequential_ten_sets_config() -> WorkflowConfig:
+    agents = []
+    for i in range(10):
+        target = f"s{i+1}" if i < 9 else "$end"
+        agents.append(
+            SetStepDef(
+                name=f"s{i}",
+                value="{{ workflow.input.x }}-" + str(i),
+                routes=[RouteDef(to=target)],
+            )
+        )
     return WorkflowConfig(
         workflow=WorkflowDef(
-            name="sequential-waits",
-            entry_point="wait_a",
-            limits=LimitsConfig(max_iterations=10, timeout_seconds=5),
+            name="sequential-ten-set",
+            entry_point="s0",
+            limits=LimitsConfig(max_iterations=20),
         ),
-        agents=[
-            WaitStepDef(name="wait_a", duration="40ms", routes=[RouteDef(to="wait_b")]),
-            WaitStepDef(name="wait_b", duration="40ms", routes=[RouteDef(to="$end")]),
-        ],
-        output={"done": "true"},
+        agents=agents,
+        output={f"v{i}": "{{ s" + str(i) + ".output }}" for i in range(10)},
     )
 
 
-def parallel_wait_config() -> WorkflowConfig:
+def parallel_ten_sets_config() -> WorkflowConfig:
+    agents = [
+        SetStepDef(name=f"s{i}", value="{{ workflow.input.x }}-" + str(i))
+        for i in range(10)
+    ]
     return WorkflowConfig(
         workflow=WorkflowDef(
-            name="parallel-waits",
-            entry_point="both",
-            limits=LimitsConfig(max_iterations=10, timeout_seconds=5),
+            name="parallel-ten-set",
+            entry_point="all_sets",
+            limits=LimitsConfig(max_iterations=20),
         ),
-        agents=[
-            WaitStepDef(name="wait_a", duration="40ms"),
-            WaitStepDef(name="wait_b", duration="40ms"),
-        ],
+        agents=agents,
         parallel=[
             ParallelGroup(
-                name="both",
-                agents=["wait_a", "wait_b"],
+                name="all_sets",
+                agents=[f"s{i}" for i in range(10)],
                 failure_mode="all_or_nothing",
                 routes=[RouteDef(to="$end")],
             )
         ],
-        output={"done": "true"},
+        output={
+            f"v{i}": "{{ all_sets.outputs.s" + str(i) + " }}"
+            for i in range(10)
+        },
     )
 
 
-def foreach_wait_config(max_concurrent: int) -> WorkflowConfig:
+def foreach_set_config(max_concurrent: int) -> WorkflowConfig:
+    inline = SetStepDef(name="copy", value="{{ item }}")
     return WorkflowConfig(
         workflow=WorkflowDef(
-            name=f"foreach-{max_concurrent}",
+            name=f"foreach-set-{max_concurrent}",
             entry_point="setup",
-            limits=LimitsConfig(max_iterations=100, timeout_seconds=10),
+            limits=LimitsConfig(max_iterations=200),
         ),
         agents=[
             SetStepDef(
                 name="setup",
-                values={"items": "{{ [1,2,3,4,5,6,7,8,9,10] }}"},
+                value="{{ range(0, 100) | list | tojson }}",
+                output_type="list",
                 routes=[RouteDef(to="loop")],
             )
         ],
         for_each=[
-            ForEachDef(
-                name="loop",
-                type="for_each",
-                source="setup.output.items",
-                **{"as": "item"},
-                agent=WaitStepDef(name="pause", duration="20ms"),
-                max_concurrent=max_concurrent,
-                failure_mode="all_or_nothing",
-                routes=[RouteDef(to="$end")],
-            )
+            ForEachDef.model_validate({
+                "name": "loop",
+                "type": "for_each",
+                "source": "setup.output",
+                "as": "item",
+                "agent": inline,
+                "max_concurrent": max_concurrent,
+                "failure_mode": "all_or_nothing",
+                "routes": [{"to": "$end"}],
+            })
         ],
-        output={"done": "true"},
+        output={"items": "{{ loop.outputs | tojson }}"},
     )
 
 
@@ -233,40 +249,33 @@ def test_perf_compact_set_vs_five_step_chain():
         payload = {"x": "nexus"}
         chain = chained_set_config()
         compact = compact_set_config()
-
         assert await engine(chain).run(payload) == await engine(compact).run(payload)
-
         baseline = await timed_runs(chain, payload, 200)
-        optimized = await timed_runs(compact, payload, 200)
-        emit("five_set_chain_vs_one_multi_set", baseline, optimized)
+        candidate = await timed_runs(compact, payload, 200)
+        emit("five_set_chain_vs_one_multi_set", baseline, candidate)
     asyncio.run(run())
 
 
-def test_perf_parallel_waits_vs_sequential():
+def test_perf_parallel_ten_sets_vs_sequential():
     async def run():
-        sequential = sequential_wait_config()
-        parallel = parallel_wait_config()
-
-        assert (await engine(sequential).run({}))["done"] is True
-        assert (await engine(parallel).run({}))["done"] is True
-
-        baseline = await timed_runs(sequential, {}, 20)
-        optimized = await timed_runs(parallel, {}, 20)
-        emit("two_independent_waits_sequential_vs_parallel", baseline, optimized)
+        payload = {"x": "nexus"}
+        sequential = sequential_ten_sets_config()
+        parallel = parallel_ten_sets_config()
+        assert await engine(sequential).run(payload) == await engine(parallel).run(payload)
+        baseline = await timed_runs(sequential, payload, 100)
+        candidate = await timed_runs(parallel, payload, 100)
+        emit("ten_internal_sets_sequential_vs_parallel", baseline, candidate)
     asyncio.run(run())
 
 
-def test_perf_foreach_concurrency_1_vs_10():
+def test_perf_foreach_set_concurrency_1_vs_20():
     async def run():
-        serial = foreach_wait_config(1)
-        concurrent = foreach_wait_config(10)
-
-        assert (await engine(serial).run({}))["done"] is True
-        assert (await engine(concurrent).run({}))["done"] is True
-
-        baseline = await timed_runs(serial, {}, 10)
-        optimized = await timed_runs(concurrent, {}, 10)
-        emit("foreach_10_items_concurrency_1_vs_10", baseline, optimized)
+        serial = foreach_set_config(1)
+        concurrent = foreach_set_config(20)
+        assert await engine(serial).run({}) == await engine(concurrent).run({})
+        baseline = await timed_runs(serial, {}, 30)
+        candidate = await timed_runs(concurrent, {}, 30)
+        emit("foreach_100_internal_sets_concurrency_1_vs_20", baseline, candidate)
     asyncio.run(run())
 
 
@@ -275,10 +284,8 @@ def test_perf_internal_set_vs_script_subprocess():
         payload = {"value": "ação-日本語-Nexus"}
         script = script_echo_config()
         internal = set_echo_config()
-
         assert await engine(script).run(payload) == await engine(internal).run(payload)
-
         baseline = await timed_runs(script, payload, 50)
-        optimized = await timed_runs(internal, payload, 50)
-        emit("script_subprocess_vs_internal_set", baseline, optimized)
+        candidate = await timed_runs(internal, payload, 50)
+        emit("script_subprocess_vs_internal_set", baseline, candidate)
     asyncio.run(run())
