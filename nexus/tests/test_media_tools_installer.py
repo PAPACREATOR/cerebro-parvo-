@@ -53,3 +53,5 @@ def test_report_and_launchers_are_created():
     assert "nexus-media-tools.json" in SCRIPT
     assert "Start-ACE-Step-Nexus.cmd" in SCRIPT
     assert "Start-Forge-Nexus.cmd" in SCRIPT
+    assert "Check-Nexus-Media-Tools.cmd" in SCRIPT
+    assert "health_check_launcher" in SCRIPT
