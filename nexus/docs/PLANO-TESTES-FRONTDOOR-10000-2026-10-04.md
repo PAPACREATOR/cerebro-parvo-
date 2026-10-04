@@ -85,3 +85,14 @@ Nunca converter ambiguidade em RESOLVED por adivinhação.
 9. L5/L6;
 10. testes práticos Windows;
 11. só depois UI final.
+
+
+## Regra de implementação mínima
+
+- Python apenas como cola pequena, validação de fronteira e testes.
+- Não criar novo motor de workflows em Python.
+- Não duplicar funções já cobertas por Conductor, Spiff, LanguageTool ou leitores Markdown existentes.
+- Regras de linguagem devem ser preferencialmente declarativas e auditáveis.
+- LanguageTool só fornece sugestões/shadow; não altera o original.
+- Tradutor local só entra como capability opcional para idioma diferente de português, depois de prova de necessidade.
+- Markdown/YAML/JSON continuam a transportar estrutura; o Kernel continua a decidir autoridade.
