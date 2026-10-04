@@ -32,3 +32,11 @@ Principal valida allowlist e circuito real antes de integrar. Work não reconstr
 PR21 HEAD consultado0753f573f2dee739a4e43a5e255a4999319cc605. Aviso naPR23: comentário5984504095. Divisão publicada naPR21: comentário5984901664.
 
 Consultar comentários recentes e HEAD antes de cada edição; publicar base, paths, testes e próximo gate. Reserva publicada não prova leitura/aceitação por outro chat. Não existe API disponível de estado em tempo real dos outros chats.
+
+## Releitura antes de agir
+
+Conferidos Quadro mestre, Fila de trabalho, Matriz de auditoria Work, Contrato de relatórios, Handoff Windows, Relatório Lab por fases, Sync equipa e comunicação PR7/17/19/20/21/23. Revisor independente conferiu também contratos F001–F010/F013, wiki e regras/README.
+
+Precedência operacional: comentários atuais21 exterior/interior e HEAD21 prevalecem sobre estados antigos dos quadros. O plano22 não existe no HEAD21 e não foi copiado. Menções históricas Conductor/Spiff/YAML ficam como genealogia; não reintroduzir runtime antigo. Wiki laboratório WindowsPASS não prova wiki oficial; conversãoODT/PDF não prova Writer editorial. Não iniciar wiki/Writer/hardening nesta sessãoavatar.
+
+Reaplicação concluída somente na branchavatar. Diff21:25paths apenasavatar/docs/estado; protegidosidênticos. Gates remotos da combinação fechados em AVATAR-SYNC-CI-2026-10-04.json. Uma tarefa, um responsável, um revisor, uma branch. Consulta antes de cada alteração; confirmação RECEIVED exige resposta observada.

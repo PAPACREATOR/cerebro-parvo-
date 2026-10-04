@@ -47,3 +47,5 @@ Próximo gate: executar instalador no checkout Windows de laboratório, validar 
 ## Sincronização posterior — 23h Lisboa
 
 PR22 foi fechada sem merge por outra sessão. A entrega avatar é reaplicada sobre PR21 atual `0753f573f2dee739a4e43a5e255a4999319cc605`, mantendo as versões novas MCP/tiny intactas. Proveniência histórica acima permanece; os 14 FAIL Linux referem a base antiga, não são resultado da combinação nova. Regressão nova PENDING até CI. Não integrar antes de conferir esta combinação.
+
+Fecho da nova combinação: [Auditoria SUCCESS](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37238792619), [Nexus Windows SUCCESS](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37238792589): core140, blocks1068, all1350, practical12 PASS; [Avatar SUCCESS](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37238792600): 165 PASS Windows/165 PASS Ubuntu. SHA testado569c3a1de720ac6e7ed509ea566c1f6b3f02a1bf. Evidência em [AVATAR-SYNC-CI-2026-10-04.json](AVATAR-SYNC-CI-2026-10-04.json). Não somar suites sobrepostas. PC/GPU/Kernel-avatarE2E permanecem NOT RUN.
