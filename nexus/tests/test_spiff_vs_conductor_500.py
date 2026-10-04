@@ -575,8 +575,6 @@ agents:
     timeout: 30
     routes:
       - to: $end
-output:
-  done: true
 """,
         encoding="utf-8",
     )
