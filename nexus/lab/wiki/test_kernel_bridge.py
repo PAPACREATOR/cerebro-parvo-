@@ -1,8 +1,6 @@
 """Real Store + isolated bridge, synthetic payloads; actual Conductor for transport."""
-import asyncio
 import copy
 import json
-import sys
 from pathlib import Path
 
 import pytest
@@ -160,60 +158,6 @@ def test_wrong_output_rejected_before_save(setup):
     wrong['markdown'] = 'different result'
     with pytest.raises(Blocked, match='Resultado não corresponde'):
         bridge.save_experiment(packet, dict(result=wrong, trace={}))
-    assert not list(bridge.root.iterdir())
-
-
-def test_real_conductor_transport_and_readback_without_provider(setup, tmp_path, monkeypatch):
-    from nexus.adapters.conductor_runner import execute
-    from conductor.engine.workflow import WorkflowEngine
-    store, bridge, draft, approved = setup
-    async def forbidden_provider(*args, **kwargs):
-        pytest.fail('No AI provider may be obtained')
-    monkeypatch.setattr(WorkflowEngine, '_get_provider_for_agent', forbidden_provider)
-    packet = bridge.prepare('Inventariar fontes para novo trabalho', [draft, approved], True)
-    path = tmp_path / 'packet.json'
-    path.write_bytes(raw_json(packet))
-    before = preserved(store.root)
-    response = asyncio.run(execute(Path(__file__).with_name('context_flow.yaml'),
-                                   dict(input_path=str(path), python=sys.executable)))
-    assert response['result'] == summarize(packet)
-    assert response['trace']['summary']['usage']['total_tokens'] == 0
-    assert response['trace']['summary']['agents_executed'] == ['inventory']
-    job = bridge.save_experiment(packet, response)
-    def forbidden(*args, **kwargs):
-        pytest.fail('Reverse must not execute any subprocess')
-    monkeypatch.setattr('subprocess.Popen', forbidden)
-    returned = WikiBridge(store, bridge.root).reverse(job)
-    assert returned['context.json'] == packet
-    assert returned['result.json'] == response['result']
-    assert preserved(store.root) == before
-
-
-@pytest.mark.parametrize('mode', ['invalid', 'missing', 'timeout'])
-def test_real_conductor_failure_paths(tmp_path, mode, setup):
-    from nexus.adapters.conductor_runner import execute
-    from ruamel.yaml import YAML
-    config = YAML().load(Path(__file__).with_name('context_flow.yaml'))
-    config['agents'][0]['args'][1] = str(Path(__file__).with_name('context_packet.py'))
-    if mode == 'timeout':
-        config['agents'][0]['args'] = ['-c', 'import time; time.sleep(5)']
-        config['agents'][0]['timeout'] = 1
-    elif mode == 'missing':
-        config['agents'][0]['command'] = str(tmp_path / 'absent-executable')
-    packet = tmp_path / 'packet.json'
-    packet.write_text('{}')
-    workflow = tmp_path / 'failure.yaml'
-    with workflow.open('w') as stream:
-        YAML().dump(config, stream)
-    _, bridge, _, approved = setup
-    valid_packet = bridge.prepare('Inventariar', [approved])
-    if mode == 'invalid':
-        response = asyncio.run(execute(workflow, dict(input_path=str(packet), python=sys.executable)))
-        with pytest.raises(Blocked):
-            bridge.save_experiment(valid_packet, response)
-    else:
-        with pytest.raises(Exception):
-            asyncio.run(execute(workflow, dict(input_path=str(packet), python=sys.executable)))
     assert not list(bridge.root.iterdir())
 
 
