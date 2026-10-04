@@ -13,12 +13,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from nexus.adapters import languagetool, notebook, office
+from nexus.adapters import constitutional, languagetool, notebook, office
 from nexus.adapters.tools import compare, hash_python, report
 from nexus.contracts import Blocked, ROOT, strict_json
 
 
-_ALLOWED = {"verify", "interpret", "proofread", "convert_pdf"}
+_ALLOWED = {"verify", "interpret", "proofread", "convert_pdf", "register_object"}
 
 
 def _hash_windows(path, powershell):
@@ -103,9 +103,12 @@ async def execute(workflow_path, inputs):
     elif process == "proofread":
         result = languagetool.run(input_path)
         steps = ("languagetool",)
-    else:
+    elif process == "convert_pdf":
         result = office.run(input_path)
         steps = ("libreoffice",)
+    else:
+        result = constitutional.read_object(input_path)
+        steps = ("read_object",)
 
     return {"result": result, "trace": _trace(steps)}
 
