@@ -25,7 +25,9 @@ def test_comparison_preserves_both_sides(left, right, outcome, status):
 
 
 def test_real_redundant_workflow(tmp_path):
-    source = tmp_path / "input.txt"
+    run = tmp_path / "runs" / ("a" * 32)
+    run.mkdir(parents=True)
+    source = run / "input.bin"
     source.write_text("Olá Nexus", encoding="utf-8")
     response = execute("verify", source)
     value = validate("result", response["result"])
