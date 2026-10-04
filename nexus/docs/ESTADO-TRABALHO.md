@@ -82,3 +82,44 @@ Próximo passo: validar o ramo de criação automática do venv no script e conf
 o snapshot oficial quando disponibilizado. F014 não prova funcionalidades externas.
 Pedro informou que disponibilizará a pasta oficial via Drive. Acesso/conteúdo
 ainda não verificados; GitHub mantém código, testes e coordenação.
+
+## Complemento wiki — sessão 04/10/2026
+
+Pedido: recuperar memória, verificar estudo sobre wikis/informação gerada e complementar com testes.
+Branch isolada: `lab-wiki-complemento-20261004`; base `b0a82e63eae60fdec66afdee6705246c0d3465ea`.
+Não altera o estado histórico das outras branches acima.
+
+Encontrado placeholder no executor anunciado como implementado; relatório anterior NOT RUN.
+Agora: executor real de laboratório + estudo complementar + evidência JSON + workflow que conserva resultados mesmo em falha e rejeita artefacto ausente.
+
+PASS Linux: 100000 objetos parametrizados, 50000 pesquisas, relações bidirecionais, rebuild/renomeação, seis cenários adversariais, recuperação num processo novo. Total 20.114s. Auditoria documental PASS.
+Hash do executor testado: `1f1495ebbb99607a58a7cc4d2b9a407ca8e1a0b9114fbe6195178cd3348db7e5`. O commit que contém esta entrada identifica a entrega.
+
+Ficheiros: `nexus/lab/wiki/`, `nexus/docs/RELATORIO-FINAL-WIKI-100K.md`, `nexus/docs/COMPLEMENTO-WIKI-INFORMACAO-GERADA-2026-10-04.md`, `.github/workflows/wiki-100k.yml`.
+
+NOT RUN: integração Nexus/Windows, IA/web reais, histórico de versões, UI, crash/concorrência, Human Gate integrado. Não atribuir PASS global à wiki nem melhoria percentual por reutilização.
+Próximo: rever contrato do objeto de conhecimento e mapping F013/Store; depois validar integração autorizada, sem tocar em produção.
+
+## Kernel → wiki → flow — continuação de 04/10/2026
+
+Pedido atual: descobrir como ligar/guardar o estudo e como o Kernel o usa para organizar informação e flows.
+Base `74f6857`, mesma branch isolada `lab-wiki-complemento-20261004`.
+
+Implementado no laboratório: bridge de leitura do Store real, FTS5 derivado, escopo explícito, separação Creative/Canonical, pacote de contexto até 6000 caracteres/oito fontes, flow Conductor real de inventário, gravação experimental e relações fonte ↔ utilização. Núcleo e flows oficiais intocados.
+
+PASS: 1098 testes em 16,59s (1024 variantes de seleção e 74 controlos/integrações); regressão dos componentes Store/portão/proveniência/notebook/schema: 101 PASS em 4,55s, dois casos Windows excluídos. Auditoria documental PASS.
+
+Falhas preservadas: fixture que reescrevia bytes iguais corrigido; expectativa errada de exceção Conductor corrigida para provar rejeição do resultado inválido na fronteira. Ensaio completo inicial: 1096 PASS/1 FAIL; final: 1098 PASS.
+Evidência: `nexus/lab/wiki/evidence/kernel-20261004/summary.json`, XML/logs, hashes e ambiente.
+Estudo: `nexus/docs/ESTUDO-LIGACAO-WIKI-KERNEL-FLOWS-2026-10-04.md`. Contrato: `CONTRATO-LAB-WIKI-KERNEL-FLOWS.md`.
+
+NOT RUN: Windows, IA real, interface nova, integração no Host oficial, concorrência externa/power loss. O flow transporta contexto, não interpreta semanticamente.
+Próximo microprocesso: contrato de request/contexto e vínculo do output às referências consultadas; depois integração limitada no Host com testes. Não passar hash do flow oficial para aceitar saída de flow diferente.
+
+Gravação local autorizada. Envio ao GitHub continua pendente de autorização explícita após a rejeição automática anterior; nenhuma nova tentativa de push nesta etapa. O commit desta entrada identifica a entrega.
+
+## Pausa e sincronização de equipa — pedido humano de 04/10, 16:02 Lisboa
+
+Implementação pausada por instrução explícita. Consultadas todas as refs remotas disponíveis, PRs #7–#13/comentários, planos e Actions. Ver `SYNC-EQUIPA-2026-10-04.md` e inventário JSON para commits, falhas, estados em curso e fronteira partilhada parser/contexto/Kernel.
+
+O pedido atual autoriza sincronizar/publicar esta branch no GitHub; a pendência de autorização nas entradas anteriores é histórica e fica levantada para esta publicação. Push CLI falhou por falta de credenciais; utilizar conector autenticado e verificar igualdade das árvores. Não alterar branches de outras sessões nem integrar experiências falhadas em main. Próxima implementação permanece em pausa até novo pedido.
