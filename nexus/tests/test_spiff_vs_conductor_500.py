@@ -6,6 +6,7 @@ import asyncio
 import hashlib
 import random
 import subprocess
+import sys
 import time
 from pathlib import Path
 
@@ -146,3 +147,57 @@ def test_real_powershell_tool_opens_and_returns_output():
     print(f"stderr={completed.stderr.strip()}")
     assert completed.returncode == 0
     assert completed.stdout.strip()
+
+
+def _run_real_tool(label, command, *, timeout=20):
+    completed = subprocess.run(
+        command,
+        capture_output=True,
+        text=True,
+        timeout=timeout,
+        check=False,
+    )
+    print(f"NEXUS_REAL_TOOL {label}")
+    print(f"command={command}")
+    print(f"exit_code={completed.returncode}")
+    print(f"stdout={completed.stdout.strip()}")
+    print(f"stderr={completed.stderr.strip()}")
+    return completed
+
+
+def test_real_windows_toolchain_multiple_calls():
+    probes = [
+        ("powershell", ["powershell.exe", "-NoProfile", "-NonInteractive", "-Command", "$PSVersionTable.PSVersion.ToString()"]),
+        ("cmd", ["cmd.exe", "/d", "/c", "ver"]),
+        ("git", ["git.exe", "--version"]),
+        ("python-child", [sys.executable, "-c", "import sys; print(sys.version); print('NEXUS_CHILD_OK')"]),
+    ]
+    for label, command in probes:
+        completed = _run_real_tool(label, command)
+        assert completed.returncode == 0, (label, completed.stderr)
+        assert completed.stdout.strip(), label
+
+
+def test_real_optional_external_tool_discovery():
+    # Optional desktop/runtime capabilities: absence is recorded as BLOCKED,
+    # never misreported as an integration PASS.
+    candidates = {
+        "libreoffice": ["soffice.exe", "--headless", "--version"],
+        "java": ["java.exe", "-version"],
+        "zotero": ["zotero.exe", "--version"],
+    }
+    for label, command in candidates.items():
+        locator = subprocess.run(
+            ["where.exe", command[0]],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
+        )
+        if locator.returncode != 0:
+            print(f"NEXUS_REAL_TOOL {label} status=BLOCKED reason=TOOL_UNAVAILABLE")
+            continue
+        completed = _run_real_tool(label, command)
+        # Some tools (notably java -version) write version info to stderr.
+        assert completed.returncode == 0, (label, completed.stderr)
+        assert completed.stdout.strip() or completed.stderr.strip(), label
