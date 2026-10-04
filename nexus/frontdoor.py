@@ -78,7 +78,6 @@ class ParsedInput:
             "content": self.content,
             "parser": self.parser,
             "explicit": self.explicit,
-            "shadow": self.shadow,
         }
 
 
