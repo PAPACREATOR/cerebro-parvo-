@@ -10,7 +10,7 @@ def test_external_tools_are_pinned():
 
 
 def test_external_tools_are_not_vendored_into_nexus():
-    assert "[string]$ToolsRoot = 'C:\\\\Nexus-Tools'" in SCRIPT
+    assert "[string]$ToolsRoot = 'C:\\Nexus-Tools'" in SCRIPT
     assert "Join-Path $ToolsRoot 'ACE-Step-1.5'" in SCRIPT
     assert "Join-Path $ToolsRoot 'Forge'" in SCRIPT
 
@@ -46,7 +46,6 @@ def test_installation_is_reproducible_and_refuses_dirty_checkouts():
     assert "fetch','--depth','1','origin',$Commit" in SCRIPT
     assert "checkout','--detach',$Commit" in SCRIPT
     assert "Refusing to overwrite local changes" in SCRIPT
-    assert "uv @('sync','--frozen')" not in SCRIPT  # guard against accidental string corruption
     assert "Invoke-Checked $uv @('sync','--frozen') $ace" in SCRIPT
 
 
