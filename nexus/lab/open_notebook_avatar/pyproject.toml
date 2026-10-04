@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "nexus-open-notebook-avatar"
 version = "0.1.0"
-description = "Optional local avatar extension for Open Notebook 1.14.0"
+description = "Optional local avatar extension for Open Notebook 1.15.0"
 requires-python = ">=3.11,<3.13"
 dependencies = ["fastapi>=0.104", "filelock==3.20.3", "Pillow>=12.2.0", "httpx==0.28.1"]
 
