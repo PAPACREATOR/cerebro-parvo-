@@ -16,7 +16,7 @@ def result():
 
 
 def execution_trace(store, run, **extra):
-    return {"workflow_sha256": store.state(run)["workflow_sha256"], **extra}
+    return {"process_sha256": store.state(run)["process_sha256"], **extra}
 
 
 def candidate(store):
@@ -108,6 +108,6 @@ def test_accept_rejects_trace_from_different_workflow_version(tmp_path):
     store = Store(tmp_path)
     run = store.create(request())
     with pytest.raises(Blocked):
-        store.accept(run, result(), {"workflow_sha256": "0" * 64})
+        store.accept(run, result(), {"process_sha256": "0" * 64})
     assert not store.path("creative", run).exists()
     assert store.state(run)["status"] == "RUNNING"
