@@ -32,7 +32,7 @@ Nenhum PASS de CI substitui o teste no Windows real em `C:\Nexus-Lab`.
 | 03 | Crash durante executor | PASS REMOTO | run 37202001479: 1216 PASS; PREPARED/EXECUTING + RECOVERY_REQUIRED; falta PC LAB |
 | 04 | Crash depois de Creative e antes de Human Gate | PASS REMOTO | Work: Creative completo reconciliado; adulterado BLOCKED; falta PC LAB |
 | 05 | Crash durante promoção Canonical | PASS REMOTO | recovery Canonical existente + regressões; falta PC LAB |
-| 06 | Idempotência de reexecução | PARCIAL | reentrada e promoção repetida cobertas; stress/property-based pendente |
+| 06 | Idempotência de reexecução | PASS REMOTO no recovery coberto | Creative/recovery/accept repetível e fase RESULT_ACCEPTED; escala continua no stress |
 | 07 | Human Gate adversarial | PASS REMOTO | Work: 1210 PASS; sessão/ticket/restart cobertos; falta PC LAB |
 | 08 | Proveniência bidirecional por capability | NOT RUN | resultado -> processo -> ferramenta -> input fecha por hashes/IDs |
 | 09 | Conductor efémero | NOT RUN | restart Kernel não depende de memória Conductor |
@@ -43,7 +43,7 @@ Nenhum PASS de CI substitui o teste no Windows real em `C:\Nexus-Lab`.
 | 14 | Open Notebook/tiny | NOT RUN | contexto mínimo, saída candidata, sem autoridade |
 | 15 | Zotero | NOT RUN | referência real, proveniência e ausência explícita |
 | 16 | Snapshot/restore completo | NOT RUN | hashes + inventário + restauro demonstrado |
-| 17 | 100 000 casos diferenciais/property-based | IMPLEMENTADO / AGUARDA PASS | 50k compare + 30k approval + 20k JSON; rever utilidade e resultado CI |
+| 17 | 100 000 casos diferenciais/property-based | PASS REMOTO | 50k compare + 30k approval + 20k JSON; incluído na suite Windows 1217 PASS; não é 100k E2E |
 | 18 | Regressão integrada Windows | NOT RUN | sem falha crítica aberta |
 | 19 | Hardening Windows final | NOT RUN | isolamento, credenciais, rede, permissões, rollback |
 | 20 | PC servidor <-> telemóvel | NOT RUN | autenticação/cifra/idempotência; PC continua autoridade |
