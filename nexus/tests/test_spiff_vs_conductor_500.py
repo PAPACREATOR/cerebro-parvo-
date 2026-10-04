@@ -513,7 +513,7 @@ async def _python_mcp_open_notebook_search_async(query, detail="summary", limit=
                 arguments={"query": query, "detail": detail, "limit": limit},
             )
             assert not result.isError
-            value = result.structured_content
+            value = result.structuredContent
             if value is None:
                 texts = [getattr(item, "text", None) for item in result.content]
                 texts = [item for item in texts if item]
