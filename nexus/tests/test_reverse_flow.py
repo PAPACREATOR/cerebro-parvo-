@@ -326,3 +326,46 @@ def test_restart_reconciles_saved_executor_result_without_reexecution(tmp_path, 
     assert recovered_trace["engine"] == envelope["trace"]["engine"]
     assert recovered_trace["events"] == envelope["trace"]["events"]
     assert recovered_trace["workflow_sha256"] == state["workflow_sha256"]
+
+
+def test_restart_reconciles_complete_creative_after_crash_before_state_update(tmp_path, monkeypatch):
+    """Crash window: Creative is durable but RUNNING state was not advanced yet."""
+    store = Store(tmp_path)
+    run = store.create(request())
+    initial = store.state(run)
+    directory = store.path("runs", run)
+    result_payload = {
+        "status": "PASS",
+        "outcome": "agreement",
+        "title": "Verificação",
+        "markdown": "# Verificação\n\nDois métodos concordam.",
+        "evidence": [{"capability": "test", "status": "PASS", "value": "abc"}],
+        "ai_calls": 0,
+    }
+    raw_trace = {"engine": "synthetic-disposable-executor", "events": []}
+    envelope = {"result": result_payload, "trace": raw_trace}
+    raw_execution = json.dumps(envelope, ensure_ascii=False).encode("utf-8")
+    (directory / "execution.stdout.json").write_bytes(raw_execution)
+    accepted_trace = dict(raw_trace, workflow_sha256=initial["workflow_sha256"])
+
+    def crash_before_state_update(*args, **kwargs):
+        raise RuntimeError("synthetic crash after Creative")
+
+    monkeypatch.setattr(store, "update", crash_before_state_update)
+    with pytest.raises(RuntimeError, match="synthetic crash after Creative"):
+        store.accept(run, result_payload, accepted_trace)
+
+    creative = store.path("creative", run)
+    preserved = {name: (creative / name).read_bytes()
+                 for name in ("content.md", "result.json", "provenance.json")}
+    assert store.state(run)["status"] == "RUNNING"
+
+    restored = Store(tmp_path)
+    state = restored.state(run)
+
+    assert state["status"] == "HUMAN_REQUIRED"
+    assert not restored.path("canonical", run).exists()
+    assert (directory / "execution.stdout.json").read_bytes() == raw_execution
+    assert {name: (creative / name).read_bytes() for name in preserved} == preserved
+    provenance = restored.check_candidate(state)
+    assert provenance["execution"]["workflow_sha256"] == state["workflow_sha256"]
