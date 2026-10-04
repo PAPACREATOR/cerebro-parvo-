@@ -33,12 +33,23 @@ jobs:
       - name: Instalar dependencias Nexus fixadas
         shell: pwsh
         run: python -m pip install -r nexus/requirements-test.txt
-      - name: Verificar manifesto da aplicacao
+      - name: Script PowerShell 5 - sucesso e falha diagnosticada
         shell: pwsh
-        run: python -c "from nexus.host import verify_integrity; verify_integrity(); print('INTEGRITY=PASS')"
-      - name: Testar Nexus atual com PowerShell e Conductor
-        shell: pwsh
-        run: python -m pytest nexus/tests -q --color=no -p no:cacheprovider -o pythonpath=. --junitxml=nexus-windows-results.xml
+        run: |
+          $python = (Get-Command python).Source
+          $report = Join-Path $env:RUNNER_TEMP 'nexus-pass'
+          powershell.exe -NoProfile -File nexus/windows/check-nexus.ps1 -PythonPath $python -ReportDirectory $report
+          if ($LASTEXITCODE -ne 0) { Get-Content "$report/*.txt"; throw 'Script failed' }
+          $state = Get-Content "$report/state.json" -Raw | ConvertFrom-Json
+          if ($state.status -ne 'PASS') { throw 'Missing PASS report' }
+          Get-Content "$report/TESTS.stdout.txt"
+          $bad = Join-Path $env:RUNNER_TEMP 'nexus-fail'
+          powershell.exe -NoProfile -File nexus/windows/check-nexus.ps1 -PythonPath 'NEXUS-MISSING-PYTHON.exe' -ReportDirectory $bad
+          if ($LASTEXITCODE -eq 0) { throw 'Missing Python was accepted' }
+          $failure = Get-Content "$bad/state.json" -Raw | ConvertFrom-Json
+          if ($failure.status -ne 'FAIL' -or -not $failure.error) { throw 'Missing failure diagnosis' }
+          Write-Output 'POWERSHELL_WRAPPER=PASS (success + missing executable)'
+          exit 0
       - name: Delimitar evidencia
         shell: pwsh
         run: |
