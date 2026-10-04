@@ -7,7 +7,7 @@ workflow:
     input_hash: {type: string}
     direction: {type: string}
     status: {type: string}
-    ordinal: {type: integer}
+    ordinal: {type: number}
   limits:
     max_iterations: 2
     timeout_seconds: 5
