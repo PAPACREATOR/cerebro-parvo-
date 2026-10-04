@@ -4,6 +4,7 @@ No workflow engine. Dispatches only the four Host-authorized processes to the
 already-tested Nexus adapters. Authority, persistence, recovery and Human Gate
 remain in Host/Store.
 """
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -14,7 +15,31 @@ from nexus.adapters.verify_direct import execute as verify
 from nexus.adapters.notebook import run as interpret
 from nexus.adapters.languagetool import run as proofread
 from nexus.adapters.office import run as convert_pdf
-from nexus.contracts import Blocked
+from nexus.contracts import Blocked, ROOT
+
+
+PROCESS_FILES = {
+    "verify": ("adapters/runner.py", "adapters/verify_direct.py", "adapters/tools.py"),
+    "interpret": ("adapters/runner.py", "adapters/notebook.py"),
+    "proofread": ("adapters/runner.py", "adapters/languagetool.py"),
+    "convert_pdf": ("adapters/runner.py", "adapters/office.py"),
+}
+
+
+def process_fingerprint(process):
+    files = PROCESS_FILES.get(process)
+    if files is None:
+        raise Blocked("Processo indisponível.")
+    h = hashlib.sha256()
+    h.update(process.encode("utf-8"))
+    h.update(b"\0")
+    for relative in files:
+        path = ROOT / relative
+        h.update(relative.encode("utf-8"))
+        h.update(b"\0")
+        h.update(path.read_bytes())
+        h.update(b"\0")
+    return h.hexdigest()
 
 
 def _trace(process, steps):
