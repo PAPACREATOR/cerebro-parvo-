@@ -7,6 +7,7 @@ import json
 
 import pytest
 
+from nexus.contracts import Blocked
 from nexus.store import Store
 from nexus.tests.test_store import request, result
 
@@ -133,3 +134,27 @@ def test_restart_never_reconciles_redirected_executor_output(tmp_path):
     assert outside.read_text("utf-8") == json.dumps(envelope, ensure_ascii=False)
     assert not restarted.path("creative", run_id).exists()
     assert not restarted.path("canonical", run_id).exists()
+
+
+def test_restart_refuses_redirected_authoritative_state(tmp_path):
+    """FAIL-first security: authoritative state.json must never be followed outside."""
+    root = tmp_path / "data"
+    store = Store(root)
+    run_id = store.create(request())
+    state_path = store.path("runs", run_id) / "state.json"
+    original = state_path.read_bytes()
+
+    outside = tmp_path / "outside-state.json"
+    outside.write_bytes(original)
+    state_path.unlink()
+    try:
+        state_path.symlink_to(outside)
+    except (OSError, NotImplementedError) as error:
+        pytest.skip(f"symlink unavailable on this platform: {error}")
+
+    with pytest.raises(Blocked):
+        Store(root)
+
+    assert state_path.is_symlink()
+    assert outside.read_bytes() == original
+    assert not store.path("canonical", run_id).exists()
