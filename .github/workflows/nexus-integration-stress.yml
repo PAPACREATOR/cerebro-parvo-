@@ -40,5 +40,12 @@ jobs:
         run: python -m pytest nexus/tests/test_mcp_client_1000.py nexus/tests/test_open_notebook_mcp_real.py -q -p no:cacheprovider -o pythonpath=.
       - name: Block D — Kernel to MCP to OpenNotebook boundary to Canonical E2E
         run: python -m pytest nexus/tests/test_open_notebook_kernel_e2e.py -q -p no:cacheprovider -o pythonpath=.
-      - name: Block E — complete Nexus regression
+      - name: Block E — media installer contract and PowerShell parse
+        shell: pwsh
+        run: |
+          python -m pytest nexus/tests/test_media_tools_installer.py -q -p no:cacheprovider -o pythonpath=.
+          $raw = Get-Content -LiteralPath nexus/windows/install-media-tools.ps1 -Raw
+          [void][scriptblock]::Create($raw)
+          Write-Output 'MEDIA_INSTALLER_PARSE=PASS'
+      - name: Block F — complete Nexus regression
         run: python -m pytest nexus/tests -q -p no:cacheprovider -o pythonpath=.
