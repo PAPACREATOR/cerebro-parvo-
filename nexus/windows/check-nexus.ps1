@@ -1,14 +1,16 @@
 [CmdletBinding()]
 param(
     [string]$PythonPath,
+    [ValidateSet('core','blocks','all','practical')]
+    [string]$Suite = 'all',
     [string]$ReportDirectory = (Join-Path $env:TEMP ('nexus-check-' + [guid]::NewGuid().ToString('N')))
 )
 $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $report = [ordered]@{
     status = 'RUNNING'; stage = 'START'; started_utc = [DateTime]::UtcNow.ToString('o')
-    finished_utc = $null; commit = $null; error = $null
-    scope = 'Repository tests with synthetic data; not personal installation'
+    finished_utc = $null; commit = $null; error = $null; suite = $Suite
+    scope = 'Repository/Lab tests; practical suite only covers currently automated real-Windows contracts'
 }
 $exitCode = 1
 $locationPushed = $false
@@ -48,7 +50,42 @@ try {
     $PythonPath = (Get-Command $PythonPath -CommandType Application -ErrorAction Stop).Source
     Invoke-PythonStep -Stage 'PYTHON_VERSION' -Arguments @('-c', 'import sys; assert sys.version_info[:2] == (3, 12), sys.version; print(sys.version)')
     Invoke-PythonStep -Stage 'INTEGRITY' -Arguments @('-c', "from nexus.host import verify_integrity; verify_integrity(); print('INTEGRITY=PASS')")
-    Invoke-PythonStep -Stage 'TESTS' -Arguments @('-m', 'pytest', 'nexus/tests', '-q', '--color=no', '-p', 'no:cacheprovider', '-o', 'pythonpath=.', ('--junitxml=' + (Join-Path $ReportDirectory 'tests.xml')))
+
+    $targets = switch ($Suite) {
+        'core' { @(
+            'nexus/tests/test_store.py',
+            'nexus/tests/test_host.py',
+            'nexus/tests/test_startup.py',
+            'nexus/tests/test_kernel_crash_contract.py',
+            'nexus/tests/test_kernel_review.py',
+            'nexus/tests/test_reverse_flow.py',
+            'nexus/tests/test_vaults.py',
+            'nexus/tests/test_schema_consistency.py',
+            'nexus/tests/test_adversarial.py'
+        ) }
+        'blocks' { @(
+            'nexus/tests/test_conductor.py',
+            'nexus/tests/test_workflows.py',
+            'nexus/tests/test_windows_hash_environment.py',
+            'nexus/tests/test_languagetool.py',
+            'nexus/tests/test_office.py',
+            'nexus/tests/test_notebook.py',
+            'nexus/tests/test_multimedia.py'
+        ) }
+        'practical' { @(
+            'nexus/tests/test_conductor.py::test_real_windows_tool_without_ai',
+            'nexus/tests/test_windows_hash_environment.py',
+            'nexus/tests/test_reverse_flow.py::test_real_windows_result_back_to_original_and_folha_after_restart',
+            'nexus/tests/test_multimedia.py::test_real_conductor_reads_family'
+        ) }
+        default { @('nexus/tests') }
+    }
+    $pytestArgs = @('-m', 'pytest') + $targets + @(
+        '-q', '--color=no', '-p', 'no:cacheprovider', '-o', 'pythonpath=.',
+        ('--junitxml=' + (Join-Path $ReportDirectory 'tests.xml'))
+    )
+    $testStage = if ($Suite -eq 'all') { 'TESTS' } else { 'TESTS-' + $Suite.ToUpperInvariant() }
+    Invoke-PythonStep -Stage $testStage -Arguments $pytestArgs
     $report.status = 'PASS'
     $report.stage = 'COMPLETE'
     $exitCode = 0
