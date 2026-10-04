@@ -1,8 +1,7 @@
-"""Minimal deterministic Nexus executor.
+"""Minimal deterministic Nexus executor through local MCP.
 
-No workflow engine. Dispatches only the four Host-authorized processes to the
-already-tested Nexus adapters. Authority, persistence, recovery and Human Gate
-remain in Host/Store.
+The Kernel selects one of four Host-authorized processes. MCP is transport only:
+no model, agent, reasoning or authority is present in this executor.
 """
 import hashlib
 import json
@@ -11,18 +10,34 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from nexus.adapters.verify_direct import execute as verify
-from nexus.adapters.notebook import run as interpret
-from nexus.adapters.languagetool import run as proofread
-from nexus.adapters.office import run as convert_pdf
 from nexus.contracts import Blocked, ROOT
+from nexus.mcp_client import MCPServerSpec, call_tool
 
+
+PROCESS_TO_TOOL = {
+    "verify": "verify_file",
+    "interpret": "interpret_file",
+    "proofread": "proofread_file",
+    "convert_pdf": "convert_pdf_file",
+}
 
 PROCESS_FILES = {
-    "verify": ("adapters/runner.py", "adapters/verify_direct.py", "adapters/tools.py"),
-    "interpret": ("adapters/runner.py", "adapters/notebook.py"),
-    "proofread": ("adapters/runner.py", "adapters/languagetool.py"),
-    "convert_pdf": ("adapters/runner.py", "adapters/office.py"),
+    "verify": (
+        "adapters/runner.py", "mcp_client.py", "mcp_tools_server.py",
+        "adapters/verify_direct.py", "adapters/tools.py",
+    ),
+    "interpret": (
+        "adapters/runner.py", "mcp_client.py", "mcp_tools_server.py",
+        "adapters/notebook.py",
+    ),
+    "proofread": (
+        "adapters/runner.py", "mcp_client.py", "mcp_tools_server.py",
+        "adapters/languagetool.py",
+    ),
+    "convert_pdf": (
+        "adapters/runner.py", "mcp_client.py", "mcp_tools_server.py",
+        "adapters/office.py",
+    ),
 }
 
 
@@ -42,34 +57,35 @@ def process_fingerprint(process):
     return h.hexdigest()
 
 
-def _trace(process, steps):
+def _trace(process, tool):
     return {
-        "engine": "nexus/python-direct",
+        "engine": "nexus/python-mcp",
         "version": "1.0.0",
         "process": process,
         "summary": {
             "usage": {"total_tokens": 0},
-            "agents_executed": list(steps),
+            "agents_executed": [tool],
         },
-        "events": [{"type": "step.completed", "step": step} for step in steps],
+        "events": [{"type": "mcp.tool.completed", "step": tool}],
     }
 
 
 def execute(process, input_path):
+    tool = PROCESS_TO_TOOL.get(process)
+    if tool is None:
+        raise Blocked("Processo indisponível.")
     path = Path(input_path).resolve()
-    if process == "verify":
-        response = verify(path)
-        return {
-            "result": response["result"],
-            "trace": _trace(process, ("hash_windows", "hash_python", "compare", "report")),
-        }
-    if process == "interpret":
-        return {"result": interpret(path), "trace": _trace(process, ("open_notebook",))}
-    if process == "proofread":
-        return {"result": proofread(path), "trace": _trace(process, ("languagetool",))}
-    if process == "convert_pdf":
-        return {"result": convert_pdf(path), "trace": _trace(process, ("libreoffice",))}
-    raise Blocked("Processo indisponível.")
+    server = MCPServerSpec(
+        command=sys.executable,
+        args=("-I", str(ROOT / "mcp_tools_server.py")),
+    )
+    result = call_tool(
+        server,
+        tool,
+        {"input_path": str(path)},
+        allowed_tools={tool},
+    )
+    return {"result": result, "trace": _trace(process, tool)}
 
 
 if __name__ == "__main__":
@@ -78,5 +94,5 @@ if __name__ == "__main__":
         process, input_path = sys.argv[1:3]
         print(json.dumps(execute(process, input_path), ensure_ascii=False))
     except Exception:
-        print("Execução determinística indisponível ou resposta rejeitada.", file=sys.stderr)
+        print("Execução MCP determinística indisponível ou resposta rejeitada.", file=sys.stderr)
         raise SystemExit(1)
