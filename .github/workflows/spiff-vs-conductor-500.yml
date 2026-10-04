@@ -30,6 +30,8 @@ jobs:
         with:
           python-version: '3.12'
       - name: Install fixed Lab dependencies
-        run: python -m pip install -r nexus/requirements-spiff-test.txt
+        run: |
+          python -m pip install -r nexus/requirements-spiff-test.txt
+          python -m pip install "open-notebook-mcp @ git+https://github.com/Epochal-dev/open-notebook-mcp.git@a2cddbf65cba8c4c8de7be16566781b7612a9545"
       - name: Compare identical 500 cases
         run: python -m pytest nexus/tests/test_spiff_vs_conductor_500.py -q -s -o pythonpath=.
