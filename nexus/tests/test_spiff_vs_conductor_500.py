@@ -21,6 +21,7 @@ from conductor.config.loader import load_workflow
 from conductor.engine.workflow import WorkflowEngine
 
 from nexus.tests.test_spiff_conductor_bidirectional_5000 import build_spiff_spec, kernel_execute
+from nexus.adapters.tools import hash_python, compare as compare_hashes, report as build_report
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURE = ROOT / "tests" / "fixtures" / "spiff_conductor_echo.yaml"
@@ -341,3 +342,147 @@ def test_real_powershell_same_cases_spiff_conductor_joint(tmp_path):
         print(f"| {name} | {len(cases)} | {result} | {totals[name]:.6f} | {(totals[name]/len(cases))*1000:.3f} | {len(cases)} |")
     print(f"mismatches={len(mismatches)}")
     assert not mismatches, mismatches[:5]
+
+
+VERIFY_FLOW = ROOT / "processes" / "verify.yaml"
+
+
+def _spiff_complex_verify(path):
+    spec = WorkflowSpec("nexus-spiff-complex-verify", addstart=True)
+    ps_task = Simple(spec, "hash_windows")
+    py_task = Simple(spec, "hash_python")
+    compare_task = Simple(spec, "compare")
+    report_task = Simple(spec, "report")
+    spec.start.connect(ps_task)
+    ps_task.connect(py_task)
+    py_task.connect(compare_task)
+    compare_task.connect(report_task)
+
+    def do_ps(workflow, _task):
+        workflow.data["a"] = _ps_hash_direct(workflow.data["path"])
+        workflow.data["calls"] = workflow.data.get("calls", 0) + 1
+
+    def do_py(workflow, _task):
+        workflow.data["b"] = hash_python(workflow.data["path"])
+        workflow.data["calls"] = workflow.data.get("calls", 0) + 1
+
+    def do_compare(workflow, _task):
+        workflow.data["comparison"] = compare_hashes(workflow.data["a"], workflow.data["b"])
+
+    def do_report(workflow, _task):
+        policy = {"agreement":"PASS","conflict":"UNKNOWN","unknown":"UNKNOWN","failure":"FAIL"}
+        outcome = workflow.data["comparison"]["outcome"]
+        workflow.data["result"] = build_report({
+            "comparison": workflow.data["comparison"],
+            "status": policy[outcome],
+        })
+
+    ps_task.completed_event.connect(do_ps)
+    py_task.completed_event.connect(do_py)
+    compare_task.completed_event.connect(do_compare)
+    report_task.completed_event.connect(do_report)
+
+    workflow = Workflow(spec)
+    workflow.set_data(path=str(path), calls=0)
+    workflow.run_all()
+    assert workflow.is_completed()
+    assert workflow.get_data("calls") == 2
+    return workflow.get_data("result")
+
+
+async def _conductor_complex_async(path):
+    config = load_workflow(VERIFY_FLOW)
+    engine = WorkflowEngine(config, workflow_path=VERIFY_FLOW)
+    envelope = await engine.run({
+        "input_path": str(path),
+        "powershell": PS_EXE,
+        "python": sys.executable,
+    })
+    return envelope["result"], engine.get_execution_summary()
+
+
+def _conductor_complex_verify(path):
+    return asyncio.run(_conductor_complex_async(path))
+
+
+def _joint_complex_verify(path):
+    config = load_workflow(VERIFY_FLOW)
+    spec = WorkflowSpec("nexus-spiff-conductor-complex", addstart=True)
+    task = Simple(spec, "dispatch_conductor_verify")
+    spec.start.connect(task)
+
+    def invoke(workflow, _task):
+        engine = WorkflowEngine(config, workflow_path=VERIFY_FLOW)
+        envelope = asyncio.run(engine.run({
+            "input_path": workflow.data["path"],
+            "powershell": PS_EXE,
+            "python": sys.executable,
+        }))
+        workflow.data["result"] = envelope["result"]
+        workflow.data["summary"] = engine.get_execution_summary()
+        workflow.data["spiff_calls"] = workflow.data.get("spiff_calls", 0) + 1
+
+    task.completed_event.connect(invoke)
+    workflow = Workflow(spec)
+    workflow.set_data(path=str(path), spiff_calls=0)
+    workflow.run_all()
+    assert workflow.is_completed()
+    assert workflow.get_data("spiff_calls") == 1
+    return workflow.get_data("result"), workflow.get_data("summary")
+
+
+def _assert_reverse_to_source(result, path):
+    expected = hashlib.sha256(path.read_bytes()).hexdigest()
+    assert result["status"] == "PASS"
+    assert result["outcome"] == "agreement"
+    assert result["ai_calls"] == 0
+    values = [item["value"] for item in result["evidence"]]
+    assert values == [expected, expected]
+    return expected
+
+
+def test_complex_bidirectional_verify_three_paths(tmp_path):
+    cases = _real_tool_cases(tmp_path)[:12]
+    totals = {"spiff": 0.0, "conductor": 0.0, "joint": 0.0}
+    mismatches = []
+
+    for path in cases:
+        t0 = time.perf_counter()
+        spiff = _spiff_complex_verify(path)
+        totals["spiff"] += time.perf_counter() - t0
+
+        t0 = time.perf_counter()
+        conductor, conductor_summary = _conductor_complex_verify(path)
+        totals["conductor"] += time.perf_counter() - t0
+
+        t0 = time.perf_counter()
+        joint, joint_summary = _joint_complex_verify(path)
+        totals["joint"] += time.perf_counter() - t0
+
+        expected = _assert_reverse_to_source(spiff, path)
+        _assert_reverse_to_source(conductor, path)
+        _assert_reverse_to_source(joint, path)
+
+        # Same semantic result and same reverse evidence. Capability labels are
+        # intentionally preserved and therefore compared explicitly as data.
+        if not (spiff == conductor == joint):
+            mismatches.append((path.name, spiff, conductor, joint))
+
+        for summary in (conductor_summary, joint_summary):
+            executed = summary["agents_executed"]
+            assert "hash_windows" in executed
+            assert "hash_python" in executed
+            assert "compare" in executed
+            assert "report" in executed
+
+        # reverse closure: output evidence -> original bytes
+        assert expected == hashlib.sha256(path.read_bytes()).hexdigest()
+
+    print("NEXUS_COMPLEX_BIDIRECTIONAL_THREE_PATHS")
+    print("| Path | Cases | Result | Total s | Mean ms | Reverse to source |")
+    print("|---|---:|---|---:|---:|---|")
+    for name in ("spiff", "conductor", "joint"):
+        result = "PASS" if not mismatches else "FAIL"
+        print(f"| {name} | {len(cases)} | {result} | {totals[name]:.6f} | {(totals[name]/len(cases))*1000:.3f} | PASS |")
+    print(f"complex_mismatches={len(mismatches)}")
+    assert not mismatches, mismatches[:3]
