@@ -9,6 +9,39 @@ from nexus.contracts import Blocked, strict_json, validate
 from nexus.adapters.notebook import prepare_source
 
 
+
+def correction_shadow(text, raw):
+    """Return a non-authoritative text shadow using only unambiguous corrections."""
+    value = strict_json(raw) if isinstance(raw, (str, bytes, bytearray)) else raw
+    validate("languagetool", value)
+    if value["warnings"]["incompleteResults"]:
+        raise Blocked("LanguageTool devolveu resultados incompletos.")
+
+    edits = []
+    for match in value["matches"]:
+        offset, length = match.get("offset"), match.get("length")
+        replacements = match.get("replacements", [])
+        if not isinstance(offset, int) or isinstance(offset, bool) or not isinstance(length, int) or isinstance(length, bool):
+            continue
+        if offset < 0 or length <= 0 or offset + length > len(text):
+            raise Blocked("LanguageTool devolveu posições inválidas.")
+        if len(replacements) != 1:
+            continue
+        replacement = replacements[0].get("value")
+        if not isinstance(replacement, str) or len(replacement) > 200 or any(ord(ch) < 32 for ch in replacement):
+            continue
+        edits.append((offset, offset + length, replacement))
+
+    edits.sort()
+    if any(current[0] < previous[1] for previous, current in zip(edits, edits[1:])):
+        raise Blocked("LanguageTool devolveu correções sobrepostas.")
+
+    shadow = text
+    for start, end, replacement in reversed(edits):
+        shadow = shadow[:start] + replacement + shadow[end:]
+    return shadow
+
+
 def normalize(raw):
     value = strict_json(raw)
     validate("languagetool", value)
