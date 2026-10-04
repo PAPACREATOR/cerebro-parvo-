@@ -1,4 +1,5 @@
 """Deterministic Nexus process runner. No workflow engine and no AI authority."""
+import hashlib
 import json
 import os
 import subprocess
@@ -13,6 +14,31 @@ from nexus.adapters.notebook import run as run_notebook
 from nexus.adapters.languagetool import run as run_languagetool
 from nexus.adapters.office import run as run_office
 from nexus.adapters.constitutional import read_object
+
+PROCESS_FILES = {
+    "verify": ("adapters/runner.py", "adapters/tools.py"),
+    "interpret": ("adapters/runner.py", "adapters/notebook.py"),
+    "proofread": ("adapters/runner.py", "adapters/languagetool.py"),
+    "convert_pdf": ("adapters/runner.py", "adapters/office.py"),
+    "register_object": ("adapters/runner.py", "adapters/constitutional.py"),
+}
+
+
+def process_fingerprint(process):
+    files = PROCESS_FILES.get(process)
+    if files is None:
+        raise Blocked("Processo indisponível.")
+    digest = hashlib.sha256()
+    digest.update(process.encode("utf-8"))
+    digest.update(b"\0")
+    for relative in files:
+        path = ROOT / relative
+        digest.update(relative.encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(path.read_bytes())
+        digest.update(b"\0")
+    return digest.hexdigest()
+
 
 VERIFY_POLICY = {
     "agreement": "PASS",
