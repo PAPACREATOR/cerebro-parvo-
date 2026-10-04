@@ -1,5 +1,6 @@
 # Revisão — formatos, redundância, ferramentas e wiki
 
+> Nota de estado (04-10-2026): este documento conserva a análise histórica. O runtime ativo já não usa Microsoft Conductor, Spiff nem YAML como motor. A execução atual é Kernel/Python; MCP é a fronteira de ferramentas. As conclusões sobre autoridade, proveniência e wiki continuam válidas.\n\n
 01/10/2026. Análise de conformidade; sem alteração normativa.
 
 Revisão de leitura, 04-10: conservar este relato histórico. A lacuna de schema
