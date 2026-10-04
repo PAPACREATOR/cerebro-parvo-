@@ -24,7 +24,7 @@
   "ui/index.html": "68ffb9007c48500250924c6936d9f3f08c25dabb150e07d0ab2e92f09689e297",
   "ui/app.js": "99b65484eecfbdb9d2ba25498e2f535ea94cb7160bc6a51224270821bcb294c5",
   "ui/style.css": "00422a3fb94d39ec264041e66637dc14b72840b3f0f26c6f129de2a510515530",
-  "adapters/constitutional.py": "46829be8e42d3469ca7a2e558c1e9ecd76edebd8fb00199fd19141ee1ed9cf61",
+  "adapters/constitutional.py": "1943aaece17916221d598ce8551e00b0d1a959e47c2d5b38aff7b4282029c026",
   "processes/register_object.yaml": "d00e8cca76d2a93d2c9b88c208ee431342baeb3dc4a4c8328dd934746ee462a0",
   "schemas/multimedia.json": "ea20b02da3c33557d42475c84e111f98a1f7048708af0e434dde4aca53154e01",
   "families/multimedia/som.md": "d31057a867080291d183e9cde486b6079e686403cf7869ed749d0f005e770462",
