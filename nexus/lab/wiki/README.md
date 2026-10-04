@@ -9,3 +9,9 @@ O estudo inclui temas, sites, páginas, fontes, pesquisas, notas, conclusões e 
 A suite deve produzir PASS/FAIL/NOT RUN, contagens, hashes, relações, consultas, falhas reproduzidas, espaço por componente, custo médio por caso e relatório final para a equipa. O índice é reconstruível e nunca é a fonte de verdade.
 
 O resultado não autoriza integração automática em nenhuma branch oficial.
+
+## Complemento executável de 04/10
+
+Ver `../../docs/COMPLEMENTO-WIKI-INFORMACAO-GERADA-2026-10-04.md` e `../../docs/RELATORIO-FINAL-WIKI-100K.md`.
+
+Comando: `python nexus/lab/wiki/test_web_research_wiki_100k.py --cases 100000 --output nexus/lab/wiki/results`. A contagem é de objetos sintéticos, não de cenários independentes. O envelope experimental não é o contrato F009. Resultados de execução ficam em `summary.json`; falha devolve código diferente de zero.

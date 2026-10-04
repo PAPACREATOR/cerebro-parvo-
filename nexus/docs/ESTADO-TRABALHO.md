@@ -82,3 +82,20 @@ Próximo passo: validar o ramo de criação automática do venv no script e conf
 o snapshot oficial quando disponibilizado. F014 não prova funcionalidades externas.
 Pedro informou que disponibilizará a pasta oficial via Drive. Acesso/conteúdo
 ainda não verificados; GitHub mantém código, testes e coordenação.
+
+## Complemento wiki — sessão 04/10/2026
+
+Pedido: recuperar memória, verificar estudo sobre wikis/informação gerada e complementar com testes.
+Branch isolada: `lab-wiki-complemento-20261004`; base `b0a82e63eae60fdec66afdee6705246c0d3465ea`.
+Não altera o estado histórico das outras branches acima.
+
+Encontrado placeholder no executor anunciado como implementado; relatório anterior NOT RUN.
+Agora: executor real de laboratório + estudo complementar + evidência JSON + workflow que conserva resultados mesmo em falha e rejeita artefacto ausente.
+
+PASS Linux: 100000 objetos parametrizados, 50000 pesquisas, relações bidirecionais, rebuild/renomeação, seis cenários adversariais, recuperação num processo novo. Total 20.114s. Auditoria documental PASS.
+Hash do executor testado: `1f1495ebbb99607a58a7cc4d2b9a407ca8e1a0b9114fbe6195178cd3348db7e5`. O commit que contém esta entrada identifica a entrega.
+
+Ficheiros: `nexus/lab/wiki/`, `nexus/docs/RELATORIO-FINAL-WIKI-100K.md`, `nexus/docs/COMPLEMENTO-WIKI-INFORMACAO-GERADA-2026-10-04.md`, `.github/workflows/wiki-100k.yml`.
+
+NOT RUN: integração Nexus/Windows, IA/web reais, histórico de versões, UI, crash/concorrência, Human Gate integrado. Não atribuir PASS global à wiki nem melhoria percentual por reutilização.
+Próximo: rever contrato do objeto de conhecimento e mapping F013/Store; depois validar integração autorizada, sem tocar em produção.
