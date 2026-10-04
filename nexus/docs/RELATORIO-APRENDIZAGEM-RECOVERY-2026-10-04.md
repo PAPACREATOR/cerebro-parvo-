@@ -200,3 +200,36 @@ Em crash durante `EXECUTING` sem resultado durável:
 `BLOCKED + RECOVERY_REQUIRED`.
 
 A fase operacional é agora coerente com o estado auditável da execução nos contratos cobertos.
+
+
+## SEC-R01 — output do executor redirecionado por symlink/junction
+
+### FAIL reproduzido
+Windows run `37202743809`:
+- `1 failed, 1217 passed`;
+- teste: `test_restart_never_reconciles_redirected_executor_output`;
+- um `execution.stdout.json` symlink para fora do run foi seguido;
+- o pacote externo chegou indevidamente a `HUMAN_REQUIRED`.
+
+### Padrão reaproveitado do Nexus/Codex
+O Nexus já usava a regra em Creative/Canonical:
+> nomes internos fixos não podem ser symlink/junction; nunca seguir proveniência para fora da raiz.
+
+### Correção mínima
+Antes de ler `execution.stdout.json` no recovery:
+- bloquear se `is_symlink()` ou `is_junction()`;
+- estado -> `BLOCKED`;
+- `commit_status=RECOVERY_REQUIRED`;
+- não criar Creative;
+- não criar Canonical;
+- não alterar o alvo externo.
+
+### PASS
+Windows run `37202954247`:
+- **1218 passed in 53.76s**;
+- `NEXUS PASS | COMPLETE`;
+- `POWERSHELL_WRAPPER=PASS`;
+- auditoria SUCCESS.
+
+### Aprendizagem
+> A superfície de recovery deve obedecer às mesmas fronteiras de path que a superfície normal. Recovery não é uma exceção de segurança.
