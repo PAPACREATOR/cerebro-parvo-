@@ -98,6 +98,10 @@ class Host:
                 atomic(directory / "libreoffice.json", config.read_bytes())
             command = [sys.executable, "-I", str(ROOT / "adapters/conductor_runner.py"), process, str(directory / "input.bin")]
             env = process_environment(directory)
+            # Kernel-owned durable checkpoint before entering an external capability.
+            # If the process dies after this point and before a durable result exists,
+            # restart must preserve uncertainty instead of claiming a generic FAIL.
+            self.store.update(run_id, execution_phase="EXECUTING")
             proc = subprocess.Popen(command, cwd=directory, env=env, stdin=subprocess.DEVNULL,
                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                     creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0)
