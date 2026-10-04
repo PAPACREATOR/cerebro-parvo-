@@ -255,31 +255,62 @@ class Store:
                 result["markdown"] += "\n\nPDF SHA-256: " + artifact["sha256"]
                 validate("result", result)
             candidate = self.path("creative", run_id)
-            candidate.mkdir()
             content = result["markdown"].encode("utf-8")
+            references = [{"path": "creative/" + run_id + "/content.md", "sha256": digest(content)}]
+            if artifact:
+                references.append({"path": "creative/" + run_id + "/resultado.pdf", "sha256": artifact["sha256"]})
+
+            def expected_provenance(timestamp):
+                return {
+                    "run_id": run_id, "process_id": state["process_id"], "process_version": state["process_version"],
+                    "step_id": "receive-validated-result", "timestamp": timestamp, "status": result["status"],
+                    "input_references": [{"path": "runs/" + run_id + "/input.bin", "sha256": state["input_sha256"]}],
+                    "output_references": references,
+                    "tools": [e["capability"] for e in result["evidence"]], "execution": trace,
+                    "laws_sha256": digest((ROOT / "laws/CONSTITUTION.md").read_bytes()),
+                    "policy_sha256": digest((ROOT / "laws/policy.json").read_bytes()),
+                    "human_approval": None,
+                }
+
+            if candidate.exists():
+                try:
+                    existing_content = self.checked_bytes("creative", run_id, "content.md")
+                    raw_result = self.checked_bytes("creative", run_id, "result.json")
+                    raw_provenance = self.checked_bytes("creative", run_id, "provenance.json")
+                    existing_result = validate("result", strict_json(raw_result))
+                    provenance = strict_json(raw_provenance)
+                    if raw_pdf is not None:
+                        self.verify_artifact({"artifact_sha256": artifact["sha256"]}, candidate)
+                    if (existing_content != content or existing_result != result
+                            or provenance != expected_provenance(provenance.get("timestamp"))):
+                        raise Blocked("Creative existente não corresponde ao resultado conservado.")
+                except (OSError, ValueError, KeyError, TypeError) as error:
+                    raise Blocked("Creative existente precisa de reconciliação. Conteúdo conservado.") from error
+                return self.update(
+                    run_id,
+                    status="HUMAN_REQUIRED" if result["status"] in ("PASS", "UNKNOWN") else result["status"],
+                    **({"artifact_sha256": artifact["sha256"]} if artifact else {}),
+                    result_status=result["status"], outcome=result["outcome"], candidate_sha256=digest(content),
+                    result_sha256=digest(raw_result), provenance_sha256=digest(raw_provenance),
+                    message="Resultado candidato. A decisão de guardar como aprovado é tua.",
+                )
+
+            candidate.mkdir()
             if raw_pdf is not None:
                 atomic(candidate / "resultado.pdf", raw_pdf)
             atomic(candidate / "content.md", content)
             atomic(candidate / "result.json", result)
-            provenance = {
-                "run_id": run_id, "process_id": state["process_id"], "process_version": state["process_version"],
-                "step_id": "receive-validated-result", "timestamp": now(), "status": result["status"],
-                "input_references": [{"path": "runs/" + run_id + "/input.bin", "sha256": state["input_sha256"]}],
-                "output_references": [{"path": "creative/" + run_id + "/content.md", "sha256": digest(content)}],
-                "tools": [e["capability"] for e in result["evidence"]], "execution": trace,
-                "laws_sha256": digest((ROOT / "laws/CONSTITUTION.md").read_bytes()),
-                "policy_sha256": digest((ROOT / "laws/policy.json").read_bytes()),
-                "human_approval": None,
-            }
-            if artifact:
-                provenance["output_references"].append({"path": "creative/" + run_id + "/resultado.pdf", "sha256": artifact["sha256"]})
+            provenance = expected_provenance(now())
             atomic(candidate / "provenance.json", provenance)
-            return self.update(run_id, status="HUMAN_REQUIRED" if result["status"] in ("PASS", "UNKNOWN") else result["status"],
-                               **({"artifact_sha256": artifact["sha256"]} if artifact else {}),
-                               result_status=result["status"], outcome=result["outcome"], candidate_sha256=digest(content),
-                               result_sha256=digest((candidate / "result.json").read_bytes()),
-                               provenance_sha256=digest((candidate / "provenance.json").read_bytes()),
-                               message="Resultado candidato. A decisão de guardar como aprovado é tua.")
+            return self.update(
+                run_id,
+                status="HUMAN_REQUIRED" if result["status"] in ("PASS", "UNKNOWN") else result["status"],
+                **({"artifact_sha256": artifact["sha256"]} if artifact else {}),
+                result_status=result["status"], outcome=result["outcome"], candidate_sha256=digest(content),
+                result_sha256=digest((candidate / "result.json").read_bytes()),
+                provenance_sha256=digest((candidate / "provenance.json").read_bytes()),
+                message="Resultado candidato. A decisão de guardar como aprovado é tua.",
+            )
 
     def promote(self, run_id, decision, destination="canonical"):
         """Only called by the authenticated UI after explicit confirmation."""
