@@ -11,7 +11,7 @@ import json
 import re
 
 from nexus.contracts import Blocked
-from nexus.frontdoor import ParsedInput, parse
+from nexus.frontdoor import ParsedInput, parse, parse_with_languagetool
 from nexus.adapters.notebook import prepare_source
 
 HEADER_RE = re.compile(r"\A<!-- nexus-natural-v1 (\{[^\n]*\}) -->\n", re.ASCII)
@@ -104,3 +104,43 @@ def kernel_from_notebook_boundary(packet: dict) -> str:
     markdown = "<!-- nexus-natural-v1 " + header + " -->\n" + packet["input_text"]
     from_markdown(markdown)
     return markdown
+
+
+def resolve_natural(text: str, *, languagetool_raw=None, tiny_hints=None) -> ParsedInput:
+    """Conservative escalation: ELIZA -> LanguageTool shadow -> tiny hint -> human.
+
+    Tiny hints classify intent only. They never carry process names, authority,
+    approval, capabilities or Canonical state.
+    """
+    first = parse(text)
+    if first.status != "UNRESOLVED" or first.explicit:
+        return first
+
+    if languagetool_raw is not None:
+        second = parse_with_languagetool(text, languagetool_raw)
+        if second.status == "RESOLVED":
+            return second
+
+    if tiny_hints is not None:
+        if not isinstance(tiny_hints, (list, tuple)):
+            raise TypeError("tiny_hints must be a list or tuple")
+        valid = [item for item in tiny_hints if isinstance(item, str) and item in INTENTS]
+        unique = set(valid)
+        if len(unique) == 1 and len(valid) == len(tiny_hints) and len(valid) > 0:
+            return ParsedInput(
+                "RESOLVED",
+                valid[0],
+                text,
+                text,
+                "tiny-hint-v1",
+                False,
+            )
+
+    return ParsedInput(
+        "ASK_HUMAN",
+        None,
+        text,
+        text,
+        "human-clarification-v1",
+        False,
+    )
