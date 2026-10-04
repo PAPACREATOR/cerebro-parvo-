@@ -13,6 +13,7 @@ from urllib.parse import urlsplit
 from nexus.contracts import ROOT, Blocked, strict_json
 from nexus.host import Host
 from nexus.instance import data_directory_lock
+from nexus.store import atomic
 
 
 class NexusHTTPServer(ThreadingHTTPServer):
@@ -121,7 +122,7 @@ def main():
         with application(args.data, args.port) as (host, server):
             url = "http://127.0.0.1:" + str(server.server_port) + "/#session=" + host.session
             # Private local launch reference; ignored by Git, never given to tools.
-            (host.store.root / "launch-url.txt").write_text(url, encoding="utf-8")
+            atomic(host.store.root / "launch-url.txt", url.encode("utf-8"))
             print("Folha Nexus pronta. Mantém esta janela aberta.", flush=True)
             if not args.no_browser:
                 webbrowser.open(url)
