@@ -117,3 +117,9 @@ NOT RUN: Windows, IA real, interface nova, integração no Host oficial, concorr
 Próximo microprocesso: contrato de request/contexto e vínculo do output às referências consultadas; depois integração limitada no Host com testes. Não passar hash do flow oficial para aceitar saída de flow diferente.
 
 Gravação local autorizada. Envio ao GitHub continua pendente de autorização explícita após a rejeição automática anterior; nenhuma nova tentativa de push nesta etapa. O commit desta entrada identifica a entrega.
+
+## Pausa e sincronização de equipa — pedido humano de 04/10, 16:02 Lisboa
+
+Implementação pausada por instrução explícita. Consultadas todas as refs remotas disponíveis, PRs #7–#13/comentários, planos e Actions. Ver `SYNC-EQUIPA-2026-10-04.md` e inventário JSON para commits, falhas, estados em curso e fronteira partilhada parser/contexto/Kernel.
+
+O pedido atual autoriza sincronizar/publicar esta branch no GitHub; a pendência de autorização nas entradas anteriores é histórica e fica levantada para esta publicação. Push CLI falhou por falta de credenciais; utilizar conector autenticado e verificar igualdade das árvores. Não alterar branches de outras sessões nem integrar experiências falhadas em main. Próxima implementação permanece em pausa até novo pedido.
