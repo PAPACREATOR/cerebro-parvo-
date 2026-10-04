@@ -23,13 +23,13 @@ Regra: não alterar leis nem arquitetura congelada sem FAIL estrutural reproduzi
 | T01 | Crash após resultado do executor e antes de Store.accept | GPT/revisor | PASS | run 37197610565: 1197 PASS; sem reexecução, workflow fixado, Canonical vazio |
 | T02 | Crash antes da execução externa | GPT/revisor | PASS | teste Work existente conserva input, marca interrupção e não cria Canonical |
 | T03 | Crash depois de Creative e antes do estado final | GPT/revisor | PASS | run 37198248236: 1206 PASS; Creative completo reconciliado; 8 danos ficam BLOCKED e preservados |
-| T04 | Idempotência de reentrada | GPT/revisor | PARCIAL | accept idempotente após crash e promoção repetida já cobertos; escala/property-based pendente |
+| T04 | Idempotência de reentrada | GPT/revisor | PASS REMOTO no recovery coberto | accept idempotente após crash, promoção repetida e RESULT_ACCEPTED; ampliar por famílias sem I/O pesado |
 | T04A | Binding resultado ↔ workflow fixado | GPT/revisor | PASS | run 37198721444: 1207 PASS; trace com hash diferente é rejeitado |\n| T05 | Human Gate adversarial | GPT/revisor | PASS | run 37199085733: 1210 PASS; sessão inválida não consome ticket, ticket cruzado bloqueado, restart invalida ticket pendente |
 | T06 | Comparação Conductor-only vs Spiff+Conductor | GPT/Work | BLOQUEADO PELO ESPELHO LOCAL | mesmos contratos efémeros; persistência fora da comparação |
-| T07 | Integração Windows LAB | Codex/PC | NOT RUN | commit testado em C:\Nexus-Lab, relatório PASS/FAIL devolvido |
+| T07 | Integração Windows LAB | Codex/PC | PREPARADO / NOT RUN | handoff escrito em HANDOFF-CODEX-NEXUS-LAB-2026-10-04.md; falta execução no PC |
 | T08 | Isolamento Windows por capability | Work/PC | PENDENTE | mínimo privilégio + ACL/processo + bypass testado |
 | T09 | Capabilities externas uma a uma | Work/PC | PENDENTE | cada ligação ida/volta/falha/restart e proveniência |
-| T10 | Matriz 100000 casos | GPT/Work | PENDENTE | property-based + crash + idempotência + diferencial, sem 100k processos pesados |
+| T10 | Matriz 100000 casos | GPT/Work | PASS REMOTO v1 | 100000 casos determinísticos incluídos na regressão Windows; relatório específico criado; expandir estado Kernel sem I/O pesado |
 | T11 | Snapshot/auditoria PC completa | GPT/Codex | PENDENTE | inventário, hashes, Git, ACLs, testes, cloud ref |
 | T12 | Hardening final + encriptação + móvel | Final | PENDENTE | depois da integração funcional e regressão global |
 
@@ -54,3 +54,14 @@ Regra: não alterar leis nem arquitetura congelada sem FAIL estrutural reproduzi
 - Em todos os PASS finais: `NEXUS PASS | COMPLETE` e wrapper PowerShell PASS.
 
 - T05 Human Gate adicional: `1210 passed in 51.73s` — run 37199085733; nenhuma alteração ao Host necessária.
+
+
+## Atualização 2026-10-04 — checkpoints Kernel
+
+- FAIL `execution_phase` ausente durante executor: run 37201693913, 1 FAIL / 1215 PASS.
+- Correção PREPARED/EXECUTING + recovery incerto: run 37202001479, **1216 PASS**.
+- FAIL fase não fechada após accept: run 37202233746, 1 FAIL / 1216 PASS.
+- Correção RESULT_ACCEPTED: run 37202434881, **1217 PASS**.
+- Relatório: `RELATORIO-APRENDIZAGEM-RECOVERY-2026-10-04.md`.
+- Stress: `RELATORIO-STRESS-100K-2026-10-04.md`.
+- Próximo gate real: `C:\Nexus-Lab`.
