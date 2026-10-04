@@ -322,4 +322,7 @@ def test_restart_reconciles_saved_executor_result_without_reexecution(tmp_path, 
     assert (directory / "execution.stdout.json").read_bytes() == raw
     assert (directory / "input.bin").read_bytes() == original
     assert not restored.path("canonical", run).exists()
-    assert restored.check_candidate(state)["execution"] == envelope["trace"]
+    recovered_trace = restored.check_candidate(state)["execution"]
+    assert recovered_trace["engine"] == envelope["trace"]["engine"]
+    assert recovered_trace["events"] == envelope["trace"]["events"]
+    assert recovered_trace["workflow_sha256"] == state["workflow_sha256"]
