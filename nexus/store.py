@@ -238,6 +238,8 @@ class Store:
             if state["status"] != "RUNNING":
                 raise Blocked("A execução já terminou.")
             self.check_input(state)
+            if not isinstance(trace, dict) or trace.get("workflow_sha256") != state.get("workflow_sha256"):
+                raise Blocked("O resultado não corresponde à versão do processo fixada no pedido.")
             if state["process_id"] in ("interpret", "proofread", "convert_pdf"):
                 if result["status"] != "UNKNOWN" or result["outcome"] != "candidate":
                     raise Blocked("Este processo só pode devolver um candidato por rever.")
