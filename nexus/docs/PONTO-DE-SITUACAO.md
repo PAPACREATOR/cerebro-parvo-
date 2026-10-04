@@ -10,7 +10,11 @@ Windows do GitHub**. [Arranque](F011-ARRANQUE-UNICO.md) · [Hash](F012-HASH-WIND
 Pedido atual: **resultados ligados, sentido inverso e wikis coerentes**.
 [F013](F013-PROVENIENCIA-INVERSA.md) documenta falhas observadas na ligação
 Canonical → Creative → evidência/processo → fonte/pedido e a correção.
-Regressão aplicável Linux: 1148 PASS; suite Windows da última correção ainda NOT RUN.
+Regressão aplicável Linux: 1148 PASS. Suite completa da última correção:
+**1194 PASS em Windows em 56,15 s**, integridade PASS, commit `2870e336`.
+[Execução verificada](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37162599479).
+As contagens Linux e Windows sobrepõem-se; não somar.
+[Continuidade e PowerShell](CONTINUIDADE-2026-10-04.md).
 Não confundir a prova mínima de proveniência com uma wiki relacional concluída.
 
 Prioridades da instalação mantidas: ligar a conta Nexus ao executor, configurar

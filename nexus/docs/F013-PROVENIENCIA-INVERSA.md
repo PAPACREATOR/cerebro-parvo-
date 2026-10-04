@@ -85,7 +85,10 @@ reexecução de providers, nova dependência ou aumento de permissões.
   Canonical válido; alteração após revisão; leitura HTTP antes/depois de aprovação;
   retorno após reinício com provider proibido; cópia para outra raiz e leitura;
   compatibilidade com pacotes antigos; dois circuitos nativos texto/anexo.
-- Regressão Windows desta revisão: **NOT RUN** até conclusão do workflow.
+- Regressão Windows desta revisão: **1194 passed in 56.15s**, sem falhas ou skips,
+  Python 3.12.10, commit `2870e3366bf9a7baefe392193e375c1ddaabfc11`.
+  `INTEGRITY=PASS`. [Execução e logs](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37162599479).
+  Logs conferidos em 04-10-2026; inclui a normalização dos quatro erros HTTP.
 
 Uma revisão intermédia anterior à normalização dos quatro erros HTTP passou
 **1190 testes em Windows em 43.25 s**; não cobre a última correção.
