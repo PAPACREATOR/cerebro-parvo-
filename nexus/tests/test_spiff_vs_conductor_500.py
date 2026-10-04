@@ -4,6 +4,8 @@ This is evidence only. It does not alter Kernel authority, Creative/Canonical or
 """
 import asyncio
 import hashlib
+import json
+import os
 import random
 import subprocess
 import sys
@@ -201,3 +203,141 @@ def test_real_optional_external_tool_discovery():
         # Some tools (notably java -version) write version info to stderr.
         assert completed.returncode == 0, (label, completed.stderr)
         assert completed.stdout.strip() or completed.stderr.strip(), label
+
+
+CHECK_FLOW = ROOT / "processes" / "check.yaml"
+PS_EXE = str(Path(os.environ["SystemRoot"]) / "System32/WindowsPowerShell/v1.0/powershell.exe")
+
+
+def _ps_hash_direct(path):
+    script = r"""
+$ErrorActionPreference = 'Stop'
+[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
+$p = [Console]::In.ReadToEnd().TrimEnd([char]10, [char]13)
+try {
+  $algorithm = [System.Security.Cryptography.SHA256]::Create()
+  try { $hash = [BitConverter]::ToString($algorithm.ComputeHash([System.IO.File]::ReadAllBytes($p))).Replace('-', '').ToLowerInvariant() }
+  finally { $algorithm.Dispose() }
+  [Console]::Out.WriteLine('{"status":"PASS","sha256":"' + $hash + '","capability":"windows.dotnet-sha256"}')
+} catch {
+  [Console]::Out.WriteLine('{"status":"FAIL","sha256":null,"capability":"windows.dotnet-sha256"}')
+}
+"""
+    completed = subprocess.run(
+        [PS_EXE, "-NoProfile", "-NonInteractive", "-Command", script],
+        input=str(path),
+        capture_output=True,
+        text=True,
+        timeout=20,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stderr
+    return json.loads(completed.stdout.strip().splitlines()[-1])
+
+
+def _spiff_real_tool(path):
+    spec = WorkflowSpec("nexus-spiff-real-tool", addstart=True)
+    task = Simple(spec, "powershell_hash")
+    spec.start.connect(task)
+
+    def invoke(workflow, _task):
+        workflow.data["result"] = _ps_hash_direct(workflow.data["path"])
+        workflow.data["tool_calls"] = workflow.data.get("tool_calls", 0) + 1
+
+    task.completed_event.connect(invoke)
+    workflow = Workflow(spec)
+    workflow.set_data(path=str(path), tool_calls=0)
+    workflow.run_all()
+    assert workflow.is_completed()
+    assert workflow.get_data("tool_calls") == 1
+    return workflow.get_data("result")
+
+
+async def _conductor_real_tool_async(path):
+    config = load_workflow(CHECK_FLOW)
+    engine = WorkflowEngine(config, workflow_path=CHECK_FLOW)
+    return await engine.run({"input_path": str(path), "powershell": PS_EXE})
+
+
+def _conductor_real_tool(path):
+    return asyncio.run(_conductor_real_tool_async(path))["result"]
+
+
+def _joint_real_tool(path):
+    config = load_workflow(CHECK_FLOW)
+    spec = WorkflowSpec("nexus-spiff-conductor-real-tool", addstart=True)
+    task = Simple(spec, "spiff_dispatch_conductor")
+    spec.start.connect(task)
+
+    def invoke(workflow, _task):
+        engine = WorkflowEngine(config, workflow_path=CHECK_FLOW)
+        envelope = asyncio.run(engine.run({"input_path": workflow.data["path"], "powershell": PS_EXE}))
+        workflow.data["result"] = envelope["result"]
+        workflow.data["spiff_calls"] = workflow.data.get("spiff_calls", 0) + 1
+
+    task.completed_event.connect(invoke)
+    workflow = Workflow(spec)
+    workflow.set_data(path=str(path), spiff_calls=0)
+    workflow.run_all()
+    assert workflow.is_completed()
+    assert workflow.get_data("spiff_calls") == 1
+    return workflow.get_data("result")
+
+
+def _real_tool_cases(tmp_path):
+    cases = []
+    fixed = [
+        ("empty.bin", b""),
+        ("one-byte.bin", b"x"),
+        ("ascii.txt", b"Nexus real PowerShell tool\n"),
+        ("unicode.txt", "ação 日本語 café\n".encode("utf-8")),
+        ("nulls.bin", b"\x00\x01\x00\xffNEXUS"),
+        ("spaces name.txt", b"spaces"),
+        ("acentuação çã.txt", "ficheiro com nome unicode".encode("utf-8")),
+        ("4k.bin", bytes(range(256)) * 16),
+    ]
+    for name, raw in fixed:
+        path = tmp_path / name
+        path.write_bytes(raw)
+        cases.append(path)
+    rng = random.Random(SEED)
+    for i in range(16):
+        raw = bytes(rng.randrange(256) for _ in range(1 + rng.randrange(2048)))
+        path = tmp_path / f"random-{i:02d}.bin"
+        path.write_bytes(raw)
+        cases.append(path)
+    return cases
+
+
+def test_real_powershell_same_cases_spiff_conductor_joint(tmp_path):
+    cases = _real_tool_cases(tmp_path)
+    totals = {"spiff": 0.0, "conductor": 0.0, "joint": 0.0}
+    mismatches = []
+
+    for path in cases:
+        expected_hash = hashlib.sha256(path.read_bytes()).hexdigest()
+
+        t0 = time.perf_counter()
+        spiff = _spiff_real_tool(path)
+        totals["spiff"] += time.perf_counter() - t0
+
+        t0 = time.perf_counter()
+        conductor = _conductor_real_tool(path)
+        totals["conductor"] += time.perf_counter() - t0
+
+        t0 = time.perf_counter()
+        joint = _joint_real_tool(path)
+        totals["joint"] += time.perf_counter() - t0
+
+        values = (spiff, conductor, joint)
+        if not all(v.get("status") == "PASS" and v.get("sha256") == expected_hash for v in values):
+            mismatches.append((path.name, spiff, conductor, joint, expected_hash))
+
+    print("NEXUS_REAL_TOOL_COMPARISON")
+    print("| Path | Cases | Result | Total s | Mean ms | Real PowerShell calls |")
+    print("|---|---:|---|---:|---:|---:|")
+    for name in ("spiff", "conductor", "joint"):
+        result = "PASS" if not mismatches else "FAIL"
+        print(f"| {name} | {len(cases)} | {result} | {totals[name]:.6f} | {(totals[name]/len(cases))*1000:.3f} | {len(cases)} |")
+    print(f"mismatches={len(mismatches)}")
+    assert not mismatches, mismatches[:5]
