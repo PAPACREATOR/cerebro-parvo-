@@ -55,7 +55,7 @@ NATURAL_RULES = {
     "perguntar": (
         r"\bexplica(?:r)?\b", r"\bresponde(?:r)?\b", r"\bo que (?:e|é)\b",
         r"\bquem (?:e|é)\b", r"\bporqu[eê]\b", r"\bcomo\b",
-        r"\bexplain\b", r"\bwhat is\b", r"\bwho is\b", r"\bwhy\b", r"\bhow\b",
+        r"\bexplain\b", r"\bwhat is\b", r"\bwho is\b", r"\bwhy\b", r"\bhow (?!much\b)",
         r"\bexplique\b", r"\bqu['’]est-ce que\b", r"\bqui est\b",
         r"\bpourquoi\b", r"\bcomment\b",
     ),
