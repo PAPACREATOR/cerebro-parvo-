@@ -50,6 +50,8 @@ class Store:
                 raise Blocked("Diretório de dados redirecionado.")
             target.mkdir(parents=True, exist_ok=True)
         for item in (self.root / "runs").glob("*/state.json"):
+            if item.is_symlink() or item.is_junction():
+                raise Blocked("Estado autoritativo redirecionado.")
             state = strict_json(item.read_bytes())
             final = self.path("canonical", state["run_id"])
             if final.exists() or state["status"] == "PASS":
