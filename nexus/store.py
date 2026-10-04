@@ -300,6 +300,7 @@ class Store:
                     **({"artifact_sha256": artifact["sha256"]} if artifact else {}),
                     result_status=result["status"], outcome=result["outcome"], candidate_sha256=digest(content),
                     result_sha256=digest(raw_result), provenance_sha256=digest(raw_provenance),
+                    execution_phase="RESULT_ACCEPTED",
                     message="Resultado candidato. A decisão de guardar como aprovado é tua.",
                 )
 
@@ -317,6 +318,7 @@ class Store:
                 result_status=result["status"], outcome=result["outcome"], candidate_sha256=digest(content),
                 result_sha256=digest((candidate / "result.json").read_bytes()),
                 provenance_sha256=digest((candidate / "provenance.json").read_bytes()),
+                execution_phase="RESULT_ACCEPTED",
                 message="Resultado candidato. A decisão de guardar como aprovado é tua.",
             )
 
