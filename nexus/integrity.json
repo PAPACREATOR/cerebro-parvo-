@@ -2,7 +2,7 @@
   "app.py": "a0cec14cb307cd4401b38614859a3541ddb9ce96576ffd7492137a4b502a94df",
   "contracts.py": "6c97ed0af3892c7dbbfe7d4b1f673c319ed9fc92c24f638161b91f2c43c02f3c",
   "host.py": "6acf5d840cb730ecc51cb1cfb4401233afe176133bb446a21a51640d178524f9",
-  "store.py": "cf8887605178b70ebf7e5cec0a7f13e668b5397e7df242aa96188804ce8165f1",
+  "store.py": "771070df700630e0dd3c5e8fbaf44ab1ce7e53ddbd4bc3b21620404dc1e638d2",
   "__init__.py": "46cab08a37d7677c810002d394bfc5ac0729e488dc9b6920cabedf37db8dc15a",
   "adapters/conductor_runner.py": "ca7efded3f337c6b0350a41263fdbcfe2f2d986f0067ccbb92ca870575ba6660",
   "adapters/tools.py": "c77a30cd738e5fdec94d25306f34b1f0fdc49f441504259f195d0fcf2aa64826",
