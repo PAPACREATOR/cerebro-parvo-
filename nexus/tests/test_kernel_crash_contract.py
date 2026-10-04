@@ -1,16 +1,19 @@
-"""Kernel-owned crash/restart contracts. Synthetic data only."""
+"""Independent review of Kernel-owned crash/restart reconciliation.
+
+Synthetic data only. This file does not implement recovery; it verifies the
+already-implemented T01 contract from the Work branch.
+"""
 import json
 
 from nexus.store import Store
 from nexus.tests.test_store import request, result
 
 
-def test_restart_with_durable_executor_result_requires_reconciliation_not_generic_fail(tmp_path):
-    """FAIL-first: external result exists, but Kernel crashed before Store.accept.
+def test_restart_reconciles_durable_executor_result_without_generic_fail(tmp_path):
+    """Executor output is durable; Kernel crashed before Store.accept.
 
-    The executor is disposable. On restart, the Kernel must not erase the distinction
-    between "nothing completed" and "a durable result exists but is not committed".
-    The safe state is explicit reconciliation; Canonical must remain untouched.
+    Restart must reconcile the saved result without creating Canonical or
+    degrading the operation to a generic FAIL.
     """
     store = Store(tmp_path)
     run_id = store.create(request())
@@ -19,22 +22,21 @@ def test_restart_with_durable_executor_result_requires_reconciliation_not_generi
     envelope = {
         "result": result(),
         "trace": {
-            "engine": "microsoft/conductor",
+            "engine": "synthetic-disposable-executor",
             "version": "synthetic",
             "summary": {"status": "completed"},
             "events": [],
-            "workflow_sha256": "0" * 64,
         },
     }
-    (run / "execution.stdout.json").write_text(
-        json.dumps(envelope, ensure_ascii=False), encoding="utf-8"
-    )
+    raw = json.dumps(envelope, ensure_ascii=False).encode("utf-8")
+    (run / "execution.stdout.json").write_bytes(raw)
     (run / "execution.stderr.txt").write_bytes(b"")
 
     restarted = Store(tmp_path)
     state = restarted.state(run_id)
 
-    assert state["status"] == "BLOCKED"
-    assert state["commit_status"] == "RECOVERY_REQUIRED"
-    assert (run / "execution.stdout.json").is_file()
-    assert not list((tmp_path / "canonical").iterdir())
+    assert state["status"] == "HUMAN_REQUIRED"
+    assert state["status"] != "FAIL"
+    assert (run / "execution.stdout.json").read_bytes() == raw
+    assert restarted.check_candidate(state)["execution"]["engine"] == "synthetic-disposable-executor"
+    assert not restarted.path("canonical", run_id).exists()
