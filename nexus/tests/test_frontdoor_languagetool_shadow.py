@@ -13,7 +13,7 @@ CASES = [
     ("pesqisa", "pesquisa", "web", " na web documento"),
     ("enconra", "encontra", "fontes", " fontes sobre documento"),
     ("corige", "corrige", "trabalhar", " este texto"),
-    ("esplica", "explica", "perguntar", " este tema"),
+    ("esplica", "explica", "perguntar", " isto"),
     ("calcla", "calcula", "calcular", " 2+2"),
     ("asunto", "assunto", "tema", " astronomia"),
 ]
