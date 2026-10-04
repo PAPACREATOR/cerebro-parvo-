@@ -63,6 +63,12 @@ class Store:
                 atomic(item, state)
             elif state["status"] == "RUNNING":
                 execution = self.path("runs", state["run_id"]) / "execution.stdout.json"
+                if execution.is_symlink() or execution.is_junction():
+                    state.update(status="BLOCKED", commit_status="RECOVERY_REQUIRED",
+                                 message="Resultado externo redirecionado; a reconciliação foi bloqueada.",
+                                 updated_at=now())
+                    atomic(item, state)
+                    continue
                 if execution.is_file():
                     try:
                         envelope = strict_json(execution.read_bytes())
