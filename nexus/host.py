@@ -1,4 +1,4 @@
-"""Minimal local Host: contracts, Conductor delegation, gate and presentation."""
+"""Minimal local Host: contracts, deterministic Python delegation, gate and presentation."""
 import getpass
 import hmac
 import json
@@ -19,14 +19,12 @@ def verify_integrity():
     manifest = strict_json((ROOT / "integrity.json").read_bytes())
     required = {
         "__init__.py", "app.py", "host.py", "store.py", "contracts.py", "approval_binding.py", "instance.py",
-        "adapters/conductor_runner.py", "adapters/tools.py", "adapters/notebook.py",
+        "adapters/runner.py", "adapters/tools.py", "adapters/notebook.py",
         "adapters/languagetool.py", "adapters/office.py",
         "laws/CONSTITUTION.md", "laws/policy.json",
-        "processes/check.yaml", "processes/verify.yaml", "processes/interpret.yaml",
-        "processes/proofread.yaml", "processes/convert_pdf.yaml",
-        "schemas/request.json", "schemas/result.json", "schemas/cognitive.json", "schemas/languagetool.json",
+                "schemas/request.json", "schemas/result.json", "schemas/cognitive.json", "schemas/languagetool.json",
         "ui/index.html", "ui/app.js", "ui/style.css",
-        "adapters/constitutional.py", "processes/register_object.yaml", "schemas/multimedia.json",
+        "adapters/constitutional.py", "schemas/multimedia.json",
         "families/multimedia/som.md", "families/multimedia/imagem.md",
     }
     if not isinstance(manifest, dict) or set(manifest) != required:
@@ -96,7 +94,7 @@ class Host:
                 if not config.is_file():
                     raise Blocked("LibreOffice precisa de configuração local.")
                 atomic(directory / "libreoffice.json", config.read_bytes())
-            command = [sys.executable, "-I", str(ROOT / "adapters/conductor_runner.py"), process, str(directory / "input.bin")]
+            command = [sys.executable, "-I", str(ROOT / "adapters/runner.py"), process, str(directory / "input.bin")]
             env = process_environment(directory)
             # Kernel-owned durable checkpoint before entering an external capability.
             # If the process dies after this point and before a durable result exists,
@@ -123,7 +121,8 @@ class Host:
             envelope = strict_json(stdout)
             if not isinstance(envelope, dict) or set(envelope) != {"result", "trace"}:
                 raise Blocked("Resposta de execução inválida.")
-            envelope["trace"]["workflow_sha256"] = digest((ROOT / "processes" / (process + ".yaml")).read_bytes())
+            from nexus.adapters.runner import process_fingerprint
+            envelope["trace"]["workflow_sha256"] = process_fingerprint(process)
             self.store.accept(run_id, envelope["result"], envelope["trace"])
         except Exception as error:
             self.store.update(run_id, status="BLOCKED" if isinstance(error, Blocked) else "FAIL",
