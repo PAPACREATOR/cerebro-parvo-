@@ -76,10 +76,10 @@ def test_malformed_objects(tmp_path, raw):
 
 
 @pytest.mark.parametrize("tribe", ["som", "imagem"])
-def test_real_conductor_reads_family(tribe):
+def test_real_deterministic_executor_reads_family(tribe):
     path = ROOT / "families/multimedia" / (tribe + ".md")
     result = asyncio.run(execute(ROOT / "processes/register_object.yaml", {
         "input_path": str(path), "python": sys.executable}))
     assert result["result"] == read_object(path)
-    assert result["trace"]["engine"] == "microsoft/conductor"
+    assert result["trace"]["engine"] == "nexus/python-deterministic"
     assert result["trace"]["summary"]["usage"]["total_tokens"] == 0
