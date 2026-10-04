@@ -1,5 +1,6 @@
 # Como o Kernel usa a wiki nos flows
 
+> Nota de estado (04-10-2026): o transporte Conductor/context_flow.yaml descrito abaixo foi um laboratório e foi removido do código ativo. Mantêm-se os resultados sobre wiki derivada, FTS5, contexto limitado, proveniência e navegação bidirecional. A continuação ativa é Kernel Python + MCP.\n\n
 04-10-2026. Estudo interpretado e primeira ligação experimental implementada.
 Base local: `74f6857`; branch `lab-wiki-complemento-20261004`. Sem envio remoto nesta sessão.
 
