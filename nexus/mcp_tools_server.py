@@ -1,8 +1,8 @@
 """Nexus-owned deterministic MCP tool server.
 
 Transport only. No model, agent, memory, approval or Store access.
-Each tool delegates to an already-bounded adapter using a Kernel-supplied input
-path. Authority remains in Host/Store.
+Each tool delegates to an already-bounded adapter. Authority remains in
+Host/Store. External-tool health probes never mutate Nexus state.
 """
 from __future__ import annotations
 
@@ -17,6 +17,8 @@ from nexus.adapters.verify_direct import execute as verify
 from nexus.adapters.notebook import run as interpret
 from nexus.adapters.languagetool import run as proofread
 from nexus.adapters.office import run as convert_pdf
+from nexus.adapters.media_tools import check_ace_step as ace_health
+from nexus.adapters.media_tools import check_forge as forge_health
 from nexus.contracts import Blocked
 
 
@@ -53,6 +55,16 @@ def proofread_file(input_path: str) -> dict:
 @mcp.tool()
 def convert_pdf_file(input_path: str) -> dict:
     return convert_pdf(_input(input_path))
+
+
+@mcp.tool()
+def check_ace_step() -> dict:
+    return ace_health()
+
+
+@mcp.tool()
+def check_forge() -> dict:
+    return forge_health()
 
 
 if __name__ == "__main__":
