@@ -228,53 +228,57 @@ def script_echo_config() -> WorkflowConfig:
     )
 
 
-@pytest.mark.asyncio
-async def test_perf_compact_set_vs_five_step_chain():
-    payload = {"x": "nexus"}
-    chain = chained_set_config()
-    compact = compact_set_config()
+def test_perf_compact_set_vs_five_step_chain():
+    async def run():
+        payload = {"x": "nexus"}
+        chain = chained_set_config()
+        compact = compact_set_config()
 
-    assert await engine(chain).run(payload) == await engine(compact).run(payload)
+        assert await engine(chain).run(payload) == await engine(compact).run(payload)
 
-    baseline = await timed_runs(chain, payload, 200)
-    optimized = await timed_runs(compact, payload, 200)
-    emit("five_set_chain_vs_one_multi_set", baseline, optimized)
-
-
-@pytest.mark.asyncio
-async def test_perf_parallel_waits_vs_sequential():
-    sequential = sequential_wait_config()
-    parallel = parallel_wait_config()
-
-    assert (await engine(sequential).run({}))["done"] is True
-    assert (await engine(parallel).run({}))["done"] is True
-
-    baseline = await timed_runs(sequential, {}, 20)
-    optimized = await timed_runs(parallel, {}, 20)
-    emit("two_independent_waits_sequential_vs_parallel", baseline, optimized)
+        baseline = await timed_runs(chain, payload, 200)
+        optimized = await timed_runs(compact, payload, 200)
+        emit("five_set_chain_vs_one_multi_set", baseline, optimized)
+    asyncio.run(run())
 
 
-@pytest.mark.asyncio
-async def test_perf_foreach_concurrency_1_vs_10():
-    serial = foreach_wait_config(1)
-    concurrent = foreach_wait_config(10)
+def test_perf_parallel_waits_vs_sequential():
+    async def run():
+        sequential = sequential_wait_config()
+        parallel = parallel_wait_config()
 
-    assert (await engine(serial).run({}))["done"] is True
-    assert (await engine(concurrent).run({}))["done"] is True
+        assert (await engine(sequential).run({}))["done"] is True
+        assert (await engine(parallel).run({}))["done"] is True
 
-    baseline = await timed_runs(serial, {}, 10)
-    optimized = await timed_runs(concurrent, {}, 10)
-    emit("foreach_10_items_concurrency_1_vs_10", baseline, optimized)
+        baseline = await timed_runs(sequential, {}, 20)
+        optimized = await timed_runs(parallel, {}, 20)
+        emit("two_independent_waits_sequential_vs_parallel", baseline, optimized)
+    asyncio.run(run())
 
 
-@pytest.mark.asyncio
-async def test_perf_internal_set_vs_script_subprocess():
-    payload = {"value": "ação-日本語-Nexus"}
-    script = script_echo_config()
-    internal = set_echo_config()
+def test_perf_foreach_concurrency_1_vs_10():
+    async def run():
+        serial = foreach_wait_config(1)
+        concurrent = foreach_wait_config(10)
 
-    assert await engine(script).run(payload) == await engine(internal).run(payload)
+        assert (await engine(serial).run({}))["done"] is True
+        assert (await engine(concurrent).run({}))["done"] is True
 
-    baseline = await timed_runs(script, payload, 50)
-    optimized = await timed_runs(internal, payload, 50)
-    emit("script_subprocess_vs_internal_set", baseline, optimized)
+        baseline = await timed_runs(serial, {}, 10)
+        optimized = await timed_runs(concurrent, {}, 10)
+        emit("foreach_10_items_concurrency_1_vs_10", baseline, optimized)
+    asyncio.run(run())
+
+
+def test_perf_internal_set_vs_script_subprocess():
+    async def run():
+        payload = {"value": "ação-日本語-Nexus"}
+        script = script_echo_config()
+        internal = set_echo_config()
+
+        assert await engine(script).run(payload) == await engine(internal).run(payload)
+
+        baseline = await timed_runs(script, payload, 50)
+        optimized = await timed_runs(internal, payload, 50)
+        emit("script_subprocess_vs_internal_set", baseline, optimized)
+    asyncio.run(run())
