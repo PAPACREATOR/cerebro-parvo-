@@ -67,5 +67,9 @@ Não aceitar segredos em prompts, publicar automaticamente, dar auto-approve glo
 - Conferir que o retorno não repete ferramentas nem cria aprovação humana nova.
   Usar dados sintéticos e testar que falhas não promovem nem eliminam conhecimento.
 - Declarar a cobertura e as exclusões; nenhum PASS parcial prova todas as ligações.
-- Conductor mantém-se executor do Nexus publicado. Spiff sai do plano de execução.
-  Não introduzir segundo motor; preservar referências históricas como história.
+- Conductor é o executor do Nexus publicado. O handoff local no PR #7 relata
+  Spiff -> Conductor; comparar o código e reproduzir os contratos antes de retirar
+  Spiff da versão local. Preferir um só executor se houver equivalência comprovada.
+- Coordenar sessões por branches/PRs, preservando caminhos relativos e indicando
+  commit de base e evidência. Espelhar código/documentação; excluir credenciais,
+  ambientes, runtime e cofres. Consultar comentários recentes antes de editar.

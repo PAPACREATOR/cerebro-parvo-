@@ -8,7 +8,7 @@ Branch: nexus-startup-lock-20261003. PR: #7.
 | F011/F012/F013 | Testado no runner Windows | 1194 PASS, run 37162599479, commit 2870e336 |
 | Script PowerShell único com relatório | PASS com Python preparado | 1194 PASS + falha por Python ausente; run 37194297587 |
 | Instalação pessoal | A cargo de Pedro | Não bloqueia tarefas do repositório |
-| Executor | Conductor; Spiff retirado do plano por Pedro | 36 ficheiros de código/workflows/dependências conferidos sem referência Spiff |
+| Executor | Conductor no GitHub; equivalência com Spiff local pendente | Handoff do outro GPT no PR #7; aguardar espelho dos ficheiros e reproduzir contratos |
 | Wiki relacional / navegação | Por iniciar | F013 cobre validação de pacotes, não navegação completa |
 
 ## Regra de continuidade pedida por Pedro
@@ -48,3 +48,18 @@ preparado pelo runner. Esse modo mantém NOT RUN até teste específico.
 A suite inclui ida/retorno F013, fontes danificadas e reinício; não prova todas
 as capabilities externas. Próximo passo: validar preparação automática de ambiente
 e alargar cobertura bidirecional por capability, um contrato de cada vez.
+
+## Coordenação com o outro GPT — 04/10, 11:13 Lisboa
+Lido o [handoff local](https://github.com/PAPACREATOR/cerebro-parvo-/pull/7#issuecomment-5978887095).
+Relata adaptador Spiff -> Conductor e dois testes ainda não publicados.
+A ausência de Spiff nos 36 ficheiros publicados não demonstra redundância local.
+Retirada condicionada à comparação dos mesmos contratos; nenhuma alteração local feita.
+Espelho solicitado por branch própria com caminhos relativos, hashes e testes.
+O Work continua na branch deste PR; comparar antes de conciliar ficheiros comuns.
+
+Nova ocorrência: [run 37194459860](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37194459860)
+teve 1193 PASS e 1 FAIL: test_independent_memories_can_open_together,
+ValueError por URL vazia em wait_for_app. Run paralelo 37194461942 passou.
+Estado: falha intermitente por investigar; não declarada resolvida.
+Próximo microprocesso: reproduzir a leitura durante publicação da URL e corrigir
+conforme a causa; depois validar o modo de criação automática do ambiente.
