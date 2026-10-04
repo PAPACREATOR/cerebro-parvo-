@@ -5,6 +5,9 @@ on:
     branches: ['lab-e2e-frontdoor-*']
     paths:
       - 'nexus/frontdoor.py'
+      - 'nexus/adapters/languagetool.py'
+      - 'nexus/schemas/frontdoor_rules.json'
+      - 'nexus/frontdoor_rules.json'
       - 'nexus/tests/test_frontdoor_prefixes.py'
       - 'nexus/tests/test_frontdoor_natural.py'
       - 'nexus/tests/test_frontdoor_languagetool_shadow.py'
