@@ -84,7 +84,8 @@ try {
         '-q', '--color=no', '-p', 'no:cacheprovider', '-o', 'pythonpath=.',
         ('--junitxml=' + (Join-Path $ReportDirectory 'tests.xml'))
     )
-    Invoke-PythonStep -Stage ('TESTS-' + $Suite.ToUpperInvariant()) -Arguments $pytestArgs
+    $testStage = if ($Suite -eq 'all') { 'TESTS' } else { 'TESTS-' + $Suite.ToUpperInvariant() }
+    Invoke-PythonStep -Stage $testStage -Arguments $pytestArgs
     $report.status = 'PASS'
     $report.stage = 'COMPLETE'
     $exitCode = 0
