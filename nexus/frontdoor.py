@@ -88,6 +88,8 @@ def parse_explicit(text: str) -> ParsedInput:
         raise TypeError("text must be str")
     if len(text) > MAX_TEXT_CHARS:
         return ParsedInput("BLOCKED", None, text, "", "prefix-v1", False)
+    if any(ord(char) < 32 and char not in "\t\n\r" for char in text):
+        return ParsedInput("BLOCKED", None, text, "", "prefix-v1", False)
     if not text.strip():
         return ParsedInput("UNRESOLVED", None, text, "", "prefix-v1", False)
 
