@@ -76,7 +76,7 @@ try {
             'nexus/tests/test_conductor.py',
             'nexus/tests/test_windows_hash_environment.py',
             'nexus/tests/test_reverse_flow.py::test_real_windows_result_back_to_original_and_folha_after_restart',
-            'nexus/tests/test_multimedia.py::test_real_conductor_reads_family',
+            'nexus/tests/test_multimedia.py::test_real_deterministic_executor_reads_family',
             'nexus/tests/test_lab_practical_boundaries.py'
         ) }
         default { @('nexus/tests') }
