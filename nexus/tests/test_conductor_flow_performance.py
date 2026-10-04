@@ -112,89 +112,78 @@ def compact_set_config() -> WorkflowConfig:
     )
 
 
-def sequential_scripts_config() -> WorkflowConfig:
-    sleeper = "import time; time.sleep(0.04); print('done')"
+def sequential_ten_sets_config() -> WorkflowConfig:
+    agents = []
+    for i in range(10):
+        agents.append(SetStepDef(
+            name=f"s{i}",
+            value="{{ workflow.input.x }}-" + str(i),
+            routes=[RouteDef(to=f"s{i + 1}" if i < 9 else "$end")],
+        ))
     return WorkflowConfig(
         workflow=WorkflowDef(
-            name="sequential-scripts",
-            entry_point="a",
-            limits=LimitsConfig(max_iterations=5, timeout_seconds=5),
+            name="sequential-ten-sets",
+            entry_point="s0",
+            limits=LimitsConfig(max_iterations=20),
         ),
-        agents=[
-            ScriptStepDef(
-                name="a",
-                command=sys.executable,
-                args=["-c", sleeper],
-                timeout=3,
-                routes=[RouteDef(to="b")],
-            ),
-            ScriptStepDef(
-                name="b",
-                command=sys.executable,
-                args=["-c", sleeper],
-                timeout=3,
-                routes=[RouteDef(to="$end")],
-            ),
-        ],
-        output={"done": "true"},
+        agents=agents,
+        output={f"v{i}": "{{ s" + str(i) + ".output }}" for i in range(10)},
     )
 
 
-def parallel_scripts_config() -> WorkflowConfig:
-    sleeper = "import time; time.sleep(0.04); print('done')"
+def parallel_ten_sets_config() -> WorkflowConfig:
+    agents = [
+        SetStepDef(name=f"s{i}", value="{{ workflow.input.x }}-" + str(i))
+        for i in range(10)
+    ]
     return WorkflowConfig(
         workflow=WorkflowDef(
-            name="parallel-scripts",
-            entry_point="both",
-            limits=LimitsConfig(max_iterations=5, timeout_seconds=5),
+            name="parallel-ten-sets",
+            entry_point="all_sets",
+            limits=LimitsConfig(max_iterations=20),
         ),
-        agents=[
-            ScriptStepDef(name="a", command=sys.executable, args=["-c", sleeper], timeout=3),
-            ScriptStepDef(name="b", command=sys.executable, args=["-c", sleeper], timeout=3),
-        ],
+        agents=agents,
         parallel=[ParallelGroup(
-            name="both",
-            agents=["a", "b"],
+            name="all_sets",
+            agents=[f"s{i}" for i in range(10)],
             failure_mode="all_or_nothing",
             routes=[RouteDef(to="$end")],
         )],
-        output={"done": "true"},
+        output={
+            f"v{i}": "{{ all_sets.outputs.s" + str(i) + " }}"
+            for i in range(10)
+        },
     )
 
 
-def foreach_scripts_config(max_concurrent: int) -> WorkflowConfig:
-    sleeper = "import time; time.sleep(0.02); print('done')"
+def foreach_sets_config(max_concurrent: int) -> WorkflowConfig:
     return WorkflowConfig(
         workflow=WorkflowDef(
-            name=f"foreach-scripts-{max_concurrent}",
+            name=f"foreach-sets-{max_concurrent}",
             entry_point="setup",
-            limits=LimitsConfig(max_iterations=50, timeout_seconds=10),
+            limits=LimitsConfig(max_iterations=200),
         ),
         agents=[SetStepDef(
             name="setup",
-            value="{{ [1,2,3,4,5,6,7,8,9,10] | tojson }}",
-            output_type="list",
+            values={"items": "{{ range(0, 100) | list | tojson }}"},
             routes=[RouteDef(to="loop")],
         )],
         for_each=[ForEachDef.model_validate({
             "name": "loop",
             "type": "for_each",
-            "source": "setup.output",
+            "source": "setup.output.items",
             "as": "item",
             "max_concurrent": max_concurrent,
             "failure_mode": "all_or_nothing",
             "agent": {
-                "name": "pause",
-                "type": "script",
-                "command": sys.executable,
-                "args": ["-c", sleeper],
-                "timeout": 3,
+                "name": "copy",
+                "type": "set",
+                "value": "{{ item }}",
             },
             "routes": [{"to": "$end"}],
         })],
-        output={"count": "{{ loop.count }}"},
+        output={"items": "{{ loop.outputs | tojson }}"},
     )
-
 
 def set_echo_config() -> WorkflowConfig:
     return WorkflowConfig(
@@ -245,29 +234,29 @@ def test_perf_compact_set_vs_five_step_chain():
     asyncio.run(run())
 
 
-def test_perf_parallel_scripts_vs_sequential():
+def test_perf_parallel_internal_sets_vs_sequential():
     async def run():
-        baseline_cfg = sequential_scripts_config()
-        candidate_cfg = parallel_scripts_config()
-        assert (await engine(baseline_cfg).run({}))["done"] is True
-        assert (await engine(candidate_cfg).run({}))["done"] is True
+        payload = {"x": "nexus"}
+        baseline_cfg = sequential_ten_sets_config()
+        candidate_cfg = parallel_ten_sets_config()
+        assert await engine(baseline_cfg).run(payload) == await engine(candidate_cfg).run(payload)
         emit(
-            "two_script_sleeps_sequential_vs_parallel",
-            await timed_runs(baseline_cfg, {}, 20),
-            await timed_runs(candidate_cfg, {}, 20),
+            "ten_internal_sets_sequential_vs_parallel",
+            await timed_runs(baseline_cfg, payload, 100),
+            await timed_runs(candidate_cfg, payload, 100),
         )
     asyncio.run(run())
 
 
-def test_perf_foreach_concurrency_1_vs_10():
+def test_perf_foreach_internal_sets_concurrency_1_vs_20():
     async def run():
-        baseline_cfg = foreach_scripts_config(1)
-        candidate_cfg = foreach_scripts_config(10)
+        baseline_cfg = foreach_sets_config(1)
+        candidate_cfg = foreach_sets_config(20)
         assert await engine(baseline_cfg).run({}) == await engine(candidate_cfg).run({})
         emit(
-            "foreach_10_scripts_concurrency_1_vs_10",
-            await timed_runs(baseline_cfg, {}, 10),
-            await timed_runs(candidate_cfg, {}, 10),
+            "foreach_100_internal_sets_concurrency_1_vs_20",
+            await timed_runs(baseline_cfg, {}, 30),
+            await timed_runs(candidate_cfg, {}, 30),
         )
     asyncio.run(run())
 
