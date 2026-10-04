@@ -9,6 +9,8 @@ import random
 from pathlib import Path
 
 import pytest
+
+pytest.importorskip("SpiffWorkflow", reason="Spiff is an optional Lab executor")
 from SpiffWorkflow import Workflow
 from SpiffWorkflow.specs import Simple, WorkflowSpec
 from conductor.config.loader import load_workflow
