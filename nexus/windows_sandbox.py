@@ -10,6 +10,7 @@ import ctypes as C
 import os
 from pathlib import Path
 import subprocess
+import sys
 import threading
 import uuid
 
@@ -364,3 +365,48 @@ class ConfinedProcess:
 
 def launch_confined(command, *, cwd, env, read_roots=(), deny_roots=()):
     return ConfinedProcess(command, cwd=cwd, env=env, read_roots=read_roots, deny_roots=deny_roots)
+
+
+def task_environment(work):
+    """Explicit task paths; never inherit the human's secrets or cache roots."""
+    work = str(work)
+    keep = ("SystemRoot", "WINDIR", "COMSPEC", "SYSTEMDRIVE")
+    env = {key: os.environ[key] for key in keep if key in os.environ}
+    system = Path(os.environ.get("SystemRoot", "C:/Windows")) / "System32"
+    env.update(PATH=str(Path(sys.executable).parent) + os.pathsep + str(system),
+               TEMP=work, TMP=work, USERPROFILE=work, APPDATA=work,
+               LOCALAPPDATA=work, HOME=work, PYTHONUTF8="1", PYTHONIOENCODING="utf-8",
+               PYTHONDONTWRITEBYTECODE="1")
+    return env
+
+
+def inside_native_boundary():
+    """Inspect the actual OS token and job; an environment flag is not authority."""
+    if os.name != "nt":
+        return False
+    a = _API()
+    current = a.H(-1)
+    token, length, contained, in_job = a.H(), a.D(), a.D(), a.D()
+    a.check(a.a.OpenProcessToken(current, 8, C.byref(token)), "current token")
+    try:
+        a.check(a.a.GetTokenInformation(token, 29, C.byref(contained), C.sizeof(contained),
+                                        C.byref(length)), "current AppContainer")
+        if not contained.value:
+            return False
+        a.a.GetTokenInformation(token, 30, None, 0, C.byref(length))
+        data = C.create_string_buffer(length.value)
+        a.check(a.a.GetTokenInformation(token, 30, data, length, C.byref(length)),
+                "current capabilities")
+        if C.cast(data, C.POINTER(a.D))[0]:
+            raise Blocked("O processo tem capacidades externas não autorizadas.")
+        a.check(a.k.IsProcessInJob(current, None, C.byref(in_job)), "current job")
+        if not in_job.value:
+            raise Blocked("O processo não tem um limite de execução.")
+        return True
+    finally:
+        a.k.CloseHandle(token)
+
+
+def require_native_boundary():
+    if not inside_native_boundary():
+        raise Blocked("Esta ferramenta só pode executar através da área protegida.")

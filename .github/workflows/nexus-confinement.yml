@@ -36,13 +36,16 @@ jobs:
         run: python -m pytest nexus/tests/test_adversarial.py nexus/tests/test_vaults.py nexus/tests/test_mcp_client.py -q -o pythonpath=. --junitxml=security-evidence/authority.xml
       - name: Native Windows boundary - 10000 actual filesystem attacks
         if: always()
-        run: python -m pytest nexus/security_tests/test_native_boundary.py -q -o pythonpath=. --junitxml=security-evidence/native-10000.xml
+        run: python -m pytest nexus/security_tests/test_native_boundary.py -s -q -o pythonpath=. --junitxml=security-evidence/native-10000.xml
       - name: 10000 authority inputs - no data mutation or forged approval
         if: always()
-        run: python -m pytest nexus/security_tests/test_authority_10000.py -q -o pythonpath=. --junitxml=security-evidence/authority-10000.xml
+        run: python -m pytest nexus/security_tests/test_authority_10000.py nexus/security_tests/test_state_concurrency.py -q -o pythonpath=. --junitxml=security-evidence/authority-10000.xml
       - name: Real Host launch with hostile disposable worker
         if: always()
         run: python -m pytest nexus/security_tests/test_confinement_gate.py -q -o pythonpath=. --junitxml=security-evidence/confinement.xml
+      - name: Real confined Host and OpenNotebook return - regression
+        if: always()
+        run: python -m pytest nexus/tests/test_host.py nexus/tests/test_open_notebook_kernel_e2e.py nexus/tests/test_kernel_crash_contract.py nexus/tests/test_reverse_flow.py -q -o pythonpath=. --junitxml=security-evidence/confined-e2e.xml
       - name: Preserve observations even on FAIL
         if: always()
         uses: actions/upload-artifact@v4

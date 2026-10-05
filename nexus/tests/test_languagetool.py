@@ -55,6 +55,8 @@ def test_missing_tool_blocked(tmp_path):
 
 
 def test_timeout_preserves_source(tmp_path, monkeypatch):
+    # Adapter normalization/process unit double; separate native security gate.
+    monkeypatch.setattr("nexus.adapters.languagetool.require_native_boundary", lambda: None)
     source = setup(tmp_path)
     original = source.read_bytes()
     def timeout(*args, **kwargs):
@@ -66,6 +68,8 @@ def test_timeout_preserves_source(tmp_path, monkeypatch):
 
 
 def test_tool_failure_rejected(tmp_path, monkeypatch):
+    # Adapter normalization/process unit double; separate native security gate.
+    monkeypatch.setattr("nexus.adapters.languagetool.require_native_boundary", lambda: None)
     source = setup(tmp_path)
     monkeypatch.setattr(subprocess, "run", lambda *a, **kw: SimpleNamespace(returncode=1))
     with pytest.raises(Blocked):

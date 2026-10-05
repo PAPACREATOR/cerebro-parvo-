@@ -1,7 +1,8 @@
 """Security acceptance gate, not an expected-failure regression test.
 
 Simulates a compromised allowed worker at the actual Host subprocess launch.
-Only its executable payload is substituted; Host cwd/env/identity/flags remain.
+Only its executable payload is substituted; Host native launcher, cwd/env,
+identity, ACLs and Job Object remain real.
 Every target is a disposable canary. No real Kernel/user/Windows file is touched.
 """
 import json
@@ -13,6 +14,7 @@ import sys
 import pytest
 
 from nexus.host import Host, ROOT
+from nexus.windows_sandbox import launch_confined
 
 
 AREAS = ("kernel", "creative", "canonical", "outside-install")
@@ -47,30 +49,34 @@ def observations(tmp_path_factory):
         name = area + ":" + action
         originals[name] = (target, target.read_bytes() if target.is_file() else None)
         manifest.append({"name": name, "action": action, "path": str(target.relative_to(root))})
-    manifest.append({"name": "assigned-work:create", "action": "create",
-                     "path": str((run_dir / "allowed.canary").relative_to(root))})
-    (root / "probe-input.json").write_text(json.dumps(manifest), encoding="utf-8")
-
-    native_popen = subprocess.Popen
+    native_launch = launch_confined
     calls = []
 
     def compromised_worker(command, *args, **kwargs):
         assert command[2] == str(ROOT / "adapters/runner.py")
         assert command[3] == "verify"
-        assert Path(kwargs["cwd"]) == run_dir
-        calls.append({"cwd": str(kwargs["cwd"]), "env_keys": sorted(kwargs["env"])})
-        substitute = [sys.executable, "-I", str(Path(__file__).with_name("confinement_probe.py")), str(root)]
-        return native_popen(substitute, *args, **kwargs)
+        work = Path(kwargs["cwd"])
+        assert command[4] == str(work / "input.bin")
+        assert not work.is_relative_to(host.store.root)
+        calls.append({"cwd": str(work), "env_keys": sorted(kwargs["env"])})
+        plan = manifest + [{"name": "assigned-work:create", "action": "create",
+                            "path": str((work / "allowed.canary").relative_to(root))}]
+        (work / "probe-input.json").write_text(json.dumps(plan), encoding="utf-8")
+        (work / "TEST-AREA-ONLY").write_text("nexus-disposable-confinement-v1", encoding="utf-8")
+        (work / "probe-root.txt").write_text(str(root), encoding="utf-8")
+        substitute = [sys.executable, "-I", str(Path(__file__).with_name("confinement_probe.py")), str(work)]
+        # Substitute only hostile payload; native token/SID/DACL/job checks stay real.
+        return native_launch(substitute, *args, **kwargs)
 
     with pytest.MonkeyPatch.context() as patch:
-        patch.setattr("nexus.host.subprocess.Popen", compromised_worker)
+        patch.setattr("nexus.host.launch_confined", compromised_worker)
         host.busy.acquire()
         host._run(run_id)
     assert len(calls) == 1
-    report = run_dir / "confinement-observations.json"
+    report = run_dir / "execution.stdout.json"
     assert report.is_file(), "Probe did not execute: confinement NOT PROVEN"
     values = json.loads(report.read_text(encoding="utf-8"))
-    assert set(values) == {item["name"] for item in manifest}
+    assert set(values) == {item["name"] for item in manifest} | {"assigned-work:create"}
     unchanged = {}
     for name, (target, original) in originals.items():
         unchanged[name] = (

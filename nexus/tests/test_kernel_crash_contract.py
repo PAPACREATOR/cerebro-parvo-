@@ -62,7 +62,7 @@ def test_restart_after_kernel_dies_during_executor_is_recovery_required(tmp_path
         seen_phase.append(host.store.state(run_id).get("execution_phase"))
         raise SystemExit("synthetic hard crash during executor")
 
-    monkeypatch.setattr("nexus.host.subprocess.Popen", crash_after_external_entry)
+    monkeypatch.setattr("nexus.host.launch_confined", crash_after_external_entry)
 
     host.busy.acquire()
     with pytest.raises(SystemExit, match="synthetic hard crash"):

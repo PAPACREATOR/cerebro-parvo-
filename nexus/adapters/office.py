@@ -9,6 +9,7 @@ import zipfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from nexus.windows_sandbox import require_native_boundary
 from nexus.contracts import Blocked, strict_json
 
 
@@ -58,6 +59,8 @@ def run(input_path):
     executable = Path(config["executable"])
     if not executable.is_absolute() or not executable.is_file() or executable.name.lower() != "soffice.com":
         raise Blocked("LibreOffice indisponível.")
+    if sys.platform == "win32":
+        require_native_boundary()
     working = source.parent / "office"
     working.mkdir()
     document = working / ("resultado" + kind)

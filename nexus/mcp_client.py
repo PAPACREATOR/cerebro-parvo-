@@ -9,14 +9,17 @@ from __future__ import annotations
 import asyncio
 import json
 import os
-from contextlib import AsyncExitStack
+import sys
+import tempfile
+from pathlib import Path
+from contextlib import AsyncExitStack, asynccontextmanager
 from dataclasses import dataclass
 from typing import Any, Iterable
 
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
-from nexus.contracts import Blocked
+from nexus.contracts import Blocked, ROOT
 
 
 MAX_RESULT_BYTES = 1_000_000
@@ -51,13 +54,104 @@ def _reduced_env(extra: dict[str, str] | None = None) -> dict[str, str]:
     return env
 
 
-async def _open_session(stack: AsyncExitStack, spec: MCPServerSpec) -> ClientSession:
+
+@asynccontextmanager
+async def _native_stdio(params, prepared=None):
+    """Adapt the SDK's stdio framing to the verified native Windows process."""
+    import anyio
+    import mcp.types as types
+    from mcp.shared.message import SessionMessage
+    from nexus.windows_sandbox import launch_confined, task_environment
+
+    read_sender, read = anyio.create_memory_object_stream(0)
+    write, write_receiver = anyio.create_memory_object_stream(0)
+    command = Path(params.command)
+    if not command.is_absolute() or not command.is_file():
+        raise Blocked("Executável MCP não autorizado.")
+    with tempfile.TemporaryDirectory(prefix="nexus-mcp-") as temporary:
+        work = Path(temporary)
+        environment = task_environment(work)
+        # Explicit provider settings are data; task/cache/profile roots cannot be
+        # redirected by them, and never receive Host session/cloud credentials.
+        protected = {"PATH","TEMP","TMP","USERPROFILE","APPDATA","LOCALAPPDATA","HOME"}
+        if params.env:
+            environment.update({k:v for k,v in params.env.items() if k.upper() not in protected})
+        roots = [ROOT, Path(sys.prefix), Path(sys.base_prefix), command.parent]
+        if command.parent.name.lower() == "scripts":
+            roots.append(command.parent.parent)
+        if prepared is not None:
+            (work / "health-snapshot.json").write_text(json.dumps(prepared), encoding="utf-8")
+        denied = (ROOT / "runtime",) if (ROOT / "runtime").is_dir() else ()
+        proc = launch_confined([str(command), *params.args], cwd=work,
+                               env=environment, read_roots=tuple(dict.fromkeys(roots)), deny_roots=denied)
+
+        async def stdout_reader():
+            async with read_sender:
+                while True:
+                    line = await anyio.to_thread.run_sync(proc.stdout.readline, MAX_RESULT_BYTES + 1)
+                    if not line:
+                        break
+                    if len(line) > MAX_RESULT_BYTES:
+                        await read_sender.send(Blocked("Resposta MCP excede o limite Nexus."))
+                        proc.kill()
+                        break
+                    try:
+                        message = SessionMessage(types.JSONRPCMessage.model_validate_json(line))
+                    except Exception:
+                        message = Blocked("Resposta MCP não é JSON-RPC válido.")
+                    await read_sender.send(message)
+
+        async def stdin_writer():
+            async with write_receiver:
+                async for message in write_receiver:
+                    raw = (message.message.model_dump_json(by_alias=True, exclude_none=True) + "\n").encode("utf-8")
+                    if len(raw) > MAX_RESULT_BYTES:
+                        raise Blocked("Pedido MCP excede o limite Nexus.")
+                    await anyio.to_thread.run_sync(proc.stdin.write, raw)
+
+        async def stderr_reader():
+            size = 0
+            while block := await anyio.to_thread.run_sync(proc.stderr.read, 65536):
+                size += len(block)
+                if size > MAX_RESULT_BYTES:
+                    proc.kill()
+                    raise Blocked("Diagnóstico MCP excede o limite Nexus.")
+
+        try:
+            async with anyio.create_task_group() as group:
+                group.start_soon(stdout_reader)
+                group.start_soon(stdin_writer)
+                group.start_soon(stderr_reader)
+                try:
+                    yield read, write
+                finally:
+                    proc.kill()  # Includes descendants; unblocks pending pipe reads.
+                    group.cancel_scope.cancel()
+        finally:
+            proc.close()
+            await read.aclose()
+            await write.aclose()
+            await read_sender.aclose()
+            await write_receiver.aclose()
+
+async def _open_session(stack: AsyncExitStack, spec: MCPServerSpec, *, prepared=None) -> ClientSession:
     params = StdioServerParameters(
         command=spec.command,
         args=list(spec.args),
         env=_reduced_env(spec.env),
     )
-    read, write = await stack.enter_async_context(stdio_client(params))
+    if os.name == "nt":
+        from nexus.windows_sandbox import inside_native_boundary
+        # SDK children of a confined runner inherit its token and job. Direct
+        # MCP callers use the same native boundary, never an unrestricted fallback.
+        if inside_native_boundary():
+            transport = stdio_client
+        else:
+            from functools import partial
+            transport = partial(_native_stdio, prepared=prepared)
+    else:
+        transport = stdio_client
+    read, write = await stack.enter_async_context(transport(params))
     session = await stack.enter_async_context(ClientSession(read, write))
     await session.initialize()
     return session
@@ -122,8 +216,19 @@ async def call_tool_async(
     pending_error: Blocked | None = None
     payload: dict[str, Any] | None = None
 
+    prepared = None
+    if (os.name == "nt" and tool_name in {"check_ace_step", "check_forge"}
+            and str(ROOT / "mcp_tools_server.py") in spec.args):
+        if arguments:
+            raise Blocked("O diagnóstico local não aceita parâmetros externos.")
+        from nexus.adapters.media_tools import check_ace_step, check_forge
+        # Fixed read-only local endpoints are brokered by trusted Host code.
+        # No credential/network capability is given to the MCP tool process.
+        probe = check_ace_step if tool_name == "check_ace_step" else check_forge
+        prepared = {tool_name: probe()}
+
     async with AsyncExitStack() as stack:
-        session = await _open_session(stack, spec)
+        session = await _open_session(stack, spec, prepared=prepared)
         try:
             available = {tool.name for tool in (await session.list_tools()).tools}
             if tool_name not in available:

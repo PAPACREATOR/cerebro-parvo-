@@ -85,6 +85,8 @@ def test_missing_office(tmp_path):
 
 
 def test_office_failure(tmp_path, monkeypatch):
+    # Process/timeout unit double only; real native security is tested separately.
+    monkeypatch.setattr("nexus.adapters.office.require_native_boundary", lambda: None)
     source, exe = configure(tmp_path); exe.touch()
     original = source.read_bytes()
     class Failed:
@@ -95,6 +97,8 @@ def test_office_failure(tmp_path, monkeypatch):
 
 
 def test_office_timeout_kills_tree(tmp_path, monkeypatch):
+    # Process/timeout unit double only; real native security is tested separately.
+    monkeypatch.setattr("nexus.adapters.office.require_native_boundary", lambda: None)
     source, exe = configure(tmp_path); exe.touch()
     events = []
     class TimedOut:
