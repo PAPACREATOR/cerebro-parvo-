@@ -199,5 +199,8 @@ if __name__ == "__main__":
         process, input_path = sys.argv[1:3]
         print(json.dumps(execute(process, input_path), ensure_ascii=False))
     except Exception:
+        sys.stderr.reconfigure(encoding="utf-8")
+        import traceback
+        traceback.print_exc(limit=8)
         print("Execução MCP determinística indisponível ou resposta rejeitada.", file=sys.stderr)
         raise SystemExit(1)

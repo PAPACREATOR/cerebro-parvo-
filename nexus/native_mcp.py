@@ -32,6 +32,9 @@ def configure():
     from nexus.windows_sandbox import inside_native_boundary
     if not inside_native_boundary():
         return
+    for stream in (sys.stdin, sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8")
     import types
     # Permit imports of asyncio's public data types without loading _overlapped,
     # whose import itself creates a network socket. Actual asyncio loops fail
@@ -114,6 +117,36 @@ def configure():
             # The rejected final check concerns socket LSPs; this stdio runtime
             # never uses socket polling. IOCP and all pipe state are ready.
     io.WindowsIOManager.__init__ = pipe_only_init
+    # Trio's entry queue also uses a TCP socketpair. Use an unnamed, task-local
+    # auto-reset Win32 event; wakes coalesce without blocking a worker/signal.
+    # Noninteractive child lifetime/interrupts are controlled by the Host Job.
+    from trio._core._wakeup_socketpair import WakeupSocketpair
+    def event_init(self):
+        self._event = io.kernel32.CreateEventA(io.ffi.NULL, False, False, io.ffi.NULL)
+        if self._event == io.ffi.NULL:
+            io.raise_winerror()
+    def event_wakeup(self):
+        if not io.kernel32.SetEvent(self._event):
+            io.raise_winerror()
+    async def event_wait(self):
+        import trio
+        while True:
+            status = io.kernel32.WaitForSingleObject(self._event, 0)
+            if status == 0:
+                return
+            if status != 258:
+                io.raise_winerror()
+            await trio.sleep(0.01)
+    def event_close(self):
+        handle, self._event = self._event, io.ffi.NULL
+        if handle != io.ffi.NULL and not io.kernel32.CloseHandle(handle):
+            io.raise_winerror()
+    WakeupSocketpair.__init__ = event_init
+    WakeupSocketpair.wakeup_thread_and_signal_safe = event_wakeup
+    WakeupSocketpair.wait_woken = event_wait
+    WakeupSocketpair.drain = lambda self: None
+    WakeupSocketpair.wakeup_on_signals = lambda self: None
+    WakeupSocketpair.close = event_close
     import anyio
     run = anyio.run
     def local_run(function, *args, backend="trio", backend_options=None):

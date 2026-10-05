@@ -7,7 +7,12 @@ import sys
 
 
 def probe(work):
-    work = Path(work).resolve(strict=True)
+    # Host already canonicalized this assigned path before applying native ACLs.
+    # GetFinalPathNameByHandle can demand reads of unassigned ancestors; compare
+    # the actual cwd and marked work directly without expanding any target rights.
+    work = Path(work).absolute()
+    if Path.cwd() != work:
+        raise ValueError("Probe is not in its assigned work area")
     root = Path((work / "probe-root.txt").read_text(encoding="utf-8"))
     if (work / "TEST-AREA-ONLY").read_text() != "nexus-disposable-confinement-v1":
         raise ValueError("Not a marked disposable test area")

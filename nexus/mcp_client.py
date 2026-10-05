@@ -253,6 +253,7 @@ async def call_tool_async(
             pending_error = error
         except Exception as error:
             pending_error = Blocked("Tool MCP falhou de forma controlada.")
+            pending_error.__cause__ = error
 
     if pending_error is not None:
         raise pending_error
