@@ -26,7 +26,68 @@ def powershell_executable():
     return str(Path(root) / "System32/WindowsPowerShell/v1.0/powershell.exe")
 
 
+
+def hash_cng(path):
+    """Windows CNG SHA256, inside the assigned task; independent of hashlib."""
+    from nexus.windows_sandbox import require_native_boundary
+    require_native_boundary()
+    import ctypes as C
+    dll = C.WinDLL("bcrypt", use_last_error=True)
+    P, U, N = C.c_void_p, C.c_ulong, C.c_long
+    declarations = {
+        "BCryptOpenAlgorithmProvider": ([C.POINTER(P), C.c_wchar_p, C.c_wchar_p, U], N),
+        "BCryptGetProperty": ([P, C.c_wchar_p, P, U, C.POINTER(U), U], N),
+        "BCryptCreateHash": ([P, C.POINTER(P), P, U, P, U, U], N),
+        "BCryptHashData": ([P, P, U, U], N),
+        "BCryptFinishHash": ([P, P, U, U], N),
+        "BCryptDestroyHash": ([P], N),
+        "BCryptCloseAlgorithmProvider": ([P, U], N),
+    }
+    for name, (args, returns) in declarations.items():
+        function = getattr(dll, name)
+        function.argtypes, function.restype = args, returns
+    def check(status):
+        if status < 0:
+            raise Blocked(f"A verificação nativa Windows falhou ({status & 0xffffffff:#x}).")
+    algorithm, hashed = P(), P()
+    try:
+        check(dll.BCryptOpenAlgorithmProvider(C.byref(algorithm), "SHA256",
+                                              "Microsoft Primitive Provider", 0))
+        size, used, digest_size = U(), U(), U()
+        check(dll.BCryptGetProperty(algorithm, "ObjectLength", C.byref(size),
+                                   C.sizeof(size), C.byref(used), 0))
+        if used.value != C.sizeof(size) or not 0 < size.value <= 1_000_000:
+            raise Blocked("Provider Windows devolveu um limite inválido.")
+        check(dll.BCryptGetProperty(algorithm, "HashDigestLength", C.byref(digest_size),
+                                   C.sizeof(digest_size), C.byref(used), 0))
+        if used.value != C.sizeof(digest_size) or digest_size.value != 32:
+            raise Blocked("Provider Windows devolveu um algoritmo inválido.")
+        storage, output = C.create_string_buffer(size.value), C.create_string_buffer(32)
+        check(dll.BCryptCreateHash(algorithm, C.byref(hashed), storage, len(storage), None, 0, 0))
+        total = 0
+        with Path(path).open("rb") as stream:
+            while block := stream.read(65536):
+                total += len(block)
+                if total > 2_097_152:
+                    raise Blocked("Input fora do limite de verificação.")
+                buffer = C.create_string_buffer(block)
+                check(dll.BCryptHashData(hashed, buffer, len(block), 0))
+        check(dll.BCryptFinishHash(hashed, output, len(output), 0))
+        return {"status": "PASS", "sha256": output.raw.hex(), "capability": "windows.cng-sha256"}
+    finally:
+        try:
+            if hashed:
+                check(dll.BCryptDestroyHash(hashed))
+        finally:
+            if algorithm:
+                check(dll.BCryptCloseAlgorithmProvider(algorithm, 0))
+
+
 def hash_windows(path, *, executable=None, timeout=15):
+    if os.name == "nt" and executable is None:
+        from nexus.windows_sandbox import inside_native_boundary
+        if inside_native_boundary():
+            return hash_cng(path)
     script = r"""
 $ErrorActionPreference = 'Stop'
 [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)

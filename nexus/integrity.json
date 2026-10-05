@@ -24,10 +24,10 @@
   "families/multimedia/imagem.md": "4a321cdc18751a5d3e1dec770908aa5d992e17126e5569bbfd9045a2dc4583de",
   "instance.py": "a97ef1449ab8a2fe66dc0bcf79fe64dca93ae1b7a43bbfa296caeb90229120ac",
   "adapters/runner.py": "d1f4e63f8d1e9a031771578591d90f4a0ccdb98c70bb7a806dbbd5ee7e94fc97",
-  "adapters/verify_direct.py": "ba0bb3571eeff8f5ad9e3134abc25274164cddf4e6d6ffc2cce051beb8129173",
-  "mcp_client.py": "12ff3807c31a7e6ee37156a674abaf492b59ab612f760eccb2a836f376ce55a4",
+  "adapters/verify_direct.py": "0ed136dafad0bbccec348cb4a92d8f2153e688cee112d244fdea3f6905b6b74c",
+  "mcp_client.py": "316fc5cb8814dc33e73032e8683eaf6c65bd0e8d00010f7c5214d70ecc1ee2e0",
   "mcp_tools_server.py": "8b47abd79a3ff30c560c1fe91fd0923c5c00f4ce739918f1d40850ee1ed52938",
   "adapters/media_tools.py": "d4eedf365080c7eb4018097bc660606e3904d0de4784782265949af8a60f2e80",
   "windows_sandbox.py": "9f4bfa274d8634b341953258f3c11456df85dbe71e7b7e9db681cd81ad93cf81",
-  "native_mcp.py": "bc7f2a28f74cdad030891685fbdf481f8acec9c5ee5453d648ee166ca6af38d4"
+  "native_mcp.py": "c55c0497697f61469b6bde21e0a279847db7cb4bfd84f39a1c94ecbfacc090ac"
 }

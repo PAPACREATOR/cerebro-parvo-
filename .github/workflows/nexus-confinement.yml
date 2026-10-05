@@ -36,7 +36,7 @@ jobs:
         run: python -m pytest nexus/tests/test_adversarial.py nexus/tests/test_vaults.py nexus/tests/test_mcp_client.py -q -o pythonpath=. --junitxml=security-evidence/authority.xml
       - name: Native Windows boundary - 10000 actual filesystem attacks
         if: always()
-        run: python -m pytest nexus/security_tests/test_native_boundary.py -s -q -o pythonpath=. --junitxml=security-evidence/native-10000.xml
+        run: python -m pytest nexus/security_tests/test_native_boundary.py nexus/security_tests/test_windows_hash.py -s -q -o pythonpath=. --junitxml=security-evidence/native-10000.xml
       - name: 10000 authority inputs - no data mutation or forged approval
         if: always()
         run: python -m pytest nexus/security_tests/test_authority_10000.py nexus/security_tests/test_state_concurrency.py -q -o pythonpath=. --junitxml=security-evidence/authority-10000.xml

@@ -246,6 +246,8 @@ async def call_tool_async(
             else:
                 result = await session.call_tool(tool_name, arguments)
                 if result.isError:
+                    details = " ".join(getattr(part, "text", "") for part in result.content)[:2000]
+                    print("Nexus MCP tool diagnostic: " + details, file=sys.stderr)
                     pending_error = Blocked("Tool MCP devolveu erro.")
                 else:
                     payload = _payload_from_result(result)

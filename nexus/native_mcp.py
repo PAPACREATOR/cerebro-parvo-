@@ -22,6 +22,9 @@ if __package__ in (None, ""):
 
 from nexus.contracts import Blocked
 
+if __name__ == "__main__":
+    sys.modules["nexus.native_mcp"] = sys.modules[__name__]
+
 _configured = False
 
 
