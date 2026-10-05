@@ -51,7 +51,8 @@ try {
 
     Invoke-Checked $git @('fetch','--prune','origin',$Branch) $repoRoot
 
-    $localExists = (& $git show-ref --verify --quiet "refs/heads/$Branch"; $LASTEXITCODE -eq 0)
+    & $git show-ref --verify --quiet "refs/heads/$Branch"
+    $localExists = ($LASTEXITCODE -eq 0)
     if ($localExists) {
         Invoke-Checked $git @('switch',$Branch) $repoRoot
     }
