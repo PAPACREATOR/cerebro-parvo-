@@ -1,7 +1,7 @@
 {
   "app.py": "a0cec14cb307cd4401b38614859a3541ddb9ce96576ffd7492137a4b502a94df",
   "contracts.py": "6c97ed0af3892c7dbbfe7d4b1f673c319ed9fc92c24f638161b91f2c43c02f3c",
-  "host.py": "2ad10b0b1d7afca6adec6559f485459009daf5a7ddbe3a1e1ae664cfc31db307",
+  "host.py": "310e9af291349165a0c63e24c43a3208b5b1d9602f3da875896a099dde179a53",
   "store.py": "4bdf2882bb1e71a4d9ecb0b3bb8a1e8565b8b9f278660563fb46a43a211e33b5",
   "__init__.py": "46cab08a37d7677c810002d394bfc5ac0729e488dc9b6920cabedf37db8dc15a",
   "adapters/tools.py": "c77a30cd738e5fdec94d25306f34b1f0fdc49f441504259f195d0fcf2aa64826",
@@ -23,10 +23,11 @@
   "families/multimedia/som.md": "d31057a867080291d183e9cde486b6079e686403cf7869ed749d0f005e770462",
   "families/multimedia/imagem.md": "4a321cdc18751a5d3e1dec770908aa5d992e17126e5569bbfd9045a2dc4583de",
   "instance.py": "a97ef1449ab8a2fe66dc0bcf79fe64dca93ae1b7a43bbfa296caeb90229120ac",
-  "adapters/runner.py": "09f88215f04c819d67c2b58444fe3ea94208f06368372e60cd6f22b235e266ed",
+  "adapters/runner.py": "2dec888c19b201bb97a45141c4607dad7fa10e8d65d75d784c028f543b78ad18",
   "adapters/verify_direct.py": "ba0bb3571eeff8f5ad9e3134abc25274164cddf4e6d6ffc2cce051beb8129173",
-  "mcp_client.py": "f62c7538be1fb4866082fbd8f5382ea7b50c959222ab7ac80883ca100135074c",
-  "mcp_tools_server.py": "43695edd70a27131cc53b216cacd293d09f6b6b388c3da23d62312e3dac8826c",
+  "mcp_client.py": "0629daef8bc1deb1a5977927408f3b56350cd47d46d58c1db75668a7b6705e0b",
+  "mcp_tools_server.py": "8b47abd79a3ff30c560c1fe91fd0923c5c00f4ce739918f1d40850ee1ed52938",
   "adapters/media_tools.py": "d4eedf365080c7eb4018097bc660606e3904d0de4784782265949af8a60f2e80",
-  "windows_sandbox.py": "9f4bfa274d8634b341953258f3c11456df85dbe71e7b7e9db681cd81ad93cf81"
+  "windows_sandbox.py": "9f4bfa274d8634b341953258f3c11456df85dbe71e7b7e9db681cd81ad93cf81",
+  "native_mcp.py": "df7a0e078e310997aa94d4e1cc97a89fb95cc6902f28fadd6c66f38e2367ccf6"
 }

@@ -62,7 +62,7 @@ def process_fingerprint(process):
     h = hashlib.sha256()
     h.update(process.encode("utf-8"))
     h.update(b"\0")
-    for relative in (*files, "windows_sandbox.py"):
+    for relative in (*files, "windows_sandbox.py", "native_mcp.py"):
         path = ROOT / relative
         h.update(relative.encode("utf-8"))
         h.update(b"\0")
@@ -95,6 +95,11 @@ def prepare_task(process, input_path, work, *, config_root=None):
         raise Blocked("Input fora do limite.")
     (work / "input.bin").write_bytes(raw)
     roots = [ROOT, Path(sys.prefix), Path(sys.base_prefix)]
+    # Private TemporaryDirectory ancestors need read access for Windows path
+    # normalization. This grants only this freshly assigned task subtree.
+    if work.parent.name != "runs" or not work.parent.parent.name.startswith(".nexus-task-"):
+        raise Blocked("Área de tarefa não autorizada.")
+    roots.append(work.parent.parent)
     config_root = Path(config_root) if config_root is not None else source.parent
     if process == "interpret":
         from nexus.adapters.notebook import fetch_output, prepare_source

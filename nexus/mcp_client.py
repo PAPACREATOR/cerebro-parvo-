@@ -6,7 +6,6 @@ executes explicitly allowed local MCP tools.
 """
 from __future__ import annotations
 
-import asyncio
 import json
 import os
 import sys
@@ -15,6 +14,9 @@ from pathlib import Path
 from contextlib import AsyncExitStack, asynccontextmanager
 from dataclasses import dataclass
 from typing import Any, Iterable
+
+from nexus.native_mcp import configure
+configure()
 
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
@@ -82,7 +84,8 @@ async def _native_stdio(params, prepared=None):
         if prepared is not None:
             (work / "health-snapshot.json").write_text(json.dumps(prepared), encoding="utf-8")
         denied = (ROOT / "runtime",) if (ROOT / "runtime").is_dir() else ()
-        proc = launch_confined([str(command), *params.args], cwd=work,
+        from nexus.native_mcp import command_for
+        proc = launch_confined(command_for([str(command), *params.args]), cwd=work,
                                env=environment, read_roots=tuple(dict.fromkeys(roots)), deny_roots=denied)
 
         diagnostic = bytearray()
@@ -259,7 +262,8 @@ async def call_tool_async(
 
 
 def list_tools(spec: MCPServerSpec) -> list[dict[str, Any]]:
-    return asyncio.run(list_tools_async(spec))
+    import anyio
+    return anyio.run(list_tools_async, spec)
 
 
 def call_tool(
@@ -269,11 +273,7 @@ def call_tool(
     *,
     allowed_tools: Iterable[str],
 ) -> dict[str, Any]:
-    return asyncio.run(
-        call_tool_async(
-            spec,
-            tool_name,
-            arguments,
-            allowed_tools=allowed_tools,
-        )
-    )
+    import anyio
+    from functools import partial
+    return anyio.run(partial(call_tool_async, spec, tool_name, arguments,
+                             allowed_tools=allowed_tools))

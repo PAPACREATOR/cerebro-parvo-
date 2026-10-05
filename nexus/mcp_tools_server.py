@@ -22,6 +22,9 @@ if __package__ in (None, ""):
     sys.modules["nexus"] = package
     package_spec.loader.exec_module(package)
 
+from nexus.native_mcp import configure
+configure()
+
 from mcp.server.fastmcp import FastMCP
 
 from nexus.adapters.verify_direct import execute as verify
