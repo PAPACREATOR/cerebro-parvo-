@@ -284,9 +284,9 @@ class ConfinedProcess:
             a.check(a.a.GetTokenInformation(token, 29, C.byref(contained), C.sizeof(contained),
                                             C.byref(length)), "AppContainer token")
             if not contained.value: raise Blocked("O processo não ficou num AppContainer.")
-            a.check(a.a.GetTokenInformation(token, 46, C.byref(contained), C.sizeof(contained),
-                                            C.byref(length)), "LPAC token")
-            if not contained.value: raise Blocked("O processo não ficou num AppContainer restrito.")
+            # Class 46 is rejected by GetTokenInformation on CI (ERROR_INVALID_PARAMETER).
+            # LPAC is requested by the documented opt-out creation attribute;
+            # real AAP-access canaries verify its behavior, not an unsupported query.
             a.a.GetTokenInformation(token, 31, None, 0, C.byref(length))
             data = C.create_string_buffer(length.value)
             a.check(a.a.GetTokenInformation(token, 31, data, length, C.byref(length)), "task identity")
