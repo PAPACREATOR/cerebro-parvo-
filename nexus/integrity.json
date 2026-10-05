@@ -28,5 +28,5 @@
   "mcp_client.py": "bd04ec69fc3d766f4eaad9782d8dd5119d4a95dc4d21a08e8b76bdf9d29aa39a",
   "mcp_tools_server.py": "e424520d87026c8a26050a62df4f6800e3f0880203c4ace2402e2386ff94ab03",
   "adapters/media_tools.py": "d4eedf365080c7eb4018097bc660606e3904d0de4784782265949af8a60f2e80",
-  "windows_sandbox.py": "c335c75787e40612d7daecc311f70e004558db4cec03084ea1766825a405c646"
+  "windows_sandbox.py": "f8d0bfde82fc2b614f7abfb7861879e5bdb88602337f9d75271d66789d697af2"
 }

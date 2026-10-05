@@ -36,6 +36,7 @@ class _API:
         self.a = C.WinDLL("advapi32", use_last_error=True)
         self.u = C.WinDLL("userenv", use_last_error=True)
         self.o = C.WinDLL("ole32", use_last_error=True)
+        self.b = C.WinDLL("KernelBase", use_last_error=True)
 
         class SA(C.Structure):
             _fields_ = [("length", D), ("descriptor", P), ("inherit", W.BOOL)]
@@ -52,6 +53,12 @@ class _API:
 
         class PI(C.Structure):
             _fields_ = [("process", H), ("thread", H), ("pid", D), ("tid", D)]
+
+        class SIDATTR(C.Structure):
+            _fields_ = [("sid", P), ("attributes", D)]
+
+        class GROUPS(C.Structure):
+            _fields_ = [("count", D), ("items", SIDATTR * 1)]
 
         class CAPS(C.Structure):
             _fields_ = [("sid", P), ("capabilities", P), ("count", D), ("reserved", D)]
@@ -73,6 +80,7 @@ class _API:
                         ("peak_process", C.c_size_t), ("peak_job", C.c_size_t)]
 
         self.SA, self.SIX, self.PI, self.CAPS, self.ACCESS, self.LIMITS = SA, SIX, PI, CAPS, ACCESS, LIMITS
+        self.SIDATTR, self.GROUPS = SIDATTR, GROUPS
         declarations = {
             "k": {
                 "CreatePipe": (W.BOOL, [P, P, P, D]), "SetHandleInformation": (W.BOOL, [H, D, D]),
@@ -94,6 +102,7 @@ class _API:
                 "OpenProcessToken": (W.BOOL, [H, D, P]),
                 "GetTokenInformation": (W.BOOL, [H, D, P, D, P]),
                 "EqualSid": (W.BOOL, [P, P]), "FreeSid": (P, [P]),
+                "GetLengthSid": (D, [P]),
                 "GetNamedSecurityInfoW": (D, [W.LPCWSTR, D, D, P, P, P, P, P]),
                 "SetEntriesInAclW": (D, [D, P, P, P]),
                 "SetNamedSecurityInfoW": (D, [W.LPWSTR, D, D, P, P, P, P]),
@@ -108,6 +117,7 @@ class _API:
                 "GetAppContainerFolderPath": (C.c_long, [W.LPCWSTR, P]),
             },
             "o": {"CoTaskMemFree": (None, [P])},
+            "b": {"DeriveCapabilitySidsFromName": (W.BOOL, [W.LPCWSTR, P, P, P, P])},
         }
         for library, functions in declarations.items():
             for name, (result, arguments) in functions.items():
@@ -137,6 +147,32 @@ class _API:
         finally:
             if new: self.k.LocalFree(new)
             if descriptor: self.k.LocalFree(descriptor)
+
+    def registry_read_sid(self):
+        groups, capabilities = C.POINTER(self.P)(), C.POINTER(self.P)()
+        ng, nc = self.D(), self.D()
+        self.check(self.b.DeriveCapabilitySidsFromName("registryRead", C.byref(groups),
+                   C.byref(ng), C.byref(capabilities), C.byref(nc)), "runtime capability")
+        try:
+            if nc.value != 1:
+                raise Blocked("Capacidade de arranque Windows inesperada.")
+            return C.create_string_buffer(C.string_at(capabilities[0], self.a.GetLengthSid(capabilities[0])))
+        finally:
+            for array, count in ((groups, ng.value), (capabilities, nc.value)):
+                for i in range(count):
+                    self.k.LocalFree(array[i])
+                if array:
+                    self.k.LocalFree(array)
+
+    def check_capabilities(self, token):
+        length = self.D()
+        self.a.GetTokenInformation(token, 30, None, 0, C.byref(length))
+        data = C.create_string_buffer(length.value)
+        self.check(self.a.GetTokenInformation(token, 30, data, length, C.byref(length)), "capabilities")
+        groups = C.cast(data, C.POINTER(self.GROUPS)).contents
+        expected = self.registry_read_sid()
+        if groups.count != 1 or not self.a.EqualSid(groups.items[0].sid, expected):
+            raise Blocked("O processo tem capacidades externas não autorizadas.")
 
     def low_label(self, path):
         descriptor, sacl = self.P(), self.P()
@@ -194,7 +230,7 @@ class ConfinedProcess:
             finally:
                 if sid_text: self.api.k.LocalFree(sid_text)
                 if profile: self.api.o.CoTaskMemFree(profile)
-            for path in dict.fromkeys(str(Path(x).resolve()) for x in read_roots):
+            for path in dict.fromkeys(str(Path(x).resolve()) for x in (*read_roots, Path(os.environ["SystemRoot"]) / "System32")):
                 self.api.acl(path, self.sid, READ_EXECUTE, inherit=Path(path).is_dir())
                 self.grants.append(path)
             for path in deny_roots:
@@ -228,7 +264,11 @@ class ConfinedProcess:
         a.k.InitializeProcThreadAttributeList(None, 3, 0, C.byref(size))
         attributes = C.create_string_buffer(size.value)
         a.check(a.k.InitializeProcThreadAttributeList(attributes, 3, 0, C.byref(size)), "process attributes")
-        caps = a.CAPS(self.sid, None, 0, 0)  # No network, camera or other capability.
+        runtime_sid = a.registry_read_sid()
+        runtime_caps = (a.SIDATTR * 1)(a.SIDATTR(C.cast(runtime_sid, a.P), 4))
+        caps = a.CAPS(self.sid, C.cast(runtime_caps, a.P), 1, 0)
+        # Only the documented read-only registry runtime capability; no network,
+        # device, camera, microphone, COM or registry-write capability.
         handles = (a.H * 3)(child_in, child_out, child_err)
         opt_out = a.D(1)  # LPAC: do not inherit ALL APPLICATION PACKAGES access.
         info, process = a.SIX(), a.PI()
@@ -285,6 +325,7 @@ class ConfinedProcess:
             a.check(a.a.GetTokenInformation(token, 29, C.byref(contained), C.sizeof(contained),
                                             C.byref(length)), "AppContainer token")
             if not contained.value: raise Blocked("O processo não ficou num AppContainer.")
+            a.check_capabilities(token)
             # Class 46 is rejected by GetTokenInformation on CI (ERROR_INVALID_PARAMETER).
             # LPAC is requested by the documented opt-out creation attribute;
             # real AAP-access canaries verify its behavior, not an unsupported query.
@@ -393,12 +434,7 @@ def inside_native_boundary():
                                         C.byref(length)), "current AppContainer")
         if not contained.value:
             return False
-        a.a.GetTokenInformation(token, 30, None, 0, C.byref(length))
-        data = C.create_string_buffer(length.value)
-        a.check(a.a.GetTokenInformation(token, 30, data, length, C.byref(length)),
-                "current capabilities")
-        if C.cast(data, C.POINTER(a.D))[0]:
-            raise Blocked("O processo tem capacidades externas não autorizadas.")
+        a.check_capabilities(token)
         a.check(a.k.IsProcessInJob(current, None, C.byref(in_job)), "current job")
         if not in_job.value:
             raise Blocked("O processo não tem um limite de execução.")

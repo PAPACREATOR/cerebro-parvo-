@@ -43,6 +43,8 @@ O gate de 22 alvos foi adaptado apenas ao novo ponto de lançamento/pasta de tra
 
 NOT RUN/PENDENTE: resultados do CI deste conjunto, perfil de crash/limpeza, instaladores/launchers externos e confinamento avatar/modelo/GPU físicos. Nenhum desses limites é substituído pelos 10.000 testes de autoridade.
 
+Commit f01ca4a, [run 37370540374](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37370540374), Server 2022: criação/token/Job passou, mas Python terminou com 0xC0000022 (ACCESS_DENIED) sem output, antes do payload. Nenhuma operação desse ensaio conta como PASS. Implementação testa registryRead (capacidade oficial só de leitura) e acesso RO do SID aos DLLs System32, usados pelo arranque LPAC; não dá rede/escrita/COM. A verificação de token exige exatamente registryRead e recusa capacidades adicionais. Acrescentado canário de escrita no registo HKCU sintético, com original invariável. A hipótese de arranque só é resolvida depois da repetição.
+
 ## Revisão do código e segurança Windows — 05-10-2026
 
 SHA executável revisto: `dcef003f7c3e93ed8bdfe1730ce5870f1b818e09`. A presente revisão documental não altera esse runtime. Pedido de Pedro: conferir o código real e aproveitar as proteções nativas do Windows nos bastidores, mantendo a Folha simples; não redefinir a arquitetura já fechada.

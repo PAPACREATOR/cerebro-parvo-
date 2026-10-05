@@ -11,7 +11,7 @@ from nexus.host import process_environment
 from nexus.windows_sandbox import _API, MODIFY, launch_confined
 
 SCRIPT = r'''
-import ctypes as C, errno, json, os, socket, subprocess, sys
+import ctypes as C, errno, json, os, socket, subprocess, sys, winreg
 from pathlib import Path
 plan=json.loads(Path('input.json').read_text())
 observations={}
@@ -34,6 +34,12 @@ for i in range(10000):
     except OSError as e:
         if access_denied(e): denied+=1
         else: errors.append([i,action,type(e).__name__,e.errno,getattr(e,'winerror',None)])
+try:
+    with winreg.OpenKey(winreg.HKEY_CURRENT_USER,plan['registry_key'],0,winreg.KEY_SET_VALUE) as key:
+        winreg.SetValueEx(key,'original',0,winreg.REG_SZ,'changed')
+    observations['registry:write']='ALLOWED'
+except OSError as e:
+    observations['registry:write']='DENIED' if access_denied(e) else 'ERROR'
 for name in ('creative','canonical'):
     try:
         (Path(plan['by_name'][name])/'original').read_bytes()
@@ -92,12 +98,17 @@ def test_real_native_boundary_10000_file_attacks_and_descendant(tmp_path):
         api.low_label(areas['all-app-packages'])
     finally:
         api.k.LocalFree(aap)
+    import uuid, winreg
+    registry_key = 'Software/NexusConfinement/' + uuid.uuid4().hex
+    registry_key = registry_key.replace('/', chr(92))
+    with winreg.CreateKey(winreg.HKEY_CURRENT_USER,registry_key) as key:
+        winreg.SetValueEx(key,'original',0,winreg.REG_SZ,'synthetic-original')
     with socket.socket() as listener:
         listener.bind(('127.0.0.1',0)); listener.listen()
         port = listener.getsockname()[1]
         with socket.create_connection(('127.0.0.1',port),timeout=2):
             connection,_=listener.accept();connection.close()
-        (work/'input.json').write_text(json.dumps({'areas':list(areas.values()),'by_name':areas,'port':port}))
+        (work/'input.json').write_text(json.dumps({'areas':list(areas.values()),'by_name':areas,'port':port,'registry_key':registry_key}))
         with launch_confined([sys.executable,'-I','-c',SCRIPT],cwd=work,
                              env=process_environment(work),read_roots=(sys.prefix,sys.base_prefix)) as proc:
             stdout, stderr = proc.communicate(timeout=120)
@@ -105,6 +116,9 @@ def test_real_native_boundary_10000_file_attacks_and_descendant(tmp_path):
         assert code == 0, stderr.decode(errors='replace')
         with socket.create_connection(('127.0.0.1',port),timeout=2):
             connection,_=listener.accept();connection.close()
+    with winreg.OpenKey(winreg.HKEY_CURRENT_USER,registry_key) as key:
+        assert winreg.QueryValueEx(key,'original')[0] == 'synthetic-original'
+    winreg.DeleteKey(winreg.HKEY_CURRENT_USER,registry_key)
     result = json.loads(stdout)
     evidence = os.environ.get('NEXUS_NATIVE_EVIDENCE')
     if evidence:
@@ -115,7 +129,7 @@ def test_real_native_boundary_10000_file_attacks_and_descendant(tmp_path):
     assert result['denied'] == 10000, result
     assert not result['errors'], result
     assert result['observations'] == {'creative:read':'DENIED','canonical:read':'DENIED',
-                                     'network':'DENIED','work':'work-result','child':'DENIED'}, result
+                                     'network':'DENIED','registry:write':'DENIED','work':'work-result','child':'DENIED'}, result
     assert all((Path(folder)/'original').read_bytes()==b'synthetic-original' for folder in areas.values())
     assert all(sorted(p.name for p in Path(folder).iterdir())==['original'] for folder in areas.values())
 
