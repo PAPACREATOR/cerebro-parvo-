@@ -23,6 +23,8 @@ USE/ADAPT: mecanismos oficiais AppContainer/SECURITY_CAPABILITIES, DACL e Job Ob
 
 Estado desta etapa: **IMPLEMENTADO / TESTES WINDOWS EM VALIDAÇÃO / NÃO INTEGRADO**. O gate Host publicado continua obrigatório e vermelho; não retirar nem mascarar o FAIL anterior. Próximo passo só após evidência da fronteira: ligar o lançamento real, separar trabalho do estado autoritativo, testar falha/reinício/retorno e repetir a regressão. PC de Pedro não foi alterado.
 
+Primeiro ensaio nativo, commit efc5b0e, [run 37364869364](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37364869364): 1 FAIL / 1 PASS. O SID derivado sem perfil não permitiu CreateProcessW (erro 2); os 10.000 ataques não executaram. Corrigida a preparação para perfil efémero por tarefa, com acesso da ferramenta ao armazenamento desse perfil explicitamente negado e limpeza no fim. A pasta de trabalho continua a ser o único destino de filesystem atribuído. Isto não cria uma conta Windows nem dá direitos globais à ferramenta. Repetição obrigatória, ainda sem PASS.
+
 ## Revisão do código e segurança Windows — 05-10-2026
 
 SHA executável revisto: `dcef003f7c3e93ed8bdfe1730ce5870f1b818e09`. A presente revisão documental não altera esse runtime. Pedido de Pedro: conferir o código real e aproveitar as proteções nativas do Windows nos bastidores, mantendo a Folha simples; não redefinir a arquitetura já fechada.

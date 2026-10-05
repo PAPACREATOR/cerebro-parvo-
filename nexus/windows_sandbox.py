@@ -34,6 +34,7 @@ class _API:
         self.k = C.WinDLL("kernel32", use_last_error=True)
         self.a = C.WinDLL("advapi32", use_last_error=True)
         self.u = C.WinDLL("userenv", use_last_error=True)
+        self.o = C.WinDLL("ole32", use_last_error=True)
 
         class SA(C.Structure):
             _fields_ = [("length", D), ("descriptor", P), ("inherit", W.BOOL)]
@@ -97,12 +98,15 @@ class _API:
                 "SetNamedSecurityInfoW": (D, [W.LPWSTR, D, D, P, P, P, P]),
                 "ConvertStringSecurityDescriptorToSecurityDescriptorW": (W.BOOL, [W.LPCWSTR, D, P, P]),
                 "GetSecurityDescriptorSacl": (W.BOOL, [P, P, P, P]),
+                "ConvertSidToStringSidW": (W.BOOL, [P, P]),
             },
             "u": {
                 "CreateAppContainerProfile": (C.c_long, [W.LPCWSTR, W.LPCWSTR, W.LPCWSTR, P, D, P]),
                 "DeleteAppContainerProfile": (C.c_long, [W.LPCWSTR]),
                 "DeriveAppContainerSidFromAppContainerName": (C.c_long, [W.LPCWSTR, P]),
+                "GetAppContainerFolderPath": (C.c_long, [W.LPCWSTR, P]),
             },
+            "o": {"CoTaskMemFree": (None, [P])},
         }
         for library, functions in declarations.items():
             for name, (result, arguments) in functions.items():
@@ -172,9 +176,23 @@ class ConfinedProcess:
         self.cwd = work
         try:
             _acl_lock.acquire(); self.locked = True
-            # A disposable lowbox SID: do not provision storage outside the work area.
-            result = self.api.u.DeriveAppContainerSidFromAppContainerName(self.name, C.byref(self.sid))
+            # Windows needs the per-task profile to launch (ERROR_FILE_NOT_FOUND
+            # was observed with a derived SID alone). Deny the tool its storage;
+            # only the separately assigned work directory may be used.
+            result = self.api.u.CreateAppContainerProfile(self.name, self.name, "Nexus task", None, 0, C.byref(self.sid))
             if result < 0: raise Blocked(f"Não foi possível criar a identidade restrita ({result:#x}).")
+            self.created = True
+            sid_text, profile = self.api.P(), self.api.P()
+            try:
+                self.api.check(self.api.a.ConvertSidToStringSidW(self.sid, C.byref(sid_text)), "profile SID")
+                result = self.api.u.GetAppContainerFolderPath(C.wstring_at(sid_text), C.byref(profile))
+                if result < 0: raise Blocked("Não foi possível delimitar o perfil da tarefa.")
+                self.profile_path = C.wstring_at(profile)
+                self.api.acl(self.profile_path, self.sid, 0x1F01FF, mode=3)
+                self.grants.append(self.profile_path)
+            finally:
+                if sid_text: self.api.k.LocalFree(sid_text)
+                if profile: self.api.o.CoTaskMemFree(profile)
             for path in dict.fromkeys(str(Path(x).resolve()) for x in read_roots):
                 self.api.acl(path, self.sid, READ_EXECUTE, inherit=Path(path).is_dir())
                 self.grants.append(path)
