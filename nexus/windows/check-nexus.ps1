@@ -81,6 +81,7 @@ try {
             'nexus/tests/test_media_tools.py',
             'nexus/tests/test_media_tools_mcp.py'
             'nexus/tests/test_media_tools_checker.py'
+            'nexus/tests/test_pc_sync.py'
         ) }
         default { @('nexus/tests') }
     }
