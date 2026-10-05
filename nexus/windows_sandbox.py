@@ -242,7 +242,14 @@ class ConfinedProcess:
             limits.basic.flags = 0x2000 | 0x8 | 0x200
             limits.basic.active, limits.job_memory = 24, 8 * 1024 ** 3
             a.check(a.k.SetInformationJobObject(self.job, 9, C.byref(limits), C.sizeof(limits)), "job limits")
-            block = C.create_unicode_buffer("\0".join(k + "=" + v for k, v in sorted(env.items())) + "\0\0")
+            environment = dict(env)
+            # AppContainer startup needs these names (ERROR_ENVVAR_NOT_FOUND
+            # was observed with only the minimal Host environment). Values are
+            # explicit task paths, never the human's home/profile or credentials.
+            environment.update(USERPROFILE=str(work), APPDATA=str(work),
+                               LOCALAPPDATA=str(work), HOME=str(work))
+            block = C.create_unicode_buffer("\0".join(k + "=" + v for k, v in
+                                                      sorted(environment.items(), key=lambda x: x[0].upper())) + "\0\0")
             line = C.create_unicode_buffer(subprocess.list2cmdline(command))
             a.check(a.k.CreateProcessW(command[0], line, None, None, True,
                                       0x80000 | 0x400 | 0x4 | 0x08000000, block, str(work),

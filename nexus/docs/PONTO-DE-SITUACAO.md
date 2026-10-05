@@ -29,6 +29,8 @@ Correção de autoridade: Host.authorize agora exige str ASCII antes de hmac.com
 
 O gate Windows passa a testar Windows Server 2022 e 2025 separadamente, sem fail-fast, conservando artefactos por plataforma e os critérios do gate Host. O job 2025 do commit f5596d4 ainda estava em fila sem runner na última consulta; fila não é PASS nem FAIL do código.
 
+Commit 7aed704, [run 37367782434](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37367782434): **10.000 inputs de autoridade PASS em cada Windows** (4 funções pytest; 2.500 casos por função), 1,03 s em Server 2022 e 0,85 s em Server 2025. A fronteira nativa continuou 1 FAIL / 1 PASS por OS: CreateProcessW erro 203 (variável de ambiente não encontrada), antes dos ataques. Nova preparação acrescenta USERPROFILE/APPDATA/LOCALAPPDATA/HOME com valores da área de tarefa, sem herdar o perfil humano. A hipótese de ambiente só passa a causa resolvida após repetição. Gate Host ainda 22 acessos proibidos permitidos; integração continua pendente.
+
 ## Revisão do código e segurança Windows — 05-10-2026
 
 SHA executável revisto: `dcef003f7c3e93ed8bdfe1730ce5870f1b818e09`. A presente revisão documental não altera esse runtime. Pedido de Pedro: conferir o código real e aproveitar as proteções nativas do Windows nos bastidores, mantendo a Folha simples; não redefinir a arquitetura já fechada.
