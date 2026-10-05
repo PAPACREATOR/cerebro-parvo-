@@ -15,6 +15,45 @@ Estados antigos, filas, handoffs e quadros temporários foram removidos da árvo
 - Tiny/IA não recebe autoridade de sistema.
 - Duplicação exata é a única base para eliminação automática; semântica/similaridade apenas sinaliza revisão.
 
+## Revisão do código e segurança Windows — 05-10-2026
+
+SHA executável revisto: `dcef003f7c3e93ed8bdfe1730ce5870f1b818e09`. A presente revisão documental não altera esse runtime. Pedido de Pedro: conferir o código real e aproveitar as proteções nativas do Windows nos bastidores, mantendo a Folha simples; não redefinir a arquitetura já fechada.
+
+| Gate observado nesse SHA | Evidência |
+|---|---|
+| Nexus Windows | [SUCCESS](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37304293988): Core 140, Blocks 1068, All 1386, Practical 40 PASS |
+| Integration Stress | [SUCCESS](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37304293836): blocos 100K, MCP, E2E controlado e regressão 1386 PASS |
+| Avatar | [SUCCESS](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37304294007): 165 PASS em Windows e 165 em Ubuntu |
+| Auditoria | [SUCCESS](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37304293869): 34 históricos e 11 de persistência PASS |
+| Confinamento Windows | **[FAIL](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37304294214): 22 acessos proibidos ALLOWED; 2 controlos PASS**. Contratos de autoridade da aplicação: 26 PASS |
+
+As contagens sobrepõem-se e não devem ser somadas. O novo Practical verde não identifica a causa do PermissionError anterior; a falha histórica continua conservada abaixo. O E2E controlado e os ensaios de avatar não substituem backend/modelo/GPU físicos completos. O gate de confinamento correu em runner Windows Server 2025, com alvos sintéticos; não é prova no PC de Pedro.
+
+### O que o código realmente faz
+
+- `host.py::_run` chama `subprocess.Popen` com cwd/env reduzidos e CREATE_NO_WINDOW. Não escolhe conta Nexus/token restrito, não aplica ACL e não associa Job Object. A tool mantém a identidade corrente. O gate hostil confirmou a consequência em 20 operações de escrita e 2 leituras proibidas de ensaio.
+- `mcp_client.py::_open_session` usa `stdio_client` com command/args/env. A allowlist limita nomes de tools; não restringe os direitos Windows do servidor. O percurso efetivo é Host → runner → MCP → adaptador → subprocesso ou API externa.
+- `adapters/office.py` e `adapters/languagetool.py` lançam os executáveis sem seleção de identidade restrita. Perfil LibreOffice por tarefa, validação de pacotes, heap Java e timeout são controlos reais, mas não isolamento de ficheiros.
+- `lab/open_notebook_avatar/notebook_avatar/service.py::command` cria processos e grupos, com limites e captura de output. Não aplica a fronteira Windows do Host. O comentário do código atribui a sandbox de SO à camada externa; essa ligação ainda falta.
+- `windows/sync-nexus-pc.ps1` arranca ACE-Step/Forge com Start-Process; `install-media-tools.ps1` pode usar winget e uv python install sem fixar todas as localizações/caches a ToolsRoot. Não há prova de instalação confinada; não foi executado nenhum instalador nesta revisão.
+- `instance.py` e `app.py` já usam proteções Windows reais: bloqueio do diretório por msvcrt e exclusividade da porta por SO_EXCLUSIVEADDRUSE. Os gates de arranque passam; estas proteções têm âmbito diferente do isolamento de ferramentas.
+- `Host.authorize` passa uma sessão Unicode diretamente a hmac.compare_digest. Ensaio do método real extraído por AST: sessão válida ACCEPTED; falsa ASCII Blocked; falsa Unicode TypeError; tipo errado Blocked. Prova de componente, sem importação/execução completa do Host. Correção local preparada não equivale a correção publicada.
+
+### Contrato preservado e diferença de implementação
+
+O comportamento exigido já está em [F008](F008-ISOLAMENTO-WINDOWS.md) e [Windows como hospedeiro](SCHEMAS-E-WINDOWS.md). A pessoa usa linguagem normal; Kernel/Host/Store aplicam autorização e regras; o Host lança uma tarefa delimitada; o Windows faz cumprir os direitos do processo; o Host verifica o retorno e escreve no destino permitido. A gestão de contas, ACLs, tokens e processos não pertence ao percurso normal da Folha. A pessoa continua a ver decisões humanas materiais quando exigidas.
+
+A evidência [WINDOWS-TWO-FOLDERS](WINDOWS-TWO-FOLDERS-EVIDENCE.json), de 01-10, regista identidade Nexus, escrita permitida e leitura/escrita protegida recusadas. É válida para as duas pastas artificiais. O código atual não integra esse lançamento com credenciais no Host. Não inferir que o PC ou todas as ferramentas continuam protegidos a partir desse ensaio antigo.
+
+**Estado: requisito definido; integração de segurança nativa incompleta; execução confinada FAIL.** Próximo microprocesso: ligar a execução real a uma fronteira Windows verificada, delimitar trabalho versus estado do Host, cobrir descendentes, acesso entre tarefas, rede e bancada/modelo; repetir o gate hostil e regressão sem enfraquecer critérios. Não é necessário redesenhar M1–M14 para reconhecer esta lacuna.
+
+### Trabalho ainda não entregue
+
+- Contenção de emergência e correção de sessão Unicode: preparadas numa cópia local separada, **não publicadas nem validadas no CI**. O HEAD publicado continua a executar como antes. Bloquear execução seria contenção, não PASS de sandbox funcional.
+- 40.000 inputs adversariais adicionais: ficheiro local preparado, **NOT RUN**. Não os contar como testes passados nem como 40.000 provas independentes do Windows.
+- PC, contas, permissões, serviços e ficheiros pessoais não foram alterados por esta revisão.
+- Verificação local da cópia publicada: 29 hashes do manifesto conformes; sintaxe dos 74 ficheiros Python Nexus válida. Estes dois controlos não executam o software nem demonstram segurança de SO.
+
 ## Revisão observada em 05-10-2026, 10:09 Lisboa
 
 SHA analisado: `7faead619e14d15e5590f84e1d52ac68d1e58bc4`. A revisão documental posterior não constitui correção do runtime nem transfere PASS para o novo commit.
@@ -62,7 +101,7 @@ Sem esses relatórios, CI/GitHub PASS não é apresentado como PASS do hardware 
 
 ## Pendências técnicas ainda reais
 
-1. Resolver o gate Windows Practical acima; depois executar no PC/RTX 2080 o SHA explicitamente validado.
+1. Fechar o confinamento Windows real acima antes de recomendar instalação/execução no PC; diagnosticar também o PermissionError histórico, mesmo com o Practical atual verde.
 2. Fechar o E2E físico OpenNotebook 1.15 + SurrealDB + modelo local + Kernel + Creative + Human Gate + Canonical.
 3. Escolher e validar um checkpoint Forge com licença conhecida antes de geração real.
 4. Continuar os contratos ainda abertos em #3 (IMP-001) e #4 (G10/IMP-019 + eliminação controlada).

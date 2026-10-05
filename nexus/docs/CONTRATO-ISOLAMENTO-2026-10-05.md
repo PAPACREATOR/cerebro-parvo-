@@ -50,3 +50,11 @@ Workflow: Nexus Windows Confinement Gate. É separado da regressão funcional pa
 Se houver acesso proibido, registar FAIL real e bloquear a declaração de isolamento. Não passar à instalação no PC como se fosse segura. A correção terá de aplicar uma fronteira de SO à execução real (e separar instalação de execução), repetindo estes ataques e os gates restantes. Não corrigir com prompts, permissões mais largas, sleeps ou apenas redirecionamento de caches.
 
 O desenvolvimento de testes em laboratório está autorizado. Criar contas/permissões no PC, alterar políticas Windows ou instalar programas no PC não foi executado por esta tarefa.
+
+## Releitura do percurso de execução — 05-10-2026
+
+O código publicado em dcef003 foi conferido desde Host/Store/arranque até runner, MCP, adaptadores, comandos avatar e instaladores Windows. O resultado real do gate é 22 acessos proibidos ALLOWED e 2 controlos PASS. O detalhe operacional fica no [ponto de situação único](PONTO-DE-SITUACAO.md).
+
+A direção já definida é aproveitar a segurança Windows para fazer cumprir as regras do Nexus. Kernel/Host/Store validam; mecanismos nativos restringem a execução; a Folha mantém linguagem normal. A arquitetura conceptual não é reaberta por esta revisão. Contas, ACLs e limites técnicos são infraestrutura interna; ações que exigem autoridade humana continuam a ser apresentadas de forma compreensível.
+
+A instalação e a execução da bancada/modelo têm de ser verificadas separadamente. Ambiente reduzido, perfis por tarefa, grupos de processo, allowlist MCP e hashes conservam utilidade, mas nenhum destes controlos já presentes muda sozinho os direitos de ficheiros da identidade corrente. Scripts sintéticos de conta/ACL existentes são evidência de um mecanismo, não integração automática no Host.
