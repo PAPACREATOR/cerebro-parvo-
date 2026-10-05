@@ -15,6 +15,14 @@ Estados antigos, filas, handoffs e quadros temporários foram removidos da árvo
 - Tiny/IA não recebe autoridade de sistema.
 - Duplicação exata é a única base para eliminação automática; semântica/similaridade apenas sinaliza revisão.
 
+## Correção e 10.000 ataques — implementação em validação, 05-10-2026
+
+Pedido humano: resolver e testar 10.000 casos. Contrato do microprocesso, dono Host (sem alterar M1–M14): lançar somente um comando selecionado pelo Host, com inputs delimitados, identidade Windows de tarefa, direitos de leitura dos executáveis e escrita no trabalho, sem direitos sobre Kernel/cofres/dados externos nem capacidades de rede. Criar suspenso; verificar token AppContainer, SID e associação ao Job antes de retomar. O Job termina descendentes e impõe limites. Erros nativos não autorizam fallback. ACLs da identidade de tarefa são revogadas na limpeza sem restaurar/destruir ACLs humanas completas.
+
+USE/ADAPT: mecanismos oficiais AppContainer/SECURITY_CAPABILITIES, DACL e Job Object, chamados por ctypes; sem serviço/conta/administração global novos. A primeira etapa é uma fronteira nativa isolada, ainda não ligada ao Host/MCP/avatar. O teste executa 10.000 operações reais de ficheiros, leitura dos dois cofres sintéticos, descendente, controlo de escrita permitida e tentativa de ligação a um socket loopback realmente disponível. ERROR/timeout/não execução não contam como DENIED. Fontes: [Microsoft AppContainer](https://learn.microsoft.com/en-us/windows/win32/secauthz/implementing-an-appcontainer), [Job Objects](https://learn.microsoft.com/en-us/windows/win32/procthread/job-objects).
+
+Estado desta etapa: **IMPLEMENTADO / TESTES WINDOWS EM VALIDAÇÃO / NÃO INTEGRADO**. O gate Host publicado continua obrigatório e vermelho; não retirar nem mascarar o FAIL anterior. Próximo passo só após evidência da fronteira: ligar o lançamento real, separar trabalho do estado autoritativo, testar falha/reinício/retorno e repetir a regressão. PC de Pedro não foi alterado.
+
 ## Revisão do código e segurança Windows — 05-10-2026
 
 SHA executável revisto: `dcef003f7c3e93ed8bdfe1730ce5870f1b818e09`. A presente revisão documental não altera esse runtime. Pedido de Pedro: conferir o código real e aproveitar as proteções nativas do Windows nos bastidores, mantendo a Folha simples; não redefinir a arquitetura já fechada.
