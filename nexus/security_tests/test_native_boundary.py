@@ -46,6 +46,7 @@ for name in ('creative','canonical'):
         observations[name+':read']='ALLOWED'
     except OSError as e:
         observations[name+':read']='DENIED' if access_denied(e) else 'ERROR'
+s=None
 try:
     s=socket.socket()
     s.settimeout(2)
@@ -64,7 +65,7 @@ except OSError as e:
     native_denial=getattr(e,'winerror',None)==10013 or e.errno==10013
     observations['network']='DENIED' if native_denial or (rc==0 and missing.value in (1,2,3)) else 'ERROR:'+str(e)
 finally:
-    s.close()
+    if s is not None: s.close()
 Path('allowed.txt').write_text('work-result')
 observations['work']=Path('allowed.txt').read_text()
 child_code="from pathlib import Path; p=Path(%r);\ntry: p.write_bytes(b'child-change'); print('ALLOWED')\nexcept OSError as e: print('DENIED' if (getattr(e,'winerror',None)==5 or (getattr(e,'winerror',None) is None and e.errno in (1,13))) else 'ERROR')" % str(Path(plan['areas'][0])/'original')

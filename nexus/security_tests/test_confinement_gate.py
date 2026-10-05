@@ -75,7 +75,9 @@ def observations(tmp_path_factory):
     assert len(calls) == 1
     report = run_dir / "execution.stdout.json"
     assert report.is_file(), "Probe did not execute: confinement NOT PROVEN"
-    values = json.loads(report.read_text(encoding="utf-8"))
+    raw = report.read_text(encoding="utf-8")
+    assert raw, (run_dir / "execution.stderr.txt").read_text(encoding="utf-8", errors="replace")[-8000:]
+    values = json.loads(raw)
     assert set(values) == {item["name"] for item in manifest} | {"assigned-work:create"}
     unchanged = {}
     for name, (target, original) in originals.items():

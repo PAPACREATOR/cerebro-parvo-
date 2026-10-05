@@ -12,7 +12,17 @@ import uuid
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+# Load the known package directly: LPAC can read Nexus without being granted
+# directory listing/read access to the repository or the human's parent folder.
+if __package__ in (None, ""):
+    import importlib.util
+    package_root = Path(__file__).absolute().parents[1]
+    package_spec = importlib.util.spec_from_file_location(
+        "nexus", package_root / "__init__.py",
+        submodule_search_locations=[str(package_root)])
+    package = importlib.util.module_from_spec(package_spec)
+    sys.modules["nexus"] = package
+    package_spec.loader.exec_module(package)
 
 from nexus.contracts import Blocked, ROOT, strict_json, validate
 from nexus.mcp_client import MCPServerSpec, call_tool

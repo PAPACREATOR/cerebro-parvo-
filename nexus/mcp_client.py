@@ -85,11 +85,14 @@ async def _native_stdio(params, prepared=None):
         proc = launch_confined([str(command), *params.args], cwd=work,
                                env=environment, read_roots=tuple(dict.fromkeys(roots)), deny_roots=denied)
 
+        diagnostic = bytearray()
+
         async def stdout_reader():
             async with read_sender:
                 while True:
                     line = await anyio.to_thread.run_sync(proc.stdout.readline, MAX_RESULT_BYTES + 1)
                     if not line:
+                        await anyio.to_thread.run_sync(proc.wait, 5)
                         break
                     if len(line) > MAX_RESULT_BYTES:
                         await read_sender.send(Blocked("Resposta MCP excede o limite Nexus."))
@@ -113,6 +116,8 @@ async def _native_stdio(params, prepared=None):
             size = 0
             while block := await anyio.to_thread.run_sync(proc.stderr.read, 65536):
                 size += len(block)
+                if len(diagnostic) < 8000:
+                    diagnostic.extend(block[:8000-len(diagnostic)])
                 if size > MAX_RESULT_BYTES:
                     proc.kill()
                     raise Blocked("Diagnóstico MCP excede o limite Nexus.")
@@ -128,6 +133,8 @@ async def _native_stdio(params, prepared=None):
                     proc.kill()  # Includes descendants; unblocks pending pipe reads.
                     group.cancel_scope.cancel()
         finally:
+            if proc.returncode not in (None, 0):
+                print(f"Nexus MCP exit {proc.returncode:#x}: " + diagnostic.decode("utf-8", errors="replace"), file=sys.stderr)
             proc.close()
             await read.aclose()
             await write.aclose()
