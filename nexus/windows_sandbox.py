@@ -230,7 +230,7 @@ class ConfinedProcess:
             finally:
                 if sid_text: self.api.k.LocalFree(sid_text)
                 if profile: self.api.o.CoTaskMemFree(profile)
-            for path in dict.fromkeys(str(Path(x).resolve()) for x in (*read_roots, Path(os.environ["SystemRoot"]) / "System32")):
+            for path in dict.fromkeys(str(Path(x).resolve()) for x in read_roots):
                 self.api.acl(path, self.sid, READ_EXECUTE, inherit=Path(path).is_dir())
                 self.grants.append(path)
             for path in deny_roots:

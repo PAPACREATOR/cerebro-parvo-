@@ -69,7 +69,7 @@ async def _native_stdio(params, prepared=None):
     if not command.is_absolute() or not command.is_file():
         raise Blocked("Executável MCP não autorizado.")
     with tempfile.TemporaryDirectory(prefix="nexus-mcp-") as temporary:
-        work = Path(temporary)
+        work = Path(temporary).resolve()
         environment = task_environment(work)
         # Explicit provider settings are data; task/cache/profile roots cannot be
         # redirected by them, and never receive Host session/cloud credentials.
