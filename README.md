@@ -4,11 +4,13 @@ Sistema local-first de criação, conhecimento e execução governada para uma p
 
 ## Código desta versão
 
-O protótipo Windows está em [nexus/](nexus/README.md). Consultar o [estado testado e pendências](nexus/docs/PUBLICACAO-2026-10-01.md). As pastas `implementacao/` e `historico/` conservam versões anteriores; não são necessárias para executar Nexus.
+O protótipo Windows está em [nexus/](nexus/README.md). Consultar o [estado testado e pendências](nexus/docs/PONTO-DE-SITUACAO.md). As pastas `implementacao/` e `historico/` conservam versões anteriores; não são necessárias para executar Nexus.
 
 ## Estado atual em uma frase
 
-**Nexus Minimal = Folha em linguagem natural + Conductor como condutor candidato + memória soberana Nexus/Windows + Open Notebook apenas como bancada cognitiva descartável.**
+**Protótipo candidato: Folha em linguagem natural + Kernel/Host/Store Python + MCP determinístico + ferramentas externas + Creative/Human Gate/Canonical.**
+
+A continuação está na [PR #23](https://github.com/PAPACREATOR/cerebro-parvo-/pull/23), branch `lab-open-notebook-avatar-20261004`; ainda não é a versão integrada em `main`. PASS de uma suite não significa release. O [ponto de situação](nexus/docs/PONTO-DE-SITUACAO.md) distingue a última referência verde, os testes do SHA analisado e os gates pendentes.
 
 A arquitetura conceptual está estável. A implementação física continua sujeita a testes: nenhuma integração é declarada resolvida antes de PASS real.
 
@@ -16,23 +18,8 @@ A arquitetura conceptual está estável. A implementação física continua suje
 
 Nexus é um **launcher metódico, com memória, leis e templates executáveis**, que usa as ferramentas disponíveis para atingir um fim. Não tenta reprogramar capacidades maduras.
 
-```text
-Humano
-  ↕
-Folha Nexus (linguagem natural)
-  ↓
-Conductor / runtime de workflows
-  ├─ processo/template conhecido → capability/ferramenta
-  └─ problema novo/ambíguo → Open Notebook + tiny local (bancada)
-                               ↓
-                            resultado
-  ↓
-verificar / PASS | FAIL | UNKNOWN
-  ↓
-Creative → Human Gate → Canonical
-  ↓
-experiência validada → processo/template candidato
-```
+A pessoa escreve na Folha. Kernel/Host/Store validam e executam o processo; MCP transporta chamadas às ferramentas. Os resultados são verificados e guardados em Creative. Só decisão humana permite promoção para Canonical. O percurso completo de cada capacidade exige prova própria.
+
 
 ## Separação de responsabilidades
 
@@ -41,8 +28,8 @@ As responsabilidades M1–M14 continuam aplicáveis. Os contratos, testes e a ev
 ### Folha Nexus
 Interface inicial mínima. Texto natural, anexos, resultados e decisões humanas. YAML, JSON, Markdown, IDs e infraestrutura ficam escondidos na utilização normal.
 
-### Conductor
-Condutor/runtime candidato para routing, workflows, scripts, MCP, paralelismo e gates. Não é proprietário do conhecimento. Só entra definitivamente depois de provar o percurso local exigido pelo Nexus.
+### Kernel e MCP
+O runtime candidato usa Kernel/Host/Store Python. MCP é transporte determinístico, sem IA nem autoridade de aprovação. Conductor/Spiff foram retirados do runtime ativo; as comparações e decisões anteriores permanecem como genealogia, incluindo a [PR #21](https://github.com/PAPACREATOR/cerebro-parvo-/pull/21).
 
 ### Open Notebook
 **Bancada de trabalho, ponto.** Não é memória soberana, Canonical, Creative, arquivo, Wiki, autoridade nem interface principal. Recebe um pacote de trabalho limitado, permite trabalho cognitivo com tiny local e devolve resultado estruturado. Deve poder ser destruído/substituído sem perda de conhecimento Nexus.
@@ -68,9 +55,9 @@ LibreOffice, Zotero, LanguageTool, web, imagem, áudio, Whisper/TTS e outras fer
 - ferramentas e bancadas substituíveis;
 - desmontar deve ser tão fácil como montar.
 
-## Templates executáveis
+## Contratos e processos
 
-Uma tarefa conhecida deve poder ser representada por um pequeno contrato reutilizável:
+O runtime candidato executa processos Python validados. O esquema abaixo conserva a proposta histórica de templates; `process.yaml` não é uma dependência do executor atual:
 
 ```text
 process.yaml
@@ -86,7 +73,7 @@ Se o processo é conhecido, executa-se com o mínimo de IA. Se não é conhecido
 ## Prova mínima
 
 1. linguagem natural na Folha;
-2. routing pelo condutor;
+2. routing pelo Kernel;
 3. tarefa cognitiva enviada à bancada Open Notebook/tiny;
 4. resultado JSON válido;
 5. gravação em Creative;
@@ -96,7 +83,7 @@ Se o processo é conhecido, executa-se com o mínimo de IA. Se não é conhecido
 9. recuperar proveniência do resultado até ao pedido/fontes;
 10. repetir tarefa semelhante e medir reutilização do processo.
 
-Só depois destes PASS entram capabilities adicionais.
+Esta lista é um critério de aceitação, não uma declaração de que todos os percursos estão comprovados. Consultar a evidência por capacidade no ponto de situação.
 
 ## Benchmark externo único
 
@@ -116,4 +103,6 @@ Para evitar dispersão, o projeto externo de comparação escolhido em 30-09-202
 
 Código/documentação próprios: PolyForm Noncommercial 1.0.0. Dependências mantêm as suas próprias licenças; antes de redistribuição devem ser fixadas versões e `THIRD_PARTY_NOTICES`.
 
-[Constituição](CEREBRO_CONSTITUTION.md) · [Arquitetura](CEREBRO_ARCHITECTURE.md) · [Decisões](DECISIONS.md) · [Estado](STATUS.md) · [Plano](IMPLEMENTATION_PLAN.md) · [Pendências](docs/PENDENCIAS.md)
+[Estado operacional](nexus/docs/PONTO-DE-SITUACAO.md) · [Arranque](nexus/README.md) · [Constituição](CEREBRO_CONSTITUTION.md) · [Arquitetura e genealogia](CEREBRO_ARCHITECTURE.md) · [Decisões](DECISIONS.md)
+
+Os documentos conceptuais e planos datados preservam etapas anteriores (incluindo Activepieces/Conductor); a composição executável atual deve ser conferida no código, na PR #23 e na evidência por SHA. A organização documental não altera as invariantes M1–M14.
