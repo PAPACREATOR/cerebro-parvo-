@@ -224,17 +224,18 @@ class ConfinedProcess:
         child_out, parent_out = self._pipe(False)
         child_err, parent_err = self._pipe(False)
         size = C.c_size_t()
-        a.k.InitializeProcThreadAttributeList(None, 2, 0, C.byref(size))
+        a.k.InitializeProcThreadAttributeList(None, 3, 0, C.byref(size))
         attributes = C.create_string_buffer(size.value)
-        a.check(a.k.InitializeProcThreadAttributeList(attributes, 2, 0, C.byref(size)), "process attributes")
+        a.check(a.k.InitializeProcThreadAttributeList(attributes, 3, 0, C.byref(size)), "process attributes")
         caps = a.CAPS(self.sid, None, 0, 0)  # No network, camera or other capability.
         handles = (a.H * 3)(child_in, child_out, child_err)
+        opt_out = a.D(1)  # LPAC: do not inherit ALL APPLICATION PACKAGES access.
         info, process = a.SIX(), a.PI()
         info.si.cb, info.si.flags = C.sizeof(info), 0x100
         info.si.stdin, info.si.stdout, info.si.stderr = child_in, child_out, child_err
         info.attributes = C.cast(attributes, a.P)
         try:
-            for key, value in ((0x20009, caps), (0x20002, handles)):
+            for key, value in ((0x20009, caps), (0x20002, handles), (0x2000F, opt_out)):
                 a.check(a.k.UpdateProcThreadAttribute(attributes, 0, key, C.byref(value), C.sizeof(value),
                                                       None, None), "restricted attributes")
             self.job = a.check(a.k.CreateJobObjectW(None, None), "job")
@@ -283,6 +284,9 @@ class ConfinedProcess:
             a.check(a.a.GetTokenInformation(token, 29, C.byref(contained), C.sizeof(contained),
                                             C.byref(length)), "AppContainer token")
             if not contained.value: raise Blocked("O processo não ficou num AppContainer.")
+            a.check(a.a.GetTokenInformation(token, 46, C.byref(contained), C.sizeof(contained),
+                                            C.byref(length)), "LPAC token")
+            if not contained.value: raise Blocked("O processo não ficou num AppContainer restrito.")
             a.a.GetTokenInformation(token, 31, None, 0, C.byref(length))
             data = C.create_string_buffer(length.value)
             a.check(a.a.GetTokenInformation(token, 31, data, length, C.byref(length)), "task identity")
