@@ -30,7 +30,7 @@ def test_pc_sync_runs_full_nexus_validation_before_media():
 
 
 def test_pc_sync_uses_external_tools_and_physical_health_gate():
-    assert "C:\\\\Nexus-Tools" in SCRIPT
+    assert "C:\\Nexus-Tools" in SCRIPT
     assert "Start-ACE-Step-Nexus.cmd" in SCRIPT
     assert "Start-Forge-Nexus.cmd" in SCRIPT
     assert "check-media-tools.ps1" in SCRIPT
