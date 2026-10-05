@@ -25,6 +25,10 @@ Estado desta etapa: **IMPLEMENTADO / TESTES WINDOWS EM VALIDAÇÃO / NÃO INTEGR
 
 Primeiro ensaio nativo, commit efc5b0e, [run 37364869364](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37364869364): 1 FAIL / 1 PASS. O SID derivado sem perfil não permitiu CreateProcessW (erro 2); os 10.000 ataques não executaram. Corrigida a preparação para perfil efémero por tarefa, com acesso da ferramenta ao armazenamento desse perfil explicitamente negado e limpeza no fim. A pasta de trabalho continua a ser o único destino de filesystem atribuído. Isto não cria uma conta Windows nem dá direitos globais à ferramenta. Repetição obrigatória, ainda sem PASS.
 
+Correção de autoridade: Host.authorize agora exige str ASCII antes de hmac.compare_digest; sessões Unicode falsas passam a Blocked. O método real extraído por AST passou controlo válido + 10.000 sessões inválidas localmente; é prova de componente, não importação completa do Host. Novo test_authority_10000.py testa o Host/Store completo em quatro famílias de 2.500 inputs (sessões, tickets humanos forjados, autoridade em resultados e processos não registados), com snapshots de dados invariantes. Manifesto atualizado para a alteração revista. CI pendente. Os 40.000 inputs antigos preparados noutra cópia continuam NOT RUN; não são estes testes.
+
+O gate Windows passa a testar Windows Server 2022 e 2025 separadamente, sem fail-fast, conservando artefactos por plataforma e os critérios do gate Host. O job 2025 do commit f5596d4 ainda estava em fila sem runner na última consulta; fila não é PASS nem FAIL do código.
+
 ## Revisão do código e segurança Windows — 05-10-2026
 
 SHA executável revisto: `dcef003f7c3e93ed8bdfe1730ce5870f1b818e09`. A presente revisão documental não altera esse runtime. Pedido de Pedro: conferir o código real e aproveitar as proteções nativas do Windows nos bastidores, mantendo a Folha simples; não redefinir a arquitetura já fechada.

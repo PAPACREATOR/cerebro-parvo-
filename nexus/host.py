@@ -57,7 +57,7 @@ class Host:
         self.actor = getpass.getuser()
 
     def authorize(self, session):
-        if not isinstance(session, str) or not hmac.compare_digest(session, self.session):
+        if type(session) is not str or not session.isascii() or not hmac.compare_digest(session, self.session):
             raise Blocked("Abre a Folha através do lançador local.")
 
     def start(self, request, session):

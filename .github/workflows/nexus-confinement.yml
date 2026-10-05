@@ -10,8 +10,12 @@ permissions:
 
 jobs:
   confinement:
-    name: Host worker cannot alter Kernel, vaults or outside installation
-    runs-on: windows-latest
+    name: Confinement and authority (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022, windows-latest]
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     env:
       PYTHONUTF8: '1'
@@ -33,6 +37,9 @@ jobs:
       - name: Native Windows boundary - 10000 actual filesystem attacks
         if: always()
         run: python -m pytest nexus/security_tests/test_native_boundary.py -q -o pythonpath=. --junitxml=security-evidence/native-10000.xml
+      - name: 10000 authority inputs - no data mutation or forged approval
+        if: always()
+        run: python -m pytest nexus/security_tests/test_authority_10000.py -q -o pythonpath=. --junitxml=security-evidence/authority-10000.xml
       - name: Real Host launch with hostile disposable worker
         if: always()
         run: python -m pytest nexus/security_tests/test_confinement_gate.py -q -o pythonpath=. --junitxml=security-evidence/confinement.xml
@@ -40,6 +47,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: windows-confinement-evidence
+          name: windows-confinement-evidence-${{ matrix.os }}
           path: security-evidence/
           if-no-files-found: error
