@@ -1,76 +1,91 @@
-# Nexus — ponto de situação revisto
+# Nexus — ponto de situação atual
 
-## Revisão do repositório — 04-10-2026
+Este é o único documento de estado operacional corrente em `nexus/docs`.
+Estados antigos, filas, handoffs e quadros temporários foram removidos da árvore ativa; continuam recuperáveis pelo histórico Git e pelos PRs/comentários.
 
-As provas abaixo da instalação Windows são históricas, não uma nova inspeção do PC.
-No [PR #7](https://github.com/PAPACREATOR/cerebro-parvo-/pull/7), o arranque único e
-o hash no ambiente reduzido passaram numa suite completa de **1154 testes em
-Windows do GitHub**. [Arranque](F011-ARRANQUE-UNICO.md) · [Hash](F012-HASH-WINDOWS-ISOLADO.md).
+## Fonte de verdade operacional
 
-Pedido atual: **resultados ligados, sentido inverso e wikis coerentes**.
-[F013](F013-PROVENIENCIA-INVERSA.md) documenta falhas observadas na ligação
-Canonical → Creative → evidência/processo → fonte/pedido e a correção.
-Regressão aplicável Linux: 1148 PASS. Suite completa da última correção:
-**1194 PASS em Windows em 56,15 s**, integridade PASS, commit `2870e336`.
-[Execução verificada](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37162599479).
-As contagens Linux e Windows sobrepõem-se; não somar.
-[Continuidade e PowerShell](CONTINUIDADE-2026-10-04.md).
-Não confundir a prova mínima de proveniência com uma wiki relacional concluída.
+- PR ativa: **#23 — CURRENT BASELINE**.
+- Branch de continuação: `lab-open-notebook-avatar-20261004`.
+- Kernel/Host/Store são a autoridade do sistema.
+- MCP é transporte determinístico.
+- OpenNotebook, LanguageTool, LibreOffice, ACE-Step, Forge e restantes integrações são ferramentas externas.
+- Creative precede Canonical.
+- Promoção para Canonical exige decisão humana explícita.
+- Tiny/IA não recebe autoridade de sistema.
+- Duplicação exata é a única base para eliminação automática; semântica/similaridade apenas sinaliza revisão.
 
-Prioridades da instalação mantidas: ligar a conta Nexus ao executor, configurar
-Open Notebook/tiny na entrada Nexos, provar restauro e integrar ferramentas por
-circuito real. Essas operações exigem acesso à cópia/configuração do PC; este
-trabalho atua no repositório e não substitui alterações Spiff/Conductor locais.
+## Última baseline funcional validada antes da limpeza documental
 
-## Conclusão
-Existe um protótipo parcial funcional. A arquitetura já tem vários circuitos
-com prova real; a integração completa e o isolamento de produção continuam
-por demonstrar. Não existe uma percentagem de conclusão fundamentada.
+A baseline funcional `7e1ec9b6ce1804123c1cb4bd198ea2dfff5bd98a` passou duas execuções independentes dos gates principais:
 
-## Resultados verificados
-| Área | Evidência | Limite |
-|---|---|---|
-| Regressão | 1136 testes passaram em 32.31 s | Inclui 1000 variantes parametrizadas de contratos; não são 1136 tarefas E2E |
-| Instalação | 16 controlos passaram em C:\Nexos | Dependências ainda em várias pastas |
-| Folha e Conductor | Arranque, sessão, execução e resultados testados | O Host ainda executa com a identidade humana |
-| LanguageTool | Revisão real de português por CLI, sem IA | Não deteta todos os erros linguísticos |
-| LibreOffice | ODT→PDF real, descarga e bloqueios testados | DOCX ainda sem prova real nesta revisão |
-| Open Notebook/Tiny | 6/6 ensaios sintéticos passaram após corrigir o prompt | Funciona no laboratório anterior, ainda não configurado em C:\Nexos |
-| Multimédia | Contratos Som/Imagem e leitura pelo Conductor testados | Sem geração de áudio/imagem nem seleção desta família na Folha |
-| Canonical | Zero itens na instalação; bypasses bloqueados | Proteção pelo Host; isolamento do executor ainda pendente |
-| Windows/NTFS | Conta Nexus e teste de duas pastas passaram | Novo teste com Conductor não chegou a executar |
+- Kernel stress: 100.000 casos PASS;
+- linguagem/ambiguidade: 100.000 casos PASS;
+- MCP stdio: 1.000 operações PASS;
+- OpenNotebook Kernel E2E: PASS;
+- ACE-Step/Forge MCP health: 17 PASS;
+- regressão completa: 1386 PASS;
+- Core Windows: 140 PASS;
+- Blocks: 1068 PASS;
+- Practical: 40 PASS;
+- avatar OpenNotebook: 165 PASS Windows + 165 PASS Ubuntu;
+- auditoria histórica: 34 PASS;
+- persistência ativa: 11 PASS.
 
-## Última tentativa Windows
-O Windows recusou a autenticação no novo ensaio. A conta está ativa e sem
-bloqueio. O utilizador esclareceu que se enganou na introdução da palavra-passe.
-Não há resultado PASS do ensaio Conductor + conta Nexus. Os scripts estão
-preparados localmente e ainda não publicados como funcionalidade concluída.
-Não foi redefinida a palavra-passe nem desativada segurança para ultrapassar o erro.
+A limpeza posterior é documental/organizacional. O HEAD resultante só passa a nova baseline depois de repetir os mesmos workflows e regressões.
 
-## Wiki e repositório
-A wiki é documentação Markdown manual e versionada. Contém a organização,
-contratos, provas e pendências. Ainda não existe espelhamento automático com o
-equipamento nem verificação automática de todos os links e instalações.
-Os relatórios históricos mantêm estados antigos; este documento resume o estado
-mais recente e deve ser lido primeiro.
+## PC físico
 
-Na revisão anterior, código publicado até caf6858, com família Multimédia e prompt literal v2.
-Licença: PolyForm Noncommercial 1.0.0. Credenciais fora do GitHub.
-Há dois scripts Windows novos locais e diferenças locais que não devem ser
-confundidas com código já publicado. Nenhum trabalho anterior foi apagado.
+O repositório já contém `nexus/windows/sync-nexus-pc.ps1` para atualizar uma única árvore Git local, validar o Nexus, instalar ACE-Step/Forge externamente e executar health checks.
 
-## Organização real
-C:\Nexos e o atalho Nexos existem. O Canonical da instalação está vazio.
-A aplicação está em aplicacao/nexus e os dados em dados. Python/Conductor,
-modelos e Notebook continuam no laboratório anterior. LibreOffice/Java usam
-as instalações Windows existentes. Não apagar as pastas anteriores.
+O gate físico só fica fechado quando existirem, no PC:
 
-## Próximos microprocessos, por ordem
-1. Repetir a autenticação e provar Conductor sob a conta Nexus.
-2. Ligar essa fronteira ao Host, preservando o Human Gate; testar falhas e regressão.
-3. Concluir a configuração cognitiva da instalação sem expor credenciais.
-4. Provar backup/restauro e manter a wiki coerente com os resultados.
-5. Instalar e testar uma ferramenta de imagem ou som de cada vez; só depois ligar o fluxo.
+- `C:\Nexus-Tools\pc-bootstrap.json`;
+- `C:\Nexus-Tools\media-health.json`.
 
-Zotero, pesquisa web, Publisher, Gmail e Facebook continuam sem circuito
-Nexus integrado comprovado. Nenhum PASS estrutural substitui esse teste real.
+Sem esses relatórios, CI/GitHub PASS não é apresentado como PASS do hardware local.
+
+## Pendências técnicas ainda reais
+
+1. Executar e validar a baseline atual no PC físico/RTX 2080.
+2. Fechar o E2E físico OpenNotebook 1.15 + SurrealDB + modelo local + Kernel + Creative + Human Gate + Canonical.
+3. Escolher e validar um checkpoint Forge com licença conhecida antes de geração real.
+4. Continuar os contratos ainda abertos em #3 (IMP-001) e #4 (G10/IMP-019 + eliminação controlada).
+5. Integrar outras ferramentas externas apenas pelo mesmo processo: contrato → FAIL real → correção mínima → regressão → teste prático → E2E.
+
+## Documentação que permanece por função
+
+### Contratos e fundamentos
+- `F001.md` … `F013-PROVENIENCIA-INVERSA.md`
+- `FUNDACAO-REVISTA-2026-10-01.md`
+- `SCHEMAS-E-WINDOWS.md`
+- `CONTRATO-RELATORIOS-MICROPROCESSO.md`
+- `REGRA-PYTHON-MINIMO-FRONTDOOR-2026-10-04.md`
+
+### Relatórios/evidência
+- `RELATORIO-STRESS-100K-2026-10-04.md`
+- `RELATORIO-APRENDIZAGEM-RECOVERY-2026-10-04.md`
+- `RELATORIO-LAB-TESTES-POR-FASES-2026-10-04.md`
+- `RELATORIO-AVATAR-2026-10-04.md`
+- `AVATAR-CI-2026-10-04.json`
+- `AVATAR-SYNC-CI-2026-10-04.json`
+- `RELATORIO-FINAL-WIKI-100K.md`
+
+### Comparações históricas preservadas
+- `RELATORIO-KERNEL-SPIFF-CONDUCTOR-FASE1-2026-10-04.md`
+- `RELATORIO-PERFORMANCE-CONDUCTOR-2026-10-04.md`
+
+Estes dois últimos são evidência histórica e não descrevem o runtime ativo.
+
+## Regra de continuidade
+
+Uma alteração só passa a baseline se:
+1. o bloco afetado passar;
+2. qualquer FAIL for preservado e diagnosticado;
+3. a correção mínima passar;
+4. regressão completa passar;
+5. testes práticos aplicáveis passarem;
+6. E2E aplicável passar;
+7. a PR #23 for atualizada com o resultado.
+
+Não criar novas cópias de estado/continuidade para cada sessão. Atualizar este documento e a PR #23.
