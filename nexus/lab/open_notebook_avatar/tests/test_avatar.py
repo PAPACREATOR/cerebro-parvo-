@@ -48,14 +48,14 @@ def rendering(setup, monkeypatch):
     # This is an integration-boundary test, never lip-sync quality evidence.
     original = mod.command
     calls = []
-    def fake_model(args, timeout, cwd=None):
+    def fake_model(args, timeout, cwd=None, **kwargs):
         calls.append(args)
-        if len(args) > 1 and args[1].endswith("worker.py"):
+        if len(args) > 2 and args[2].endswith("worker.py"):
             value = lambda flag: args[args.index(flag) + 1]
             return original(["ffmpeg", "-nostdin", "-v", "error", "-loop", "1", "-i", value("--avatar"),
                              "-i", value("--audio"), "-c:v", "libx264", "-pix_fmt", "yuv420p",
                              "-c:a", "aac", "-shortest", value("--output")], timeout, cwd)
-        return original(args, timeout, cwd)
+        return original(args, timeout, cwd, **kwargs)
     monkeypatch.setattr(mod, "command", fake_model)
     return setup, calls
 
@@ -197,12 +197,12 @@ def test_pipeline_reverse_idempotence_restart(rendering):
     audio_hash = digest(service.settings.audio_root / "episode.wav")
     avatar_hash = digest(service.settings.avatar_root / "face.png")
     result = service.render("podcast_episode:one", "episode.wav", "face.png")
-    n = sum(len(c) > 1 and c[1].endswith("worker.py") for c in calls)
+    n = sum(len(c) > 2 and c[2].endswith("worker.py") for c in calls)
     assert n == 1
     assert result["input"]["audio_sha256"] == audio_hash
     assert result["input"]["avatar_original_sha256"] == avatar_hash
     assert service.render("podcast_episode:one", "episode.wav", "face.png") == result
-    assert sum(len(c) > 1 and c[1].endswith("worker.py") for c in calls) == 1
+    assert sum(len(c) > 2 and c[2].endswith("worker.py") for c in calls) == 1
     fresh = AvatarService(service.settings)
     assert fresh.inspect(result["job_id"]) == result
     assert digest(service.settings.audio_root / "episode.wav") == audio_hash
@@ -230,7 +230,7 @@ def test_tamper_rejected(rendering, tamper):
     key = root.name
     expect("OUTPUT_TAMPERED", lambda: service.inspect(key))
     expect("OUTPUT_TAMPERED", lambda: service.render("e", "episode.wav", "face.png"))
-    assert sum(len(c) > 1 and c[1].endswith("worker.py") for c in calls) == 1
+    assert sum(len(c) > 2 and c[2].endswith("worker.py") for c in calls) == 1
 
 
 def test_changed_inputs_create_new_job(rendering):
@@ -247,11 +247,11 @@ def test_concurrent_same_job(rendering, monkeypatch):
     import threading
     started, release = threading.Event(), threading.Event()
     original = mod.command
-    def delayed(args, timeout, cwd=None):
-        if len(args) > 1 and args[1].endswith("worker.py"):
+    def delayed(args, timeout, cwd=None, **kwargs):
+        if len(args) > 2 and args[2].endswith("worker.py"):
             started.set()
             assert release.wait(5)
-        return original(args, timeout, cwd)
+        return original(args, timeout, cwd, **kwargs)
     monkeypatch.setattr(mod, "command", delayed)
     with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
         first = pool.submit(service.render, "e", "episode.wav", "face.png")
@@ -260,16 +260,16 @@ def test_concurrent_same_job(rendering, monkeypatch):
         release.set()
         result = first.result(10)
     assert service.inspect(result["job_id"]) == result
-    assert sum(len(c) > 1 and c[1].endswith("worker.py") for c in calls) == 1
+    assert sum(len(c) > 2 and c[2].endswith("worker.py") for c in calls) == 1
 
 
 def test_worker_failure_and_retry(rendering, monkeypatch):
     service, calls = rendering
     original = mod.command
-    def fail(args, timeout, cwd=None):
-        if len(args) > 1 and args[1].endswith("worker.py"):
+    def fail(args, timeout, cwd=None, **kwargs):
+        if len(args) > 2 and args[2].endswith("worker.py"):
             raise AvatarError("TOOL_TIMEOUT")
-        return original(args, timeout, cwd)
+        return original(args, timeout, cwd, **kwargs)
     monkeypatch.setattr(mod, "command", fail)
     expect("TOOL_TIMEOUT", lambda: service.render("e", "episode.wav", "face.png"))
     assert not list(service.settings.output_root.glob("*/video.mp4"))
@@ -297,9 +297,9 @@ def test_failure_at_atomic_publish_and_retry(rendering, monkeypatch):
 def test_model_changed_during_execution_never_publishes(rendering, monkeypatch):
     service, calls = rendering
     original = mod.command
-    def changed(args, timeout, cwd=None):
-        result = original(args, timeout, cwd)
-        if len(args) > 1 and args[1].endswith("worker.py"):
+    def changed(args, timeout, cwd=None, **kwargs):
+        result = original(args, timeout, cwd, **kwargs)
+        if len(args) > 2 and args[2].endswith("worker.py"):
             service.settings.checkpoint.write_bytes(b"CHANGED_MODEL")
         return result
     monkeypatch.setattr(mod, "command", changed)
@@ -418,3 +418,35 @@ def test_installer_rejects_unverified_version(tmp_path, version):
     (tmp_path / "pyproject.toml").write_text(f'[project]\nversion="{version}"\n')
     with pytest.raises(ValueError):
         module.install(tmp_path)
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Real Windows boundary only")
+def test_avatar_command_cannot_write_outside_assigned_work(tmp_path):
+    protected = tmp_path / "protected"
+    protected.mkdir()
+    target = protected / "original"
+    target.write_bytes(b"original")
+    work = tmp_path / "work"
+    work.mkdir()
+    code = (
+        "from pathlib import Path;"
+        "Path('allowed').write_bytes(b'work');"
+        f"target=Path({str(target)!r});\n"
+        "try: target.write_bytes(b'changed');print('ALLOWED')\n"
+        "except PermissionError: print('DENIED')"
+    )
+    assert command([sys.executable, "-I", "-c", code], 10, work).strip() == "DENIED"
+    assert target.read_bytes() == b"original"
+    assert (work / "allowed").read_bytes() == b"work"
+
+@pytest.mark.skipif(os.name != "nt", reason="Real Windows boundary only")
+def test_avatar_worker_requires_real_native_boundary(tmp_path):
+    worker = Path(mod.__file__).with_name("worker.py")
+    direct = subprocess.run([sys.executable, "-I", str(worker), "--help"],
+                            capture_output=True, timeout=10)
+    assert direct.returncode != 0
+    assert b"Blocked" in direct.stderr
+    work = tmp_path / "assigned"
+    work.mkdir()
+    protected = command([sys.executable, "-I", str(worker), "--help"], 10, work)
+    assert "--checkpoint" in protected and "--detector" in protected

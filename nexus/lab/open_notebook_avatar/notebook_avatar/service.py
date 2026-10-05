@@ -1,7 +1,7 @@
 """Bounded local audio + portrait -> talking MP4, with reusable provenance.
 
 Inputs are operator-controlled files. No network, shell commands, deletion of
-sources, Canonical access, or automatic promotion. OS sandboxing is external.
+sources, Canonical access, or automatic promotion. Windows child processes and image decoding use the verified Nexus boundary.
 """
 from __future__ import annotations
 
@@ -13,6 +13,7 @@ import re
 import signal
 import shutil
 import subprocess
+import sys
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
@@ -52,24 +53,62 @@ def contained_file(root: Path, name: str, max_bytes: int) -> Path:
     return path
 
 
-def command(args: list[str], timeout: float, cwd: Path | None = None) -> str:
+def _tool(value: str) -> str:
+    found = shutil.which(value)
+    if not found:
+        raise AvatarError("TOOL_UNAVAILABLE")
+    return str(Path(found).resolve())
+
+
+def _windows_command(args, timeout, cwd, read_roots):
+    try:
+        from nexus.contracts import ROOT, Blocked
+        from nexus.host import verify_integrity
+        from nexus.windows_sandbox import launch_confined, task_environment
+    except ImportError:
+        raise AvatarError("TOOL_UNAVAILABLE") from None
+    executable = Path(_tool(args[0]))
+    roots = [ROOT, Path(sys.prefix), Path(sys.base_prefix), executable.parent,
+             Path(__file__).resolve().parent, *read_roots]
+    if executable.parent.name.lower() == "scripts":
+        roots.append(executable.parent.parent)
+    try:
+        verify_integrity()
+        with launch_confined([str(executable), *args[1:]], cwd=Path(cwd).resolve(),
+                env=task_environment(Path(cwd).resolve()), read_roots=tuple(dict.fromkeys(roots))) as process:
+            try:
+                data, error = process.communicate(timeout=timeout)
+            except subprocess.TimeoutExpired:
+                raise AvatarError("TOOL_TIMEOUT") from None
+            if process.returncode:
+                raise AvatarError("TOOL_FAILED")
+    except (Blocked, OSError):
+        raise AvatarError("TOOL_UNAVAILABLE") from None
+    if len(data) > 1_000_000:
+        raise AvatarError("TOOL_OUTPUT_SIZE")
+    try:
+        return data.decode("utf-8")
+    except UnicodeError:
+        raise AvatarError("TOOL_OUTPUT_INVALID") from None
+
+
+def command(args: list[str], timeout: float, cwd: Path | None = None, *, read_roots=()) -> str:
+    if os.name == "nt":
+        if cwd is None:
+            with tempfile.TemporaryDirectory(prefix="nexus-avatar-tool-") as temporary:
+                return _windows_command(args, timeout, Path(temporary), read_roots)
+        return _windows_command(args, timeout, cwd, read_roots)
     env = {k: v for k, v in os.environ.items() if k in {
         "PATH", "SystemRoot", "WINDIR", "TEMP", "TMP", "TMPDIR", "HOME", "USERPROFILE",
         "CUDA_VISIBLE_DEVICES", "LD_LIBRARY_PATH"}}
     try:
         with tempfile.TemporaryFile() as stdout, tempfile.TemporaryFile() as stderr:
             process = subprocess.Popen(args, stdin=subprocess.DEVNULL, stdout=stdout, stderr=stderr,
-                                       cwd=cwd, env=env, start_new_session=(os.name != "nt"),
-                                       creationflags=(subprocess.CREATE_NEW_PROCESS_GROUP if os.name == "nt" else 0))
+                                       cwd=cwd, env=env, start_new_session=True)
             try:
                 process.wait(timeout=timeout)
             except subprocess.TimeoutExpired:
-                if os.name == "nt":
-                    subprocess.run(["taskkill", "/PID", str(process.pid), "/T", "/F"],
-                                   capture_output=True, timeout=10, check=False)
-                    process.kill()
-                else:
-                    os.killpg(process.pid, signal.SIGKILL)
+                os.killpg(process.pid, signal.SIGKILL)
                 process.wait()
                 raise AvatarError("TOOL_TIMEOUT") from None
             if process.returncode:
@@ -87,7 +126,7 @@ def command(args: list[str], timeout: float, cwd: Path | None = None) -> str:
 
 
 def probe(path: Path, ffprobe: str) -> dict:
-    raw = command([ffprobe, "-v", "error", "-show_streams", "-show_format", "-of", "json", str(path)], 20)
+    raw = command([ffprobe, "-v", "error", "-show_streams", "-show_format", "-of", "json", str(path)], 20, path.parent)
     try:
         value = json.loads(raw)
         duration = float(value["format"]["duration"])
@@ -176,11 +215,22 @@ class AvatarService:
                 raise AvatarError("INPUT_SIZE")
             image_copy = stage / "avatar.png"
             try:
-                with Image.open(avatar_copy) as image:
-                    if image.format not in {"JPEG", "PNG"} or not 96 <= min(image.size) or max(image.size) > 2048:
-                        raise ValueError
-                    image.load()
-                    image.convert("RGB").save(image_copy)
+                if os.name == "nt":
+                    # Only copied bytes reach PIL; the Host never decodes an image.
+                    decode = (
+                        "from PIL import Image;"
+                        "im=Image.open('original-avatar');"
+                        "assert im.format in {'JPEG','PNG'};"
+                        "assert 96 <= min(im.size) and max(im.size) <= 2048;"
+                        "im.load();im.convert('RGB').save('avatar.png')"
+                    )
+                    command([sys.executable, "-I", "-c", decode], 30, stage)
+                else:
+                    with Image.open(avatar_copy) as image:
+                        if image.format not in {"JPEG", "PNG"} or not 96 <= min(image.size) or max(image.size) > 2048:
+                            raise ValueError
+                        image.load()
+                        image.convert("RGB").save(image_copy)
             except Exception:
                 raise AvatarError("AVATAR_INVALID") from None
             if not 0 < audio_copy.stat().st_size <= 100_000_000:
@@ -204,12 +254,14 @@ class AvatarService:
                         return self.inspect(key)
                     wav = stage / "audio.wav"
                     command([s.ffmpeg, "-nostdin", "-v", "error", "-i", str(audio_copy),
-                             "-vn", "-ac", "1", "-ar", "16000", str(wav)], 60)
+                             "-vn", "-ac", "1", "-ar", "16000", str(wav)], 60, stage)
                     video = stage / "video.mp4"
-                    command([s.worker_python, str(worker), "--audio", str(wav), "--avatar", str(image_copy),
+                    command([s.worker_python, "-I", str(worker), "--audio", str(wav), "--avatar", str(image_copy),
                              "--output", str(video), "--checkpoint", str(s.checkpoint.resolve()),
                              "--detector", str(detector_checkpoint.resolve()),
-                             "--device", device, "--batch-size", str(batch_size), "--ffmpeg", s.ffmpeg], s.timeout, stage)
+                             "--device", device, "--batch-size", str(batch_size), "--ffmpeg", _tool(s.ffmpeg)],
+                            s.timeout, stage, read_roots=(s.checkpoint.resolve(), detector_checkpoint.resolve(),
+                                                         Path(_tool(s.ffmpeg)).parent))
                     if (digest(s.checkpoint) != contract["checkpoint_sha256"] or
                         digest(detector_checkpoint) != contract["detector_sha256"] or
                         digest(worker) != contract["worker_sha256"]):
@@ -218,7 +270,7 @@ class AvatarService:
                     kinds = {x.get("codec_type") for x in info["streams"]}
                     if not {"audio", "video"} <= kinds or abs(info["duration"] - audio_info["duration"]) > 0.5:
                         raise AvatarError("OUTPUT_INVALID")
-                    command([s.ffmpeg, "-nostdin", "-v", "error", "-i", str(video), "-f", "null", "-"], 120)
+                    command([s.ffmpeg, "-nostdin", "-v", "error", "-i", str(video), "-f", "null", "-"], 120, stage)
                     manifest = {"job_id": key, "status": "PASS", "outcome": "candidate", "authority": "UNTRUSTED",
                                 "input": contract, "output": {"file": "video.mp4", "sha256": digest(video),
                                 "duration": info["duration"], "bytes": video.stat().st_size},

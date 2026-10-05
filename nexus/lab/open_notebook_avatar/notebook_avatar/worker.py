@@ -8,6 +8,21 @@ import subprocess
 
 
 def main():
+    if os.name == "nt":
+        # Direct invocation cannot bypass the real OS boundary. Load only the
+        # installed Nexus package; no broad parent-folder or PYTHONPATH grant.
+        import importlib.util
+        import sys
+        from pathlib import Path
+        root = Path(__file__).parents[3]
+        if "nexus" not in sys.modules:
+            spec = importlib.util.spec_from_file_location("nexus", root / "__init__.py",
+                                                        submodule_search_locations=[str(root)])
+            package = importlib.util.module_from_spec(spec)
+            sys.modules["nexus"] = package
+            spec.loader.exec_module(package)
+        from nexus.windows_sandbox import require_native_boundary
+        require_native_boundary()
     parser = argparse.ArgumentParser()
     for flag in ("audio", "avatar", "output", "checkpoint", "detector", "ffmpeg"):
         parser.add_argument("--" + flag, required=True)
