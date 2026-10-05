@@ -15,7 +15,7 @@ def test_cng_known_vectors_inside_native_boundary(tmp_path):
         "empty": b"",
         "abc": b"abc",
         "all-bytes": bytes(range(256)),
-        "nul": b"one\x00two\xffthree",
+        "nul-bytes": b"one\x00two\xffthree",
         "ação-日本語": "Ação e memória 日本語".encode("utf-8"),
         "chunk-boundary": b"x" * 65537,
         "maximum-input": bytes(range(256)) * 8192,
