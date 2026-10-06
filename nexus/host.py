@@ -88,7 +88,9 @@ class Host:
                 with launch_confined(command, cwd=work, env=process_environment(work),
                                      read_roots=roots, deny_roots=(self.store.root,)) as proc:
                     try:
-                        stdout, stderr = proc.communicate(timeout=150 if process == "interpret" else 75)
+                        stdout, stderr = proc.communicate(
+                            timeout=150 if process in ("interpret", "video", "podcast", "visual_podcast") else 75
+                        )
                     except subprocess.TimeoutExpired:
                         raise Blocked("A ferramenta excedeu o tempo permitido.") from None
                     code = proc.returncode
