@@ -146,3 +146,66 @@ def test_writer_real_fixed_template_source_never_changes_on_direct_export(tmp_pa
     _run("--convert-to", "pdf:writer_pdf_Export", "--outdir", str(out), str(local_template), cwd=tmp_path)
     assert local_template.read_bytes() == original
     assert FIXTURE.read_bytes() == original
+
+
+def _copy_template_with_exact_slots(source: Path, destination: Path, title: str, body: str) -> None:
+    """Test-only proof: replace only two existing literal slots; never edit styles."""
+    from xml.sax.saxutils import escape
+
+    with zipfile.ZipFile(source, "r") as src, zipfile.ZipFile(destination, "w") as dst:
+        for info in src.infolist():
+            raw = src.read(info.filename)
+            if info.filename == "content.xml":
+                text = raw.decode("utf-8")
+                assert text.count("NEXUS_FIXED_TEMPLATE_TITLE") == 1
+                assert text.count("NEXUS_FIXED_TEMPLATE_BODY_064") == 1
+                text = text.replace("NEXUS_FIXED_TEMPLATE_TITLE", escape(title))
+                text = text.replace("NEXUS_FIXED_TEMPLATE_BODY_064", escape(body))
+                raw = text.encode("utf-8")
+            dst.writestr(info, raw)
+
+
+def test_writer_real_fills_existing_slots_without_touching_styles(tmp_path):
+    title = "Capítulo — ação e memória"
+    body = "Texto português: informação, proveniência e revisão humana."
+
+    filled_template = tmp_path / "filled.ott"
+    _copy_template_with_exact_slots(FIXTURE, filled_template, title, body)
+
+    # The mechanism may fill content slots, but it must not redesign the template.
+    assert _member(filled_template, "styles.xml") == _member(FIXTURE, "styles.xml")
+    filled_content = _member(filled_template, "content.xml").decode("utf-8")
+    assert title in filled_content
+    assert body in filled_content
+    assert "NEXUS_FIXED_TEMPLATE_TITLE" not in filled_content
+    assert "NEXUS_FIXED_TEMPLATE_BODY_064" not in filled_content
+
+    odt_dir = tmp_path / "odt"
+    odt_dir.mkdir()
+    _run("--convert-to", "odt", "--outdir", str(odt_dir), str(filled_template), cwd=tmp_path)
+    odt = odt_dir / "filled.odt"
+    assert odt.is_file()
+
+    roundtrip_content = _member(odt, "content.xml").decode("utf-8")
+    roundtrip_styles = _member(odt, "styles.xml")
+    assert title in roundtrip_content
+    assert body in roundtrip_content
+    for token in (
+        b'style:page-usage="mirrored"',
+        b'fo:orphans="2"',
+        b'fo:widows="2"',
+        b'fo:keep-with-next="always"',
+    ):
+        assert token in roundtrip_styles
+
+    pdf_dir = tmp_path / "pdf-filled"
+    pdf_dir.mkdir()
+    _run("--convert-to", "pdf:writer_pdf_Export", "--outdir", str(pdf_dir), str(odt), cwd=tmp_path)
+    pdf = pdf_dir / "filled.pdf"
+    raw_pdf = pdf.read_bytes()
+    assert len(raw_pdf) > 5_000
+    assert raw_pdf.startswith(b"%PDF-")
+    assert b"%%EOF" in raw_pdf[-2048:]
+
+    # The source template remains immutable throughout the real LibreOffice run.
+    assert hashlib.sha256(FIXTURE.read_bytes()).hexdigest() == FIXED_SHA256
