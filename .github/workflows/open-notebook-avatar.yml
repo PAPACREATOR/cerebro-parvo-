@@ -43,7 +43,7 @@ jobs:
           if (-not $exe) { throw 'FFmpeg executable missing' }
           $exe.DirectoryName | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
       - name: Install native API and extension test dependencies
-        run: python -m pip install -r nexus/requirements.txt -e upstream-open-notebook -e 'nexus/lab/open_notebook_avatar[test]'
+        run: python -m pip install jsonschema==4.26.0 -e upstream-open-notebook -e 'nexus/lab/open_notebook_avatar[test]'
       - name: Extension contracts and real FFmpeg
         shell: bash
         run: |
