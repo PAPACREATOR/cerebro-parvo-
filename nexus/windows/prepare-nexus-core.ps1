@@ -43,14 +43,14 @@ $dirty = & $git -C $RepoRoot status --porcelain
 if ($LASTEXITCODE -ne 0) { throw 'NEXUS_GIT_STATUS_FAILED' }
 if ($dirty) { throw 'NEXUS_DIRTY_TREE' }
 
-$py = Get-Command py.exe -CommandType Application -ErrorAction SilentlyContinue
+$py = Get-Command py.exe -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
 $pythonCmd = $null
 if ($py) {
     & $py.Source -3.12 -c "import sys; assert sys.version_info[:2] == (3,12)"
     if ($LASTEXITCODE -eq 0) { $pythonCmd = @($py.Source, '-3.12') }
 }
 if (-not $pythonCmd) {
-    $python = Get-Command python.exe -CommandType Application -ErrorAction SilentlyContinue
+    $python = Get-Command python.exe -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
     if ($python) {
         & $python.Source -c "import sys; assert sys.version_info[:2] == (3,12)"
         if ($LASTEXITCODE -eq 0) { $pythonCmd = @($python.Source) }
