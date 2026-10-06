@@ -108,28 +108,7 @@ Invoke-PytestStep 'host-gate-attacks' @(
     'nexus/tests/test_reverse_flow.py::test_valid_json_canonical_provenance_tampering_blocks_restart'
 ) | Out-Null
 
-$soffice = Get-Command soffice.com -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
-if (-not $soffice) { $soffice = Get-Command soffice.exe -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1 }
-if (-not $soffice) {
-    $programFilesX86 = [Environment]::GetFolderPath('ProgramFilesX86')
-    foreach ($candidate in @(
-        (Join-Path $env:ProgramFiles 'LibreOffice\program\soffice.com'),
-        (Join-Path $programFilesX86 'LibreOffice\program\soffice.com')
-    )) {
-        if ($candidate -and (Test-Path -LiteralPath $candidate)) {
-            $soffice = [pscustomobject]@{ Source = $candidate }
-            break
-        }
-    }
-}
-if ($soffice) {
-    Invoke-PytestStep 'book-writer-real' @('nexus/tests/test_writer_real_libreoffice.py') @{
-        NEXUS_REAL_WRITER = '1'
-        LIBREOFFICE_EXE = $soffice.Source
-    } | Out-Null
-} else {
-    Record-Step 'book-writer-real' 'NOT_CONFIGURED' 'LibreOffice soffice not found'
-}
+Invoke-Probe 'book-writer-real' 'book' | Out-Null
 
 Invoke-Probe 'zotero-search-real' 'zotero' @('--query', $Query) | Out-Null
 Invoke-Probe 'internet-search-real' 'web' @('--query', $Query) | Out-Null
