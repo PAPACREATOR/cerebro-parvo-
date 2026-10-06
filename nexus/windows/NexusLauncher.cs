@@ -7,9 +7,9 @@ internal static class NexusLauncher
 {
     private static string Quote(string value)
     {
-        if (value == null) return """";
-        if (value.Length > 0 && !value.Any(char.IsWhiteSpace) && !value.Contains(""")) return value;
-        return """ + value.Replace("\\", "\\\\").Replace(""", "\\"") + """;
+        if (value == null) return "\"\"";
+        if (value.Length > 0 && !value.Any(char.IsWhiteSpace) && !value.Contains("\"")) return value;
+        return "\"" + value.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
     }
 
     private static string FindRepoRoot()
