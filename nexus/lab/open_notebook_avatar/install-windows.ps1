@@ -28,7 +28,9 @@ function Run-Step {
 $index = if ($Device -eq 'cuda') { 'https://download.pytorch.org/whl/cu124' } else { 'https://download.pytorch.org/whl/cpu' }
 Run-Step $worker @('-m','pip','install','torch==2.5.1','torchvision==0.20.1','--index-url',$index)
 Run-Step $worker @('-m','pip','install','--only-binary=av','-r',(Join-Path $PSScriptRoot 'requirements-worker.txt'),'gdown==6.4.1',($PSScriptRoot + '[mcp]'))
-Run-Step $api @('-m','pip','install',$PSScriptRoot)
+$uv = (Get-Command uv.exe -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
+& $uv pip install --python $api $PSScriptRoot
+if ($LASTEXITCODE -ne 0) { throw 'Avatar API extension installation failed; do not mark PASS' }
 $models = Join-Path $root 'data/avatar-models'
 $portraits = Join-Path $root 'data/avatars'
 $outputs = Join-Path $root 'data/avatar-videos'
