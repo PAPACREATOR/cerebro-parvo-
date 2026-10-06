@@ -48,3 +48,9 @@ def test_core_prepare_requires_python_312_instead_of_installing_system_python():
     assert "NEXUS_PYTHON_312_REQUIRED" in SCRIPT
     assert "winget" not in SCRIPT.lower()
     assert "Python 3.12" in SCRIPT
+
+
+def test_core_prepare_is_powershell_5_compatible_for_security_arguments():
+    assert "*$security" not in SCRIPT
+    assert "$securityArgs = @('-m','pytest') + $security + @('-q','-o','pythonpath=.')" in SCRIPT
+    assert "-ArgumentList $securityArgs" in SCRIPT
