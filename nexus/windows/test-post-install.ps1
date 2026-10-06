@@ -166,6 +166,12 @@ try {
         Stage-Pass ('suite-' + $suite) $state
     }
 
+    # Real Writer gate: fixed .ott -> ODT -> round-trip -> PDF using installed LibreOffice.
+    Run-Pytest 'writer-libreoffice-real' @('nexus/tests/test_writer_real_libreoffice.py') @{
+        NEXUS_REAL_WRITER='1'
+        LIBREOFFICE_EXE=$install.tools.libreoffice.path
+    }
+
     # Product/system stress. These use temp data only and cannot promote Canonical.
     Run-Pytest 'product-flows-30000' @('nexus/tests/test_product_flows_5000.py')
     Run-Pytest 'public-routes-6x10000' @('nexus/tests/test_public_product_routes_10000.py')
