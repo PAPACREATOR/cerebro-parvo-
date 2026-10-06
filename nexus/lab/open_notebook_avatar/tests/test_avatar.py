@@ -399,7 +399,7 @@ def test_installer_idempotence(tmp_path):
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     (tmp_path / "api").mkdir()
-    (tmp_path / "pyproject.toml").write_text('[project]\nversion="1.14.0"\n')
+    (tmp_path / "pyproject.toml").write_text('[project]\nversion="1.15.0"\n')
     text = 'app.include_router(podcasts.router, prefix="/api", tags=["podcasts"])\n'
     (tmp_path / "api/main.py").write_text(text)
     assert module.install(tmp_path) == "INSTALLED"
@@ -409,7 +409,7 @@ def test_installer_idempotence(tmp_path):
     assert (tmp_path / "api/main.py.pre-avatar").read_text() == text
 
 
-@pytest.mark.parametrize("version", ["1.13.0", "1.14.1", "2.0.0"])
+@pytest.mark.parametrize("version", ["1.13.0", "1.14.0", "1.14.1", "2.0.0"])
 def test_installer_rejects_unverified_version(tmp_path, version):
     script = Path(__file__).parents[1] / "install_router.py"
     spec = importlib.util.spec_from_file_location("installer", script)
