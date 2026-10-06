@@ -7,7 +7,7 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
-$Git = (Get-Command git.exe -CommandType Application -ErrorAction Stop).Source
+$Git = (Get-Command git.exe -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
 $OfficialOrigin = 'https://github.com/PAPACREATOR/cerebro-parvo-.git'
 
 function Test-NexusRepo {
