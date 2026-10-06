@@ -20,7 +20,6 @@ from pathlib import Path
 
 OPEN_NOTEBOOK_BASE = "http://127.0.0.1:5055"
 FORGE_BASE = "http://127.0.0.1:7861"
-SPEACHES_BASE = "http://127.0.0.1:8969"
 MAX_HTTP = 20_000_000
 
 
@@ -222,8 +221,8 @@ def _is_within(child: Path, parent: Path) -> bool:
         return False
 
 
-def run_moneyprinter(config: dict, storyboard: dict, scene_paths: list[Path], output: Path, aspect: str) -> Path:
-    required = {"root", "uv", "ffmpeg", "commit", "speaches_root", "voice", "tts_model"}
+def run_moneyprinter(config: dict, storyboard: dict, scene_paths: list[Path], output: Path, aspect: str, audio: Path | None = None) -> Path:
+    required = {"root", "uv", "ffmpeg", "commit"}
     if set(config) != required:
         raise BridgeError("MoneyPrinterTurbo runtime configuration has the wrong shape")
     root = Path(config["root"]).resolve()
@@ -299,6 +298,7 @@ def main() -> int:
     parser.add_argument("--minutes", type=int, default=4)
     parser.add_argument("--aspect", choices=("16:9", "9:16", "1:1"), default="16:9")
     parser.add_argument("--runtime", type=Path, required=True)
+    parser.add_argument("--audio", type=Path, default=None)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     if not 1 <= args.minutes <= 6:
@@ -315,12 +315,12 @@ def main() -> int:
         "status": "RUNNING",
         "authority": "NONE",
         "canonical_write": False,
-        "pipeline": ["open-notebook", "forge", "moneyprinterturbo", "ffmpeg"],\n        "narration": "custom-audio+whisper" if args.audio else "silent-for-clipchamp",
+        "pipeline": ["open-notebook", "forge", "moneyprinterturbo", "ffmpeg"],
+        "narration": "custom-audio+whisper" if args.audio else "silent-for-clipchamp",
         "source_sha256": sha256_bytes(args.source.read_bytes()),
     }
     (output / "report.json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    speech_process = None
     try:
         storyboard = open_notebook_storyboard(open_config, source)
         storyboard_raw = json.dumps(storyboard, ensure_ascii=False, indent=2).encode("utf-8")
