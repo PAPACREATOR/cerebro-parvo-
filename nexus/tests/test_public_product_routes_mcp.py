@@ -7,6 +7,7 @@ Book is excluded here because its real proof is LibreOffice Writer.
 from __future__ import annotations
 
 import json
+import os
 import uuid
 from pathlib import Path
 
@@ -14,6 +15,12 @@ import pytest
 
 from nexus.adapters.runner import PROCESS_TO_TOOL, execute
 from nexus.contracts import validate
+
+
+pytestmark = pytest.mark.skipif(
+    os.name == "nt",
+    reason="Direct MCP route proof runs outside the Windows native boundary; Windows is covered by confinement/post-install gates.",
+)
 
 
 def _run_dir(tmp_path: Path) -> Path:
