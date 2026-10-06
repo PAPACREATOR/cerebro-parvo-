@@ -46,12 +46,19 @@ function Invoke-PytestStep {
     }
     try {
         $args = @('-m','pytest') + $Targets + @('-q','--color=no','-p','no:cacheprovider','-o','pythonpath=.')
-        $proc = Start-Process -FilePath $python -ArgumentList $args -WorkingDirectory $RepoRoot -RedirectStandardOutput $stdout -RedirectStandardError $stderr -PassThru -Wait -NoNewWindow
-        if ($proc.ExitCode -eq 0) {
+        Push-Location -LiteralPath $RepoRoot
+        try {
+            & $python @args > $stdout 2> $stderr
+            $code = $LASTEXITCODE
+        }
+        finally {
+            Pop-Location
+        }
+        if ($code -eq 0) {
             Record-Step $Name 'PASS' 'pytest real/contract gate passed' $stdout
             return $true
         }
-        Record-Step $Name 'FAIL' ('pytest exit ' + $proc.ExitCode) $stderr
+        Record-Step $Name 'FAIL' ('pytest exit ' + $code) $stderr
         return $false
     }
     finally {
@@ -66,16 +73,23 @@ function Invoke-Probe {
     $stdout = Join-Path $reportRoot ($Name + '.stdout.txt')
     $stderr = Join-Path $reportRoot ($Name + '.stderr.txt')
     $args = @((Join-Path $RepoRoot 'nexus\windows\real_acceptance.py'), $Command, '--output', $reportRoot) + $Arguments
-    $proc = Start-Process -FilePath $python -ArgumentList $args -WorkingDirectory $RepoRoot -RedirectStandardOutput $stdout -RedirectStandardError $stderr -PassThru -Wait -NoNewWindow
-    if ($proc.ExitCode -eq 0) {
+    Push-Location -LiteralPath $RepoRoot
+    try {
+        & $python @args > $stdout 2> $stderr
+        $code = $LASTEXITCODE
+    }
+    finally {
+        Pop-Location
+    }
+    if ($code -eq 0) {
         Record-Step $Name 'PASS' 'physical capability completed' $stdout
         return 'PASS'
     }
-    if ($proc.ExitCode -eq 2) {
+    if ($code -eq 2) {
         Record-Step $Name 'NOT_CONFIGURED' 'tool/service/configuration unavailable' $stdout
         return 'NOT_CONFIGURED'
     }
-    Record-Step $Name 'FAIL' ('probe exit ' + $proc.ExitCode) $stderr
+    Record-Step $Name 'FAIL' ('probe exit ' + $code) $stderr
     return 'FAIL'
 }
 
