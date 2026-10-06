@@ -2,14 +2,39 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text;
 
 internal static class NexusLauncher
 {
     private static string Quote(string value)
     {
-        if (value == null) return "\"\"";
-        if (value.Length > 0 && !value.Any(char.IsWhiteSpace) && !value.Contains("\"")) return value;
-        return "\"" + value.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
+        if (value == null || value.Length == 0) return "\"\"";
+        if (!value.Any(char.IsWhiteSpace) && !value.Contains("\"")) return value;
+
+        var result = new StringBuilder();
+        result.Append('"');
+        var backslashes = 0;
+        foreach (var ch in value)
+        {
+            if (ch == '\\')
+            {
+                backslashes++;
+                continue;
+            }
+            if (ch == '"')
+            {
+                result.Append('\\', backslashes * 2 + 1);
+                result.Append('"');
+                backslashes = 0;
+                continue;
+            }
+            result.Append('\\', backslashes);
+            backslashes = 0;
+            result.Append(ch);
+        }
+        result.Append('\\', backslashes * 2);
+        result.Append('"');
+        return result.ToString();
     }
 
     private static string FindRepoRoot()
