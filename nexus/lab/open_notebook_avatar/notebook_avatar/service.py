@@ -68,10 +68,12 @@ def _windows_command(args, timeout, cwd, read_roots):
     except ImportError:
         raise AvatarError("TOOL_UNAVAILABLE") from None
     executable = Path(_tool(args[0]))
-    roots = [ROOT, Path(sys.prefix), Path(sys.base_prefix), executable.parent,
-             Path(__file__).resolve().parent, *read_roots]
-    if executable.parent.name.lower() == "scripts":
-        roots.append(executable.parent.parent)
+    roots = [executable.parent, *read_roots]
+    if executable.stem.lower() in {"python", "pythonw"}:
+        roots.extend([ROOT, Path(sys.prefix), Path(sys.base_prefix),
+                      Path(__file__).resolve().parent])
+        if executable.parent.name.lower() == "scripts":
+            roots.append(executable.parent.parent)
     try:
         verify_integrity()
         with launch_confined([str(executable), *args[1:]], cwd=Path(cwd).resolve(),

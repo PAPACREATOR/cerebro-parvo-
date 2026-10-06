@@ -5,7 +5,7 @@ Estados antigos, filas, handoffs e quadros temporários foram removidos da árvo
 
 ## Relatório corrente — 06-10-2026
 
-Pedido humano: corrigir e testar sem alterar a estrutura, e escrever o ponto de situação. **Candidato com confinamento Host/MCP aprovado no CI; avatar Windows em execução; instalação física por validar.** Arquitetura M1–M14, responsabilidades Kernel/Host/Store, Creative/Human Gate/Canonical e caminhos existentes preservados.
+Pedido humano: corrigir e testar sem alterar a estrutura, e escrever o ponto de situação. **Núcleo Host/MCP funcional e aprovado no CI; avatar Windows com falha real de âmbito em correção; instalação física por validar.** Arquitetura M1–M14, responsabilidades Kernel/Host/Store, Creative/Human Gate/Canonical e caminhos existentes preservados.
 
 Código candidato: `48a72159cad4a3b0097f5323006efeb2f932d76a`; PR #23 draft, branch lab-open-notebook-avatar-20261004. Baseline/base e main não foram promovidas.
 
@@ -19,7 +19,7 @@ Código candidato: `48a72159cad4a3b0097f5323006efeb2f932d76a`; PR #23 draft, bra
 | Concorrência | 500 substituições atómicas com quatro leitores | **PASS**, mesmo run |
 | Regressão Nexus completa | **1.386 PASS no runtime 48a7215**, Core 140, Blocks 1.068 e Practical 40 também PASS | [Anterior](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37378593246), [48a7215](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37435221836) |
 | MCP real e pacote OpenNotebook | **1.000 chamadas MCP reais + inventário 33 tools PASS no runtime 48a7215**; blocos A–G e regressão 1.386 PASS | [Anterior](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37378593142), [48a7215](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37435221883) |
-| Avatar | Linux 165 PASS, dois controlos nativos só Windows não aplicáveis; Windows em execução | [Run 37435221823](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37435221823) |
+| Avatar | Linux 165 PASS no runtime 48a7215; Windows anterior CANCELLED no limite de 20 min. Novo contrato FFmpeg: **1 FAIL**, leitura não necessária do Host permitida | [Anterior](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37435221823), [FAIL de âmbito](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37437120425) |
 
 Não somar estas linhas: funções pytest, inputs e operações são unidades diferentes, e as suites sobrepõem-se. Repetição por OS ou por SHA não aumenta o número de inputs distintos.
 
@@ -29,7 +29,7 @@ O Host limita os processos que lança. Os ensaios não são uma auditoria de tod
 
 PC de Pedro, contas, serviços, políticas e ficheiros pessoais não foram alterados. Nenhum PASS de CI é convertido em perfeição universal, instalação física ou release. Próxima ação autorizada: terminar a repetição Avatar Windows, corrigir falhas reais que aparecerem e testar a recusa do provisioning ainda sem proteção.
 
-Microcontrato Avatar/Host, 06-10: FFmpeg/ffprobe só necessitam de leitura do diretório do executável e dependências selecionadas; não devem ler o Python/Nexus do Host. A leitura ampla atual foi encontrada no código, e o ensaio Windows acrescentado copia dados atribuídos com FFmpeg real e tenta ler Lib/this.py fora do trabalho. Primeiro ensaio do contrato PENDENTE, sem alterar ainda o launcher. Repetição completa Windows anterior ainda em curso; não converter demora em PASS nem atribuir-lhe causa sem log final.
+Microcontrato Avatar/Host, 06-10: FFmpeg/ffprobe só necessitam de leitura do diretório do executável e dependências selecionadas; não devem ler o Python/Nexus do Host. Em cc3d1be, [run 37437120425](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37437120425), o FFmpeg real copiou o input atribuído mas também leu Lib/this.py fora do trabalho: **1 FAIL em 37,85 s**; regressão Windows seguinte NOT RUN por esse FAIL. O job anterior de 48a7215 foi CANCELLED no limite de 20 min, sem XML final; não é PASS e a causa desse tempo não está provada. Correção mínima neste commit: codecs recebem apenas diretório do executável e dependências explícitas; só processos Python recebem os caminhos Python/Nexus necessários. Nenhuma alteração de estrutura, capacidade de rede, token, Job ou portão humano. Repetição do mesmo contrato e da suite completa PENDENTE.
 
 ## Fonte de verdade operacional
 
