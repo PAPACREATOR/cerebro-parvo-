@@ -52,7 +52,7 @@ jobs:
           [void][scriptblock]::Create($sync)
           $codeSync = Get-Content -LiteralPath nexus/windows/sync-nexus-code.ps1 -Raw
           [void][scriptblock]::Create($codeSync)
-          python -m pytest nexus/tests/test_pc_sync.py nexus/tests/test_code_sync.py -q -p no:cacheprovider -o pythonpath=.
+          python -m pytest nexus/tests/test_pc_sync.py nexus/tests/test_code_sync.py nexus/tests/test_code_sync_functional.py -q -p no:cacheprovider -o pythonpath=.
           Write-Output 'MEDIA_INSTALLER_PARSE=PASS'
           Write-Output 'MEDIA_HEALTH_PARSE=PASS'
           Write-Output 'PC_SYNC_PARSE=PASS'
