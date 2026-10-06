@@ -51,6 +51,8 @@ def test_post_install_acceptance_runs_exact_stress_and_security_gates():
         "nomic-embed-text",
         "torch.cuda.is_available",
         "MoneyPrinterTurbo",
+        "NEXUS_REAL_WRITER",
+        "test_writer_real_libreoffice.py",
     )
     for token in required:
         assert token.lower() in POST.lower()
