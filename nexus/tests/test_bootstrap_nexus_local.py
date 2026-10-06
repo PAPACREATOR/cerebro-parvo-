@@ -1,0 +1,44 @@
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+SCRIPT = (ROOT / "windows" / "bootstrap-nexus-local.ps1").read_text(encoding="utf-8")
+
+
+def test_bootstrap_runs_sync_before_core_prepare():
+    sync = SCRIPT.index("sync-nexus-code.ps1")
+    prepare = SCRIPT.index("prepare-nexus-core.ps1")
+    assert sync < prepare
+    assert "NEXUS_STEP_FAILED" in SCRIPT
+
+
+def test_bootstrap_never_calls_guarded_provisioning():
+    forbidden = (
+        "sync-nexus-pc.ps1",
+        "install-media-tools.ps1",
+        "install-windows.ps1",
+        "setup-isolation.ps1",
+        "Start-ACE-Step-Nexus.cmd",
+        "Start-Forge-Nexus.cmd",
+    )
+    for token in forbidden:
+        assert token not in SCRIPT
+    assert "external_provisioning = 'BLOCKED_BY_POLICY'" in SCRIPT
+
+
+def test_bootstrap_requires_core_report_matching_current_head():
+    assert "pc-core-report.json" in SCRIPT
+    assert "NEXUS_CORE_REPORT_MISSING" in SCRIPT
+    assert "NEXUS_CORE_REPORT_MISMATCH" in SCRIPT
+    assert "$core.head -ne $head" in SCRIPT
+
+
+def test_bootstrap_writes_single_final_report():
+    assert "local-bootstrap-report.json" in SCRIPT
+    assert "NEXUS LOCAL BOOTSTRAP = PASS" in SCRIPT
+    assert "Code synchronized and Nexus core prepared/tested." in SCRIPT
+
+
+def test_bootstrap_does_not_clone_or_reset_repository():
+    lowered = SCRIPT.lower()
+    assert "git clone" not in lowered
+    assert "reset --hard" not in lowered
