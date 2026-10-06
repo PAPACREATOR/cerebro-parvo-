@@ -88,7 +88,7 @@ try {
             'nexus/tests/test_bootstrap_nexus_local.py',
             'nexus/tests/test_external_inventory.py',
             'nexus/tests/test_external_provision_plan.py',
-            'nexus/tests/test_external_inventory_functional.py'
+            'nexus/tests/test_external_inventory_functional.py',
             'nexus/tests/test_repository_syntax_audit.py'
         ) }
         default { @('nexus/tests') }
