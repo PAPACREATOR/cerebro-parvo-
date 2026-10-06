@@ -28,6 +28,7 @@ FLOWS = (
     ("web", "@ pesquisa web {i} e conserva as fontes", "web"),
 )
 PUBLIC_PROCESSES = {"verify", "interpret", "proofread", "convert_pdf"}
+NOTEBOOK_FLOWS = {"video", "podcast", "visual_podcast"}
 
 
 def _sha(value: str) -> str:
@@ -58,16 +59,19 @@ def test_whole_product_system_50000_cases():
         assert forward["outcome"] == expected
         assert reverse["outcome"] == expected
 
-        if expected == "agreement":
-            # 3. Only an agreed source packet can reach the bounded Notebook bridge.
+        if expected == "agreement" and flow in NOTEBOOK_FLOWS:
+            # 3. Notebook is a downstream specialist only for flows that need it.
             packet = kernel_to_notebook(markdown)
             assert packet["authority"] == "UNTRUSTED_REQUEST"
             assert packet["target"] == "open-notebook"
             returned = kernel_from_notebook_boundary(packet)
             assert returned == markdown
             assert from_markdown(returned)["text"].encode("utf-8") == original.encode("utf-8")
+        elif expected == "agreement":
+            # Research/writing/music stay outside Notebook at this boundary.
+            assert flow in {"book", "music", "web"}
         else:
-            # Conflict is preserved; the matrix deliberately performs no Notebook call.
+            # Conflict is preserved; no downstream specialist receives it.
             assert forward["outcome"] == "conflict"
 
         # 4. Product names never become Host authority merely because a flow exists in lab.
@@ -107,3 +111,4 @@ def test_whole_product_system_budget_is_exact():
     assert CASES == 50_000
     assert len(FLOWS) == 6
     assert PUBLIC_PROCESSES == {"verify", "interpret", "proofread", "convert_pdf"}
+    assert NOTEBOOK_FLOWS == {"video", "podcast", "visual_podcast"}
