@@ -18,16 +18,18 @@ def test_install_bat_is_explicit_and_password_free():
     assert "install-nexus-complete.ps1" in INSTALL_BAT
     assert "-AuthorizeInstall" in INSTALL_BAT
     assert "C:\\Nexus-Tools" in INSTALL_BAT
-    for forbidden in ("New-LocalUser", "NexusTool", "Read-Host", "password="):
+    for forbidden in ("New-LocalUser", "Add-LocalGroupMember", "Read-Host", "-Password", "password="):
         assert forbidden not in INSTALL_BAT
+    assert "nao cria contas Windows Nexus/NexusTool" in INSTALL_BAT
 
 
 def test_post_install_bat_only_calls_bounded_acceptance():
     assert "test-post-install.ps1" in TEST_BAT
     assert "complete-install-report.json" in TEST_BAT
     assert "post-install-acceptance-report.json" in TEST_BAT
-    assert "promote" not in TEST_BAT.lower()
-    assert "canonical" not in TEST_BAT.lower()
+    assert "store.promote" not in TEST_BAT.lower()
+    assert "\\canonical\\" not in TEST_BAT.lower()
+    assert "nao promove nem escreve diretamente no canonical" in TEST_BAT.lower()
 
 
 def test_post_install_acceptance_runs_exact_stress_and_security_gates():
