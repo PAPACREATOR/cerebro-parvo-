@@ -42,3 +42,7 @@ def test_bootstrap_does_not_clone_or_reset_repository():
     lowered = SCRIPT.lower()
     assert "git clone" not in lowered
     assert "reset --hard" not in lowered
+
+
+def test_bootstrap_selects_one_git_executable_deterministically():
+    assert "Get-Command git.exe -CommandType Application -ErrorAction Stop | Select-Object -First 1" in SCRIPT
