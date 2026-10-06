@@ -60,7 +60,7 @@ jobs:
           [void][scriptblock]::Create($inventory)
           $plan = Get-Content -LiteralPath nexus/windows/plan-external-provisioning.ps1 -Raw
           [void][scriptblock]::Create($plan)
-          python -m pytest nexus/tests/test_pc_sync.py nexus/tests/test_code_sync.py nexus/tests/test_code_sync_functional.py nexus/tests/test_prepare_nexus_core.py nexus/tests/test_bootstrap_nexus_local.py nexus/tests/test_external_inventory.py nexus/tests/test_external_provision_plan.py -q -p no:cacheprovider -o pythonpath=.
+          python -m pytest nexus/tests/test_pc_sync.py nexus/tests/test_code_sync.py nexus/tests/test_code_sync_functional.py nexus/tests/test_prepare_nexus_core.py nexus/tests/test_bootstrap_nexus_local.py nexus/tests/test_external_inventory.py nexus/tests/test_external_provision_plan.py nexus/tests/test_external_inventory_functional.py -q -p no:cacheprovider -o pythonpath=.
           Write-Output 'MEDIA_INSTALLER_PARSE=PASS'
           Write-Output 'MEDIA_HEALTH_PARSE=PASS'
           Write-Output 'PC_SYNC_PARSE=PASS'
