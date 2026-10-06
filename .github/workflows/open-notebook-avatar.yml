@@ -44,17 +44,17 @@ jobs:
           $exe.DirectoryName | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
       - name: Install native API and extension test dependencies
         run: python -m pip install jsonschema==4.26.0 -e upstream-open-notebook -e 'nexus/lab/open_notebook_avatar[test]'
-      - name: Windows codec reads only assigned inputs
+      - name: Windows codec scope and tool timeout
         if: runner.os == 'Windows'
         shell: bash
         run: |
           export PYTHONPATH="$GITHUB_WORKSPACE/upstream-open-notebook"
-          python -m pytest nexus/lab/open_notebook_avatar/tests/test_avatar.py -k test_ffmpeg_cannot_read_unneeded_host_runtime -q --junitxml=avatar-native-scope.xml
+          python -m pytest nexus/lab/open_notebook_avatar/tests/test_avatar.py -k 'test_ffmpeg_cannot_read_unneeded_host_runtime or test_timeout' -vv --durations=10 --junitxml=avatar-native-scope.xml
       - name: Extension contracts and real FFmpeg
         shell: bash
         run: |
           export PYTHONPATH="$GITHUB_WORKSPACE/upstream-open-notebook"
-          python -m pytest nexus/lab/open_notebook_avatar/tests -q --junitxml=avatar-tests.xml
+          python -m pytest nexus/lab/open_notebook_avatar/tests -vv --durations=10 --junitxml=avatar-tests.xml
       - name: Explain scope
         shell: bash
         run: echo 'Boundary tests use real FFmpeg and native auth; learned model substituted. Native CPU model acceptance has separate versioned evidence. No GPU or user-PC release claim.' >> "$GITHUB_STEP_SUMMARY"

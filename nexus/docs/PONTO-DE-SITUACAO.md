@@ -5,7 +5,7 @@ Estados antigos, filas, handoffs e quadros temporários foram removidos da árvo
 
 ## Relatório corrente — 06-10-2026
 
-Pedido humano: corrigir e testar sem alterar a estrutura, e escrever o ponto de situação. **Núcleo Host/MCP funcional e aprovado no CI; avatar Windows com falha real de âmbito em correção; instalação física por validar.** Arquitetura M1–M14, responsabilidades Kernel/Host/Store, Creative/Human Gate/Canonical e caminhos existentes preservados.
+Pedido humano: corrigir e testar sem alterar a estrutura, e escrever o ponto de situação. **Núcleo Host/MCP funcional e aprovado no CI; âmbito dos codecs corrigido em Windows; regressão avatar em curso; instalação física por validar.** Arquitetura M1–M14, responsabilidades Kernel/Host/Store, Creative/Human Gate/Canonical e caminhos existentes preservados.
 
 Código candidato: `48a72159cad4a3b0097f5323006efeb2f932d76a`; PR #23 draft, branch lab-open-notebook-avatar-20261004. Baseline/base e main não foram promovidas.
 
@@ -29,7 +29,7 @@ O Host limita os processos que lança. Os ensaios não são uma auditoria de tod
 
 PC de Pedro, contas, serviços, políticas e ficheiros pessoais não foram alterados. Nenhum PASS de CI é convertido em perfeição universal, instalação física ou release. Próxima ação autorizada: terminar a repetição Avatar Windows, corrigir falhas reais que aparecerem e testar a recusa do provisioning ainda sem proteção.
 
-Microcontrato Avatar/Host, 06-10: FFmpeg/ffprobe só necessitam de leitura do diretório do executável e dependências selecionadas; não devem ler o Python/Nexus do Host. Em cc3d1be, [run 37437120425](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37437120425), o FFmpeg real copiou o input atribuído mas também leu Lib/this.py fora do trabalho: **1 FAIL em 37,85 s**; regressão Windows seguinte NOT RUN por esse FAIL. O job anterior de 48a7215 foi CANCELLED no limite de 20 min, sem XML final; não é PASS e a causa desse tempo não está provada. Correção mínima neste commit: codecs recebem apenas diretório do executável e dependências explícitas; só processos Python recebem os caminhos Python/Nexus necessários. Nenhuma alteração de estrutura, capacidade de rede, token, Job ou portão humano. Repetição do mesmo contrato e da suite completa PENDENTE.
+Microcontrato Avatar/Host, 06-10: FFmpeg/ffprobe só necessitam de leitura do diretório do executável e dependências selecionadas; não devem ler o Python/Nexus do Host. Em cc3d1be, [run 37437120425](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37437120425), o FFmpeg real copiou o input atribuído mas também leu Lib/this.py fora do trabalho: **1 FAIL em 37,85 s**; regressão Windows seguinte NOT RUN por esse FAIL. O job anterior de 48a7215 foi CANCELLED no limite de 20 min, sem XML final; não é PASS e a causa desse tempo não está provada. Correção mínima neste commit: codecs recebem apenas diretório do executável e dependências explícitas; só processos Python recebem os caminhos Python/Nexus necessários. Nenhuma alteração de estrutura, capacidade de rede, token, Job ou portão humano. Em b3752b3, [run 37438100330](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37438100330), o mesmo contrato Windows passou: leitura atribuída funciona e a leitura do Host é recusada. Suite completa ainda em curso. Dado o CANCELLED anterior, o CI passa a executar o teste de timeout existente no início e a conservar nomes/durações; não aumenta limites nem enfraquece testes.
 
 ## Fonte de verdade operacional
 
