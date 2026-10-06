@@ -24,7 +24,7 @@ PS_CASES = [
     ("windows/setup-isolation.ps1", None, [], None, LEGACY_MARKER),
 ]
 
-@pytest.mark.parametrize("relative,root_parameter,flags,device", PS_CASES)
+@pytest.mark.parametrize("relative,root_parameter,flags,device,marker", PS_CASES)
 @pytest.mark.parametrize("mode", ["tripwires", "native"])
 def test_windows_provisioning_refuses_before_changes(tmp_path, relative, root_parameter, flags, device, marker, mode):
     target = tmp_path / "not-created"
