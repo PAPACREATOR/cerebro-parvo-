@@ -19,7 +19,7 @@ USE > ADAPT > CREATE.
 ## Autoridade
 
 - A pessoa é autoridade final.
-- Activepieces executa; não decide conhecimento.
+- Kernel/Host/Store governam e executam o runtime candidato; ferramentas externas executam apenas capacidades delimitadas.
 - Open Notebook/tiny produz proposta/evidência; não decide autoridade.
 - Ferramentas externas devolvem UNTRUSTED.
 - Instrução humana atual prevalece sobre comportamento aprendido.
@@ -31,10 +31,10 @@ USE > ADAPT > CREATE.
 
 - M1–M14 são responsabilidades/invariantes, não exigem 14 serviços.
 - IMP-001–026 são contratos/testes da família de importação, não exigem 26 módulos.
-- Preferir flows/Subflows/Pieces/MCP/API/CLI existentes a código próprio.
-- Não duplicar no Activepieces regras que pertencem ao Core.
-- Não criar custom Piece quando um conector existente resolve.
-- Um flow deve ter explicação equivalente em linguagem natural.
+- Preferir API/CLI/MCP/adapters finos de ferramentas maduras a código próprio.
+- Não duplicar fora do Kernel regras que pertencem ao Core.
+- Não criar adapter próprio quando uma interface estável existente resolve.
+- Todo o processo deve ter explicação equivalente em linguagem natural.
 - Open Notebook usa um único espaço cognitivo por defeito; contexto e sessão são delimitados por tarefa.
 - A tiny recebe contexto temático, fontes permitidas, budget e schema de saída.
 - SQLite não é um terceiro cofre; coordena eventos/IDs/relações/estado/índices.
