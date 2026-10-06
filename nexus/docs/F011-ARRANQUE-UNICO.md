@@ -1,3 +1,5 @@
+> **Estado atual (06-10-2026):** contrato de instância única continua vigente. Referências a Conductor/Spiff na evidência são históricas. O arranque atual pertence ao runtime Kernel/Host/Store Python e a regressão moderna é conferida pelos workflows Nexus Windows/Confinement.
+
 # F011 — uma instância por memória Nexus
 
 Contrato de implementação, 03-10-2026. Não altera a arquitetura.
