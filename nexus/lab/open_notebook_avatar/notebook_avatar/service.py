@@ -28,6 +28,23 @@ class AvatarError(Exception):
         super().__init__(code)
 
 
+# Bind trusted runtime modules and DLL prototypes when the service starts.
+# This creates no task, profile, process or ACL; each invocation still verifies
+# the seal and creates a fresh task identity before running the selected tool.
+_NATIVE_RUNTIME = None
+if os.name == "nt":
+    try:
+        from nexus.contracts import ROOT as _ROOT, Blocked as _Blocked
+        from nexus.host import verify_integrity as _verify_integrity
+        from nexus.windows_sandbox import _API, launch_confined as _launch, task_environment as _environment
+    except ImportError:
+        pass
+    else:
+        _verify_integrity()
+        _API()
+        _NATIVE_RUNTIME = (_ROOT, _Blocked, _verify_integrity, _launch, _environment)
+
+
 def digest(path: Path) -> str:
     h = hashlib.sha256()
     with path.open("rb") as stream:
@@ -97,12 +114,9 @@ def _python_environment(executable):
 
 
 def _windows_command(args, timeout, cwd, read_roots):
-    try:
-        from nexus.contracts import ROOT, Blocked
-        from nexus.host import verify_integrity
-        from nexus.windows_sandbox import launch_confined, task_environment
-    except ImportError:
-        raise AvatarError("TOOL_UNAVAILABLE") from None
+    if _NATIVE_RUNTIME is None:
+        raise AvatarError("TOOL_UNAVAILABLE")
+    ROOT, Blocked, verify_integrity, launch_confined, task_environment = _NATIVE_RUNTIME
     executable = Path(_tool(args[0]))
     try:
         directories = []

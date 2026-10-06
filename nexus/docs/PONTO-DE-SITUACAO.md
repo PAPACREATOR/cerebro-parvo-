@@ -40,6 +40,10 @@ Repetição em 7726709, [Avatar 37441690692](https://github.com/PAPACREATOR/cere
 
 Próximo microcontrato, dono Host, 06-10: provisioning não validado deve recusar antes de diretórios, processos, instalação, downloads ou conta global, incluindo flags de salto. Entradas revistas: os três instaladores Windows, o descarregador de modelos (CLI/função) e setup-isolation.ps1 histórico, que ainda podia criar conta/pastas globais com elevação. Este commit acrescenta primeiro nove critérios com os entrypoints reais e sentinelas de side effects; fonte ainda sem alteração. As sentinelas impedem a alteração global no ensaio, e não constituem prova de confinamento. Baseline esperada FAIL, resultado PENDENTE. Após recusa incondicional, repetir com e sem sentinelas: só isso prova recusa real, não instalação funcional. Estrutura preservada e implementação histórica retida; nenhum script físico executado no PC de Pedro.
 
+Regressão do runtime 7726709 em 6ba7ea7 (só testes/documentação), [Avatar 37442921072](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37442921072): primeira chamada timeout **3,64 s > 3 s**, vídeo/retorno/idempotência PASS em 1,85 s, worker nativo PASS e FFmpeg restrito PASS; **1 FAIL / 3 PASS**. O primeiro PASS de 1,74 s não é prova de estabilidade do arranque. Os imports Nexus e a ligação de protótipos DLL passam para a inicialização do serviço, sem criar tarefa, perfil, processo ou ACL. O selo continua verificado em cada chamada e não há fallback. O mesmo limite de três segundos e a suite integral mantêm-se; repetição PENDENTE.
+
+Baseline provisioning, [Confinamento 37442920985](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37442920985): **9 FAIL** em Server 2025, sentinelas observadas em New-Item, Get-Command, Resolve-Path, Read-Host e mkdir do descarregador. Original e pasta não criada invariáveis. Outros gates Native/Host/retorno PASS. Falha esperada do contrato, não nove ataques bem sucedidos no PC. A mesma recusa deve ser comprovada depois sem sentinelas.
+
 ## Fonte de verdade operacional
 
 - PR ativa: **#23 — CURRENT BASELINE**.
