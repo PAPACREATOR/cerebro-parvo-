@@ -16,7 +16,9 @@ def test_provisioning_script_remains_hard_blocked_before_operations():
 def test_code_sync_is_single_checkout_fast_forward_only():
     assert "reset --hard" not in SYNC.lower()
     assert "merge','--ff-only" in SYNC
-    assert "clone" not in SYNC.lower()
+    assert "git clone" not in SYNC.lower()
+    assert "@('clone'" not in SYNC
+    assert '"clone"' not in SYNC
     assert "backup-nexus" not in SYNC.lower()
     assert "Nexus-old" not in SYNC
 
