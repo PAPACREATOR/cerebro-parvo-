@@ -147,6 +147,22 @@ function New-RandomHex {
     return -join ($buffer | ForEach-Object { $_.ToString('x2') })
 }
 
+function Get-DotEnvValue {
+    param([string]$Path,[string]$Name)
+    foreach ($line in [IO.File]::ReadAllLines($Path)) {
+        $trimmed = $line.Trim()
+        if (-not $trimmed -or $trimmed.StartsWith('#')) { continue }
+        $parts = $trimmed.Split(@('='),2)
+        if ($parts.Count -ne 2 -or $parts[0].Trim() -ne $Name) { continue }
+        $value = $parts[1].Trim()
+        if ($value.Length -ge 2 -and (($value.StartsWith('"') -and $value.EndsWith('"')) -or ($value.StartsWith("'") -and $value.EndsWith("'")))) {
+            $value = $value.Substring(1,$value.Length-2)
+        }
+        return $value
+    }
+    return $null
+}
+
 if (-not $RepoRoot) {
     $RepoRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 }
@@ -430,13 +446,75 @@ endlocal
     $report.models.avatar = [ordered]@{ status='DOWNLOADED'; root=$avatarModels; device=$Device }
     Save-Report
 
-    # Configure deterministic Nexus adapters. OpenNotebook model/transformation IDs are intentionally
-    # not invented here; later acceptance must bind real IDs and prove them.
+    # Configure Open Notebook through its own authenticated API. Start only the local
+    # services needed for configuration; no Nexus vault is mounted into these processes.
+    $dbPassword = Get-DotEnvValue $openEnv 'SURREAL_PASSWORD'
+    $apiPassword = Get-DotEnvValue $openEnv 'OPEN_NOTEBOOK_PASSWORD'
+    if (-not $dbPassword -or -not $apiPassword) { throw 'NEXUS_OPEN_NOTEBOOK_ENV_INCOMPLETE' }
+
+    $openDataRoot = Join-Path $ToolsRoot 'OpenNotebook-Data'
+    $surrealData = Join-Path $openDataRoot 'surrealdb'
+    $null = New-Item -ItemType Directory -Force -Path $openDataRoot
+    $surrealLog = Join-Path $Logs 'open-notebook-surreal.stdout.txt'
+    $surrealErr = Join-Path $Logs 'open-notebook-surreal.stderr.txt'
+    $apiLog = Join-Path $Logs 'open-notebook-api.stdout.txt'
+    $apiErr = Join-Path $Logs 'open-notebook-api.stderr.txt'
+    $speechConfigLog = Join-Path $Logs 'speaches-config.stdout.txt'
+    $speechConfigErr = Join-Path $Logs 'speaches-config.stderr.txt'
+    $surrealProcess = $null
+    $apiProcess = $null
+    $speechConfigProcess = $null
+    try {
+        $surrealProcess = Start-Process -FilePath $surreal -ArgumentList @(
+            'start','--no-banner','--bind','127.0.0.1:8000','--user','root','--pass',$dbPassword,('rocksdb:' + $surrealData)
+        ) -WorkingDirectory $openNotebook -RedirectStandardOutput $surrealLog -RedirectStandardError $surrealErr -PassThru -WindowStyle Hidden
+        Wait-Http 'http://127.0.0.1:8000/health' 90
+
+        $speechConfigProcess = Start-Process -FilePath $uv -ArgumentList @(
+            'run','uvicorn','--factory','--host','127.0.0.1','--port','8969','speaches.main:create_app'
+        ) -WorkingDirectory $speaches -RedirectStandardOutput $speechConfigLog -RedirectStandardError $speechConfigErr -PassThru -WindowStyle Hidden
+        Wait-Http 'http://127.0.0.1:8969/v1/models' 120
+
+        $apiProcess = Start-Process -FilePath $openPython -ArgumentList @(
+            '-m','uvicorn','api.main:app','--host','127.0.0.1','--port','5055'
+        ) -WorkingDirectory $openNotebook -RedirectStandardOutput $apiLog -RedirectStandardError $apiErr -PassThru -WindowStyle Hidden
+        Wait-Http 'http://127.0.0.1:5055/health' 120
+
+        $openConfigReport = Join-Path $ToolsRoot 'open-notebook-local-config.json'
+        $openConfigHelper = Join-Path $RepoRoot 'nexus\windows\configure-open-notebook-local.py'
+        Invoke-Checked $python312 @(
+            $openConfigHelper,'--api','http://127.0.0.1:5055','--env-file',$openEnv,
+            '--report',$openConfigReport,'--authorize-install'
+        ) $RepoRoot
+        $openConfig = Get-Content -LiteralPath $openConfigReport -Raw | ConvertFrom-Json
+        if ($openConfig.status -ne 'PASS' -or $openConfig.auto_delete_files -ne 'no') {
+            throw 'NEXUS_OPEN_NOTEBOOK_LOCAL_CONFIG_FAILED'
+        }
+        $report.tools.open_notebook.status = 'INSTALLED_BUILT_CONFIGURED'
+        $report.tools.open_notebook['config_report'] = $openConfigReport
+        $report.tools.open_notebook['podcast_profile'] = $openConfig.podcast_profiles.episode.name
+        $report.models.open_notebook = [ordered]@{
+            status='CONFIGURED_TESTED'
+            language=$openConfig.models.language.name
+            embedding=$openConfig.models.embedding.name
+            tts=$openConfig.models.tts.name
+        }
+    }
+    finally {
+        foreach ($process in @($apiProcess,$speechConfigProcess,$surrealProcess)) {
+            if ($process -and -not $process.HasExited) {
+                Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+                $process.WaitForExit()
+            }
+        }
+    }
+    Save-Report
+
+    # Configure deterministic Nexus adapters.
     $runtime = Join-Path $RepoRoot 'nexus\runtime'
     $null = New-Item -ItemType Directory -Force -Path $runtime
     @{ java=$java; jar=$ltJar.FullName } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $runtime 'languagetool.json') -Encoding UTF8
     @{ executable=$soffice } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $runtime 'libreoffice.json') -Encoding UTF8
-    $report.pending += 'OPEN_NOTEBOOK_MODEL_AND_TRANSFORMATION_BINDING'
     Save-Report
 
     # Run the existing Windows core/regression/security preparation after installation.
