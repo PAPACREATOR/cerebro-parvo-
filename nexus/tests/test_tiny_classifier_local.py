@@ -158,3 +158,13 @@ def test_tiny_timeout_is_blocked(tiny_server):
     spec = TinyLocalSpec(tiny_server.url, tiny_server.model, timeout=0.01)
     with pytest.raises(Blocked, match="indisponível"):
         classify("SLOW V1", spec)
+
+
+def test_tiny_blocks_localhost_alias_even_if_machine_resolves_it():
+    with pytest.raises(Blocked, match="loopback explícito"):
+        classify("pedido V1", TinyLocalSpec("http://localhost:9000", "qwen-3b-local"))
+
+
+def test_tiny_blocks_query_in_base_url():
+    with pytest.raises(Blocked, match="Endpoint tiny inválido"):
+        classify("pedido V1", TinyLocalSpec("http://127.0.0.1:9000?proxy=1", "qwen-3b-local"))
