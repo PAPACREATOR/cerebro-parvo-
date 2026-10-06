@@ -16,10 +16,11 @@ echo.
 echo Saidas externas ficam em C:\Nexus-Tools\reports e NAO entram em Canonical.
 echo.
 
-if not exist ".venv\Scripts\python.exe" (
-  echo A preparar primeiro o Nexus Windows...
-  powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\nexus\windows\prepare-nexus-core.ps1" -RepoRoot "%CD%"
-  if errorlevel 1 exit /b 1
+echo A validar primeiro o HEAD completo e os limites de seguranca...
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\nexus\windows\prepare-nexus-core.ps1" -RepoRoot "%CD%"
+if errorlevel 1 (
+  echo NEXUS TESTES REAIS = BLOQUEADO: regressao/security gate falhou.
+  exit /b 1
 )
 
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File ".\nexus\windows\test-real-acceptance.ps1" -RepoRoot "%CD%"
