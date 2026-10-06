@@ -570,9 +570,6 @@ endlocal
         uv=$uv
         ffmpeg=$ffmpeg
         commit=$moneyPrinterHead
-        speaches_root=$speaches
-        voice='pf_dora'
-        tts_model='speaches-ai/Kokoro-82M-v1.0-ONNX'
     } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $runtime 'moneyprinterturbo.json') -Encoding UTF8
     $report.tools.open_notebook['nexus_adapter_config'] = (Join-Path $runtime 'open-notebook.json')
     $report.tools.open_notebook['documentary_adapter_config'] = (Join-Path $runtime 'open-notebook-documentary.json')
