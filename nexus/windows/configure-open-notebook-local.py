@@ -228,6 +228,41 @@ def documentary_transformation(api: API, language_id: str):
     return api.call("POST", "/api/transformations", {"name": name, **expected})
 
 
+def product_plan_transformation(api: API, language_id: str):
+    """Shared bounded plan contract for video/podcast/visual-podcast routes."""
+    name = "nexus_product_plan_v1"
+    prompt = (
+        "Return ONLY one valid JSON object, with no Markdown fences and no text before or after it. "
+        "The input begins with ROUTE: video, podcast or visual_podcast and then SOURCE:. "
+        "Use exactly these keys: title, body, steps, quotes. "
+        "Write in European Portuguese unless the source explicitly requests another language. "
+        "title: non-empty string up to 180 characters. "
+        "body: the main usable script/content for the requested route, grounded only in SOURCE. "
+        "steps: array of 2 to 40 concise microtasks; for video use shot/storyboard beats, for podcast use episode segments, "
+        "for visual_podcast use episode segments with matching visual beats. "
+        "quotes: array of 1 to 5 exact verbatim substrings copied only from SOURCE, each up to 800 characters. "
+        "Do not invent facts, sources, quotations, dates, names or claims. "
+        "The complete response must be parseable by a strict JSON parser."
+    )
+    items = api.call("GET", "/api/transformations")
+    matches = [item for item in items if item.get("name") == name]
+    if len(matches) > 1:
+        raise SetupError("Duplicate Nexus product-plan transformation")
+    expected = {
+        "title": "Nexus product plan JSON v1",
+        "description": "Bounded local planning handoff for public product routes.",
+        "prompt": prompt,
+        "apply_default": False,
+        "model_id": language_id,
+    }
+    if matches:
+        item = matches[0]
+        if any(item.get(key) != value for key, value in expected.items()):
+            raise SetupError("Existing Nexus product-plan transformation conflicts with the pinned contract")
+        return item
+    return api.call("POST", "/api/transformations", {"name": name, **expected})
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--api", default="http://127.0.0.1:5055")
@@ -298,6 +333,7 @@ def main() -> int:
 
     cognitive = transformation(api, language["id"])
     documentary = documentary_transformation(api, language["id"])
+    product_plan = product_plan_transformation(api, language["id"])
     speaker = speaker_profile(api, tts["id"])
     episode = episode_profile(api, language["id"], speaker["id"])
 
@@ -315,6 +351,7 @@ def main() -> int:
         },
         "transformation": {"id": cognitive["id"], "name": cognitive["name"]},
         "documentary_transformation": {"id": documentary["id"], "name": documentary["name"]},
+        "product_plan_transformation": {"id": product_plan["id"], "name": product_plan["name"]},
         "podcast_profiles": {
             "speaker": {"id": speaker["id"], "name": speaker["name"]},
             "episode": {"id": episode["id"], "name": episode["name"]},
