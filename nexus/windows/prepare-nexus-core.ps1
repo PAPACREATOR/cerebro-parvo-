@@ -34,7 +34,7 @@ if (-not (Test-Path -LiteralPath (Join-Path $RepoRoot '.git'))) {
     throw 'NEXUS_REPOSITORY_NOT_FOUND'
 }
 
-$git = (Get-Command git.exe -CommandType Application -ErrorAction Stop).Source
+$git = (Get-Command git.exe -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
 $origin = (& $git -C $RepoRoot config --get remote.origin.url).Trim()
 if ($LASTEXITCODE -ne 0 -or $origin -ne 'https://github.com/PAPACREATOR/cerebro-parvo-.git') {
     throw 'NEXUS_WRONG_ORIGIN'
