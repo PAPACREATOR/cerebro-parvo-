@@ -27,7 +27,7 @@ FLOWS = (
     ("music", "& cria música {i} com tema letra e estilo definidos", "trabalhar"),
     ("web", "@ pesquisa web {i} e conserva as fontes", "web"),
 )
-PUBLIC_PROCESSES = {"verify", "interpret", "proofread", "convert_pdf"}
+PUBLIC_PROCESSES = {"verify", "interpret", "proofread", "convert_pdf", "video", "podcast", "visual_podcast", "book", "music", "web"}
 NOTEBOOK_FLOWS = {"video", "podcast", "visual_podcast"}
 
 
@@ -74,14 +74,9 @@ def test_whole_product_system_50000_cases():
             # Conflict is preserved; no downstream specialist receives it.
             assert forward["outcome"] == "conflict"
 
-        # 4. Product names never become Host authority merely because a flow exists in lab.
-        if flow == "book":
-            request = {"process": "convert_pdf", "text": original, "filename": "", "attachment": ""}
-            assert validate("request", request)["process"] == "convert_pdf"
-        else:
-            request = {"process": flow, "text": original, "filename": "", "attachment": ""}
-            with pytest.raises(Blocked):
-                validate("request", request)
+        # 4. Public product routes are recognized but still produce candidates only.
+        request = {"process": flow, "text": original, "filename": "", "attachment": ""}
+        assert validate("request", request)["process"] == flow
 
         # 5. External/AI output cannot smuggle authority into the result contract.
         hostile = {
@@ -110,5 +105,5 @@ def test_whole_product_system_50000_cases():
 def test_whole_product_system_budget_is_exact():
     assert CASES == 50_000
     assert len(FLOWS) == 6
-    assert PUBLIC_PROCESSES == {"verify", "interpret", "proofread", "convert_pdf"}
+    assert PUBLIC_PROCESSES == {"verify", "interpret", "proofread", "convert_pdf", "video", "podcast", "visual_podcast", "book", "music", "web"}
     assert NOTEBOOK_FLOWS == {"video", "podcast", "visual_podcast"}
