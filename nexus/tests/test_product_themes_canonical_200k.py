@@ -256,6 +256,7 @@ def test_exact_200000_budget_and_windows_account_secret_contract():
 
     setup = (ROOT / "windows" / "setup-isolation.ps1").read_text(encoding="utf-8")
     installer = (ROOT / "windows" / "install-nexus-complete.ps1").read_text(encoding="utf-8")
+    sandbox = (ROOT / "windows_sandbox.py").read_text(encoding="utf-8")
     gitignore = (ROOT.parent / ".gitignore").read_text(encoding="utf-8")
 
     # The old global-account prototype is retained only as unreachable history.
@@ -273,6 +274,15 @@ def test_exact_200000_budget_and_windows_account_secret_contract():
         "NexusTool",
     ):
         assert forbidden not in installer
+
+    # Current per-task Windows boundary replaces reusable Nexus/NexusTool passwords.
+    assert "CreateAppContainerProfile" in sandbox
+    assert 'self.name = "nexus-" + uuid.uuid4().hex' in sandbox
+    assert "CreateJobObjectW" in sandbox
+    assert "AssignProcessToJobObject" in sandbox
+    assert "DeleteAppContainerProfile" in sandbox
+    for forbidden in ("LogonUser", "CreateProcessAsUser", "password", "NexusTool"):
+        assert forbidden not in sandbox
 
     # Local application secrets are generated at install time and excluded from Git.
     assert "New-RandomHex 24" in installer
