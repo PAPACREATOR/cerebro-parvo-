@@ -77,8 +77,18 @@ def _tool(value: str) -> str:
     return str(Path(found).resolve())
 
 
+_PYTHON_ENVIRONMENT_CACHE = {}
+
+
 def _python_environment(executable):
     """Select Python files without granting its complete package installation."""
+    executable = Path(executable).resolve()
+    cache_key = str(executable)
+    cached = _PYTHON_ENVIRONMENT_CACHE.get(cache_key)
+    if cached is not None:
+        roots, directories, sites = cached
+        return list(roots), list(directories), tuple(sites)
+
     prefix = executable.parent.parent if executable.parent.name.lower() == "scripts" else executable.parent
     prefix = prefix.resolve()
     base = Path(sys.base_prefix).resolve() if prefix == Path(sys.prefix).resolve() else prefix
@@ -110,7 +120,19 @@ def _python_environment(executable):
     sites = tuple(dict.fromkeys(p for p in (prefix / "Lib" / "site-packages",
                                            base / "Lib" / "site-packages") if p.is_dir()))
     directories.extend(sites)
-    return roots, directories, sites
+    frozen = (tuple(roots), tuple(directories), tuple(sites))
+    _PYTHON_ENVIRONMENT_CACHE[cache_key] = frozen
+    return list(frozen[0]), list(frozen[1]), frozen[2]
+
+
+# Pure discovery only: no process, profile, ACL or capability is created here.
+# Moving this stable filesystem enumeration outside the first timed tool call
+# avoids charging Python installation discovery to the tool timeout contract.
+if os.name == "nt" and _NATIVE_RUNTIME is not None:
+    try:
+        _python_environment(Path(sys.executable))
+    except AvatarError:
+        pass
 
 
 def _windows_command(args, timeout, cwd, read_roots):
