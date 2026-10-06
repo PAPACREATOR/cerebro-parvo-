@@ -8,6 +8,8 @@ MODELS = (ROOT / "lab" / "open_notebook_avatar" / "provision_models.py").read_te
 ROUTER = (ROOT / "lab" / "open_notebook_avatar" / "install_router.py").read_text(encoding="utf-8")
 LAUNCHER = (ROOT / "windows" / "nexus-launcher.py").read_text(encoding="utf-8")
 OPEN_CONFIG = (ROOT / "windows" / "configure-open-notebook-local.py").read_text(encoding="utf-8")
+MPT_CONFIG = (ROOT / "windows" / "configure-moneyprinterturbo-local.py").read_text(encoding="utf-8")
+DOCUMENTARY = (ROOT / "windows" / "documentary_bridge.py").read_text(encoding="utf-8")
 
 
 def test_complete_installer_requires_explicit_human_authorization():
@@ -42,6 +44,7 @@ def test_installer_pins_the_external_source_trees_and_binary_hashes():
         "55c7e05ee2b68ec0d8b86c4b588e9b9807f257af8c15c05d17074514c64d8c91",
         "53600506b399bb5ffe1e4c8dec794fd378212f14aaf38ccef9b6f89314d11631",
         "6ce0161689b3853acaa03779ec93eafe75a02f4ced659bee03f50797806fa2fa",
+        "68eb5a68b93cfe338198b3dfb151f6d5ec2fe4e5",
     )
     joined = MASTER + MEDIA
     for value in expected:
