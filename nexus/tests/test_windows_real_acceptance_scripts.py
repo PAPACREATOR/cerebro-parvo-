@@ -33,7 +33,9 @@ def test_real_acceptance_never_claims_external_probe_is_canonical():
     assert "INCOMPLETE_UNTIL_EXTERNAL_CAPABILITIES_ENTER_HOST_CREATIVE_HUMAN_GATE" in powershell
     assert "authority" in python
     assert "UNTRUSTED" in python
-    assert "canonical" not in python.lower()
+    assert "does not promote anything to Canonical" in python
+    assert "from nexus.store" not in python
+    assert "Store(" not in python
 
 
 def test_launcher_is_thin_and_does_not_shell_out():
