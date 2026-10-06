@@ -42,9 +42,17 @@ if ($RepoRoot) {
 $prepare = Join-Path $RepoRoot 'nexus\windows\prepare-nexus-core.ps1'
 Invoke-PowerShellChecked -ScriptPath $prepare -Arguments @('-RepoRoot',$RepoRoot,'-ToolsRoot',$ToolsRoot)
 
+$inventory = Join-Path $RepoRoot 'nexus\windows\inventory-external-tools.ps1'
+Invoke-PowerShellChecked -ScriptPath $inventory -Arguments @('-ToolsRoot',$ToolsRoot)
+
 $git = (Get-Command git.exe -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
 $head = (& $git -C $RepoRoot rev-parse HEAD).Trim()
 if ($LASTEXITCODE -ne 0) { throw 'NEXUS_HEAD_READ_FAILED' }
+
+$inventoryReport = Join-Path $ToolsRoot 'external-tools-inventory.json'
+if (-not (Test-Path -LiteralPath $inventoryReport)) {
+    throw 'NEXUS_EXTERNAL_INVENTORY_MISSING'
+}
 
 $coreReport = Join-Path $ToolsRoot 'pc-core-report.json'
 if (-not (Test-Path -LiteralPath $coreReport)) {
@@ -63,6 +71,7 @@ $report = [ordered]@{
     branch = $Branch
     head = $head
     core_report = $coreReport
+    external_inventory = $inventoryReport
     external_provisioning = 'BLOCKED_BY_POLICY'
     note = 'Code synchronized and Nexus core prepared/tested. Protected external provisioning was not bypassed.'
 }
