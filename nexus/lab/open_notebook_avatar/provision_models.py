@@ -25,9 +25,9 @@ def sha(path):
     return h.hexdigest()
 
 
-def provision(root):
-    if os.name == "nt":
-        raise RuntimeError("NEXUS_PROTECTED_PROVISIONING_PENDING: protected model provisioning is not validated; refusing downloads and changes.")
+def provision(root, *, authorize_install=False):
+    if os.name == "nt" and authorize_install is not True:
+        raise RuntimeError("NEXUS_INSTALL_AUTHORIZATION_REQUIRED: protected model provisioning requires explicit human-authorized installation.")
     import gdown
     root.mkdir(parents=True, exist_ok=True)
     for name, expected in [("wav2lip.pth", WAV2LIP_SHA), ("s3fd.pth", SFD_SHA)]:
@@ -58,4 +58,6 @@ def provision(root):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("directory", type=Path)
-    provision(parser.parse_args().directory)
+    parser.add_argument("--authorize-install", action="store_true")
+    args = parser.parse_args()
+    provision(args.directory, authorize_install=args.authorize_install)
