@@ -40,6 +40,9 @@ jobs:
       - name: 10000 authority inputs - no data mutation or forged approval
         if: always()
         run: python -m pytest nexus/security_tests/test_authority_10000.py nexus/security_tests/test_state_concurrency.py -q -o pythonpath=. --junitxml=security-evidence/authority-10000.xml
+      - name: Refuse unvalidated provisioning before any change
+        if: always()
+        run: python -m pytest nexus/security_tests/test_install_gate.py -q -o pythonpath=. --junitxml=security-evidence/install-guard.xml
       - name: Real Host launch with hostile disposable worker
         if: always()
         run: python -m pytest nexus/security_tests/test_confinement_gate.py -q -o pythonpath=. --junitxml=security-evidence/confinement.xml
