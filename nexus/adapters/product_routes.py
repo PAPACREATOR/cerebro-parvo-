@@ -161,8 +161,7 @@ def _sections(text: str) -> dict[str, str]:
     return joined
 
 
-def run_music(input_path) -> dict:
-    text = prepare_text(Path(input_path).read_bytes())
+def music_candidate(text: str) -> dict:
     fields = _sections(text)
     prompt = fields["estilo"] + ". Tema: " + fields["tema"]
     spec = json.dumps({"prompt": prompt, "lyrics": fields["letra"]}, ensure_ascii=False, sort_keys=True)
@@ -183,13 +182,17 @@ def run_music(input_path) -> dict:
     }
 
 
-def run_web(input_path) -> dict:
-    text = prepare_text(Path(input_path).read_bytes()).strip()
+def run_music(input_path) -> dict:
+    return music_candidate(prepare_text(Path(input_path).read_bytes()))
+
+
+def web_candidate(text: str) -> dict:
+    text = text.strip()
     if text.lower().startswith("consulta:"):
         query = text.split(":", 1)[1].strip()
     else:
         query = text
-    if not query or len(query) > 2000:
+    if not query or len(query) > 2000 or "\x00" in query:
         raise Blocked("Consulta web inválida.")
     markdown = (
         "# Pesquisa web — pedido preparado\n\n"
@@ -205,3 +208,7 @@ def run_web(input_path) -> dict:
         "ai_calls": 0,
         "evidence": [{"capability": "web/query-spec", "status": "UNKNOWN", "value": query}],
     }
+
+
+def run_web(input_path) -> dict:
+    return web_candidate(prepare_text(Path(input_path).read_bytes()))
