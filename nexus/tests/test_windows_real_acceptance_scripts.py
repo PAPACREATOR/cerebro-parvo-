@@ -61,11 +61,10 @@ def test_windows_batch_entrypoints_exist_and_are_guarded():
 ])
 def test_new_powershell_scripts_parse_on_real_windows(relative):
     path = ROOT / relative
+    escaped = str(path).replace("'", "''")
     command = (
         "$e=$null;$t=$null;"
-        "[System.Management.Automation.Language.Parser]::ParseFile("
-        + repr(str(path)).replace("'", "''")
-        + ",[ref]$t,[ref]$e)|Out-Null;"
+        f"[System.Management.Automation.Language.Parser]::ParseFile('{escaped}',[ref]$t,[ref]$e)|Out-Null;"
         "if($e.Count){$e|%{$_.ToString()}|Write-Error;exit 1}"
     )
     result = subprocess.run(
