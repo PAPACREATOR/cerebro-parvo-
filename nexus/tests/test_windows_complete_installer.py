@@ -7,6 +7,7 @@ AVATAR = (ROOT / "lab" / "open_notebook_avatar" / "install-windows.ps1").read_te
 MODELS = (ROOT / "lab" / "open_notebook_avatar" / "provision_models.py").read_text(encoding="utf-8")
 ROUTER = (ROOT / "lab" / "open_notebook_avatar" / "install_router.py").read_text(encoding="utf-8")
 LAUNCHER = (ROOT / "windows" / "nexus-launcher.py").read_text(encoding="utf-8")
+OPEN_CONFIG = (ROOT / "windows" / "configure-open-notebook-local.py").read_text(encoding="utf-8")
 
 
 def test_complete_installer_requires_explicit_human_authorization():
@@ -65,11 +66,12 @@ def test_installer_prepares_local_models_needed_for_later_physical_acceptance():
         assert value in MASTER or value in AVATAR or value in MODELS
 
 
-def test_installer_only_leaves_open_notebook_binding_explicitly_pending():
-    assert "PASS_WITH_EXPLICIT_PENDING_BINDINGS" in MASTER
-    assert "OPEN_NOTEBOOK_MODEL_AND_TRANSFORMATION_BINDING" in MASTER
+def test_installer_has_no_fake_pending_binding_after_local_configuration():
+    assert "OPEN_NOTEBOOK_MODEL_AND_TRANSFORMATION_BINDING" not in MASTER
     assert "FORGE_IMAGE_CHECKPOINT_SELECTION" not in MASTER
     assert "model='NOT_SELECTED'" not in MASTER
+    assert "configure-open-notebook-local.py" in MASTER
+    assert "INSTALLED_BUILT_CONFIGURED" in MASTER
 
 
 def test_forge_and_deforum_receive_a_verified_sd15_baseline():
@@ -115,3 +117,32 @@ def test_deforum_is_installed_inside_forge_but_not_claimed_functional_without_re
     assert "INSTALLED_DEPENDENCIES_TESTED" in MEDIA
     assert "REQUIRES_REAL_RENDER_ACCEPTANCE" in MEDIA
     assert "NEXUS_DEFORUM_INSTALL_NOT_VERIFIED" in MASTER
+
+
+def test_open_notebook_configuration_uses_public_api_and_local_models():
+    for value in (
+        "/api/credentials", "/api/models", "/api/models/defaults",
+        "/api/settings", "/api/speaker-profiles", "/api/episode-profiles",
+        "qwen3:4b", "nomic-embed-text", "speaches-ai/Kokoro-82M-v1.0-ONNX",
+        "Nexus Local Test Speaker", "Nexus Local Test Episode",
+    ):
+        assert value in OPEN_CONFIG
+    assert '"auto_delete_files": "no"' in OPEN_CONFIG
+    assert "NEXUS_INSTALL_AUTHORIZATION_REQUIRED" in OPEN_CONFIG
+
+
+def test_open_notebook_config_fails_on_conflict_instead_of_overwriting():
+    assert "Credential base URL conflict" in OPEN_CONFIG
+    assert "Existing model is linked to another credential" in OPEN_CONFIG
+    assert "Existing Nexus speaker profile conflicts" in OPEN_CONFIG
+    assert "Existing Nexus episode profile conflicts" in OPEN_CONFIG
+    assert 'api.call("PUT", "/api/credentials/' not in OPEN_CONFIG
+
+
+def test_complete_installer_starts_only_loopback_configuration_services():
+    for value in (
+        "'127.0.0.1:8000'", "'127.0.0.1','--port','8969'",
+        "'127.0.0.1','--port','5055'",
+    ):
+        assert value in MASTER
+    assert "open-notebook-local-config.json" in MASTER
