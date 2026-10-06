@@ -186,7 +186,7 @@ def test_restart_returns_saved_result_without_reexecuting_provider(tmp_path, mon
     def forbidden(*args, **kwargs):
         pytest.fail("Reverse reading/recovery must never reexecute a provider")
 
-    monkeypatch.setattr("nexus.host.subprocess.Popen", forbidden)
+    monkeypatch.setattr("nexus.host.launch_confined", forbidden)
     restored = Host(tmp_path)
     with http(restored) as call:
         with pytest.raises(HTTPError):
@@ -214,7 +214,7 @@ def test_relocated_copy_preserves_reverse_chain_without_provider(tmp_path, monke
     def forbidden(*args, **kwargs):
         pytest.fail("Restoring a packet must not invoke a provider")
 
-    monkeypatch.setattr("nexus.host.subprocess.Popen", forbidden)
+    monkeypatch.setattr("nexus.host.launch_confined", forbidden)
     restored = Host(restored_root)
     with http(restored) as call:
         assert call("/api/runs/" + run)["status"] == "PASS"
@@ -280,7 +280,7 @@ def test_real_windows_result_back_to_original_and_folha_after_restart(tmp_path, 
     def forbidden(*args, **kwargs):
         pytest.fail("Restored result must use saved evidence, never execute the external capability again")
 
-    monkeypatch.setattr("nexus.host.subprocess.Popen", forbidden)
+    monkeypatch.setattr("nexus.host.launch_confined", forbidden)
     restored = Host(tmp_path)
     with http(restored) as call:
         returned = call("/api/runs/" + run)
@@ -314,7 +314,7 @@ def test_restart_reconciles_saved_executor_result_without_reexecution(tmp_path, 
     def forbidden(*args, **kwargs):
         pytest.fail("Kernel restart must reconcile saved executor output, not execute a provider")
 
-    monkeypatch.setattr("nexus.host.subprocess.Popen", forbidden)
+    monkeypatch.setattr("nexus.host.launch_confined", forbidden)
     restored = Store(tmp_path)
     state = restored.state(run)
 

@@ -1,3 +1,5 @@
+> **Estado atual (06-10-2026):** LanguageTool continua capability externa local. A implementação ativa é Kernel/Host → runner/MCP → adapter LanguageTool → relatório candidate/UNKNOWN em Creative. As referências a Conductor abaixo documentam o ensaio histórico de 01-10.
+
 # F006 — revisão linguística local
 
 INPUT: texto UTF-8 até 6000 caracteres; configuração administrativa com caminhos absolutos para Java e o JAR LanguageTool já instalados.

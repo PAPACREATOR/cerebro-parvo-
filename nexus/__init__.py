@@ -1,1 +1,1 @@
-"""Minimal Nexus host. Workflows belong to Microsoft Conductor."""
+"""Nexus local host: Kernel/Host/Store own authority; MCP transports bounded tool calls."""

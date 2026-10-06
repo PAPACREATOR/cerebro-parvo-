@@ -1,4 +1,15 @@
+> **Estado atual (06-10-2026):** o texto abaixo conserva a evolução e os FAILs anteriores. O runtime atual já usa fronteira nativa Windows/AppContainer LPAC + Job Object para os processos lançados pelo Host, com gates reais de confinamento/autoridade em Windows 2022/2025. Provisioning externo continua deliberadamente bloqueado e não deve ser confundido com confinamento de runtime já provado.
+
 # F008 — isolamento Windows (PENDENTE)
+
+
+## Conferência do código atual — 05-10-2026
+
+Runtime revisto: dcef003. Os parágrafos seguintes conservam o percurso de 01-10 e o PASS limitado das duas pastas; Conductor/interpret.yaml são referências históricas, substituídas no candidato por Python/MCP.
+
+O Host atual ainda lança `subprocess.Popen` na identidade corrente; o servidor MCP e os adaptadores seguem essa execução. Não há ligação ao `Start-Process -Credential` deste ensaio, nem Job Object aplicado ao lançamento. O novo gate hostil real produziu 22 acessos proibidos ALLOWED e 2 controlos PASS. O [ponto de situação](PONTO-DE-SITUACAO.md) contém SHA, logs e limites.
+
+O contrato continua a exigir execução restrita pelo Windows nos bastidores, mantendo a Folha simples. O utilizador aprova o que a autoridade exige; não gere manualmente permissões a cada tarefa. Uma conta dedicada e ACLs em duas pastas não provam rede, separação entre tarefas, restrição da bancada/modelo ou confinamento de todos os diretórios. A aprovação humana não concede automaticamente direitos gerais à tool.
 
 Prioridade humana reforçada em 01-10-2026. O workflow interpret.yaml já está implementado; a fronteira de conta Windows não.
 

@@ -52,3 +52,38 @@ def test_mcp_cloud_credentials_are_rejected():
     )
     with pytest.raises(Blocked, match="Credencial cloud"):
         list_tools(bad)
+
+
+@pytest.mark.parametrize("key", [
+    "NEXUS_SESSION",
+    "OPEN_NOTEBOOK_PASSWORD",
+    "PASSWORD",
+    "TOKEN",
+    "AWS_SECRET_ACCESS_KEY",
+    "CUSTOM_PATH",
+])
+def test_mcp_arbitrary_environment_is_rejected(key):
+    bad = MCPServerSpec(
+        command=str(PYTHON),
+        args=("-u", str(ROOT / "tests/fixtures/mcp_test_server.py")),
+        env={key: "forbidden"},
+    )
+    with pytest.raises(Blocked, match="Variável de ambiente MCP"):
+        list_tools(bad)
+
+
+def test_mcp_only_explicit_open_notebook_transport_environment_is_allowed():
+    allowed = MCPServerSpec(
+        command=str(PYTHON),
+        args=("-u", str(ROOT / "tests/fixtures/mcp_test_server.py")),
+        env={"OPEN_NOTEBOOK_URL": "http://127.0.0.1:1", "MCP_TRANSPORT": "stdio"},
+    )
+    names = {item["name"] for item in list_tools(allowed)}
+    assert names == {"ping", "double", "explode"}
+
+
+def test_mcp_reduced_environment_drops_pythonpath(monkeypatch):
+    from nexus.mcp_client import _reduced_env
+    monkeypatch.setenv("PYTHONPATH", "C:/untrusted/import/path")
+    env = _reduced_env()
+    assert "PYTHONPATH" not in env

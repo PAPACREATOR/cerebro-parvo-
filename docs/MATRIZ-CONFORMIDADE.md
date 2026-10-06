@@ -1,3 +1,5 @@
+> **Documento histórico datado.** Conserva a análise desta fase e não define o runtime atual. Para implementação vigente consultar [CEREBRO_ARCHITECTURE.md](../CEREBRO_ARCHITECTURE.md), [DECISIONS.md](../DECISIONS.md) e [PONTO-DE-SITUACAO](../nexus/docs/PONTO-DE-SITUACAO.md).
+
 # Matriz de conformidade — 27-09-2026
 
 Fontes: [prompt mestre](baseline/CEREBRO_PROMPT_MESTRE_CURSOR_2026-09-26.md), contratos corrigidos Parte III e código candidato importado. Mapeamento abaixo é análise de cobertura, não nova atribuição normativa de módulos.

@@ -123,3 +123,23 @@ Gravação local autorizada. Envio ao GitHub continua pendente de autorização 
 Implementação pausada por instrução explícita. Consultadas todas as refs remotas disponíveis, PRs #7–#13/comentários, planos e Actions. Ver `SYNC-EQUIPA-2026-10-04.md` e inventário JSON para commits, falhas, estados em curso e fronteira partilhada parser/contexto/Kernel.
 
 O pedido atual autoriza sincronizar/publicar esta branch no GitHub; a pendência de autorização nas entradas anteriores é histórica e fica levantada para esta publicação. Push CLI falhou por falta de credenciais; utilizar conector autenticado e verificar igualdade das árvores. Não alterar branches de outras sessões nem integrar experiências falhadas em main. Próxima implementação permanece em pausa até novo pedido.
+
+## Open Notebook — avatar/FFmpeg, pedido de 04/10/2026
+
+Pedido de Pedro: corrigir código, instalar dependências e implementar avatar no Open Notebook com muitos testes. Branch isolada `lab-open-notebook-avatar-20261004`, base PR #22 / `b0b95076c94b4752db8955744e3fe4ed8e4fcb68`.
+
+Entrega: router nativo opcional Open Notebook 1.14, worker SFD/Wav2Lip/FFmpeg, proveniência atómica, MCP adicional, instaladores/provisionamento e CI Linux/Windows. Áudio do episódio existente; código ativo Nexus e main intocados.
+
+PASS Linux: 165 testes da extensão (11,93 s), dois circuitos nativos reais com SurrealDB/API/SFD/Wav2Lip CPU/FFmpeg/MCP, repetição, restart e adulteração. Dependências instaladas, pip check e integridade host PASS. Regressão geral Nexus: 1319 PASS/14 FAIL/7 SKIP; não atribuir PASS global. Falhas e correções de desenvolvimento preservadas.
+
+Relatório: `RELATORIO-AVATAR-2026-10-04.md`; evidência: `nexus/lab/open_notebook_avatar/evidence/`. Windows/GPU/PC, qualidade quantitativa, novo frontend e integração Kernel oficial NOT RUN local. CI remoto tem resultado próprio. Próximo gate: instalação e episódio reais no Windows de laboratório, revisão humana e integração limitada. Este commit identifica a entrega; não promove resultados nem autoriza merge em main.
+
+Fecho externo: run `37233045607`, commit `ca8b034e1fd68cfdc78ba1368485c5b054472a65`: CI Ubuntu 165 PASS/0 FAIL/0 SKIP (11,40 s), CI Windows 165 PASS/0 FAIL/0 SKIP (11,46 s). Logs/JUnit conferidos, hashes em `AVATAR-CI-2026-10-04.json`. PR #23 publicado draft. Isto prova contratos Windows com FFmpeg real, não inferência GPU nem instalação no PC de Pedro. Atualização subsequente apenas documental.
+
+## Coordenação e sincronização — 04/10/2026, 23h Lisboa
+
+Pedro pediu para localizar sessões e dividir tarefas. Consultados memória, PRs, comentários e Actions; PR21 atual `0753f573f2dee739a4e43a5e255a4999319cc605`. PR22 fechada sem merge. Sessão principal PR21 mantém exterior Nexus/Kernel/MCP/tiny; esta sessão Work mantém interior OpenNotebook/avatar/podcast. Revisor interno independente confirma paths e gates, não representa outro chat. Instalação Windows física continua com Pedro/Codex no Lab.
+
+Handoff publicado na PR21, comentário5984901664. Reaplicados somente ficheiros avatar sobre árvore atual21, estado reconciliado; nenhum path MCP/tiny/requirements/fixtures externo substituído. Histórico dos commits anteriores preservado por merge na branch avatar, sem alterar21/main. Gates do bloco avatar anteriores preservados; regressão desta nova combinação ainda PENDING até CI do novo commit. Não afirmar que outra sessão recebeu/aceitou o handoff.
+
+Fecho da combinação sincronizada: código `569c3a1de720ac6e7ed509ea566c1f6b3f02a1bf`, auditoriaSUCCESS run37238792619; NexusWindowsSUCCESS run37238792589: core140, blocks1068, all1350, practical12 PASS. AvatarWindows165 PASS (12,12s), Ubuntu165 PASS (9,38s), run37238792600. ProtegidosMCP/tiny/Host/Store/integrity idênticos21. Evidência `AVATAR-SYNC-CI-2026-10-04.json`. Isto substitui o PENDING da combinação, preservando falhas históricas. PC/GPU/Kernel-avatarE2E continuam NOT RUN. Esta atualização é só documental.

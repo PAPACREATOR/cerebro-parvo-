@@ -208,7 +208,10 @@ class Store:
         return target
 
     def state(self, run_id):
-        return strict_json((self.path("runs", run_id) / "state.json").read_bytes())
+        # Python file reads on Windows can prevent os.replace while open.
+        # Share the writer lock so HTTP snapshots cannot race atomic replacement.
+        with self.lock:
+            return strict_json((self.path("runs", run_id) / "state.json").read_bytes())
 
     def update(self, run_id, **fields):
         with self.lock:

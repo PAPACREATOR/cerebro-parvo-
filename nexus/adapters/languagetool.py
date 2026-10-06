@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from nexus.windows_sandbox import require_native_boundary
 from nexus.contracts import Blocked, strict_json, validate
 from nexus.adapters.notebook import prepare_source
 
@@ -77,6 +78,8 @@ def run(input_path):
             raise Blocked("Java ou LanguageTool indisponível.")
     if Path(config["java"]).name.lower() != "java.exe" or Path(config["jar"]).name != "languagetool-commandline.jar":
         raise Blocked("Ferramenta não autorizada para revisão linguística.")
+    if sys.platform == "win32":
+        require_native_boundary()
     # Stream to files so malformed/noisy tool output cannot fill Host memory.
     output = source.parent / "languagetool-output.json"
     with output.open("wb") as stdout, (source.parent / "languagetool.stderr.txt").open("wb") as stderr:

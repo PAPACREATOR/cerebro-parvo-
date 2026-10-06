@@ -6,9 +6,10 @@ import os
 import subprocess
 import sys
 import zipfile
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from nexus.windows_sandbox import require_native_boundary
 from nexus.contracts import Blocked, strict_json
 
 
@@ -22,14 +23,25 @@ def document_kind(raw):
             if len(names) != len(entries):
                 raise Blocked("Documento com entradas repetidas.")
             for entry in entries:
-                name = entry.filename.lower()
-                if any(word in name for word in ("vbaproject", "scripts/", "basic/", "embeddings/")):
-                    raise Blocked("Conteúdo ativo não permitido neste ensaio.")
+                raw_name = getattr(entry, "orig_filename", entry.filename)
+                normalized_name = entry.filename
+                posix = PurePosixPath(normalized_name)
+                if ("\x00" in raw_name or "\\" in raw_name or raw_name.startswith("/")
+                        or any(part == ".." for part in posix.parts)
+                        or (posix.parts and ":" in posix.parts[0])):
+                    raise Blocked("Caminho interno de documento não autorizado.")
+                name = normalized_name.lower()
+                if (any(word in name for word in ("vbaproject", "scripts/", "basic/", "embeddings/"))
+                        or name.startswith("object ")
+                        or name.startswith("objectreplacements/")):
+                    raise Blocked("Conteúdo ativo ou objeto incorporado não permitido neste ensaio.")
                 if name.endswith((".xml", ".rels")):
                     body = archive.read(entry).lower()
                     import re
-                    if any(word in body for word in (b'<!entity', b'<!doctype')) or re.search(rb'targetmode\s*=\s*[\x22\x27]external|(?:xlink:href|href)\s*=\s*[\x22\x27](?:https?:|file:)', body):
-                        raise Blocked("Ligação externa não permitida neste ensaio.")
+                    if (any(word in body for word in (b'<!entity', b'<!doctype', b'<draw:object', b'<draw:object-ole'))
+                            or re.search(rb'targetmode\s*=\s*[\x22\x27]external', body)
+                            or re.search(rb'(?:xlink:href|href)\s*=\s*[\x22\x27](?:[a-z][a-z0-9+.-]*:|//|\\\\)', body)):
+                        raise Blocked("Ligação externa ou objeto incorporado não permitido neste ensaio.")
             if "word/document.xml" in names and "[Content_Types].xml" in names:
                 return ".docx"
             if "mimetype" in names and archive.read("mimetype") == b"application/vnd.oasis.opendocument.text" and "content.xml" in names:
@@ -58,6 +70,8 @@ def run(input_path):
     executable = Path(config["executable"])
     if not executable.is_absolute() or not executable.is_file() or executable.name.lower() != "soffice.com":
         raise Blocked("LibreOffice indisponível.")
+    if sys.platform == "win32":
+        require_native_boundary()
     working = source.parent / "office"
     working.mkdir()
     document = working / ("resultado" + kind)

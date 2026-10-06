@@ -1,6 +1,39 @@
 # Decisões vigentes e genealogia
 
-## 30-09-2026 — Nexus Minimal: launcher metódico + bancada descartável (VIGENTE)
+## 06-10-2026 — reconciliação documental e Writer editorial
+
+A documentação ativa foi alinhada com o runtime candidato realmente testado: Kernel/Host/Store Python + MCP determinístico + ferramentas externas. Activepieces, Memory Provider, Spiff e Conductor permanecem preservados como genealogia em decisões, histórico e relatórios, mas deixam de aparecer como dependências vigentes.
+
+Foi separado o que já está provado no LibreOffice do que ainda é capacidade futura. F007 continua a representar DOCX/ODT → PDF. O novo contrato `nexus/docs/CAPABILITY-WRITER-EDITORIAL.md` define Writer editorial completo em W001–W020: ODT editável, estilos, páginas, gutter, cabeçalhos/rodapés, viúvas/órfãos, imagens/legendas, sumário, PDF, round-trip, adulteração, restart e Human Gate.
+
+Decisão de implementação preferida para esta capability: ODF/ODT determinístico + LibreOffice para render/export; UNO só quando necessário e testável; macros não são mecanismo normal.
+
+Isto adiciona capacidade, não altera M1–M14 nem autoridade.
+
+## 05-10-2026 — reconciliação documental da implementação candidata
+
+A [PR #21](https://github.com/PAPACREATOR/cerebro-parvo-/pull/21) documenta a remoção de Conductor/Spiff/YAML de execução do ativo; a [PR #23](https://github.com/PAPACREATOR/cerebro-parvo-/pull/23) é a única continuação. Kernel/Host/Store Python, MCP determinístico, ferramentas externas e Human Gate constituem a composição candidata. A pessoa continua autoridade máxima; M1–M14 e os princípios não são reabertos por esta nota.
+
+A entrada de 30/09 mantém a genealogia do produto, mas as suas escolhas de executor/templates foram substituídas na implementação. O [ponto de situação](nexus/docs/PONTO-DE-SITUACAO.md) é a fonte operacional para SHAs, PASS/FAIL e limites. Referência verde histórica não equivale a HEAD atual aprovado.
+
+Esta entrada regista decisões já materializadas e evidência anterior; não cria uma nova decisão arquitetural.
+
+## Desenvolvimento: problema, decisão e evidência
+
+| Fase | Problema / objetivo | Desenvolvimento e razão | Evidência e limite |
+|---|---|---|---|
+| 27–28/09 — receção e persistência | Receber dados e guardar estado recuperável sem atribuir autoridade à ferramenta | Contratos de importação e writer PREPARED → materialização → verificação → COMMITTED/reconciliação; separar escrita de aprovação | Suites históricas preservadas; issues #3/#4 continuam abertas e exigem reconciliação com o candidato atual |
+| 28/09 — composição com ferramentas existentes | Evitar reconstruir capacidades maduras | Estudo Activepieces, Memory Provider e ferramentas externas; consolidou a regra LIGAR > CONFIGURAR > ADAPTAR > CRIAR | Os documentos de 28/09 são genealogia da composição; não obrigam a reinstalar esses componentes |
+| 30/09 — Folha e bancada descartável | Dar uma entrada simples e manter memória independente da IA | Nexus como launcher metódico; OpenNotebook delimitado por tarefa; Creative/Canonical e decisão humana fora do modelo | Princípios preservados na entrada de 30/09; escolha de executor evoluiu depois |
+| 01–04/10 — execução e recuperação Windows | Demonstrar arranque, ida/volta, proveniência e recuperação com ferramentas | Folha/Host/Store, testes Windows, comparação Spiff/Conductor e processo de falha → correção → repetição | Relatórios F011–F013 e comparações datadas preservados; runner não prova PC pessoal |
+| 04/10 — runtime Python mínimo | Reduzir dependências e componentes de execução preservando os contratos | PR #21 remove Conductor/Spiff/YAML de execução do ativo após trabalho comparativo e regressão; não remove leis nem Human Gate | PR #21 regista falhas da migração e suites Windows; a genealogia da alternativa permanece |
+| 04–05/10 — MCP e ferramentas externas | Chamar ferramentas sem dar autoridade ao transporte nem tornar IA obrigatória | MCP stdio, allowlists, OpenNotebook delimitado; normalização de respostas e fecho de sessão corrigidos após FAIL | 1.000 operações MCP; E2E do Kernel usa uma fronteira HTTP simulada, não backend/modelo completos |
+| 04–05/10 — avatar e multimédia | Reutilizar o podcast existente e acrescentar vídeo; preparar ferramentas locais de imagem/música | Áudio existente + retrato → Wav2Lip/FFmpeg; ACE-Step/Forge externos; instalação/checks Windows | Avatar curto real CPU Linux; 165 testes por OS; health check não demonstra geração; PC/GPU e pedido escrito completo pendentes |
+| 05/10 — consolidação e revisão | Evitar continuações concorrentes e documentação que manda executar componentes antigos | Uma PR ativa, um documento de estado; esta revisão corrige os pontos de entrada e distingue histórico de candidato | A comparação 7e1ec9b → 7faead6 é documental; o novo FAIL Practical Windows fica explícito e não é ocultado por PASS anteriores |
+
+A razão transversal é reduzir engenharia e dependências sem perder comportamento exigido. Uma mudança de mecanismo não prova a implementação de toda a arquitetura. O critério de progresso continua a ser contrato, execução observada e evidência reproduzível; não o número de bibliotecas, commits ou testes isolados.
+
+## 30-09-2026 — Nexus Minimal: launcher metódico + bancada descartável (HISTÓRICA; princípios mantidos, executor substituído)
 
 A arquitetura foi reduzida novamente para preservar funções e cortar engenharia própria.
 

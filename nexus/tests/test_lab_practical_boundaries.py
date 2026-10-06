@@ -89,7 +89,7 @@ def test_real_windows_exact_2mib_attachment_roundtrip_and_restart(tmp_path, monk
     def forbidden(*args, **kwargs):
         pytest.fail("Restart must use durable evidence, never rerun the external workflow")
 
-    monkeypatch.setattr("nexus.host.subprocess.Popen", forbidden)
+    monkeypatch.setattr("nexus.host.launch_confined", forbidden)
     restored = Host(tmp_path)
     with http(restored) as call:
         state = call("/api/runs/" + run_id)

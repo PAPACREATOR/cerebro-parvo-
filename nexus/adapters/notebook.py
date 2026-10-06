@@ -31,11 +31,11 @@ def normalize(raw, source, model_id, transformation_id):
             "evidence":[{"capability":"open-notebook/local-model", "status":"UNKNOWN",
                          "value":json.dumps({"model_id":model_id,"transformation_id":transformation_id,"quotes":value["quotes"]},ensure_ascii=False)}]}
 
-def run(input_path):
-    path = Path(input_path)
-    source = prepare_source(path.read_bytes())
-    config = strict_json((path.parent / "open-notebook.json").read_bytes())
-    if set(config) != {"base_url","password","model_id","transformation_id"} or config["base_url"] != "http://127.0.0.1:5055":
+def fetch_output(source, config):
+    """Host-owned bounded HTTP action. The confined tool receives no credential."""
+    if (not isinstance(config, dict) or set(config) != {"base_url","password","model_id","transformation_id"}
+            or config["base_url"] != "http://127.0.0.1:5055"
+            or any(not isinstance(v, str) or not v or len(v) > 4000 or "\x00" in v for v in config.values())):
         raise Blocked("Configuração da bancada não autorizada.")
     payload = {"model_id":config["model_id"],"transformation_id":config["transformation_id"],"input_text":source}
     request = urllib.request.Request(config["base_url"] + "/api/transformations/execute",
@@ -47,11 +47,33 @@ def run(input_path):
         if len(raw) > 200000:
             raise Blocked("Resposta demasiado grande.")
         envelope = strict_json(raw)
-        return normalize(envelope["output"],source,config["model_id"],config["transformation_id"])
+        output = envelope["output"]
+        if not isinstance(output, str):
+            raise Blocked("Resposta cognitiva sem texto estruturado.")
+        return {"output": output, "model_id": config["model_id"], "transformation_id": config["transformation_id"]}
     except Blocked:
         raise
     except Exception as error:
         raise Blocked("A bancada não devolveu uma resposta utilizável.") from None
+
+
+def run(input_path):
+    path = Path(input_path)
+    source = prepare_source(path.read_bytes())
+    response = path.parent / "open-notebook-response.json"
+    if sys.platform == "win32":
+        from nexus.windows_sandbox import require_native_boundary
+        require_native_boundary()
+        # No network-capability widening and no secret/configuration fallback.
+        if not response.is_file():
+            raise Blocked("Falta a resposta delimitada da bancada.")
+        value = strict_json(response.read_bytes())
+    else:
+        config = strict_json((path.parent / "open-notebook.json").read_bytes())
+        value = fetch_output(source, config)
+    if not isinstance(value, dict) or set(value) != {"output", "model_id", "transformation_id"}:
+        raise Blocked("Resposta delimitada inválida.")
+    return normalize(value["output"], source, value["model_id"], value["transformation_id"])
 
 if __name__ == "__main__":
     sys.stdout.reconfigure(encoding="utf-8")

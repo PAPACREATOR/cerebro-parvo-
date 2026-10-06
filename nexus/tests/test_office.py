@@ -85,6 +85,8 @@ def test_missing_office(tmp_path):
 
 
 def test_office_failure(tmp_path, monkeypatch):
+    # Process/timeout unit double only; real native security is tested separately.
+    monkeypatch.setattr("nexus.adapters.office.require_native_boundary", lambda: None)
     source, exe = configure(tmp_path); exe.touch()
     original = source.read_bytes()
     class Failed:
@@ -95,6 +97,8 @@ def test_office_failure(tmp_path, monkeypatch):
 
 
 def test_office_timeout_kills_tree(tmp_path, monkeypatch):
+    # Process/timeout unit double only; real native security is tested separately.
+    monkeypatch.setattr("nexus.adapters.office.require_native_boundary", lambda: None)
     source, exe = configure(tmp_path); exe.touch()
     events = []
     class TimedOut:
@@ -131,3 +135,38 @@ def test_http_pdf_requires_session_and_unchanged_bytes(tmp_path):
         with pytest.raises(Blocked): host.prepare_approval(run, host.session)
     finally:
         server.shutdown(); server.server_close(); worker.join()
+
+
+@pytest.mark.parametrize("extra", [
+    ("Object 1/content.xml", "<office:document/>"),
+    ("ObjectReplacements/Object 1", "binary"),
+    ("word/embeddings/oleObject1.bin", "binary"),
+    ("content.xml", '<draw:object xlink:href="./Object 1"/>'),
+])
+def test_embedded_writer_objects_are_blocked(extra):
+    with pytest.raises(Blocked):
+        document_kind(odt(extra))
+
+
+@pytest.mark.parametrize("extra", [
+    ("../outside.xml", "x"),
+    ("/absolute.xml", "x"),
+    ("C:/drive.xml", "x"),
+    ("links.xml", '<a xlink:href="ftp://example.invalid/file"/>'),
+    ("links.xml", '<a xlink:href="//server/share"/>'),
+    ("links.xml", '<a xlink:href="smb://server/share"/>'),
+])
+def test_writer_internal_path_traversal_and_external_uri_are_blocked(extra):
+    with pytest.raises(Blocked):
+        document_kind(odt(extra))
+
+
+def test_writer_raw_backslash_member_is_blocked():
+    safe = b"folder/windows-path.xml"
+    hostile = b"folder\\windows-path.xml"
+    raw = odt(("folder/windows-path.xml", "x"))
+    assert raw.count(safe) >= 2
+    raw = raw.replace(safe, hostile)
+    assert hostile in raw
+    with pytest.raises(Blocked):
+        document_kind(raw)

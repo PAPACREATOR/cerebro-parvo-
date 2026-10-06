@@ -1,105 +1,124 @@
-# Plano de execução vigente — provar antes de escolher
+# Plano de implementação vigente
 
-## Objetivo
+Objetivo: fechar um protótipo local funcional no PC, mantendo o Kernel estável e acrescentando capacidades por adapters/contratos.
 
-Construir o menor Cérebro funcional possível com dois blocos nucleares:
-- Activepieces Community;
-- Memory Provider local SQLite/MCP.
+## Regra de execução
 
-O humano é a autoridade.
+Cada micro-passo segue:
 
-## Fase 0 — comparação do Memory Provider
+`contrato → implementação mínima → teste direto → teste inverso/bloqueio → adversarial/limites → regressão do bloco → regressão total → E2E`.
 
-Testar em igualdade:
-- RMANOV/sqlite-memory-mcp;
-- Beledarian/mcp-local-memory.
+FAIL é preservado. Não se avança enquanto a causa não estiver corrigida e o bloco repetido.
 
-Contrato mínimo:
-- Windows;
-- MCP acessível pelo Activepieces;
-- SQLite local e portátil;
-- FTS;
-- semântico local ou desligável;
-- temporal;
-- relações;
-- proveniência;
-- histórico/contradições;
-- sem auto-delete por similaridade;
-- restart;
-- backup/restore;
-- funcionamento sem Internet;
-- possibilidade de desligar/substituir.
+## Fase 0 — sincronização segura
 
-Critério de escolha: **menos adaptação + menos dependências + mais invariantes PASS**. Não escolher por marketing ou quantidade de tools.
+- localizar uma única cópia oficial;
+- recusar múltiplos checkouts;
+- recusar árvore suja;
+- `fetch + switch + merge --ff-only`;
+- nunca `reset --hard`;
+- não criar clone redundante.
 
-## Fase 1 — vertical slice
+## Fase 1 — preparar o Core no PC
 
-```
-pedido humano
- -> Activepieces
- -> retrieve Memory Provider
- -> comparadores
- -> recipe
- -> resultado
- -> Creative
- -> Human Gate
- -> Canonical
- -> persistir com proveniência
-```
+- Python 3.12 local;
+- `.venv`;
+- dependências de teste;
+- Core;
+- Blocks;
+- Practical;
+- All;
+- autoridade;
+- confinamento;
+- bidirecionalidade;
+- recovery;
+- relatório por HEAD.
 
-A operação técnica de promoção no Memory Provider só pode ser chamada após aprovação humana.
+## Fase 2 — inventário real
 
-## Fase 2 — três memórias
-
-- Working: estado Activepieces + contexto temporário;
-- Behavioral/Procedural: regras/preferências/correções versionadas;
-- Persistent: Memory Provider SQLite com Creative/Canonical.
-
-Não criar três bases.
-
-## Fase 3 — três comparadores
-
-- determinístico/exato;
-- semântico;
-- relacional.
-
-Temporal/proveniência complementam a decisão mas não concedem autoridade.
-
-## Fase 4 — robustez
-
-- matar Memory Provider durante flow;
-- reiniciar sem duplicar ação irreversível;
-- matar Activepieces;
-- restaurar SQLite;
-- exportar Canonical;
-- comparar hashes/estado;
-- Internet OFF;
-- trocar provider mantendo contrato.
-
-## Fase 5 — providers periféricos
-
-Só após FAIL/necessidade real:
+Detetar sem instalar:
+- Git/Python/Java;
 - LibreOffice;
 - Zotero;
 - LanguageTool;
-- ComfyUI;
-- IA local OpenAI-compatible;
-- web explícita;
-- email;
-- publicação.
+- OpenNotebook;
+- FFmpeg;
+- ACE-Step;
+- Forge.
 
-Open Notebook/K-DLC só regressam se um teste provar uma função não coberta.
+O inventário não autoriza provisioning.
 
-## PiecesOS
+## Fase 3 — plano do que falta
 
-Pode ser usado como benchmark para comparar qualidade de memória. Não é requisito do MVP nem do produto.
+Para cada ferramenta:
+- estado atual;
+- fonte;
+- versão/pin;
+- licença;
+- destino;
+- tipo de instalação;
+- gate necessário;
+- health check;
+- rollback/cleanup.
 
-## Código histórico
+Modo inicial: PLAN_ONLY.
 
-Python/writer recuperável permanecem como fallback. Não apagar. Não reativar sem lacuna demonstrada.
+## Fase 4 — provisioning protegido
 
-## Regra
+Só depois do seu gate próprio:
+- staging delimitado;
+- verificação de pin/hash/licença;
+- instalação externa;
+- nenhum acesso a Store/Creative/Canonical;
+- nenhum arranque automático não autorizado;
+- cleanup e recovery;
+- health check;
+- relatório.
 
-**LIGAR > CONFIGURAR > ADAPTAR > CRIAR.**
+ACE-Step, Forge, modelos/avatar e isolamento de instalação pertencem aqui.
 
-**Nenhum componente entra sem FAIL.**
+## Fase 5 — capacidades editoriais
+
+### LibreOffice Writer
+Expandir o adapter atual, que hoje prova apenas DOCX/ODT → PDF:
+- estilos;
+- páginas/espelhos;
+- gutter;
+- cabeçalhos/rodapés;
+- numeração;
+- viúvas/órfãos;
+- secções/capítulos;
+- imagens/legendas;
+- índices;
+- templates de livro;
+- round-trip;
+- verificação PDF.
+
+### Zotero
+- leitura local;
+- pesquisa;
+- referências;
+- citações;
+- proveniência;
+- escrita apenas com gate humano aplicável.
+
+## Fase 6 — cognição e multimédia físicas
+
+- OpenNotebook 1.15 + SurrealDB + modelo local real;
+- ACE-Step na RTX 2080;
+- Forge com checkpoint licenciado;
+- avatar/FFmpeg;
+- resultados sempre candidate/Creative;
+- hashes e proveniência;
+- limites GPU/VRAM/timeouts medidos.
+
+## Fase 7 — adaptabilidade
+
+Nova capability:
+`adapter → contrato → tests → MCP/runner → Kernel → Creative → humano → Canonical`.
+
+Não redesenhar o núcleo por ferramenta.
+
+## Fora do plano ativo
+
+Activepieces, Memory Provider, Spiff e Conductor permanecem na genealogia e comparação histórica. Não são dependências do runtime candidato atual.

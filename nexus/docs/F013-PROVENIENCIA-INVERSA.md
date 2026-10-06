@@ -1,3 +1,5 @@
+> **Estado atual (06-10-2026):** contrato vigente de retorno e proveniência inversa. Referências a Conductor/Spiff abaixo pertencem à implementação histórica; o caminho ativo usa Host/Store + runner/MCP e deve continuar a provar retorno sem reexecutar ferramentas nem criar aprovação nova.
+
 # F013 — proveniência inversa e retorno à Folha
 
 04-10-2026, Europe/Lisbon. Pedido humano: testar no sentido inverso e conferir

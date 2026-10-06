@@ -1,3 +1,5 @@
+> **Estado atual (06-10-2026):** este documento preserva o diagnóstico histórico de PowerShell/Conductor. O hash independente e os gates Windows continuam parte da regressão, mas o executor ativo é Python/MCP e a fronteira nativa foi posteriormente validada.
+
 # F012 — hash Windows no ambiente reduzido do Host
 
 03-10-2026. Correção de execução M14; preserva leis, contratos e autoridade.

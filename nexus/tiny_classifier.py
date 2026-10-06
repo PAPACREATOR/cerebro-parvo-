@@ -21,6 +21,11 @@ MAX_TEXT_CHARS = 4000
 MAX_RESPONSE_BYTES = 20000
 
 
+class NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, *args, **kwargs):
+        raise Blocked("Redirecionamento tiny proibido.")
+
+
 @dataclass(frozen=True)
 class TinyLocalSpec:
     url: str
@@ -32,9 +37,9 @@ def _validate_spec(spec: TinyLocalSpec) -> str:
     if not isinstance(spec, TinyLocalSpec):
         raise TypeError("spec must be TinyLocalSpec")
     parsed = urllib.parse.urlparse(spec.url)
-    if parsed.scheme != "http" or parsed.hostname not in {"127.0.0.1", "localhost", "::1"}:
-        raise Blocked("Tiny só pode usar endpoint HTTP local.")
-    if parsed.username or parsed.password or parsed.fragment:
+    if parsed.scheme != "http" or parsed.hostname not in {"127.0.0.1", "::1"}:
+        raise Blocked("Tiny só pode usar endpoint HTTP loopback explícito.")
+    if parsed.username or parsed.password or parsed.fragment or parsed.query:
         raise Blocked("Endpoint tiny inválido.")
     if not parsed.port:
         raise Blocked("Endpoint tiny deve indicar porta local.")
@@ -75,8 +80,9 @@ def classify(text: str, spec: TinyLocalSpec) -> list[str]:
         method="POST",
         headers={"Content-Type": "application/json"},
     )
+    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), NoRedirect())
     try:
-        with urllib.request.urlopen(request, timeout=float(spec.timeout)) as response:
+        with opener.open(request, timeout=float(spec.timeout)) as response:
             if response.status != 200:
                 raise Blocked("Tiny local devolveu estado inválido.")
             raw = response.read(MAX_RESPONSE_BYTES + 1)

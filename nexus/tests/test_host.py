@@ -114,9 +114,11 @@ def test_refresh_review_revokes_previous_ticket(tmp_path):
 def test_invalid_tool_output_never_promotes(tmp_path, monkeypatch, output):
     class BrokenTool:
         returncode = 0
+        def __enter__(self): return self
+        def __exit__(self, *args): pass
         def communicate(self, **kwargs):
             return output, b""
-    monkeypatch.setattr("nexus.host.subprocess.Popen", lambda *args, **kwargs: BrokenTool())
+    monkeypatch.setattr("nexus.host.launch_confined", lambda *args, **kwargs: BrokenTool())
     host = Host(tmp_path)
     run = host.store.create(request())
     host.busy.acquire()

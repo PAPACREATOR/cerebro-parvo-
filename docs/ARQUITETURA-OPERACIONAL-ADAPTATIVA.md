@@ -1,3 +1,5 @@
+> **Documento histórico datado.** Conserva a análise desta fase e não define o runtime atual. Para implementação vigente consultar [CEREBRO_ARCHITECTURE.md](../CEREBRO_ARCHITECTURE.md), [DECISIONS.md](../DECISIONS.md) e [PONTO-DE-SITUACAO](../nexus/docs/PONTO-DE-SITUACAO.md).
+
 # Arquitetura operacional adaptativa
 
 Estado: refinamento operacional aprovado em 28-09-2026. Não cria M15 nem substitui M1–M14. Implementa a arquitetura fechada com o mínimo de código próprio e máxima reutilização de componentes maduros.

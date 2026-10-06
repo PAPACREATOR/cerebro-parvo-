@@ -22,7 +22,7 @@ Python só pode fazer cola determinística mínima:
 - execução: JSON;
 - conhecimento/pedido humano: Markdown;
 - LanguageTool: adaptador existente;
-- Spiff/Conductor: motores efémeros;
+- executores e ferramentas externas: processos delimitados pelo Kernel;
 - estado/recovery/Human Gate: Kernel/Store.
 
 ## Proibido
