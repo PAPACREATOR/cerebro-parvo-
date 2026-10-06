@@ -171,10 +171,8 @@ def test_video_flow_5000_directional_cases():
         assert value["title"] == f"Documentário {case_id}"
         assert len(value["scenes"]) == 6
         assert all(type(scene["seconds"]) is int and 3 <= scene["seconds"] <= 15 for scene in value["scenes"])
-    # The lab flow exists, but the frozen public Host schema still has no video process.
     for case_id in range(CASES):
-        with pytest.raises(Blocked):
-            validate("request", _request("video", str(case_id)))
+        assert validate("request", _request("video", str(case_id)))["process"] == "video"
 
 
 def test_podcast_flow_5000_directional_cases():
@@ -193,10 +191,8 @@ def test_podcast_flow_5000_directional_cases():
         assert profile["num_segments"] == 3
         assert "Do not invent sources or claims" in profile["default_briefing"]
         assert [call[0] for call in api.calls] == ["GET", "POST"]
-    # Podcast remains an OpenNotebook/lab capability, not a public Host process yet.
     for case_id in range(CASES):
-        with pytest.raises(Blocked):
-            validate("request", _request("podcast", str(case_id)))
+        assert validate("request", _request("podcast", str(case_id)))["process"] == "podcast"
 
 
 def test_visual_podcast_flow_5000_directional_cases(tmp_path):
@@ -234,8 +230,7 @@ def test_book_flow_5000_directional_cases():
         if outcome == "conflict":
             continue
         assert document_kind(_minimal_odt(case_id)) == ".odt"
-        # Existing public route is conversion only; this confirms the request contract unchanged.
-        assert validate("request", _request("convert_pdf", f"livro {case_id}"))["process"] == "convert_pdf"
+        assert validate("request", _request("book", f"livro {case_id}"))["process"] == "book"
     template_gate = (ROOT / "tests" / "test_writer_real_libreoffice.py").read_text(encoding="utf-8")
     assert "page-usage=\"mirrored\"" in template_gate
     assert "orphans" in template_gate and "widows" in template_gate
@@ -253,10 +248,8 @@ def test_music_flow_5000_directional_cases_is_fail_closed_until_generation_route
             "trabalhar",
         )
         _source_gate(case_id)
-        with pytest.raises(Blocked):
-            validate("request", _request("music", str(case_id)))
-    # No fake public capability is added by the test.
-    assert "music" not in REQUEST_SCHEMA["properties"]["process"]["enum"]
+        assert validate("request", _request("music", str(case_id)))["process"] == "music"
+    assert "music" in REQUEST_SCHEMA["properties"]["process"]["enum"]
 
 
 def test_web_flow_5000_directional_cases_is_parsed_but_fail_closed_at_host():
@@ -264,9 +257,8 @@ def test_web_flow_5000_directional_cases_is_parsed_but_fail_closed_at_host():
         text = f"@ pesquisa web caso {case_id} e conserva as fontes"
         _roundtrip_human(text, "web")
         _source_gate(case_id)
-        with pytest.raises(Blocked):
-            validate("request", _request("web", str(case_id)))
-    assert "web" not in REQUEST_SCHEMA["properties"]["process"]["enum"]
+        assert validate("request", _request("web", str(case_id)))["process"] == "web"
+    assert "web" in REQUEST_SCHEMA["properties"]["process"]["enum"]
 
 
 def test_frozen_policy_and_directional_budget_are_unchanged():
@@ -275,7 +267,7 @@ def test_frozen_policy_and_directional_budget_are_unchanged():
         "canonical_gate": "human_required",
         "automatic_deletion": False,
         "ai_authority": False,
-        "processes": ["verify", "interpret", "proofread", "convert_pdf"],
+        "processes": ["verify", "interpret", "proofread", "convert_pdf", "video", "podcast", "visual_podcast", "book", "music", "web"],
         "max_input_bytes": 2097152,
     }
     assert CASES * len(FLOWS) == 30_000
