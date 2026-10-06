@@ -94,7 +94,7 @@ def normalize_plan(raw: str, source: str, route: str, model_id: str, transformat
     if not isinstance(value, dict) or set(value) != {"title", "body", "steps", "quotes"}:
         raise Blocked("Plano OpenNotebook com formato inválido.")
     title, body, steps, quotes = value["title"], value["body"], value["steps"], value["quotes"]
-    if not isinstance(title, str) or not title.strip() or len(title) > 180:
+    if not isinstance(title, str) or not title.strip() or len(title) > 150:
         raise Blocked("Título de plano inválido.")
     if not isinstance(body, str) or not body.strip() or len(body) > 30_000:
         raise Blocked("Conteúdo de plano inválido.")
