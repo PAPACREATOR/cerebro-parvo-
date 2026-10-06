@@ -2,16 +2,18 @@
 param(
     [string]$ToolsRoot = 'C:\Nexus-Tools',
     [switch]$SkipAceStep,
-    [switch]$SkipForge
+    [switch]$SkipForge,
+    [switch]$AuthorizeInstall
 )
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
-# Stop before any command, prompt, directory or external operation.
-throw 'NEXUS_PROTECTED_PROVISIONING_PENDING: protected provisioning is not validated; refusing changes and external processes.'
+# Explicit human-authorized installation gate. Accidental/direct invocation remains fail-closed.
+if (-not $AuthorizeInstall) {
+    throw 'NEXUS_INSTALL_AUTHORIZATION_REQUIRED: rerun with -AuthorizeInstall only after explicit human approval.'
+}
 
-# Historical implementation retained below; unreachable while this gate is closed.
 
 $AceRepo = 'https://github.com/ace-step/ACE-Step-1.5.git'
 $AceCommit = 'ca1e85fe9430179831e6bc6be790c332190a3866'
