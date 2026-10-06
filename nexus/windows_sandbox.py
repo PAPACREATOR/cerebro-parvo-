@@ -89,6 +89,7 @@ class _API:
                 "UpdateProcThreadAttribute": (W.BOOL, [P, D, C.c_size_t, P, C.c_size_t, P, P]),
                 "DeleteProcThreadAttributeList": (None, [P]),
                 "CreateProcessW": (W.BOOL, [W.LPCWSTR, W.LPWSTR, P, P, W.BOOL, D, P, W.LPCWSTR, P, P]),
+                "CreateFileW": (H, [W.LPCWSTR, D, D, P, D, D, H]),
                 "CreateJobObjectW": (H, [P, W.LPCWSTR]),
                 "SetInformationJobObject": (W.BOOL, [H, D, P, D]),
                 "AssignProcessToJobObject": (W.BOOL, [H, H]),
@@ -106,6 +107,7 @@ class _API:
                 "GetNamedSecurityInfoW": (D, [W.LPCWSTR, D, D, P, P, P, P, P]),
                 "SetEntriesInAclW": (D, [D, P, P, P]),
                 "SetNamedSecurityInfoW": (D, [W.LPWSTR, D, D, P, P, P, P]),
+                "SetSecurityInfo": (D, [H, D, D, P, P, P, P]),
                 "ConvertStringSecurityDescriptorToSecurityDescriptorW": (W.BOOL, [W.LPCWSTR, D, P, P]),
                 "GetSecurityDescriptorSacl": (W.BOOL, [P, P, P, P]),
                 "ConvertSidToStringSidW": (W.BOOL, [P, P]),
@@ -141,7 +143,18 @@ class _API:
             entry.trustee.form, entry.trustee.type, entry.trustee.name = 0, 5, sid
             error = self.a.SetEntriesInAclW(1, C.byref(entry), old, C.byref(new))
             if not error:
-                error = self.a.SetNamedSecurityInfoW(path, 1, 4, None, None, new, None)
+                if not inherit and Path(path).is_dir():
+                    # Documented MAXIMUM_ALLOWED handle semantics suppress
+                    # propagation to children. Only this task SID's ACE changes;
+                    # the tool does not receive the Host handle or its rights.
+                    handle = self.k.CreateFileW(path, 0x02000000, 7, None, 3, 0x02000000, None)
+                    self.check(handle and handle != self.H(-1).value, "directory ACL handle")
+                    try:
+                        error = self.a.SetSecurityInfo(handle, 1, 4, None, None, new, None)
+                    finally:
+                        self.k.CloseHandle(handle)
+                else:
+                    error = self.a.SetNamedSecurityInfoW(path, 1, 4, None, None, new, None)
             if error:
                 raise Blocked(f"Não foi possível delimitar os direitos da tarefa ({error}).")
         finally:
@@ -209,6 +222,7 @@ class ConfinedProcess:
         self.stdin = self.stdout = self.stderr = None
         self.returncode = None
         self.grants, self.handles = [], []
+        self.shallow_grants = set()
         self.created, self.locked = False, False
         self.cwd = work
         try:
@@ -236,6 +250,7 @@ class ConfinedProcess:
                     raise Blocked("Diretório de runtime inválido.")
                 self.api.acl(path, self.sid, READ_EXECUTE, inherit=False)
                 self.grants.append(path)
+                self.shallow_grants.add(path)
             for path in dict.fromkeys(str(Path(x).resolve()) for x in read_roots):
                 self.api.acl(path, self.sid, READ_EXECUTE, inherit=Path(path).is_dir())
                 self.grants.append(path)
@@ -395,9 +410,10 @@ class ConfinedProcess:
         if self.process: a.k.CloseHandle(self.process); self.process = None
         if self.job: a.k.CloseHandle(self.job); self.job = None
         for path in reversed(self.grants):
-            try: a.acl(path, self.sid, 0, mode=4)
+            try: a.acl(path, self.sid, 0, mode=4, inherit=path not in self.shallow_grants)
             except Exception as error: errors.append(error)
         self.grants.clear()
+        self.shallow_grants.clear()
         if self.created:
             result = a.u.DeleteAppContainerProfile(self.name)
             if result < 0: errors.append(Blocked(f"Limpeza da identidade restrita falhou ({result:#x})."))

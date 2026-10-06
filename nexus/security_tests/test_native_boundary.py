@@ -151,6 +151,19 @@ def test_directory_enumeration_does_not_authorize_unassigned_file(tmp_path):
     selected.write_bytes(b"selected-data")
     protected = directory / "original"
     protected.write_bytes(b"original")
+    import ctypes as C
+    api = _API()
+    def acl_bytes(path):
+        acl, descriptor = api.P(), api.P()
+        assert api.a.GetNamedSecurityInfoW(str(path), 1, 4, None, None,
+                                         C.byref(acl), None, C.byref(descriptor)) == 0
+        try:
+            assert acl
+            size = int.from_bytes(C.string_at(acl, 4)[2:4], "little")
+            return C.string_at(acl, size)
+        finally:
+            api.k.LocalFree(descriptor)
+    original_acl = acl_bytes(protected)
     code = (
         "import json;from pathlib import Path;"
         f"folder=Path({str(directory)!r});"
@@ -169,3 +182,4 @@ def test_directory_enumeration_does_not_authorize_unassigned_file(tmp_path):
     assert stdout.strip() == b"DENIED"
     assert protected.read_bytes() == b"original"
     assert selected.read_bytes() == b"selected-data"
+    assert acl_bytes(protected) == original_acl
