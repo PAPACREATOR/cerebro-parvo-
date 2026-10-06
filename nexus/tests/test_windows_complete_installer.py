@@ -40,6 +40,7 @@ def test_installer_pins_the_external_source_trees_and_binary_hashes():
         "d9426c121eddadc76648be20034bc087acd0240c",
         "55c7e05ee2b68ec0d8b86c4b588e9b9807f257af8c15c05d17074514c64d8c91",
         "53600506b399bb5ffe1e4c8dec794fd378212f14aaf38ccef9b6f89314d11631",
+        "6ce0161689b3853acaa03779ec93eafe75a02f4ced659bee03f50797806fa2fa",
     )
     joined = MASTER + MEDIA
     for value in expected:
@@ -64,11 +65,19 @@ def test_installer_prepares_local_models_needed_for_later_physical_acceptance():
         assert value in MASTER or value in AVATAR or value in MODELS
 
 
-def test_installer_does_not_claim_unconfigured_open_notebook_or_forge_bindings():
+def test_installer_only_leaves_open_notebook_binding_explicitly_pending():
     assert "PASS_WITH_EXPLICIT_PENDING_BINDINGS" in MASTER
     assert "OPEN_NOTEBOOK_MODEL_AND_TRANSFORMATION_BINDING" in MASTER
-    assert "FORGE_IMAGE_CHECKPOINT_SELECTION" in MASTER
-    assert "model='NOT_SELECTED'" in MASTER
+    assert "FORGE_IMAGE_CHECKPOINT_SELECTION" not in MASTER
+    assert "model='NOT_SELECTED'" not in MASTER
+
+
+def test_forge_and_deforum_receive_a_verified_sd15_baseline():
+    assert "v1-5-pruned-emaonly.safetensors" in MASTER
+    assert "6ce0161689b3853acaa03779ec93eafe75a02f4ced659bee03f50797806fa2fa" in MASTER
+    assert "CreativeML Open RAIL-M" in MASTER
+    assert "RUNTIME_AND_BASE_MODEL_INSTALLED" in MASTER
+    assert "REQUIRES_REAL_FORGE_AND_DEFORUM_RENDER_ACCEPTANCE" in MASTER
 
 
 def test_installer_never_writes_or_deletes_nexus_vaults():
