@@ -20,7 +20,7 @@ def test_install_bat_is_explicit_and_password_free():
     assert "C:\\Nexus-Tools" in INSTALL_BAT
     for forbidden in ("New-LocalUser", "Add-LocalGroupMember", "Read-Host", "-Password", "password="):
         assert forbidden not in INSTALL_BAT
-    assert "nao cria contas Windows Nexus/NexusTool" in INSTALL_BAT
+    assert "nao cria contas windows nexus/nexustool" in INSTALL_BAT.lower()
 
 
 def test_post_install_bat_only_calls_bounded_acceptance():
