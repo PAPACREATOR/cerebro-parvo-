@@ -6,7 +6,7 @@ import os
 import subprocess
 import sys
 import zipfile
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from nexus.windows_sandbox import require_native_boundary
@@ -23,7 +23,13 @@ def document_kind(raw):
             if len(names) != len(entries):
                 raise Blocked("Documento com entradas repetidas.")
             for entry in entries:
-                name = entry.filename.lower()
+                raw_name = entry.filename
+                posix = PurePosixPath(raw_name)
+                if ("\x00" in raw_name or "\\" in raw_name or raw_name.startswith("/")
+                        or any(part == ".." for part in posix.parts)
+                        or (posix.parts and ":" in posix.parts[0])):
+                    raise Blocked("Caminho interno de documento não autorizado.")
+                name = raw_name.lower()
                 if (any(word in name for word in ("vbaproject", "scripts/", "basic/", "embeddings/"))
                         or name.startswith("object ")
                         or name.startswith("objectreplacements/")):
@@ -32,7 +38,8 @@ def document_kind(raw):
                     body = archive.read(entry).lower()
                     import re
                     if (any(word in body for word in (b'<!entity', b'<!doctype', b'<draw:object', b'<draw:object-ole'))
-                            or re.search(rb'targetmode\s*=\s*[\x22\x27]external|(?:xlink:href|href)\s*=\s*[\x22\x27](?:https?:|file:)', body)):
+                            or re.search(rb'targetmode\s*=\s*[\x22\x27]external', body)
+                            or re.search(rb'(?:xlink:href|href)\s*=\s*[\x22\x27](?:[a-z][a-z0-9+.-]*:|//|\\\\)', body)):
                         raise Blocked("Ligação externa ou objeto incorporado não permitido neste ensaio.")
             if "word/document.xml" in names and "[Content_Types].xml" in names:
                 return ".docx"
