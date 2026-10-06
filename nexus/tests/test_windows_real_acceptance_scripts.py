@@ -6,6 +6,8 @@ import subprocess
 
 import pytest
 
+from nexus.contracts import Blocked
+from nexus.host import Host
 from nexus.windows.real_acceptance import _names, _profile_endpoint
 
 
@@ -37,6 +39,19 @@ def test_real_acceptance_never_claims_external_probe_is_canonical():
     assert "from nexus.store" not in python
     assert "Store(" not in python
 
+
+
+@pytest.mark.parametrize("process", ["music", "podcast", "avatar", "zotero", "web", "book"])
+def test_external_acceptance_capabilities_cannot_be_smuggled_into_host_catalogue(tmp_path, process):
+    host = Host(tmp_path)
+    with pytest.raises(Blocked):
+        host.start(
+            {"process": process, "text": "candidate externo", "filename": "", "attachment": ""},
+            host.session,
+        )
+    assert not list((tmp_path / "runs").iterdir())
+    assert not list((tmp_path / "creative").iterdir())
+    assert not list((tmp_path / "canonical").iterdir())
 
 def test_launcher_is_thin_and_does_not_shell_out():
     source = (ROOT / "nexus/windows/NexusLauncher.cs").read_text("utf-8")
