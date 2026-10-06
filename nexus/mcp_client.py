@@ -31,6 +31,10 @@ BLOCKED_ENV_KEYS = {
     "GOOGLE_API_KEY",
     "GROQ_API_KEY",
 }
+ALLOWED_EXTRA_ENV_KEYS = {
+    "OPEN_NOTEBOOK_URL",
+    "MCP_TRANSPORT",
+}
 
 
 @dataclass(frozen=True)
@@ -50,9 +54,12 @@ def _reduced_env(extra: dict[str, str] | None = None) -> dict[str, str]:
         for key, value in extra.items():
             if not isinstance(key, str) or not isinstance(value, str):
                 raise TypeError("MCP env must contain strings")
-            if key.upper() in BLOCKED_ENV_KEYS:
+            upper = key.upper()
+            if upper in BLOCKED_ENV_KEYS:
                 raise Blocked("Credencial cloud proibida na fronteira MCP Nexus.")
-            env[key] = value
+            if upper not in ALLOWED_EXTRA_ENV_KEYS:
+                raise Blocked("Variável de ambiente MCP não autorizada pelo Kernel.")
+            env[upper] = value
     return env
 
 
