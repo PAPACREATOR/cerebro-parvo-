@@ -25,7 +25,7 @@
   "instance.py": "a97ef1449ab8a2fe66dc0bcf79fe64dca93ae1b7a43bbfa296caeb90229120ac",
   "adapters/runner.py": "d1f4e63f8d1e9a031771578591d90f4a0ccdb98c70bb7a806dbbd5ee7e94fc97",
   "adapters/verify_direct.py": "0ed136dafad0bbccec348cb4a92d8f2153e688cee112d244fdea3f6905b6b74c",
-  "mcp_client.py": "7e8c2bd4a8a12b3f97fc9e01f71043cca737d288e39443a8095068dd360f9770",
+  "mcp_client.py": "5b5a80353e768842bb3c684117f1d5d876d20069ac8c0dd1ea5061be23615f9b",
   "mcp_tools_server.py": "8b47abd79a3ff30c560c1fe91fd0923c5c00f4ce739918f1d40850ee1ed52938",
   "adapters/media_tools.py": "d4eedf365080c7eb4018097bc660606e3904d0de4784782265949af8a60f2e80",
   "windows_sandbox.py": "95e5b0424ea2019429365b6278619391093bb8d4309d6c067ad30898210f79c0",
