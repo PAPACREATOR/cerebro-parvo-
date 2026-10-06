@@ -9,6 +9,11 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
+# Stop before any command, prompt, directory or external operation.
+throw 'NEXUS_PROTECTED_PROVISIONING_PENDING: protected provisioning is not validated; refusing changes and external processes.'
+
+# Historical implementation retained below; unreachable while this gate is closed.
+
 function Invoke-Checked {
     param(
         [Parameter(Mandatory=$true)][string]$FilePath,

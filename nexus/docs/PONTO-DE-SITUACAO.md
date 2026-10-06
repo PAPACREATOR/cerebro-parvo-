@@ -5,7 +5,7 @@ Estados antigos, filas, handoffs e quadros temporários foram removidos da árvo
 
 ## Relatório corrente — 06-10-2026
 
-Pedido humano: corrigir e testar sem alterar a estrutura, e escrever o ponto de situação. **Núcleo e Avatar Windows PASS em 7726709; protótipo funcional em CI; provisioning sem fronteira em teste de recusa; instalação física por validar.** Arquitetura M1–M14, responsabilidades Kernel/Host/Store, Creative/Human Gate/Canonical e caminhos existentes preservados.
+Pedido humano: corrigir e testar sem alterar a estrutura, e escrever o ponto de situação. **Núcleo e Avatar Windows PASS em 7726709; protótipo funcional em CI; provisioning sem fronteira bloqueado; recusa e arranque em repetição; instalação física por validar.** Arquitetura M1–M14, responsabilidades Kernel/Host/Store, Creative/Human Gate/Canonical e caminhos existentes preservados.
 
 Runtime com gates completos Nexus/Host/MCP/Avatar confirmados: `77267094bf7747a05155a529726a277601c86e79`. Este commit acrescenta testes de provisioning e relatório, sem mudar produção; não trata instaladores não protegidos como PASS. PR #23 draft, branch lab-open-notebook-avatar-20261004. Baseline/base e main não foram promovidas.
 
@@ -43,6 +43,8 @@ Próximo microcontrato, dono Host, 06-10: provisioning não validado deve recusa
 Regressão do runtime 7726709 em 6ba7ea7 (só testes/documentação), [Avatar 37442921072](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37442921072): primeira chamada timeout **3,64 s > 3 s**, vídeo/retorno/idempotência PASS em 1,85 s, worker nativo PASS e FFmpeg restrito PASS; **1 FAIL / 3 PASS**. O primeiro PASS de 1,74 s não é prova de estabilidade do arranque. Os imports Nexus e a ligação de protótipos DLL passam para a inicialização do serviço, sem criar tarefa, perfil, processo ou ACL. O selo continua verificado em cada chamada e não há fallback. O mesmo limite de três segundos e a suite integral mantêm-se; repetição PENDENTE.
 
 Baseline provisioning, [Confinamento 37442920985](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37442920985): **9 FAIL** em Server 2025, sentinelas observadas em New-Item, Get-Command, Resolve-Path, Read-Host e mkdir do descarregador. Original e pasta não criada invariáveis. Outros gates Native/Host/retorno PASS. Falha esperada do contrato, não nove ataques bem sucedidos no PC. A mesma recusa deve ser comprovada depois sem sentinelas.
+
+Contenção do provisioning, 06-10: os três instaladores e o setup histórico recusam imediatamente, antes de resolver caminhos, perguntar credenciais, criar pastas, instalar ou lançar programas. O descarregador recusa no início de provision em Windows, cobrindo CLI e função, antes de gdown, mkdir ou HTTP. Flags de salto não contornam o bloqueio; nenhuma criação de conta global nem política adicional. Fonte histórica preservada sem execução e caminhos inalterados. Repetição com as nove sentinelas originais e nove invocações reais sem sentinelas = **18 critérios PENDENTES**. Isto implementa recusa segura; **não implementa nem aprova instalação protegida funcional**. check-nexus.ps1 continua disponível para um ambiente já instalado. Correção do arranque Avatar em validação simultânea, com o teste <3 s mantido.
 
 ## Fonte de verdade operacional
 

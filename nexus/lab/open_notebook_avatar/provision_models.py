@@ -5,6 +5,7 @@ the downloaded files. gdown handles Google Drive confirmation pages.
 """
 import argparse
 import hashlib
+import os
 from pathlib import Path
 import tempfile
 import urllib.request
@@ -25,6 +26,8 @@ def sha(path):
 
 
 def provision(root):
+    if os.name == "nt":
+        raise RuntimeError("NEXUS_PROTECTED_PROVISIONING_PENDING: protected model provisioning is not validated; refusing downloads and changes.")
     import gdown
     root.mkdir(parents=True, exist_ok=True)
     for name, expected in [("wav2lip.pth", WAV2LIP_SHA), ("s3fd.pth", SFD_SHA)]:

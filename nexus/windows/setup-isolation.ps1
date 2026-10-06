@@ -1,5 +1,10 @@
 # Synthetic test only. Existing accounts and folders are never reset.
 $ErrorActionPreference = 'Stop'
+
+# Stop before any command, prompt, directory or external operation.
+throw 'NEXUS_PROTECTED_PROVISIONING_PENDING: legacy global account setup is retired; use the Host per-task boundary.'
+
+# Historical implementation retained below; unreachable while this gate is closed.
 $root = 'C:\ProgramData\NexusMinimal'
 $password = $null
 try {

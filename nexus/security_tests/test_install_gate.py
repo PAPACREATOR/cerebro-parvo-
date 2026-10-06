@@ -24,7 +24,7 @@ PS_CASES = [
 ]
 
 @pytest.mark.parametrize("relative,root_parameter,flags,device", PS_CASES)
-@pytest.mark.parametrize("mode", ["tripwires"])
+@pytest.mark.parametrize("mode", ["tripwires", "native"])
 def test_windows_provisioning_refuses_before_changes(tmp_path, relative, root_parameter, flags, device, mode):
     target = tmp_path / "not-created"
     original = tmp_path / "original"
@@ -59,7 +59,7 @@ def test_windows_provisioning_refuses_before_changes(tmp_path, relative, root_pa
 
 
 @pytest.mark.parametrize("entry", ["cli", "function"])
-@pytest.mark.parametrize("mode", ["tripwires"])
+@pytest.mark.parametrize("mode", ["tripwires", "native"])
 def test_model_provisioning_refuses_before_downloads(tmp_path, entry, mode):
     target = tmp_path / "not-created"
     original = tmp_path / "original"

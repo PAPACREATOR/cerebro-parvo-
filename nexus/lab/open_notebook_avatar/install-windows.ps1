@@ -5,6 +5,11 @@ param(
     [ValidateSet('cpu','cuda')][string]$Device = 'cpu'
 )
 $ErrorActionPreference = 'Stop'
+
+# Stop before any command, prompt, directory or external operation.
+throw 'NEXUS_PROTECTED_PROVISIONING_PENDING: protected avatar installation is not validated; refusing changes and external processes.'
+
+# Historical implementation retained below; unreachable while this gate is closed.
 $root = (Resolve-Path -LiteralPath $OpenNotebookRoot).Path
 $api = (Get-Command $ApiPython -CommandType Application -ErrorAction Stop).Source
 $workerDir = Join-Path $root 'venv-avatar'

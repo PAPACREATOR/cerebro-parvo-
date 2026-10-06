@@ -8,6 +8,11 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
+# Stop before any command, prompt, directory or external operation.
+throw 'NEXUS_PROTECTED_PROVISIONING_PENDING: protected provisioning is not validated; refusing changes and external processes.'
+
+# Historical implementation retained below; unreachable while this gate is closed.
+
 $AceRepo = 'https://github.com/ace-step/ACE-Step-1.5.git'
 $AceCommit = 'ca1e85fe9430179831e6bc6be790c332190a3866'
 $AceLicense = 'MIT'
