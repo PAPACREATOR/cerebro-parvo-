@@ -8,6 +8,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: nexus-confinement-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   confinement:
     name: Confinement and authority (${{ matrix.os }})
