@@ -162,6 +162,37 @@ def episode_profile(api: API, language_id: str, speaker_id: str):
     return api.call("POST", "/api/episode-profiles", payload)
 
 
+
+def transformation(api: API, language_id: str):
+    name = "nexus_strict_cognitive_v1"
+    prompt = (
+        "Return ONLY one valid JSON object, with no Markdown fences and no text before or after it. "
+        "Use exactly these keys: title, summary, quotes. "
+        "title must be a non-empty string up to 150 characters. "
+        "summary must be a factual summary grounded only in the supplied input, up to 3000 characters. "
+        "quotes must be an array containing 1 to 5 exact verbatim substrings copied from the supplied input; "
+        "each quote must be non-empty and at most 800 characters. "
+        "Do not invent facts. Do not paraphrase inside quotes. "
+        "The complete response must be parseable by a strict JSON parser."
+    )
+    items = api.call("GET", "/api/transformations")
+    matches = [item for item in items if item.get("name") == name]
+    if len(matches) > 1:
+        raise SetupError("Duplicate Nexus cognitive transformation")
+    expected = {
+        "title": "Nexus strict cognitive JSON v1",
+        "description": "Bounded local transformation for the Nexus interpret adapter.",
+        "prompt": prompt,
+        "apply_default": False,
+        "model_id": language_id,
+    }
+    if matches:
+        item = matches[0]
+        if any(item.get(key) != value for key, value in expected.items()):
+            raise SetupError("Existing Nexus cognitive transformation conflicts with the pinned contract")
+        return item
+    return api.call("POST", "/api/transformations", {"name": name, **expected})
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--api", default="http://127.0.0.1:5055")
@@ -230,6 +261,7 @@ def main() -> int:
     if settings.get("auto_delete_files") != "no":
         raise SetupError("Open Notebook automatic file deletion could not be disabled")
 
+    cognitive = transformation(api, language["id"])
     speaker = speaker_profile(api, tts["id"])
     episode = episode_profile(api, language["id"], speaker["id"])
 
@@ -245,6 +277,7 @@ def main() -> int:
             "embedding": {"id": embedding["id"], "name": embedding["name"]},
             "tts": {"id": tts["id"], "name": tts["name"]},
         },
+        "transformation": {"id": cognitive["id"], "name": cognitive["name"]},
         "podcast_profiles": {
             "speaker": {"id": speaker["id"], "name": speaker["name"]},
             "episode": {"id": episode["id"], "name": episode["name"]},
