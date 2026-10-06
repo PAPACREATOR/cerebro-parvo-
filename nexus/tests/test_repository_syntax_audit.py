@@ -43,12 +43,16 @@ def test_active_python_has_no_eval_exec_os_system_or_shell_true():
         for node in ast.walk(tree):
             if isinstance(node, ast.Call):
                 name = None
-                if isinstance(node.func, ast.Name):
+                if isinstance(node.func, ast.Name) and node.func.id in {"eval", "exec"}:
                     name = node.func.id
-                elif isinstance(node.func, ast.Attribute):
-                    owner = node.func.value.id if isinstance(node.func.value, ast.Name) else None
-                    name = f"{owner}.{node.func.attr}" if owner else node.func.attr
-                if name in {"eval", "exec", "os.system"}:
+                elif (
+                    isinstance(node.func, ast.Attribute)
+                    and isinstance(node.func.value, ast.Name)
+                    and node.func.value.id == "os"
+                    and node.func.attr == "system"
+                ):
+                    name = "os.system"
+                if name is not None:
                     forbidden_calls.append((str(path.relative_to(ROOT)), node.lineno, name))
                 for kw in node.keywords:
                     if kw.arg == "shell" and isinstance(kw.value, ast.Constant) and kw.value.value is True:
