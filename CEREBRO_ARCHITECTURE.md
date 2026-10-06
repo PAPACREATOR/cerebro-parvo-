@@ -1,123 +1,104 @@
-# Arquitetura vigente — núcleo mínimo substituível
+# Arquitetura vigente — Kernel estável, capacidades substituíveis
 
 ## Estado
 
-A arquitetura **conceptual** está estável. A composição física está em validação e não deve ser declarada fechada antes do teste comparativo do Memory Provider.
+A arquitetura conceptual está fechada. O runtime candidato atual é Kernel/Host/Store Python com MCP determinístico e ferramentas externas delimitadas. A PR #23 contém a implementação e evidência corrente.
 
 ## Diagrama
 
 ```mermaid
 flowchart TD
- P[Humano / autoridade final] --> AP[Activepieces Community]
- AP -->|MCP| MP[Memory Provider local]
- MP --> DB[(SQLite)]
- MP --> EX[FTS5 / exato]
- MP --> SE[Semântico opcional]
- MP --> RE[Entidades / relações / proveniência]
- MP --> TE[Temporal / histórico]
- AP --> CR[Creative]
+ P[Pessoa / autoridade final] --> UI[Folha Única]
+ UI --> K[Kernel / Host / Store]
+ K --> CMP[Validação + comparadores]
+ K --> MCP[MCP / adapters delimitados]
+ MCP --> ON[OpenNotebook]
+ MCP --> LT[LanguageTool]
+ MCP --> LO[LibreOffice]
+ MCP --> Z[Zotero]
+ MCP --> MM[ACE-Step / Forge / multimédia]
+ ON --> U[UNTRUSTED / candidate]
+ LT --> U
+ LO --> U
+ Z --> U
+ MM --> U
+ U --> K
+ K --> CR[Creative]
  CR --> HG[Human Gate]
  P --> HG
  HG --> CA[Canonical]
- AP --> PR[Providers periféricos por receita]
+ K --> EV[Eventos / proveniência / recuperação]
 ```
 
 ## Responsabilidades
 
-### Humano
-É a única autoridade final. Aprova promoção a Canonical e ações protegidas.
+### Pessoa
+Única autoridade final. Aprova promoções e ações protegidas.
 
-### Activepieces
-É o motor executivo, não o proprietário do conhecimento:
-- flows/subflows;
-- regras e estados de execução;
+### Kernel / Host / Store
+É o cérebro determinístico/constitucional:
+- identidade e estado;
+- regras e invariantes;
+- seleção de processo/capability;
+- Creative e Canonical;
 - Human Gate;
-- recipes;
-- MCP/HTTP;
-- coordenação dos comparadores;
-- chamadas a providers.
+- proveniência direta e inversa;
+- eventos, integridade, recovery e replay;
+- validação de outputs externos;
+- confinamento dos processos que lança.
 
-### Memory Provider
-É o sistema de conhecimento local e substituível:
-- SQLite/WAL;
-- FTS5/BM25;
-- pesquisa semântica quando necessária;
-- temporalidade;
-- entidades/relações;
-- proveniência/eventos;
-- histórico sem eliminação automática por similaridade.
+### MCP
+Transporte determinístico:
+- allowlist de tools;
+- argumentos delimitados;
+- timeouts e limites;
+- zero autoridade;
+- zero Store/Canonical direto.
 
-Candidatos:
-- A: RMANOV/sqlite-memory-mcp;
-- B: Beledarian/mcp-local-memory.
+### Ferramentas externas
+Executam capacidades especializadas e devolvem candidatos. Não governam o Nexus.
 
-Nenhum é aceite sem teste.
+Exemplos: OpenNotebook, LanguageTool, LibreOffice, Zotero, ACE-Step, Forge, FFmpeg, Whisper/TTS e modelos locais.
 
 ## Três memórias
 
-São papéis lógicos, não três programas:
-- Working: estado de execução Activepieces + contexto temporário;
-- Behavioral/Procedural: regras/preferências/correções versionadas;
-- Persistent Knowledge: conhecimento persistente no Memory Provider, distinguindo Creative de Canonical.
-
-## Dois domínios
-
-- Creative: propostas, hipóteses, variantes, contradições e material ainda não aprovado;
-- Canonical: conhecimento explicitamente aprovado pelo humano.
-
-A existência de uma função técnica chamada `promote` num provider não lhe dá autoridade. A chamada só pode ocorrer após Human Gate.
+Papéis lógicos, não três programas:
+- Working;
+- Behavioral/Procedural;
+- Persistent Knowledge, com Creative e Canonical.
 
 ## Três comparadores
 
-- determinístico/exato: regras, hashes, IDs, estados + FTS quando aplicável;
-- semântico: embeddings/vector apenas quando necessário;
-- relacional: entidades, relações, proveniência, versões e genealogia.
+- determinístico/exato;
+- semântico;
+- relacional/proveniência.
 
-Os resultados são evidência. Nenhum comparador decide Canonical.
+Nenhum comparador decide Canonical.
 
-## Invariantes
+## Adaptabilidade
 
-- humano manda;
-- IA/provider nunca aprova;
-- similaridade/paráfrase nunca autoriza apagar;
-- contradições são preservadas e sinalizadas;
-- replay não volta a chamar IA/web para inventar evidência histórica;
-- backup só é válido depois de restore demonstrado;
-- provider swap não altera as leis;
-- Internet desligada não deve destruir o núcleo;
-- desmontar deve ser tão fácil como montar.
+Adicionar capacidade não deve redesenhar o núcleo:
 
-## Redundância
+`nova ferramenta → adapter/contrato → MCP/runner → Kernel valida → Creative → humano → Canonical`.
 
-Não duplicar serviços por segurança aparente. A redundância é funcional:
-- Activepieces guarda/processa execução;
-- Memory Provider guarda conhecimento num formato SQLite portátil;
-- exports/backups independentes permitem reconstrução;
-- Canonical nunca depende de PiecesOS ou de uma cloud.
+A ferramenta deve ser substituível. Se a remoção de uma capability destrói a memória ou a autoridade do sistema, está mal integrada.
 
-## PiecesOS
+## Windows
 
-Não é núcleo. É proprietário e fica como benchmark/opção experimental. A geração 12.3.8/12.3.9 é interessante por LTM + MCP + FTS/vector/temporal, mas a arquitetura não pode depender do seu entitlement, cloud ou redistribuição.
+O Host limita processos que lança através da fronteira nativa validada. Isso não significa controlo total sobre todo o Windows nem sobre processos externos iniciados fora do Host.
 
-## Providers periféricos
+Provisioning externo permanece um gate separado: recusa segura não equivale a instalação protegida funcional.
 
-Zotero, LibreOffice, ComfyUI, LanguageTool, IA local, web, email e publicação entram apenas quando uma receita exige. Open Notebook/K-DLC deixam de ser runtime obrigatório.
+## Genealogia
 
-## Regra de implementação
-
-**LIGAR > CONFIGURAR > ADAPTAR > CRIAR.**
-
-1. Activepieces já resolve?
-2. Memory Provider já resolve?
-3. MCP/API/CLI de provider maduro resolve?
-4. configurar/adaptar minimamente;
-5. criar código apenas perante FAIL demonstrado.
+Activepieces, Memory Provider, Spiff e Conductor foram etapas reais da investigação e implementação. Permanecem em `DECISIONS.md`, `historico/` e relatórios. Não são runtime obrigatório atual.
 
 ## Critério de desacoplamento
 
-```
-Remove(MemoryProvider) -> Activepieces + leis + configuração sobrevivem
-Remove(Activepieces)   -> SQLite/Canonical + exports sobrevivem
-Remove(AI)             -> conhecimento e autoridade sobrevivem
-Internet=OFF           -> núcleo continua utilizável
+```text
+Remove(AI)              -> autoridade e conhecimento sobrevivem
+Remove(OpenNotebook)    -> Creative/Canonical/proveniência sobrevivem
+Remove(LibreOffice)     -> documentos e memória sobrevivem; capability fica indisponível
+Remove(MCP tool)        -> Kernel bloqueia a capability, não perde estado
+Internet=OFF            -> núcleo continua utilizável
 ```
