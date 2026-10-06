@@ -3,6 +3,34 @@
 Este é o único documento de estado operacional corrente em `nexus/docs`.
 Estados antigos, filas, handoffs e quadros temporários foram removidos da árvore ativa; continuam recuperáveis pelo histórico Git e pelos PRs/comentários.
 
+## Relatório corrente — 06-10-2026
+
+Pedido humano: corrigir e testar sem alterar a estrutura, e escrever o ponto de situação. **Candidato com confinamento Host/MCP aprovado no CI; avatar Windows em execução; instalação física por validar.** Arquitetura M1–M14, responsabilidades Kernel/Host/Store, Creative/Human Gate/Canonical e caminhos existentes preservados.
+
+Código candidato: `48a72159cad4a3b0097f5323006efeb2f932d76a`; PR #23 draft, branch lab-open-notebook-avatar-20261004. Baseline/base e main não foram promovidas.
+
+| Bloco | Números observados | Resultado/evidência |
+|---|---|---|
+| Windows Server 2022 e 2025, fronteira nativa | 10.000 operações filesystem recusadas, zero ERROR; leitura Creative/Canonical, escrita HKCU sintética, rede loopback e filho DENIED; escrita atribuída funciona | **PASS**, [run 37435221986](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37435221986) |
+| Autoridade Host/Store | 10.000 inputs em quatro famílias de 2.500; snapshots invariáveis e sem tickets humanos forjados | **PASS**, mesmo run |
+| Host real | 22 alvos proibidos DENIED + dois controlos positivos = 24 critérios | **24 PASS**, mesmo run |
+| Retorno e recuperação | 76 funções/contratos | **76 PASS**, mesmo run |
+| Hash independente CNG | Sete vetores, incluindo vazio, NUL, Unicode, chunk e limite 2 MiB | **PASS**, mesmo run |
+| Concorrência | 500 substituições atómicas com quatro leitores | **PASS**, mesmo run |
+| Regressão Nexus completa | **1.386 PASS no runtime 48a7215**, Core 140, Blocks 1.068 e Practical 40 também PASS | [Anterior](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37378593246), [48a7215](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37435221836) |
+| MCP real e pacote OpenNotebook | **1.000 chamadas MCP reais + inventário 33 tools PASS no runtime 48a7215**; blocos A–G e regressão 1.386 PASS | [Anterior](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37378593142), [48a7215](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37435221883) |
+| Avatar | Linux 165 PASS, dois controlos nativos só Windows não aplicáveis; Windows em execução | [Run 37435221823](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37435221823) |
+
+Não somar estas linhas: funções pytest, inputs e operações são unidades diferentes, e as suites sobrepõem-se. Repetição por OS ou por SHA não aumenta o número de inputs distintos.
+
+Correções implementadas: validação ASCII da sessão; launcher Windows com LPAC/DACL/Job e ausência de fallback; snapshot privado separado do Store; stdio MCP em pipes LOCAL/eventos sem rede; CNG para verificação independente; avatar Windows ligado ao launcher existente para codecs, PIL e worker. O conflito de dependências no CI Avatar foi corrigido instalando apenas o jsonschema consumido pelo selo do Host nesse ambiente; as versões Nexus permanecem fixadas.
+
+O Host limita os processos que lança. Os ensaios não são uma auditoria de todo o Windows nem confinam retroativamente OpenNotebook/ACE/Forge ou outros backends já iniciados fora desse launcher. Modelos/GPU, instalação protegida no PC e limpeza de perfis/ACL em crash: **NOT RUN/PENDENTES**. A inferência aprendida é substituída nos contratos Avatar deste run. Os instaladores externos atuais ainda precisam de recusa antes de alterar o sistema enquanto não têm fronteira comprovada.
+
+PC de Pedro, contas, serviços, políticas e ficheiros pessoais não foram alterados. Nenhum PASS de CI é convertido em perfeição universal, instalação física ou release. Próxima ação autorizada: terminar a repetição Avatar Windows, corrigir falhas reais que aparecerem e testar a recusa do provisioning ainda sem proteção.
+
+Microcontrato Avatar/Host, 06-10: FFmpeg/ffprobe só necessitam de leitura do diretório do executável e dependências selecionadas; não devem ler o Python/Nexus do Host. A leitura ampla atual foi encontrada no código, e o ensaio Windows acrescentado copia dados atribuídos com FFmpeg real e tenta ler Lib/this.py fora do trabalho. Primeiro ensaio do contrato PENDENTE, sem alterar ainda o launcher. Repetição completa Windows anterior ainda em curso; não converter demora em PASS nem atribuir-lhe causa sem log final.
+
 ## Fonte de verdade operacional
 
 - PR ativa: **#23 — CURRENT BASELINE**.

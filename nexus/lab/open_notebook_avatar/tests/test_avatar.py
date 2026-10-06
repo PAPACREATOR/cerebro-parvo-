@@ -450,3 +450,18 @@ def test_avatar_worker_requires_real_native_boundary(tmp_path):
     work.mkdir()
     protected = command([sys.executable, "-I", str(worker), "--help"], 10, work)
     assert "--checkpoint" in protected and "--detector" in protected
+
+@pytest.mark.skipif(os.name != "nt", reason="Real Windows boundary only")
+def test_ffmpeg_cannot_read_unneeded_host_runtime(tmp_path):
+    work = tmp_path / "assigned"
+    work.mkdir()
+    source = work / "sample"
+    source.write_bytes(b"assigned-input")
+    protected = Path(sys.base_prefix) / "Lib" / "this.py"
+    before = protected.read_bytes()
+    def read_data(path):
+        return command(["ffmpeg", "-nostdin", "-v", "error", "-f", "data", "-i",
+                        str(path), "-map", "0:0", "-c", "copy", "-f", "data", "-"], 15, work)
+    assert read_data(source) == "assigned-input"
+    expect("TOOL_FAILED", lambda: read_data(protected))
+    assert protected.read_bytes() == before

@@ -44,6 +44,12 @@ jobs:
           $exe.DirectoryName | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
       - name: Install native API and extension test dependencies
         run: python -m pip install jsonschema==4.26.0 -e upstream-open-notebook -e 'nexus/lab/open_notebook_avatar[test]'
+      - name: Windows codec reads only assigned inputs
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          export PYTHONPATH="$GITHUB_WORKSPACE/upstream-open-notebook"
+          python -m pytest nexus/lab/open_notebook_avatar/tests/test_avatar.py -k test_ffmpeg_cannot_read_unneeded_host_runtime -q --junitxml=avatar-native-scope.xml
       - name: Extension contracts and real FFmpeg
         shell: bash
         run: |
@@ -56,5 +62,7 @@ jobs:
         if: always()
         with:
           name: avatar-tests-${{ matrix.os }}
-          path: avatar-tests.xml
+          path: |
+            avatar-tests.xml
+            avatar-native-scope.xml
           if-no-files-found: error
