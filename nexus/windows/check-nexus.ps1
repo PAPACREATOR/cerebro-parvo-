@@ -89,7 +89,8 @@ try {
             'nexus/tests/test_external_inventory.py',
             'nexus/tests/test_external_provision_plan.py',
             'nexus/tests/test_external_inventory_functional.py',
-            'nexus/tests/test_repository_syntax_audit.py'
+            'nexus/tests/test_repository_syntax_audit.py',
+            'nexus/tests/test_windows_real_acceptance_scripts.py'
         ) }
         default { @('nexus/tests') }
     }
