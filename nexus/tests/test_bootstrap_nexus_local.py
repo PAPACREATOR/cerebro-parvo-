@@ -4,10 +4,11 @@ ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = (ROOT / "windows" / "bootstrap-nexus-local.ps1").read_text(encoding="utf-8")
 
 
-def test_bootstrap_runs_sync_before_core_prepare():
+def test_bootstrap_runs_sync_then_core_then_inventory():
     sync = SCRIPT.index("sync-nexus-code.ps1")
     prepare = SCRIPT.index("prepare-nexus-core.ps1")
-    assert sync < prepare
+    inventory = SCRIPT.index("inventory-external-tools.ps1")
+    assert sync < prepare < inventory
     assert "NEXUS_STEP_FAILED" in SCRIPT
 
 
@@ -30,6 +31,12 @@ def test_bootstrap_requires_core_report_matching_current_head():
     assert "NEXUS_CORE_REPORT_MISSING" in SCRIPT
     assert "NEXUS_CORE_REPORT_MISMATCH" in SCRIPT
     assert "$core.head -ne $head" in SCRIPT
+
+
+def test_bootstrap_requires_external_inventory_report():
+    assert "external-tools-inventory.json" in SCRIPT
+    assert "NEXUS_EXTERNAL_INVENTORY_MISSING" in SCRIPT
+    assert "external_inventory = $inventoryReport" in SCRIPT
 
 
 def test_bootstrap_writes_single_final_report():
