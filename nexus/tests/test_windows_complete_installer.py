@@ -154,3 +154,9 @@ def test_nexus_interpret_config_is_bound_to_real_open_notebook_ids():
     assert "transformation_id=$openConfig.transformation.id" in MASTER
     assert "Return ONLY one valid JSON object" in OPEN_CONFIG
     assert "exact verbatim substrings" in OPEN_CONFIG
+
+
+def test_heavy_install_requires_disk_headroom_before_downloads():
+    assert "NEXUS_DISK_SPACE_REQUIRED" in MASTER
+    assert "70 * 1GB" in MASTER
+    assert MASTER.index("NEXUS_DISK_SPACE_REQUIRED") < MASTER.index("LanguageTool-6.6.zip")
