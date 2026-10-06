@@ -160,3 +160,24 @@ def test_heavy_install_requires_disk_headroom_before_downloads():
     assert "NEXUS_DISK_SPACE_REQUIRED" in MASTER
     assert "70 * 1GB" in MASTER
     assert MASTER.index("NEXUS_DISK_SPACE_REQUIRED") < MASTER.index("LanguageTool-6.6.zip")
+
+
+def test_moneyprinter_is_pinned_and_documentary_path_has_no_tts_dependency():
+    assert "https://github.com/harry0703/MoneyPrinterTurbo.git" in MASTER
+    assert "68eb5a68b93cfe338198b3dfb151f6d5ec2fe4e5" in MASTER
+    assert "INSTALLED_CONFIGURED_CLI_TESTED" in MASTER
+    assert 'llm_provider = "ollama"' in MPT_CONFIG
+    assert 'subtitle_provider = "whisper"' in MPT_CONFIG
+    assert '"provider": "none"' in MPT_CONFIG
+    assert "kokoro:" not in DOCUMENTARY.lower()
+    assert "speaches" not in DOCUMENTARY.lower()
+    assert '"--voice-name", "no-voice"' in DOCUMENTARY
+    assert '"--custom-audio-file"' in DOCUMENTARY
+    assert '"--no-subtitle-enabled"' in DOCUMENTARY
+
+
+def test_documentary_output_is_candidate_only_and_never_promotes():
+    assert '"canonical_write": False' in DOCUMENTARY
+    assert "store.promote" not in DOCUMENTARY
+    assert "canonical" not in DOCUMENTARY.lower().replace('"canonical_write": false', "")
+    assert "PASS_CANDIDATE" in DOCUMENTARY
