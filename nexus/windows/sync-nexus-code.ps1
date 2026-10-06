@@ -41,8 +41,42 @@ function Invoke-GitChecked {
 $RepoRoot = Resolve-NexusRepo -Requested $RepoRoot
 $Git = (Get-Command git.exe -CommandType Application -ErrorAction Stop).Source
 
-$origin = (& $Git -C $RepoRoot remote get-url origin).Trim()
-if ($LASTEXITCODE -ne 0 -or $origin -notmatch 'PAPACREATOR/cerebro-parvo-(\.git)?$') {
+$origin = (& $Git -C $RepoRoot config --get remote.origin.url).Trim()
+if ($LASTEXITCODE -ne 0 -or $origin -notmatch '^https://github\.com/PAPACREATOR/cerebro-parvo-\.git
+    throw 'NEXUS_WRONG_ORIGIN: o checkout não aponta para PAPACREATOR/cerebro-parvo-.'
+}
+
+$dirty = & $Git -C $RepoRoot status --porcelain
+if ($LASTEXITCODE -ne 0) { throw 'NEXUS_GIT_STATUS_FAILED' }
+if ($dirty) {
+    throw 'NEXUS_DIRTY_TREE: existem alterações locais; nada foi atualizado.'
+}
+
+Invoke-GitChecked -Arguments @('fetch','--prune','origin',$Branch) -WorkingDirectory $RepoRoot
+
+& $Git -C $RepoRoot show-ref --verify --quiet "refs/heads/$Branch"
+$localExists = ($LASTEXITCODE -eq 0)
+if ($localExists) {
+    Invoke-GitChecked -Arguments @('switch',$Branch) -WorkingDirectory $RepoRoot
+}
+else {
+    Invoke-GitChecked -Arguments @('switch','--track','-c',$Branch,"origin/$Branch") -WorkingDirectory $RepoRoot
+}
+
+Invoke-GitChecked -Arguments @('merge','--ff-only',"origin/$Branch") -WorkingDirectory $RepoRoot
+
+$head = (& $Git -C $RepoRoot rev-parse HEAD).Trim()
+$remote = (& $Git -C $RepoRoot rev-parse "origin/$Branch").Trim()
+if ($LASTEXITCODE -ne 0 -or $head -ne $remote) {
+    throw 'NEXUS_SYNC_MISMATCH: HEAD local não corresponde ao remoto.'
+}
+
+Write-Host 'NEXUS CODE SYNC = PASS'
+Write-Host ('REPO: ' + $RepoRoot)
+Write-Host ('BRANCH: ' + $Branch)
+Write-Host ('HEAD: ' + $head)
+Write-Host 'Provisioning/instalação não foi executado.'
+) {
     throw 'NEXUS_WRONG_ORIGIN: o checkout não aponta para PAPACREATOR/cerebro-parvo-.'
 }
 
