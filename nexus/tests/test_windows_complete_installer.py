@@ -37,6 +37,7 @@ def test_installer_pins_the_external_source_trees_and_binary_hashes():
         "993994f7984bf3fe9655b267448328cf66fccb42",
         "ca1e85fe9430179831e6bc6be790c332190a3866",
         "dfdcbab685e57677014f05a3309b48cc87383167",
+        "d9426c121eddadc76648be20034bc087acd0240c",
         "55c7e05ee2b68ec0d8b86c4b588e9b9807f257af8c15c05d17074514c64d8c91",
         "53600506b399bb5ffe1e4c8dec794fd378212f14aaf38ccef9b6f89314d11631",
     )
@@ -97,3 +98,11 @@ def test_avatar_router_matches_the_pinned_open_notebook_version():
     assert 'version != "1.15.0"' in ROUTER
     assert "Open Notebook 1.15.0" in ROUTER
     assert "app.include_router(podcasts.router" in ROUTER
+
+
+def test_deforum_is_installed_inside_forge_but_not_claimed_functional_without_render():
+    assert "https://github.com/deforum/sd-forge-deforum.git" in MEDIA
+    assert "d9426c121eddadc76648be20034bc087acd0240c" in MEDIA
+    assert "INSTALLED_DEPENDENCIES_TESTED" in MEDIA
+    assert "REQUIRES_REAL_RENDER_ACCEPTANCE" in MEDIA
+    assert "NEXUS_DEFORUM_INSTALL_NOT_VERIFIED" in MASTER
