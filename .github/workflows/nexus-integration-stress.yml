@@ -15,6 +15,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: nexus-integration-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   windows:
     name: 100K blocks + MCP + OpenNotebook E2E
