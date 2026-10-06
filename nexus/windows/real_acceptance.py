@@ -12,12 +12,15 @@ import argparse
 import hashlib
 import json
 import os
-import sys
+import shutil
+import subprocess
 import time
+import zipfile
 import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
+from xml.sax.saxutils import escape
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -107,6 +110,117 @@ def _profile_endpoint(openapi: dict, fragment: str) -> str | None:
             candidates.append(path)
     exact = [p for p in candidates if "{" not in p]
     return sorted(exact, key=len)[0] if exact else None
+
+
+
+def _soffice() -> str:
+    candidates = [
+        shutil.which("soffice.com"),
+        shutil.which("soffice.exe"),
+        shutil.which("soffice"),
+        str(Path(os.environ.get("ProgramFiles", "")) / "LibreOffice" / "program" / "soffice.com"),
+        str(Path(os.environ.get("ProgramFiles(x86)", "")) / "LibreOffice" / "program" / "soffice.com"),
+    ]
+    for value in candidates:
+        if value and Path(value).is_file():
+            return str(Path(value).resolve())
+    raise NotConfigured("LibreOffice soffice not found")
+
+
+def book(out: Path) -> dict:
+    """Create a persistent A5 book-format ODT/PDF from the immutable Nexus template."""
+    template = ROOT / "nexus" / "tests" / "fixtures" / "writer-fixed-test.ott"
+    expected = "379df147e4b7019c197f572bc07491404782ecd0abfc615886cd1c9350399d3f"
+    if not template.is_file() or sha256(template.read_bytes()) != expected:
+        raise RuntimeError("fixed Writer template hash mismatch")
+
+    title = "Nexus — Ensaio de Livro"
+    body = (
+        "Capítulo de aceitação física. O original é conservado, a proveniência "
+        "é verificável e nenhum resultado entra em Canonical sem decisão humana. "
+        "Este documento serve apenas para provar paginação, estilos e exportação."
+    )
+    filled = out / "livro-teste.ott"
+    with zipfile.ZipFile(template, "r") as source, zipfile.ZipFile(filled, "w") as target:
+        for info in source.infolist():
+            raw = source.read(info.filename)
+            if info.filename == "content.xml":
+                text = raw.decode("utf-8")
+                if text.count("NEXUS_FIXED_TEMPLATE_TITLE") != 1 or text.count("NEXUS_FIXED_TEMPLATE_BODY_064") != 1:
+                    raise RuntimeError("fixed Writer slots changed")
+                text = text.replace("NEXUS_FIXED_TEMPLATE_TITLE", escape(title))
+                text = text.replace("NEXUS_FIXED_TEMPLATE_BODY_064", escape(body))
+                raw = text.encode("utf-8")
+            target.writestr(info, raw)
+
+    with zipfile.ZipFile(filled) as archive:
+        styles_before = archive.read("styles.xml")
+    with zipfile.ZipFile(template) as archive:
+        if styles_before != archive.read("styles.xml"):
+            raise RuntimeError("book template styles were modified")
+
+    soffice = _soffice()
+    profile = out / "libreoffice-profile"
+    profile.mkdir(exist_ok=False)
+    odt_dir = out / "book-odt"
+    pdf_dir = out / "book-pdf"
+    odt_dir.mkdir()
+    pdf_dir.mkdir()
+    common = [soffice, "-env:UserInstallation=" + profile.as_uri(), "--headless", "--norestore"]
+    first = subprocess.run(
+        [*common, "--convert-to", "odt", "--outdir", str(odt_dir), str(filled)],
+        cwd=out, capture_output=True, text=True, timeout=90,
+    )
+    if first.returncode:
+        raise RuntimeError("LibreOffice ODT conversion failed: " + (first.stderr or first.stdout)[-2000:])
+    odt = odt_dir / "livro-teste.odt"
+    if not odt.is_file() or odt.stat().st_size < 1000:
+        raise RuntimeError("LibreOffice did not produce ODT")
+
+    with zipfile.ZipFile(odt) as archive:
+        content_xml = archive.read("content.xml").decode("utf-8")
+        styles_xml = archive.read("styles.xml")
+    if title not in content_xml or body not in content_xml:
+        raise RuntimeError("book content did not survive ODT round-trip")
+    for token in (
+        b'style:page-usage="mirrored"',
+        b'fo:orphans="2"',
+        b'fo:widows="2"',
+        b'fo:keep-with-next="always"',
+    ):
+        if token not in styles_xml:
+            raise RuntimeError("book style contract did not survive round-trip")
+
+    second = subprocess.run(
+        [*common, "--convert-to", "pdf:writer_pdf_Export", "--outdir", str(pdf_dir), str(odt)],
+        cwd=out, capture_output=True, text=True, timeout=90,
+    )
+    if second.returncode:
+        raise RuntimeError("LibreOffice PDF export failed: " + (second.stderr or second.stdout)[-2000:])
+    pdf = pdf_dir / "livro-teste.pdf"
+    raw_pdf = pdf.read_bytes() if pdf.is_file() else b""
+    if len(raw_pdf) < 5000 or not raw_pdf.startswith(b"%PDF-") or b"%%EOF" not in raw_pdf[-2048:]:
+        raise RuntimeError("book PDF is incomplete")
+
+    final_odt = out / "livro-teste.odt"
+    final_pdf = out / "livro-teste.pdf"
+    shutil.copy2(odt, final_odt)
+    shutil.copy2(pdf, final_pdf)
+    result = {
+        "status": "PASS",
+        "capability": "libreoffice.writer-book-real",
+        "authority": "UNTRUSTED",
+        "outcome": "candidate",
+        "title": title,
+        "template_sha256": expected,
+        "odt": {"file": final_odt.name, "bytes": final_odt.stat().st_size,
+                "sha256": sha256(final_odt.read_bytes())},
+        "pdf": {"file": final_pdf.name, "bytes": final_pdf.stat().st_size,
+                "sha256": sha256(raw_pdf)},
+        "note": "Persistent physical book artefacts. No Canonical promotion was attempted.",
+    }
+    write_json(out / "book-real.json", result)
+    return result
 
 
 def zotero(query: str, out: Path) -> dict:
@@ -378,6 +492,7 @@ def avatar(episode_id: str, avatar_name: str, out: Path) -> dict:
 
 
 COMMANDS = {
+    "book": lambda a: book(a.output),
     "zotero": lambda a: zotero(a.query, a.output),
     "web": lambda a: internet_research(a.query, a.output),
     "music": lambda a: ace_music(a.output),
