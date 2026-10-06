@@ -193,6 +193,13 @@ foreach ($path in @($BinRoot,$Downloads,$Models,$Logs,$Build)) {
     $null = New-Item -ItemType Directory -Force -Path $path
 }
 
+$driveRoot = [IO.Path]::GetPathRoot($ToolsRoot)
+$drive = New-Object System.IO.DriveInfo($driveRoot)
+$minimumFreeBytes = [int64](70 * 1GB)
+if ($drive.AvailableFreeSpace -lt $minimumFreeBytes) {
+    throw ('NEXUS_DISK_SPACE_REQUIRED: at least 70 GiB free on ' + $driveRoot + '; choose another -ToolsRoot before installation.')
+}
+
 $report = [ordered]@{
     schema = 'nexus.windows-complete-install.v1'
     status = 'RUNNING'
@@ -202,6 +209,7 @@ $report = [ordered]@{
     repo_root = $RepoRoot
     tools_root = $ToolsRoot
     device = $Device
+    storage = [ordered]@{ drive=$driveRoot; free_bytes=$drive.AvailableFreeSpace; minimum_free_bytes=$minimumFreeBytes }
     prerequisites = [ordered]@{}
     tools = [ordered]@{}
     models = [ordered]@{}
