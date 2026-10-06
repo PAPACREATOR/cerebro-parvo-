@@ -60,6 +60,42 @@ def _tool(value: str) -> str:
     return str(Path(found).resolve())
 
 
+def _python_environment(executable):
+    """Select Python files without granting its complete package installation."""
+    prefix = executable.parent.parent if executable.parent.name.lower() == "scripts" else executable.parent
+    prefix = prefix.resolve()
+    base = Path(sys.base_prefix).resolve() if prefix == Path(sys.prefix).resolve() else prefix
+    config = prefix / "pyvenv.cfg"
+    roots = [executable]
+    if config.is_file():
+        if config.is_symlink() or config.stat().st_size > 4096:
+            raise AvatarError("TOOL_UNAVAILABLE")
+        roots.append(config)
+        for line in config.read_text(encoding="utf-8").splitlines():
+            key, separator, value = line.partition("=")
+            if separator and key.strip().lower() == "home":
+                home = Path(value.strip())
+                if not home.is_absolute():
+                    raise AvatarError("TOOL_UNAVAILABLE")
+                base = home.resolve(strict=True)
+    library = base / "Lib"
+    if not library.is_dir():
+        raise AvatarError("TOOL_UNAVAILABLE")
+    directories = [prefix, base, library]
+    for folder in dict.fromkeys((prefix, base)):
+        roots.extend(folder.glob("*.dll"))
+        roots.extend(folder.glob("python*.zip"))
+        if (folder / "DLLs").is_dir():
+            roots.append(folder / "DLLs")
+    # FileFinder needs enumeration of Lib; granting every descendant would
+    # also propagate task ACLs over unrelated upstream packages.
+    roots.extend(p for p in library.iterdir() if p.name.lower() != "site-packages")
+    sites = tuple(dict.fromkeys(p for p in (prefix / "Lib" / "site-packages",
+                                           base / "Lib" / "site-packages") if p.is_dir()))
+    directories.extend(sites)
+    return roots, directories, sites
+
+
 def _windows_command(args, timeout, cwd, read_roots):
     try:
         from nexus.contracts import ROOT, Blocked
@@ -68,22 +104,26 @@ def _windows_command(args, timeout, cwd, read_roots):
     except ImportError:
         raise AvatarError("TOOL_UNAVAILABLE") from None
     executable = Path(_tool(args[0]))
-    roots = [executable.parent, *read_roots]
-    if executable.stem.lower() in {"python", "pythonw"}:
-        roots.extend([ROOT, Path(sys.prefix), Path(sys.base_prefix),
-                      Path(__file__).resolve().parent])
-        if executable.parent.name.lower() == "scripts":
-            roots.append(executable.parent.parent)
     try:
+        directories = []
+        if executable.stem.lower() in {"python", "pythonw"}:
+            roots, directories, _ = _python_environment(executable)
+            roots.extend(ROOT / name for name in ("__init__.py", "contracts.py", "windows_sandbox.py"))
+            roots.append(Path(__file__).with_name("worker.py"))
+            directories.append(ROOT)
+        else:
+            roots = [executable.parent]
+        roots.extend(read_roots)
         verify_integrity()
         with launch_confined([str(executable), *args[1:]], cwd=Path(cwd).resolve(),
-                env=task_environment(Path(cwd).resolve()), read_roots=tuple(dict.fromkeys(roots))) as process:
+                env=task_environment(Path(cwd).resolve()), read_roots=tuple(dict.fromkeys(roots)),
+                read_dirs=tuple(dict.fromkeys(directories))) as process:
             try:
                 data, error = process.communicate(timeout=timeout)
             except subprocess.TimeoutExpired:
                 raise AvatarError("TOOL_TIMEOUT") from None
             if process.returncode:
-                raise AvatarError("TOOL_FAILED")
+                raise AvatarError("TOOL_FAILED") from RuntimeError(error[:4000].decode("utf-8", errors="replace"))
     except (Blocked, OSError):
         raise AvatarError("TOOL_UNAVAILABLE") from None
     if len(data) > 1_000_000:
@@ -226,15 +266,20 @@ class AvatarService:
                         "assert 96 <= min(im.size) and max(im.size) <= 2048;"
                         "im.load();im.convert('RGB').save('avatar.png')"
                     )
-                    command([sys.executable, "-I", "-c", decode], 30, stage)
+                    dependencies = [Path(Image.__file__).resolve().parent]
+                    xml = getattr(Image, "ElementTree", None)
+                    if xml is not None and xml.__name__.startswith("defusedxml"):
+                        dependencies.append(Path(xml.__file__).resolve().parent)
+                    command([sys.executable, "-I", "-c", decode], 30, stage,
+                            read_roots=tuple(dependencies))
                 else:
                     with Image.open(avatar_copy) as image:
                         if image.format not in {"JPEG", "PNG"} or not 96 <= min(image.size) or max(image.size) > 2048:
                             raise ValueError
                         image.load()
                         image.convert("RGB").save(image_copy)
-            except Exception:
-                raise AvatarError("AVATAR_INVALID") from None
+            except Exception as error:
+                raise AvatarError("AVATAR_INVALID") from error
             if not 0 < audio_copy.stat().st_size <= 100_000_000:
                 raise AvatarError("INPUT_SIZE")
             # Record original image bytes too; protect against changes during decoding.
@@ -263,7 +308,9 @@ class AvatarService:
                              "--detector", str(detector_checkpoint.resolve()),
                              "--device", device, "--batch-size", str(batch_size), "--ffmpeg", _tool(s.ffmpeg)],
                             s.timeout, stage, read_roots=(s.checkpoint.resolve(), detector_checkpoint.resolve(),
-                                                         Path(_tool(s.ffmpeg)).parent))
+                                                         Path(_tool(s.ffmpeg)).parent,
+                                                         *(_python_environment(Path(_tool(s.worker_python)))[2]
+                                                           if os.name == "nt" else ())))
                     if (digest(s.checkpoint) != contract["checkpoint_sha256"] or
                         digest(detector_checkpoint) != contract["detector_sha256"] or
                         digest(worker) != contract["worker_sha256"]):

@@ -190,7 +190,7 @@ class _API:
 
 class ConfinedProcess:
     """Small binary-stdio process object; close terminates the complete job."""
-    def __init__(self, command, *, cwd, env, read_roots=(), deny_roots=()):
+    def __init__(self, command, *, cwd, env, read_roots=(), read_dirs=(), deny_roots=()):
         _windows()
         if not isinstance(command, (list, tuple)) or not command or any(
                 not isinstance(x, str) or "\x00" in x for x in command):
@@ -199,7 +199,7 @@ class ConfinedProcess:
         work = Path(cwd)
         if not executable.is_absolute() or not executable.is_file() or not work.is_absolute() or not work.is_dir():
             raise Blocked("Área ou executável de ferramenta inválido.")
-        for path in (work, executable, *(Path(x) for x in read_roots)):
+        for path in (work, executable, *(Path(x) for x in (*read_roots, *read_dirs))):
             if path.is_symlink() or path.resolve() != path.absolute():
                 raise Blocked("Ligação de filesystem não autorizada na execução.")
         self.api = _API()
@@ -230,6 +230,12 @@ class ConfinedProcess:
             finally:
                 if sid_text: self.api.k.LocalFree(sid_text)
                 if profile: self.api.o.CoTaskMemFree(profile)
+            # Directory enumeration is separate from recursive file access.
+            for path in dict.fromkeys(str(Path(x).resolve()) for x in read_dirs):
+                if not Path(path).is_dir():
+                    raise Blocked("Diretório de runtime inválido.")
+                self.api.acl(path, self.sid, READ_EXECUTE, inherit=False)
+                self.grants.append(path)
             for path in dict.fromkeys(str(Path(x).resolve()) for x in read_roots):
                 self.api.acl(path, self.sid, READ_EXECUTE, inherit=Path(path).is_dir())
                 self.grants.append(path)
@@ -404,8 +410,9 @@ class ConfinedProcess:
     def __exit__(self, *_): self.close()
 
 
-def launch_confined(command, *, cwd, env, read_roots=(), deny_roots=()):
-    return ConfinedProcess(command, cwd=cwd, env=env, read_roots=read_roots, deny_roots=deny_roots)
+def launch_confined(command, *, cwd, env, read_roots=(), read_dirs=(), deny_roots=()):
+    return ConfinedProcess(command, cwd=cwd, env=env, read_roots=read_roots,
+                           read_dirs=read_dirs, deny_roots=deny_roots)
 
 
 def task_environment(work):

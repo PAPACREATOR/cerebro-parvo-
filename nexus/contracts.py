@@ -3,8 +3,6 @@ import json
 import math
 from pathlib import Path
 
-from jsonschema import Draft202012Validator
-
 ROOT = Path(__file__).resolve().parent
 
 
@@ -37,6 +35,8 @@ def strict_json(raw):
 
 
 def validate(name, value):
+    from jsonschema import Draft202012Validator
+
     schema = strict_json((ROOT / "schemas" / (name + ".json")).read_bytes())
     if next(Draft202012Validator(schema).iter_errors(value), None):
         raise Blocked("Os dados não cumprem o contrato " + name + ".")

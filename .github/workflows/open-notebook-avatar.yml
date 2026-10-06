@@ -49,7 +49,7 @@ jobs:
         shell: bash
         run: |
           export PYTHONPATH="$GITHUB_WORKSPACE/upstream-open-notebook"
-          python -m pytest nexus/lab/open_notebook_avatar/tests/test_avatar.py -k 'test_ffmpeg_cannot_read_unneeded_host_runtime or test_timeout' -vv --durations=10 --junitxml=avatar-native-scope.xml
+          python -m pytest nexus/lab/open_notebook_avatar/tests/test_avatar.py -k 'test_ffmpeg_cannot_read_unneeded_host_runtime or test_timeout or test_pipeline_reverse_idempotence_restart or test_avatar_worker_requires_real_native_boundary' -vv --durations=10 --junitxml=avatar-native-scope.xml
       - name: Extension contracts and real FFmpeg
         shell: bash
         run: |

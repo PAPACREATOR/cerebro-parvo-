@@ -139,3 +139,33 @@ def test_native_bad_command_never_launches(tmp_path):
     from nexus.contracts import Blocked
     with pytest.raises(Blocked):
         launch_confined(['not-an-absolute-program','\x00'],cwd=tmp_path,env={})
+
+
+def test_directory_enumeration_does_not_authorize_unassigned_file(tmp_path):
+    assert os.name == "nt", "Native Windows test NOT RUN on this OS"
+    work = tmp_path / "assigned"
+    work.mkdir()
+    directory = tmp_path / "dependency"
+    directory.mkdir()
+    selected = directory / "selected"
+    selected.write_bytes(b"selected-data")
+    protected = directory / "original"
+    protected.write_bytes(b"original")
+    code = (
+        "import json;from pathlib import Path;"
+        f"folder=Path({str(directory)!r});"
+        f"selected=Path({str(selected)!r});protected=Path({str(protected)!r});"
+        "assert 'original' in {p.name for p in folder.iterdir()};"
+        "assert selected.read_bytes()==b'selected-data';\n"
+        "try: protected.read_bytes();print('ALLOWED')\n"
+        "except PermissionError: print('DENIED')"
+    )
+    with launch_confined([sys.executable, "-I", "-c", code], cwd=work,
+                         env=process_environment(work),
+                         read_roots=(sys.prefix, sys.base_prefix, selected),
+                         read_dirs=(directory,)) as process:
+        stdout, stderr = process.communicate(timeout=10)
+        assert process.returncode == 0, stderr.decode(errors="replace")
+    assert stdout.strip() == b"DENIED"
+    assert protected.read_bytes() == b"original"
+    assert selected.read_bytes() == b"selected-data"

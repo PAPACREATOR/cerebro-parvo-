@@ -5,9 +5,9 @@ Estados antigos, filas, handoffs e quadros temporários foram removidos da árvo
 
 ## Relatório corrente — 06-10-2026
 
-Pedido humano: corrigir e testar sem alterar a estrutura, e escrever o ponto de situação. **Núcleo Host/MCP funcional e aprovado no CI; âmbito dos codecs corrigido em Windows; regressão avatar em curso; instalação física por validar.** Arquitetura M1–M14, responsabilidades Kernel/Host/Store, Creative/Human Gate/Canonical e caminhos existentes preservados.
+Pedido humano: corrigir e testar sem alterar a estrutura, e escrever o ponto de situação. **Núcleo funcional demonstrado no runtime anterior; âmbito dos codecs PASS; timeout Python FAIL em correção; novos gates pendentes; instalação física por validar.** Arquitetura M1–M14, responsabilidades Kernel/Host/Store, Creative/Human Gate/Canonical e caminhos existentes preservados.
 
-Código candidato: `48a72159cad4a3b0097f5323006efeb2f932d76a`; PR #23 draft, branch lab-open-notebook-avatar-20261004. Baseline/base e main não foram promovidas.
+Último runtime com gates completos Nexus/Host/MCP: `48a72159cad4a3b0097f5323006efeb2f932d76a` (regressão/integration também PASS em b3752b3). A correção granular deste commit exige nova validação; resultados anteriores não aprovam automaticamente o novo código. PR #23 draft, branch lab-open-notebook-avatar-20261004. Baseline/base e main não foram promovidas.
 
 | Bloco | Números observados | Resultado/evidência |
 |---|---|---|
@@ -30,6 +30,9 @@ O Host limita os processos que lança. Os ensaios não são uma auditoria de tod
 PC de Pedro, contas, serviços, políticas e ficheiros pessoais não foram alterados. Nenhum PASS de CI é convertido em perfeição universal, instalação física ou release. Próxima ação autorizada: terminar a repetição Avatar Windows, corrigir falhas reais que aparecerem e testar a recusa do provisioning ainda sem proteção.
 
 Microcontrato Avatar/Host, 06-10: FFmpeg/ffprobe só necessitam de leitura do diretório do executável e dependências selecionadas; não devem ler o Python/Nexus do Host. Em cc3d1be, [run 37437120425](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37437120425), o FFmpeg real copiou o input atribuído mas também leu Lib/this.py fora do trabalho: **1 FAIL em 37,85 s**; regressão Windows seguinte NOT RUN por esse FAIL. O job anterior de 48a7215 foi CANCELLED no limite de 20 min, sem XML final; não é PASS e a causa desse tempo não está provada. Correção mínima neste commit: codecs recebem apenas diretório do executável e dependências explícitas; só processos Python recebem os caminhos Python/Nexus necessários. Nenhuma alteração de estrutura, capacidade de rede, token, Job ou portão humano. Em b3752b3, [run 37438100330](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37438100330), o mesmo contrato Windows passou: leitura atribuída funciona e a leitura do Host é recusada. Suite completa ainda em curso. Dado o CANCELLED anterior, o CI passa a executar o teste de timeout existente no início e a conservar nomes/durações; não aumenta limites nem enfraquece testes.
+
+
+Microcontrato de timeout Python, 06-10: em 2f39016, [run 37438868791](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37438868791), o mesmo FFmpeg PASS em 0,15 s, mas o teste existente de timeout terminou em 18,99 s, acima de três segundos: **1 FAIL / 1 PASS**, regressão Windows seguinte NOT RUN. Não aumentar o limite do teste. Correção deste commit: o launcher distingue leitura do diretório sem herança da leitura dos descendentes; Python recebe ficheiros/DLLs e biblioteca padrão, com pacotes externos só quando selecionados. PIL recebe apenas PIL e a sua dependência XML presente; os pacotes do modelo são explícitos no worker. O worker lê os ficheiros Nexus necessários à verificação da fronteira, sem concessão recursiva de todo o Nexus. O import jsonschema passa para validate: inspecionar o token não deve carregar o validador de dados nem exigir os seus pacotes. Selo atualizado para os dois ficheiros core alterados. Um controlo nativo exige listar uma pasta, ler um ficheiro selecionado e recusar outro ficheiro na mesma pasta. Sem alteração de estrutura, rede, token, Job, limites ou decisão humana. Repetição dos quatro critérios Avatar iniciais, regressão integral e gates Nexus: **PENDENTES**.
 
 ## Fonte de verdade operacional
 
