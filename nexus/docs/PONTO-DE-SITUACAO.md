@@ -1,5 +1,15 @@
 # Nexus — ponto de situação atual
 
+## Atualização documental e capacidades — 06-10-2026
+
+- Constituição e arquitetura ativa reconciliadas com Kernel/Host/Store + MCP;
+- Activepieces/Conductor/Spiff preservados como genealogia, não runtime;
+- planos/instalação/matriz de compatibilidade atualizados;
+- F001–F008 e F011–F013 marcados com interpretação atual sem apagar evidência histórica;
+- LibreOffice atual continua limitado a DOCX/ODT → PDF;
+- Writer editorial completo passou a ter contrato próprio em `CAPABILITY-WRITER-EDITORIAL.md`, ainda **NOT IMPLEMENTED**;
+- arquitetura M1–M14 não foi alterada.
+
 Este é o único documento de estado operacional corrente em `nexus/docs`.
 Estados antigos, filas, handoffs e quadros temporários foram removidos da árvore ativa; continuam recuperáveis pelo histórico Git e pelos PRs/comentários.
 
