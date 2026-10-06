@@ -36,6 +36,8 @@ def test_post_install_acceptance_runs_exact_stress_and_security_gates():
     required = (
         "test_product_flows_5000.py",
         "test_product_system_50000.py",
+        "test_public_product_routes_10000.py",
+        "test_public_product_routes_all_50000.py",
         "test_product_themes_canonical_200k.py",
         "test_system_varied_200k.py",
         "test_bidirectional_50000.py",
