@@ -46,8 +46,11 @@ if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $out)) {
     throw 'NEXUS_LAUNCHER_BUILD_FAILED'
 }
 
-# Smoke test only: --help must exercise the compiled launcher and the real venv.
+# Smoke tests exercise the compiled launcher, the real venv and Windows quoting.
 & $out --help | Out-Null
+if ($LASTEXITCODE -ne 0) { throw 'NEXUS_LAUNCHER_SMOKE_FAILED' }
+$spacePath = Join-Path $env:TEMP 'Nexus Launcher Smoke Data'
+& $out --data $spacePath --help | Out-Null
 if ($LASTEXITCODE -ne 0) {
     throw 'NEXUS_LAUNCHER_SMOKE_FAILED'
 }
