@@ -26,6 +26,8 @@ $SurrealSha256 = '55c7e05ee2b68ec0d8b86c4b588e9b9807f257af8c15c05d17074514c64d8c
 $LanguageToolVersion = '6.6'
 $LanguageToolSha256 = '53600506b399bb5ffe1e4c8dec794fd378212f14aaf38ccef9b6f89314d11631'
 $PyInstallerVersion = '6.16.0'
+$StableDiffusion15Url = 'https://huggingface.co/stable-diffusion-v1-5/stable-diffusion-v1-5/resolve/main/v1-5-pruned-emaonly.safetensors'
+$StableDiffusion15Sha256 = '6ce0161689b3853acaa03779ec93eafe75a02f4ced659bee03f50797806fa2fa'
 
 function Invoke-Checked {
     param(
@@ -394,9 +396,26 @@ endlocal
         throw 'NEXUS_ACE_MAIN_MODEL_MISSING'
     }
     $report.models.ace_step = [ordered]@{ status='DOWNLOADED'; model='acestep-v15-turbo'; root=$aceModels }
+
+    # Conservative Deforum/Forge baseline for the 8 GB GPU target: official SD 1.5 EMA-only.
+    $forgeRoot = Join-Path $ToolsRoot 'Forge'
+    $sdModelDir = Join-Path $forgeRoot 'models\Stable-diffusion'
+    $null = New-Item -ItemType Directory -Force -Path $sdModelDir
+    $sd15 = Join-Path $sdModelDir 'v1-5-pruned-emaonly.safetensors'
+    Download-Verified $StableDiffusion15Url $sd15 $StableDiffusion15Sha256 | Out-Null
+    $report.models.stable_diffusion = [ordered]@{
+        status='DOWNLOADED_VERIFIED'
+        model='stable-diffusion-v1-5/v1-5-pruned-emaonly.safetensors'
+        path=$sd15
+        sha256=$StableDiffusion15Sha256
+        license='CreativeML Open RAIL-M'
+        functional_status='REQUIRES_REAL_FORGE_AND_DEFORUM_RENDER_ACCEPTANCE'
+    }
     $report.tools.forge = [ordered]@{
-        status='RUNTIME_INSTALLED'; path=(Join-Path $ToolsRoot 'Forge'); model='NOT_SELECTED';
-        note='No image checkpoint was silently chosen because model licences/size are separate decisions.'
+        status='RUNTIME_AND_BASE_MODEL_INSTALLED'
+        path=$forgeRoot
+        model=$sd15
+        note='Forge plus the conservative SD 1.5 baseline are installed; image/Deforum rendering remains a physical acceptance gate.'
     }
     Save-Report
 
@@ -418,7 +437,6 @@ endlocal
     @{ java=$java; jar=$ltJar.FullName } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $runtime 'languagetool.json') -Encoding UTF8
     @{ executable=$soffice } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $runtime 'libreoffice.json') -Encoding UTF8
     $report.pending += 'OPEN_NOTEBOOK_MODEL_AND_TRANSFORMATION_BINDING'
-    $report.pending += 'FORGE_IMAGE_CHECKPOINT_SELECTION'
     Save-Report
 
     # Run the existing Windows core/regression/security preparation after installation.
