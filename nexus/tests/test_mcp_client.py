@@ -80,3 +80,10 @@ def test_mcp_only_explicit_open_notebook_transport_environment_is_allowed():
     )
     names = {item["name"] for item in list_tools(allowed)}
     assert names == {"ping", "double", "explode"}
+
+
+def test_mcp_reduced_environment_drops_pythonpath(monkeypatch):
+    from nexus.mcp_client import _reduced_env
+    monkeypatch.setenv("PYTHONPATH", "C:/untrusted/import/path")
+    env = _reduced_env()
+    assert "PYTHONPATH" not in env
