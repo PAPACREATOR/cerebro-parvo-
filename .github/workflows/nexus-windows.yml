@@ -54,7 +54,7 @@ jobs:
           # nexus-integration-stress.yml. Do not duplicate it inside the ordinary
           # Windows regression: duplicate heavy runs previously terminated pytest
           # without a failure summary after the dedicated gates had already passed.
-          python -m pytest nexus/tests -q -p no:cacheprovider -o pythonpath=. --ignore=nexus/tests/test_product_flows_5000.py --ignore=nexus/tests/test_product_system_50000.py --ignore=nexus/tests/test_product_themes_canonical_200k.py
+          python -m pytest nexus/tests -q -p no:cacheprovider -o pythonpath=. --ignore=nexus/tests/test_product_flows_5000.py --ignore=nexus/tests/test_product_system_50000.py --ignore=nexus/tests/test_product_themes_canonical_200k.py --ignore=nexus/tests/test_public_product_routes_10000.py --ignore=nexus/tests/test_public_product_routes_all_50000.py
           if ($LASTEXITCODE -ne 0) { throw 'Standard Windows regression failed' }
           Write-Output 'NEXUS_SUITE_ALL_STANDARD=PASS'
           $bad = Join-Path $env:RUNNER_TEMP 'nexus-fail'
