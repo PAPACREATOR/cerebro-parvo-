@@ -46,7 +46,7 @@ class MCPServerSpec:
 
 def _reduced_env(extra: dict[str, str] | None = None) -> dict[str, str]:
     env: dict[str, str] = {}
-    for key in ("SystemRoot", "WINDIR", "PATH", "PATHEXT", "TEMP", "TMP", "PYTHONPATH"):
+    for key in ("SystemRoot", "WINDIR", "PATH", "PATHEXT", "TEMP", "TMP"):
         value = os.environ.get(key)
         if value:
             env[key] = value
