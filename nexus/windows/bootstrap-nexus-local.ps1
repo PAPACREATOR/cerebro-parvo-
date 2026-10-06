@@ -45,6 +45,9 @@ Invoke-PowerShellChecked -ScriptPath $prepare -Arguments @('-RepoRoot',$RepoRoot
 $inventory = Join-Path $RepoRoot 'nexus\windows\inventory-external-tools.ps1'
 Invoke-PowerShellChecked -ScriptPath $inventory -Arguments @('-ToolsRoot',$ToolsRoot)
 
+$plan = Join-Path $RepoRoot 'nexus\windows\plan-external-provisioning.ps1'
+Invoke-PowerShellChecked -ScriptPath $plan -Arguments @('-ToolsRoot',$ToolsRoot)
+
 $git = (Get-Command git.exe -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
 $head = (& $git -C $RepoRoot rev-parse HEAD).Trim()
 if ($LASTEXITCODE -ne 0) { throw 'NEXUS_HEAD_READ_FAILED' }
@@ -52,6 +55,11 @@ if ($LASTEXITCODE -ne 0) { throw 'NEXUS_HEAD_READ_FAILED' }
 $inventoryReport = Join-Path $ToolsRoot 'external-tools-inventory.json'
 if (-not (Test-Path -LiteralPath $inventoryReport)) {
     throw 'NEXUS_EXTERNAL_INVENTORY_MISSING'
+}
+
+$planReport = Join-Path $ToolsRoot 'external-provision-plan.json'
+if (-not (Test-Path -LiteralPath $planReport)) {
+    throw 'NEXUS_EXTERNAL_PLAN_MISSING'
 }
 
 $coreReport = Join-Path $ToolsRoot 'pc-core-report.json'
@@ -72,6 +80,7 @@ $report = [ordered]@{
     head = $head
     core_report = $coreReport
     external_inventory = $inventoryReport
+    external_plan = $planReport
     external_provisioning = 'BLOCKED_BY_POLICY'
     note = 'Code synchronized and Nexus core prepared/tested. Protected external provisioning was not bypassed.'
 }
