@@ -36,3 +36,6 @@ REGISTO-DE-EVENTOS-E-ACOES.md
 **/.venv/
 **/.pytest_cache/
 **/__pycache__/
+
+# Local Windows launcher build artefact
+/Nexus.exe

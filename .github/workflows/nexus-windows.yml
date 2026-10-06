@@ -57,7 +57,19 @@ jobs:
           if ($failure.status -ne 'FAIL' -or -not $failure.error) { throw 'Missing failure diagnosis' }
           Write-Output 'POWERSHELL_WRAPPER=PASS (staged suites + missing executable)'
           exit 0
+      - name: Compilar e arrancar Nexus.exe fino
+        shell: pwsh
+        run: |
+          python -m venv .venv
+          .\.venv\Scripts\python.exe -m pip install --disable-pip-version-check -r nexus/requirements.txt
+          powershell.exe -NoProfile -ExecutionPolicy Bypass -File nexus/windows/build-nexus-launcher.ps1 -RepoRoot "$env:GITHUB_WORKSPACE"
+          if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath .\Nexus.exe)) {
+            throw 'Nexus.exe launcher build/smoke failed'
+          }
+          $hash = (Get-FileHash -LiteralPath .\Nexus.exe -Algorithm SHA256).Hash.ToLowerInvariant()
+          Write-Output ("NEXUS_EXE=PASS sha256=" + $hash)
+
       - name: Delimitar evidencia
         shell: pwsh
         run: |
-          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value 'Suites Nexus core, blocks, practical e all executadas num runner Windows. Practical cobre apenas contratos reais ja automatizados. Nao prova a instalacao no PC de Pedro, Open Notebook/tiny, LibreOffice real, ACL da conta Nexus, homelab ou o produto completo.'
+          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value 'Suites Nexus core, blocks, practical e all executadas num runner Windows. O lançador Nexus.exe fino foi compilado e executou --help através da .venv. Practical cobre apenas contratos reais ja automatizados. Nao prova a instalacao física no PC de Pedro nem as ferramentas externas completas.'
