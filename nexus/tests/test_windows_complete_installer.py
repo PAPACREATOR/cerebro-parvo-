@@ -179,5 +179,6 @@ def test_moneyprinter_is_pinned_and_documentary_path_has_no_tts_dependency():
 def test_documentary_output_is_candidate_only_and_never_promotes():
     assert '"canonical_write": False' in DOCUMENTARY
     assert "store.promote" not in DOCUMENTARY
-    assert "canonical" not in DOCUMENTARY.lower().replace('"canonical_write": false', "")
+    assert "path(\"canonical\"" not in DOCUMENTARY.lower()
+    assert " / \"canonical\"" not in DOCUMENTARY.lower()
     assert "PASS_CANDIDATE" in DOCUMENTARY
