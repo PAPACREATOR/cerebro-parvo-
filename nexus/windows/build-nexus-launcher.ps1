@@ -41,7 +41,7 @@ if (Test-Path -LiteralPath $out) {
     Remove-Item -LiteralPath $out -Force
 }
 
-& $csc /nologo /target:exe /optimize+ /out:$out $source
+& $csc /nologo /target:exe /optimize+ ('/out:' + $out) $source
 if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $out)) {
     throw 'NEXUS_LAUNCHER_BUILD_FAILED'
 }
