@@ -1,5 +1,15 @@
 # Decisões vigentes e genealogia
 
+## 06-10-2026 — reconciliação documental e Writer editorial
+
+A documentação ativa foi alinhada com o runtime candidato realmente testado: Kernel/Host/Store Python + MCP determinístico + ferramentas externas. Activepieces, Memory Provider, Spiff e Conductor permanecem preservados como genealogia em decisões, histórico e relatórios, mas deixam de aparecer como dependências vigentes.
+
+Foi separado o que já está provado no LibreOffice do que ainda é capacidade futura. F007 continua a representar DOCX/ODT → PDF. O novo contrato `nexus/docs/CAPABILITY-WRITER-EDITORIAL.md` define Writer editorial completo em W001–W020: ODT editável, estilos, páginas, gutter, cabeçalhos/rodapés, viúvas/órfãos, imagens/legendas, sumário, PDF, round-trip, adulteração, restart e Human Gate.
+
+Decisão de implementação preferida para esta capability: ODF/ODT determinístico + LibreOffice para render/export; UNO só quando necessário e testável; macros não são mecanismo normal.
+
+Isto adiciona capacidade, não altera M1–M14 nem autoridade.
+
 ## 05-10-2026 — reconciliação documental da implementação candidata
 
 A [PR #21](https://github.com/PAPACREATOR/cerebro-parvo-/pull/21) documenta a remoção de Conductor/Spiff/YAML de execução do ativo; a [PR #23](https://github.com/PAPACREATOR/cerebro-parvo-/pull/23) é a única continuação. Kernel/Host/Store Python, MCP determinístico, ferramentas externas e Human Gate constituem a composição candidata. A pessoa continua autoridade máxima; M1–M14 e os princípios não são reabertos por esta nota.
