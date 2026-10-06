@@ -52,11 +52,14 @@ jobs:
           [void][scriptblock]::Create($sync)
           $codeSync = Get-Content -LiteralPath nexus/windows/sync-nexus-code.ps1 -Raw
           [void][scriptblock]::Create($codeSync)
-          python -m pytest nexus/tests/test_pc_sync.py nexus/tests/test_code_sync.py nexus/tests/test_code_sync_functional.py -q -p no:cacheprovider -o pythonpath=.
+          $prepareCore = Get-Content -LiteralPath nexus/windows/prepare-nexus-core.ps1 -Raw
+          [void][scriptblock]::Create($prepareCore)
+          python -m pytest nexus/tests/test_pc_sync.py nexus/tests/test_code_sync.py nexus/tests/test_code_sync_functional.py nexus/tests/test_prepare_nexus_core.py -q -p no:cacheprovider -o pythonpath=.
           Write-Output 'MEDIA_INSTALLER_PARSE=PASS'
           Write-Output 'MEDIA_HEALTH_PARSE=PASS'
           Write-Output 'PC_SYNC_PARSE=PASS'
           Write-Output 'CODE_SYNC_PARSE=PASS'
+          Write-Output 'PREPARE_CORE_PARSE=PASS'
       - name: Block F — ACE-Step and Forge bounded local MCP health
         run: python -m pytest nexus/tests/test_media_tools.py nexus/tests/test_media_tools_mcp.py nexus/tests/test_media_tools_checker.py -q -p no:cacheprovider -o pythonpath=.
       - name: Block G — complete Nexus regression
