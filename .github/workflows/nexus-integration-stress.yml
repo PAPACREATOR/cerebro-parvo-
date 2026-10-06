@@ -61,6 +61,7 @@ jobs:
           Write-Output 'MEDIA_HEALTH_PARSE=PASS'
           Write-Output 'PC_SYNC_PARSE=PASS'
           Write-Output 'CODE_SYNC_PARSE=PASS'
+          Write-Output 'EXTERNAL_INVENTORY_PARSE=PASS'
           Write-Output 'PREPARE_CORE_PARSE=PASS'
           Write-Output 'LOCAL_BOOTSTRAP_PARSE=PASS'
       - name: Block F — ACE-Step and Forge bounded local MCP health
