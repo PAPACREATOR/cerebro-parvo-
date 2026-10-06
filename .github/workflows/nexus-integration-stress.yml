@@ -56,12 +56,17 @@ jobs:
           [void][scriptblock]::Create($prepareCore)
           $bootstrap = Get-Content -LiteralPath nexus/windows/bootstrap-nexus-local.ps1 -Raw
           [void][scriptblock]::Create($bootstrap)
-          python -m pytest nexus/tests/test_pc_sync.py nexus/tests/test_code_sync.py nexus/tests/test_code_sync_functional.py nexus/tests/test_prepare_nexus_core.py nexus/tests/test_bootstrap_nexus_local.py -q -p no:cacheprovider -o pythonpath=.
+          $inventory = Get-Content -LiteralPath nexus/windows/inventory-external-tools.ps1 -Raw
+          [void][scriptblock]::Create($inventory)
+          $plan = Get-Content -LiteralPath nexus/windows/plan-external-provisioning.ps1 -Raw
+          [void][scriptblock]::Create($plan)
+          python -m pytest nexus/tests/test_pc_sync.py nexus/tests/test_code_sync.py nexus/tests/test_code_sync_functional.py nexus/tests/test_prepare_nexus_core.py nexus/tests/test_bootstrap_nexus_local.py nexus/tests/test_external_inventory.py nexus/tests/test_external_provision_plan.py -q -p no:cacheprovider -o pythonpath=.
           Write-Output 'MEDIA_INSTALLER_PARSE=PASS'
           Write-Output 'MEDIA_HEALTH_PARSE=PASS'
           Write-Output 'PC_SYNC_PARSE=PASS'
           Write-Output 'CODE_SYNC_PARSE=PASS'
           Write-Output 'EXTERNAL_INVENTORY_PARSE=PASS'
+          Write-Output 'EXTERNAL_PROVISION_PLAN_PARSE=PASS'
           Write-Output 'PREPARE_CORE_PARSE=PASS'
           Write-Output 'LOCAL_BOOTSTRAP_PARSE=PASS'
       - name: Block F — ACE-Step and Forge bounded local MCP health
