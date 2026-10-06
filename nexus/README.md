@@ -67,6 +67,6 @@ ACE-Step/Forge são ferramentas externas com instalador e health checks. Consult
 
 ## Limites conhecidos
 
-O gate protege o percurso da aplicação; ainda não há isolamento Windows por conta/ACL entre ferramentas e cofres. Um processo com os mesmos direitos do utilizador pode alterar ficheiros. O manifesto verifica alterações acidentais, não é uma raiz de confiança externa. A recuperação testada não substitui backup/restauro. Wiki, integração Zotero/web, desenho e música permanecem pendentes.
+O runtime lançado pelo Host já usa fronteira nativa Windows/AppContainer LPAC + Job Object nos percursos validados. Isto limita os processos que o Host lança; não promete controlar todo o Windows nem ferramentas externas já iniciadas fora dessa fronteira. Provisioning protegido de ferramentas externas continua pendente. O manifesto verifica integridade do código selado, não substitui uma raiz de confiança externa. Recuperação testada não substitui backup/restauro. Zotero, Writer editorial completo, modelos/GPU físicos e algumas capabilities multimédia permanecem pendentes.
 
 Licença do código Nexus: [PolyForm Noncommercial 1.0.0](../LICENSE). Dependências mantêm as suas licenças e não são redistribuídas nesta pasta.
