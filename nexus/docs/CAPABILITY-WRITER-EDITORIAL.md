@@ -1,3 +1,5 @@
+> **Decisão humana posterior — 06-10-2026:** o Writer editorial não é um compositor livre. O Nexus usa um **molde Writer fixo, versionado e aprovado pela pessoa**. Estilos, page styles, margens, gutter, cabeçalhos/rodapés, viúvas/órfãos, grelha e regras de paginação pertencem ao molde. O runtime não os recalcula nem os altera. Só preenche zonas/campos explicitamente permitidos, insere assets nos slots previstos, atualiza campos/índices previstos pelo molde, guarda uma cópia candidate e exporta PDF. Alterar o molde exige nova versão, hash, testes completos e aprovação humana.
+
 # Capability — LibreOffice Writer editorial
 
 Estado: **contrato de capacidade a implementar/testar**. Não altera M1–M14 nem a autoridade do Kernel.
@@ -6,7 +8,7 @@ A integração LibreOffice existente em [F007](F007-LIBREOFFICE.md) prova apenas
 
 ## Objetivo
 
-Permitir que o Nexus produza e reveja documentos Writer profissionais sem transformar LibreOffice em memória, UI principal ou autoridade.
+Permitir que o Nexus preencha e produza documentos Writer profissionais a partir de um molde fixo, sem transformar LibreOffice em compositor autónomo, memória, UI principal ou autoridade.
 
 Fluxo:
 
@@ -37,7 +39,8 @@ Canonical apenas após Human Gate
 - macros, scripts, ligações externas e embeddings ativos são bloqueados;
 - LibreOffice não escreve diretamente em Creative/Canonical;
 - toda a saída é candidate/UNTRUSTED até validação do Kernel;
-- estilos e layout são dados explícitos, não efeitos invisíveis de UI;
+- estilos e layout pertencem ao molde aprovado e não são alterados pelo runtime;
+- o hash/versão do molde faz parte da proveniência de cada documento;
 - reabrir/editar deve preservar estrutura e proveniência;
 - nenhum documento é publicado automaticamente.
 
@@ -126,25 +129,33 @@ Para cada imagem:
 - sem URL externa;
 - sem objeto incorporado ativo.
 
-### W004 — selecionar perfil
+### W004 — selecionar molde fixo
 
-Só perfis allowlisted e versionados.
+Só moldes allowlisted, versionados e com SHA-256 aprovado.
 
-Perfil desconhecido → BLOCKED.
+Molde desconhecido, hash diferente ou ficheiro alterado → BLOCKED.
 
-### W005 — criar pacote ODT
+O runtime não cria estilos nem altera page styles. O molde contém previamente todas as regras editoriais.
 
-Construção determinística de:
-- `mimetype`;
-- `META-INF/manifest.xml`;
-- `content.xml`;
-- `styles.xml`;
-- `meta.xml`;
-- assets permitidos.
+### W005 — instanciar cópia do molde
 
-Preferir geração ODF determinística pelo adapter a macros.
+Copiar o molde aprovado para a área temporária da tarefa.
 
-### W006 — estilos de página
+Permitido:
+- substituir placeholders de conteúdo explicitamente allowlisted;
+- preencher campos definidos;
+- inserir imagens apenas em slots previstos;
+- atualizar campos/índice previstos no próprio molde.
+
+Proibido:
+- alterar `styles.xml` ou page styles;
+- criar estilos;
+- alterar margens/gutter;
+- alterar cabeçalhos/rodapés estruturais;
+- executar macros;
+- introduzir objetos ativos ou ligações externas.
+
+### W006 — estilos de página — validação do molde
 
 Aplicar:
 - tamanho;
@@ -154,7 +165,7 @@ Aplicar:
 - first/left/right page styles quando necessário;
 - início de capítulo em página definida pelo perfil.
 
-### W007 — estilos tipográficos
+### W007 — estilos tipográficos — validação do molde
 
 Todos os parágrafos devem usar estilos nomeados.
 
@@ -168,7 +179,7 @@ Proibir formatação manual invisível quando existir estilo equivalente.
 - sem heading level skip não autorizado;
 - bookmarks/IDs estáveis quando aplicável.
 
-### W009 — viúvas, órfãos e continuidade
+### W009 — viúvas, órfãos e continuidade — validação do molde
 
 Configurar/testar:
 - orphan control;
@@ -179,7 +190,7 @@ Configurar/testar:
 
 PASS estrutural não substitui inspeção de paginação.
 
-### W010 — cabeçalhos, rodapés e paginação
+### W010 — cabeçalhos, rodapés e paginação — validação do molde
 
 - páginas iniciais de capítulo conforme perfil;
 - numeração coerente;
@@ -348,13 +359,14 @@ Depois:
 
 ## Implementação preferida
 
-Ordem de preferência:
+1. **molde .OTT/.ODT fixo e aprovado pela pessoa**;
+2. cópia por tarefa;
+3. substituição delimitada de placeholders/slots;
+4. LibreOffice Writer para abrir/atualizar campos previstos/exportar;
+5. UNO apenas se for necessário acionar funções nativas já definidas no molde, nunca para redesenhar o documento;
+6. macros nunca são mecanismo normal.
 
-1. **ODF/ODT determinístico + LibreOffice para render/export**;
-2. UNO apenas para operações que o ODF determinístico não consiga representar/testar de forma robusta;
-3. nunca macros como mecanismo normal.
-
-Isto mantém o adapter pequeno, auditável e independente da UI do Writer.
+Isto mantém o adapter pequeno e auditável: o design editorial está no molde, não no código.
 
 ## Critério de PASS da capability
 
