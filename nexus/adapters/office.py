@@ -23,13 +23,14 @@ def document_kind(raw):
             if len(names) != len(entries):
                 raise Blocked("Documento com entradas repetidas.")
             for entry in entries:
-                raw_name = entry.filename
-                posix = PurePosixPath(raw_name)
+                raw_name = getattr(entry, "orig_filename", entry.filename)
+                normalized_name = entry.filename
+                posix = PurePosixPath(normalized_name)
                 if ("\x00" in raw_name or "\\" in raw_name or raw_name.startswith("/")
                         or any(part == ".." for part in posix.parts)
                         or (posix.parts and ":" in posix.parts[0])):
                     raise Blocked("Caminho interno de documento não autorizado.")
-                name = raw_name.lower()
+                name = normalized_name.lower()
                 if (any(word in name for word in ("vbaproject", "scripts/", "basic/", "embeddings/"))
                         or name.startswith("object ")
                         or name.startswith("objectreplacements/")):
