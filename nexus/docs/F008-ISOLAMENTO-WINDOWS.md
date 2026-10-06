@@ -1,3 +1,5 @@
+> **Estado atual (06-10-2026):** o texto abaixo conserva a evolução e os FAILs anteriores. O runtime atual já usa fronteira nativa Windows/AppContainer LPAC + Job Object para os processos lançados pelo Host, com gates reais de confinamento/autoridade em Windows 2022/2025. Provisioning externo continua deliberadamente bloqueado e não deve ser confundido com confinamento de runtime já provado.
+
 # F008 — isolamento Windows (PENDENTE)
 
 
