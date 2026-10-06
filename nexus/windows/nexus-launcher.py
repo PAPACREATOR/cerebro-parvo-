@@ -32,16 +32,17 @@ def main() -> int:
         config = json.loads(config_path.read_text(encoding="utf-8"))
     except Exception:
         return fail("Configuração do lançador Nexus inválida.")
-    if set(config) != {"repo_root", "python", "data_root", "expected_origin"}:
+    if set(config) != {"repo_root", "python", "git", "data_root", "expected_origin"}:
         return fail("Configuração do lançador Nexus incompatível.")
     repo = Path(config["repo_root"]).resolve()
     python = Path(config["python"]).resolve()
+    git = Path(config["git"]).resolve()
     data = Path(config["data_root"]).resolve()
-    if not python.is_file() or not (repo / ".git").is_dir() or not (repo / "nexus" / "app.py").is_file():
+    if not python.is_file() or not git.is_file() or not (repo / ".git").is_dir() or not (repo / "nexus" / "app.py").is_file():
         return fail("Instalação Nexus não encontrada.")
     try:
         origin = subprocess.check_output(
-            ["git", "-C", str(repo), "config", "--get", "remote.origin.url"],
+            [str(git), "-C", str(repo), "config", "--get", "remote.origin.url"],
             text=True, encoding="utf-8", errors="strict", timeout=10,
             creationflags=subprocess.CREATE_NO_WINDOW,
         ).strip()
