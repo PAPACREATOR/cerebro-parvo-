@@ -31,6 +31,9 @@ from nexus.adapters.verify_direct import execute as verify
 from nexus.adapters.notebook import run as interpret
 from nexus.adapters.languagetool import run as proofread
 from nexus.adapters.office import run as convert_pdf
+from nexus.adapters.product_routes import run_open_notebook as run_product_plan
+from nexus.adapters.product_routes import run_music as run_music_plan
+from nexus.adapters.product_routes import run_web as run_web_plan
 from nexus.adapters.media_tools import check_ace_step as ace_health
 from nexus.adapters.media_tools import check_forge as forge_health
 from nexus.contracts import Blocked, strict_json
@@ -74,6 +77,36 @@ def proofread_file(input_path: str) -> dict:
 @mcp.tool()
 def convert_pdf_file(input_path: str) -> dict:
     return convert_pdf(_input(input_path))
+
+
+@mcp.tool()
+def video_plan_file(input_path: str) -> dict:
+    return run_product_plan(_input(input_path), "video")
+
+
+@mcp.tool()
+def podcast_plan_file(input_path: str) -> dict:
+    return run_product_plan(_input(input_path), "podcast")
+
+
+@mcp.tool()
+def visual_podcast_plan_file(input_path: str) -> dict:
+    return run_product_plan(_input(input_path), "visual_podcast")
+
+
+@mcp.tool()
+def book_file(input_path: str) -> dict:
+    return convert_pdf(_input(input_path))
+
+
+@mcp.tool()
+def music_plan_file(input_path: str) -> dict:
+    return run_music_plan(_input(input_path))
+
+
+@mcp.tool()
+def web_plan_file(input_path: str) -> dict:
+    return run_web_plan(_input(input_path))
 
 
 def _health(name, probe):
