@@ -93,10 +93,27 @@ function Invoke-Probe {
     return 'FAIL'
 }
 
+
+function Get-CanonicalSnapshot {
+    $root = Join-Path $RepoRoot 'nexus\runtime\canonical'
+    if (-not (Test-Path -LiteralPath $root)) { return @() }
+    return @(
+        Get-ChildItem -LiteralPath $root -File -Recurse -Force |
+        Sort-Object FullName |
+        ForEach-Object {
+            $relative = $_.FullName.Substring($root.Length).TrimStart('\')
+            $hash = (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+            $relative + '|' + $_.Length + '|' + $hash
+        }
+    )
+}
+
 Write-Host '=== NEXUS REAL WINDOWS ACCEPTANCE ==='
 Write-Host ('Repository: ' + $RepoRoot)
 Write-Host ('Report:     ' + $reportRoot)
 Write-Host ''
+
+$canonicalBefore = @(Get-CanonicalSnapshot)
 
 Invoke-PytestStep 'host-gate-attacks' @(
     'nexus/tests/test_host.py::test_full_http_flow_and_bypasses',
@@ -127,6 +144,17 @@ if ($episodeId) {
     Invoke-Probe 'visual-podcast-real' 'avatar' $avatarArgs | Out-Null
 } else {
     Record-Step 'visual-podcast-real' 'BLOCKED_DEPENDENCY' 'podcast did not produce an episode id'
+}
+
+
+$canonicalAfter = @(Get-CanonicalSnapshot)
+$canonicalDiff = @(Compare-Object -ReferenceObject $canonicalBefore -DifferenceObject $canonicalAfter)
+if ($canonicalDiff.Count -eq 0) {
+    Record-Step 'canonical-physical-isolation' 'PASS' 'external physical probes left runtime Canonical byte-identical'
+} else {
+    $diffPath = Join-Path $reportRoot 'canonical-diff.txt'
+    $canonicalDiff | Out-String | Set-Content -LiteralPath $diffPath -Encoding UTF8
+    Record-Step 'canonical-physical-isolation' 'FAIL' 'runtime Canonical changed during external physical probes' $diffPath
 }
 
 $git = (Get-Command git.exe -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
