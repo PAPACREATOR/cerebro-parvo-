@@ -52,7 +52,7 @@ def _opener():
 
 
 def get_local_json(url: str, timeout: int = 5):
-    if not (url.startswith(OPEN_NOTEBOOK_BASE) or url.startswith(FORGE_BASE) or url.startswith(SPEACHES_BASE)):
+    if not (url.startswith(OPEN_NOTEBOOK_BASE) or url.startswith(FORGE_BASE)):
         raise BridgeError("Non-local network endpoint is forbidden")
     request = urllib.request.Request(url, headers={"Accept": "application/json"})
     try:
@@ -71,7 +71,7 @@ def get_local_json(url: str, timeout: int = 5):
 
 
 def post_local_json(url: str, payload: dict, *, bearer: str = "", timeout: int = 120):
-    if not (url.startswith(OPEN_NOTEBOOK_BASE) or url.startswith(FORGE_BASE) or url.startswith(SPEACHES_BASE)):
+    if not (url.startswith(OPEN_NOTEBOOK_BASE) or url.startswith(FORGE_BASE)):
         raise BridgeError("Non-local network endpoint is forbidden")
     headers = {"Content-Type": "application/json", "Accept": "application/json"}
     if bearer:
