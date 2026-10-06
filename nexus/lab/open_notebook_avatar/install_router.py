@@ -1,4 +1,4 @@
-"""Add the optional router to a local Open Notebook 1.14.0 source checkout.
+"""Add the optional router to a local Open Notebook 1.15.0 source checkout.
 
 Run after installing this package in Open Notebook's environment. Preserves a
 backup, checks syntax before replacing, and is idempotent. No dependency install
@@ -17,8 +17,8 @@ BLOCK = '\n' + MARKER + '\nfrom notebook_avatar.router import router as avatar_r
 
 def install(root: Path):
     version = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))["project"]["version"]
-    if version != "1.14.0":
-        raise ValueError("This installer is validated for Open Notebook 1.14.0 only")
+    if version != "1.15.0":
+        raise ValueError("This installer is validated for Open Notebook 1.15.0 only")
     target = root / "api/main.py"
     text = target.read_text(encoding="utf-8")
     if BLOCK in text:
