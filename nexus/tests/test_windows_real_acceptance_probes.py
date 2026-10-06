@@ -40,6 +40,15 @@ def test_zotero_search_is_read_only_and_compacts_results(tmp_path, monkeypatch):
     assert json.loads((tmp_path / "zotero-search.json").read_text("utf-8"))["items"][0]["key"] == "A1"
 
 
+
+def test_zotero_disabled_local_api_is_not_misreported_as_tool_failure(tmp_path, monkeypatch):
+    def forbidden(*_args, **_kwargs):
+        raise RuntimeError("HTTP 403: disabled")
+    monkeypatch.setattr(acceptance, "request_bytes", forbidden)
+    with pytest.raises(acceptance.NotConfigured, match="disabled"):
+        acceptance.zotero("x", tmp_path)
+
+
 def test_zotero_invalid_item_envelope_fails(tmp_path, monkeypatch):
     monkeypatch.setattr(acceptance, "request_bytes", lambda *a, **k: (b"{}", {}))
     monkeypatch.setattr(acceptance, "request_json", lambda *a, **k: ({"not": "a list"}, {}))
