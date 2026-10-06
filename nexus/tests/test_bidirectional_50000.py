@@ -31,6 +31,7 @@ EXTERNAL_CALLS = 25_000
 TOTAL_CASES = INTERNAL_CASES + EXTERNAL_CALLS
 EXTERNAL_BATCH_SIZE = 2_500
 EXTERNAL_SESSIONS = EXTERNAL_CALLS // EXTERNAL_BATCH_SIZE
+EXTERNAL_CONCURRENCY = 100
 
 pytestmark = pytest.mark.skipif(os.environ.get("NEXUS_RUN_50K") != "1", reason="explicit 50k stress gate")
 
@@ -83,19 +84,27 @@ def _spec() -> MCPServerSpec:
 
 async def _external_25000() -> int:
     count = 0
+
+    async def one(session, i: int) -> int:
+        original = _text(i)
+        result = await session.call_tool("ping", {"value": original})
+        assert result.isError is False, i
+        payload = _payload_from_result(result)
+        assert payload == {"echo": original, "authority": "NONE"}, i
+        assert payload["echo"].encode("utf-8") == original.encode("utf-8"), i
+        return 1
+
     for batch in range(EXTERNAL_SESSIONS):
         async with AsyncExitStack() as stack:
             session = await _open_session(stack, _spec())
             start = batch * EXTERNAL_BATCH_SIZE
             stop = start + EXTERNAL_BATCH_SIZE
-            for i in range(start, stop):
-                original = _text(i)
-                result = await session.call_tool("ping", {"value": original})
-                assert result.isError is False, i
-                payload = _payload_from_result(result)
-                assert payload == {"echo": original, "authority": "NONE"}, i
-                assert payload["echo"].encode("utf-8") == original.encode("utf-8"), i
-                count += 1
+            for chunk_start in range(start, stop, EXTERNAL_CONCURRENCY):
+                chunk_stop = min(chunk_start + EXTERNAL_CONCURRENCY, stop)
+                completed = await asyncio.gather(
+                    *(one(session, i) for i in range(chunk_start, chunk_stop))
+                )
+                count += sum(completed)
     return count
 
 
@@ -110,3 +119,4 @@ def test_declared_total_is_exactly_50000():
     assert TOTAL_CASES == 50_000
     assert EXTERNAL_BATCH_SIZE == 2_500
     assert EXTERNAL_SESSIONS == 10
+    assert EXTERNAL_CONCURRENCY == 100
