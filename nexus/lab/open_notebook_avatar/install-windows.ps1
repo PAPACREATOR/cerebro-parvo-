@@ -37,7 +37,7 @@ $outputs = Join-Path $root 'data/avatar-videos'
 foreach ($directory in @($models,$portraits,$outputs)) {
     $null = New-Item -ItemType Directory -Path $directory -Force
 }
-Run-Step $worker @((Join-Path $PSScriptRoot 'provision_models.py'),$models)
+Run-Step $worker @((Join-Path $PSScriptRoot 'provision_models.py'),$models,'--authorize-install')
 Run-Step $worker @('-c',"import shutil; assert shutil.which('ffmpeg') and shutil.which('ffprobe'); from lipsync import LipSync; print('DEPENDENCIES=PASS')")
 Run-Step $api @((Join-Path $PSScriptRoot 'install_router.py'),$root)
 # Preserve unrelated settings and secrets. Only these four capability paths are changed.
