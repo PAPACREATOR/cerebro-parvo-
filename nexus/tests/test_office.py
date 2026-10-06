@@ -135,3 +135,14 @@ def test_http_pdf_requires_session_and_unchanged_bytes(tmp_path):
         with pytest.raises(Blocked): host.prepare_approval(run, host.session)
     finally:
         server.shutdown(); server.server_close(); worker.join()
+
+
+@pytest.mark.parametrize("extra", [
+    ("Object 1/content.xml", "<office:document/>"),
+    ("ObjectReplacements/Object 1", "binary"),
+    ("word/embeddings/oleObject1.bin", "binary"),
+    ("content.xml", '<draw:object xlink:href="./Object 1"/>'),
+])
+def test_embedded_writer_objects_are_blocked(extra):
+    with pytest.raises(Blocked):
+        document_kind(odt(extra))
