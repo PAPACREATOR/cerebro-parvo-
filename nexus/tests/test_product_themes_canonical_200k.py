@@ -1,8 +1,8 @@
 """200,000 product/theme/Canonical authority cases.
 
-Ten independent deterministic families x 20,000. This suite deliberately does
-not turn lab capabilities into public Host routes and never writes Canonical
-without Store.promote + an exact HumanDecision.
+Ten independent deterministic families x 20,000. Public product routes are
+recognized, but no route can write Canonical without Store.promote + an exact
+HumanDecision.
 """
 from __future__ import annotations
 
@@ -212,7 +212,7 @@ def test_family_08_canonical_reference_attacks_20000_are_blocked(tmp_path):
             store.path("canonical", attacks[i % len(attacks)])
 
 
-def test_family_09_product_names_20000_do_not_bypass_public_host_policy():
+def test_family_09_product_names_20000_are_public_but_gain_no_authority():
     for i in range(CASES):
         process = PRODUCTS[i % len(PRODUCTS)][0]
         request = {
@@ -221,8 +221,7 @@ def test_family_09_product_names_20000_do_not_bypass_public_host_policy():
             "filename": "",
             "attachment": "",
         }
-        with pytest.raises(Blocked):
-            validate("request", request)
+        assert validate("request", request)["process"] == process
 
 
 def test_family_10_canonical_prompt_injection_20000_stays_untrusted():
