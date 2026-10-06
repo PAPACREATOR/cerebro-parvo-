@@ -53,20 +53,9 @@ def configure(root: Path, ffmpeg: Path, device: str) -> dict:
     compute = "int8_float16" if device == "cuda" else "int8"
     text = replace_once(text, r'^compute_type = "int8"$', f'compute_type = "{compute}"', "whisper.compute_type")
 
-    # Reuse the already-pinned Speaches/Kokoro service; no second TTS server.
-    text = replace_once(
-        text,
-        r'^base_url = "http://127\.0\.0\.1:8880/v1"$',
-        'base_url = "http://127.0.0.1:8969/v1"',
-        "kokoro.base_url",
-    )
-    text = replace_once(
-        text,
-        r'^model_id = "kokoro"$',
-        'model_id = "speaches-ai/Kokoro-82M-v1.0-ONNX"',
-        "kokoro.model_id",
-    )
-    text = replace_once(text, r'^voices = \[\]$', 'voices = ["pf_dora"]', "kokoro.voices")
+    # No TTS provider is configured for the Nexus documentary path. If narration
+    # is supplied, MoneyPrinterTurbo receives it through --custom-audio-file and
+    # Whisper may derive subtitles. Without narration the render is silent.
 
     # Never auto-open Explorer from a headless Nexus-owned render.
     text = replace_once(
@@ -92,25 +81,12 @@ def configure(root: Path, ffmpeg: Path, device: str) -> dict:
     for key, value in expected.items():
         if parsed.get(key) != value:
             raise SetupError(f"MoneyPrinterTurbo local config did not round-trip: {key}")
-    kokoro = parsed.get("kokoro", {})
-    if kokoro.get("base_url") != "http://127.0.0.1:8969/v1":
-        raise SetupError("MoneyPrinterTurbo Kokoro endpoint mismatch")
-    if kokoro.get("model_id") != "speaches-ai/Kokoro-82M-v1.0-ONNX":
-        raise SetupError("MoneyPrinterTurbo Kokoro model mismatch")
-    if kokoro.get("voices") != ["pf_dora"]:
-        raise SetupError("MoneyPrinterTurbo Portuguese voice mismatch")
-
     return {
         "schema": "nexus.moneyprinterturbo-local-config.v1",
         "status": "PASS",
         "config": str(target),
         "llm": {"provider": "ollama", "base_url": expected["ollama_base_url"], "model": "qwen3:4b"},
-        "tts": {
-            "provider": "kokoro-via-speaches",
-            "base_url": kokoro["base_url"],
-            "model": kokoro["model_id"],
-            "voice": "pf_dora",
-        },
+        "tts": {"provider": "none", "mode": "custom-audio-or-silent"},
         "subtitles": {"provider": "whisper", "model": "small", "device": device, "compute_type": compute},
         "ffmpeg": str(ffmpeg.resolve()),
         "network_contract": "LOCAL_RUNTIME_ONLY_FOR_NEXUS_PATH",
