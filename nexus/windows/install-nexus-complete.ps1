@@ -363,6 +363,20 @@ endlocal
     $mediaInstaller = Join-Path $RepoRoot 'nexus\windows\install-media-tools.ps1'
     & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $mediaInstaller -ToolsRoot $ToolsRoot -AuthorizeInstall
     if ($LASTEXITCODE -ne 0) { throw 'NEXUS_MEDIA_INSTALL_FAILED' }
+    $mediaReportPath = Join-Path $ToolsRoot 'nexus-media-tools.json'
+    if (-not (Test-Path -LiteralPath $mediaReportPath)) { throw 'NEXUS_MEDIA_REPORT_MISSING' }
+    $mediaReport = Get-Content -LiteralPath $mediaReportPath -Raw | ConvertFrom-Json
+    if ($null -eq $mediaReport.deforum -or $mediaReport.deforum.status -ne 'INSTALLED_DEPENDENCIES_TESTED') {
+        throw 'NEXUS_DEFORUM_INSTALL_NOT_VERIFIED'
+    }
+    $report.tools.deforum = [ordered]@{
+        status=$mediaReport.deforum.status
+        path=$mediaReport.deforum.path
+        commit=$mediaReport.deforum.commit
+        license=$mediaReport.deforum.license
+        functional_status=$mediaReport.deforum.functional_status
+    }
+    Save-Report
 
     # Pre-fetch the ACE-Step main model so the later real-music test cannot hide a first-use download.
     $ace = Join-Path $ToolsRoot 'ACE-Step-1.5'
