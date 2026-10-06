@@ -566,6 +566,12 @@ endlocal
         transformation_id=$openConfig.documentary_transformation.id
     } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $runtime 'open-notebook-documentary.json') -Encoding UTF8
     @{
+        base_url='http://127.0.0.1:5055'
+        password=$apiPassword
+        model_id=$openConfig.models.language.id
+        transformation_id=$openConfig.product_plan_transformation.id
+    } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $runtime 'open-notebook-product.json') -Encoding UTF8
+    @{
         root=$moneyPrinter
         uv=$uv
         ffmpeg=$ffmpeg
@@ -573,6 +579,7 @@ endlocal
     } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $runtime 'moneyprinterturbo.json') -Encoding UTF8
     $report.tools.open_notebook['nexus_adapter_config'] = (Join-Path $runtime 'open-notebook.json')
     $report.tools.open_notebook['documentary_adapter_config'] = (Join-Path $runtime 'open-notebook-documentary.json')
+    $report.tools.open_notebook['product_adapter_config'] = (Join-Path $runtime 'open-notebook-product.json')
     $report.tools.moneyprinterturbo['nexus_adapter_config'] = (Join-Path $runtime 'moneyprinterturbo.json')
     Save-Report
 
