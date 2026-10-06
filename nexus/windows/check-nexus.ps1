@@ -84,6 +84,7 @@ try {
             'nexus/tests/test_pc_sync.py'
             'nexus/tests/test_code_sync.py'
             'nexus/tests/test_code_sync_functional.py'
+            'nexus/tests/test_prepare_nexus_core.py'
         ) }
         default { @('nexus/tests') }
     }
