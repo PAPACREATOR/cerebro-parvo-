@@ -69,12 +69,14 @@ def test_internet_research_rejects_invalid_search_shape(tmp_path, monkeypatch):
         acceptance.internet_research("teste", tmp_path)
 
 
-def test_ace_music_requires_initialized_models(tmp_path, monkeypatch):
-    monkeypatch.setattr(
-        acceptance, "request_json",
-        lambda *a, **k: ({"data": {"status": "ok", "models_initialized": False}}, {}),
-    )
-    with pytest.raises(acceptance.NotConfigured, match="not initialized"):
+def test_ace_music_allows_lazy_model_initialization_but_still_obeys_job_failure(tmp_path, monkeypatch):
+    responses = iter([
+        ({"data": {"status": "ok", "models_initialized": False}}, {}),
+        ({"code": 200, "data": {"task_id": "task-lazy"}}, {}),
+        ({"data": [{"status": 2, "result": ""}]}, {}),
+    ])
+    monkeypatch.setattr(acceptance, "request_json", lambda *a, **k: next(responses))
+    with pytest.raises(RuntimeError, match="reported failure"):
         acceptance.ace_music(tmp_path)
 
 
