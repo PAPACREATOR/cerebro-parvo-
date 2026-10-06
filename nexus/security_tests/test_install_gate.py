@@ -15,6 +15,7 @@ LEGACY_MARKER = "NEXUS_PROTECTED_PROVISIONING_PENDING"
 AUTHORIZED_INSTALL_MARKER = "NEXUS_INSTALL_AUTHORIZATION_REQUIRED"
 TRIPWIRE = "NEXUS_TEST_UNPROTECTED_SIDE_EFFECT"
 PS_CASES = [
+    ("windows/install-nexus-complete.ps1", "ToolsRoot", [], None, AUTHORIZED_INSTALL_MARKER),
     ("windows/install-media-tools.ps1", "ToolsRoot", [], None, AUTHORIZED_INSTALL_MARKER),
     ("windows/install-media-tools.ps1", "ToolsRoot", ["SkipAceStep", "SkipForge"], None, AUTHORIZED_INSTALL_MARKER),
     ("windows/sync-nexus-pc.ps1", "ToolsRoot", [], None, LEGACY_MARKER),
