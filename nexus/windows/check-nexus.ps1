@@ -77,13 +77,13 @@ try {
             'nexus/tests/test_reverse_flow.py::test_real_windows_result_back_to_original_and_folha_after_restart',
             'nexus/tests/test_multimedia.py::test_python_reader_reads_family',
             'nexus/tests/test_lab_practical_boundaries.py',
-            'nexus/tests/test_open_notebook_kernel_e2e.py'
+            'nexus/tests/test_open_notebook_kernel_e2e.py',
             'nexus/tests/test_media_tools.py',
-            'nexus/tests/test_media_tools_mcp.py'
-            'nexus/tests/test_media_tools_checker.py'
-            'nexus/tests/test_pc_sync.py'
-            'nexus/tests/test_code_sync.py'
-            'nexus/tests/test_code_sync_functional.py'
+            'nexus/tests/test_media_tools_mcp.py',
+            'nexus/tests/test_media_tools_checker.py',
+            'nexus/tests/test_pc_sync.py',
+            'nexus/tests/test_code_sync.py',
+            'nexus/tests/test_code_sync_functional.py',
             'nexus/tests/test_prepare_nexus_core.py'
         ) }
         default { @('nexus/tests') }
