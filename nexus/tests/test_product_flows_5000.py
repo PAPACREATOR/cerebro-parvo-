@@ -80,18 +80,22 @@ def _source_gate(case_id: int) -> str:
     return expected
 
 
-def _roundtrip_human(text: str, expected_intent: str) -> None:
+def _roundtrip_human(text: str, expected_intent: str) -> str:
     parsed = parse(text)
     assert parsed.status == "RESOLVED"
     assert parsed.intent == expected_intent
     markdown = to_markdown(parsed)
+    back = from_markdown(markdown)
+    assert back["text"].encode("utf-8") == text.encode("utf-8")
+    return markdown
+
+
+def _notebook_roundtrip(markdown: str) -> None:
     packet = kernel_to_notebook(markdown)
     assert packet["authority"] == "UNTRUSTED_REQUEST"
     assert packet["target"] == "open-notebook"
     returned = kernel_from_notebook_boundary(packet)
     assert returned == markdown
-    back = from_markdown(returned)
-    assert back["text"].encode("utf-8") == text.encode("utf-8")
 
 
 def _request(process: str, text: str = "x") -> dict:
@@ -144,10 +148,11 @@ def test_video_flow_5000_directional_cases():
     assert source.is_file()
     assert "PASS_CANDIDATE" in source.read_text(encoding="utf-8")
     for case_id in range(CASES):
-        _roundtrip_human(f"& cria documentário caso {case_id} com fontes aprovadas", "trabalhar")
+        markdown = _roundtrip_human(f"& cria documentário caso {case_id} com fontes aprovadas", "trabalhar")
         outcome = _source_gate(case_id)
         if outcome == "conflict":
             continue
+        _notebook_roundtrip(markdown)
         value = DOCUMENTARY.validate_storyboard(_valid_storyboard(case_id))
         assert value["title"] == f"Documentário {case_id}"
         assert len(value["scenes"]) == 6
@@ -160,12 +165,13 @@ def test_video_flow_5000_directional_cases():
 
 def test_podcast_flow_5000_directional_cases():
     for case_id in range(CASES):
-        _roundtrip_human(f"& cria podcast caso {case_id} apenas com estas fontes", "trabalhar")
+        markdown = _roundtrip_human(f"& cria podcast caso {case_id} apenas com estas fontes", "trabalhar")
         outcome = _source_gate(case_id)
         api = _EpisodeAPI()
         if outcome == "conflict":
             assert api.calls == []
             continue
+        _notebook_roundtrip(markdown)
         profile = OPEN_CONFIG.episode_profile(api, f"language-{case_id}", f"speaker-{case_id}")
         assert profile["outline_llm"] == f"language-{case_id}"
         assert profile["transcript_llm"] == f"language-{case_id}"
@@ -190,10 +196,11 @@ def test_visual_podcast_flow_5000_directional_cases(tmp_path):
     avatar.write_bytes(b"\x89PNG\r\n\x1a\n" + b"b" * 128)
 
     for case_id in range(CASES):
-        _roundtrip_human(f"& cria podcast visual caso {case_id}", "trabalhar")
+        markdown = _roundtrip_human(f"& cria podcast visual caso {case_id}", "trabalhar")
         outcome = _source_gate(case_id)
         if outcome == "conflict":
             continue
+        _notebook_roundtrip(markdown)
         assert contained_file(audio_root, "episode.wav", 100_000_000) == audio.resolve()
         assert contained_file(avatar_root, "portrait.png", 20_000_000) == avatar.resolve()
         bad = "../portrait.png" if case_id % 2 else "C:\\portrait.png"
