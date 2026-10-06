@@ -193,6 +193,41 @@ def transformation(api: API, language_id: str):
         return item
     return api.call("POST", "/api/transformations", {"name": name, **expected})
 
+def documentary_transformation(api: API, language_id: str):
+    """Pinned storyboard/script contract consumed by the local documentary bridge."""
+    name = "nexus_documentary_script_v1"
+    prompt = (
+        "Return ONLY one valid JSON object, with no Markdown fences and no text before or after it. "
+        "Use exactly these keys: title, script, scenes. "
+        "Write the narration in European Portuguese unless the input explicitly requests another language. "
+        "title must be a non-empty string up to 180 characters. "
+        "script must be a factual documentary narration grounded only in the supplied input; do not invent sources, "
+        "quotes, dates, names or claims. Aim for the requested duration when the input supplies one. "
+        "scenes must be an array with 6 to 40 objects. Every scene must use exactly these keys: visual_prompt, seconds. "
+        "visual_prompt must be a concise English visual description suitable for a documentary still image; "
+        "it must not assert facts absent from the supplied input. seconds must be an integer from 3 to 15. "
+        "The sum of scene seconds should approximately match the narration duration. "
+        "The complete response must be parseable by a strict JSON parser."
+    )
+    items = api.call("GET", "/api/transformations")
+    matches = [item for item in items if item.get("name") == name]
+    if len(matches) > 1:
+        raise SetupError("Duplicate Nexus documentary transformation")
+    expected = {
+        "title": "Nexus documentary script JSON v1",
+        "description": "Bounded local documentary handoff for MoneyPrinterTurbo.",
+        "prompt": prompt,
+        "apply_default": False,
+        "model_id": language_id,
+    }
+    if matches:
+        item = matches[0]
+        if any(item.get(key) != value for key, value in expected.items()):
+            raise SetupError("Existing Nexus documentary transformation conflicts with the pinned contract")
+        return item
+    return api.call("POST", "/api/transformations", {"name": name, **expected})
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--api", default="http://127.0.0.1:5055")
@@ -262,6 +297,7 @@ def main() -> int:
         raise SetupError("Open Notebook automatic file deletion could not be disabled")
 
     cognitive = transformation(api, language["id"])
+    documentary = documentary_transformation(api, language["id"])
     speaker = speaker_profile(api, tts["id"])
     episode = episode_profile(api, language["id"], speaker["id"])
 
@@ -278,6 +314,7 @@ def main() -> int:
             "tts": {"id": tts["id"], "name": tts["name"]},
         },
         "transformation": {"id": cognitive["id"], "name": cognitive["name"]},
+        "documentary_transformation": {"id": documentary["id"], "name": documentary["name"]},
         "podcast_profiles": {
             "speaker": {"id": speaker["id"], "name": speaker["name"]},
             "episode": {"id": episode["id"], "name": episode["name"]},
