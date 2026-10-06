@@ -168,6 +168,8 @@ try {
 
     # Product/system stress. These use temp data only and cannot promote Canonical.
     Run-Pytest 'product-flows-30000' @('nexus/tests/test_product_flows_5000.py')
+    Run-Pytest 'public-routes-6x10000' @('nexus/tests/test_public_product_routes_10000.py')
+    Run-Pytest 'public-routes-all-50000' @('nexus/tests/test_public_product_routes_all_50000.py')
     Run-Pytest 'product-system-50000' @('nexus/tests/test_product_system_50000.py')
     Run-Pytest 'product-themes-canonical-200000' @('nexus/tests/test_product_themes_canonical_200k.py')
     Run-Pytest 'varied-200000' @('nexus/tests/test_system_varied_200k.py')
