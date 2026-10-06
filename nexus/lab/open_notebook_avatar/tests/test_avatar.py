@@ -465,3 +465,21 @@ def test_ffmpeg_cannot_read_unneeded_host_runtime(tmp_path):
     assert read_data(source) == "assigned-input"
     expect("TOOL_FAILED", lambda: read_data(protected))
     assert protected.read_bytes() == before
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Real Windows Python runtime discovery only")
+def test_python_runtime_discovery_cache_returns_independent_lists():
+    executable = Path(sys.executable).resolve()
+    first_roots, first_dirs, first_sites = mod._python_environment(executable)
+    second_roots, second_dirs, second_sites = mod._python_environment(executable)
+    assert first_roots == second_roots
+    assert first_dirs == second_dirs
+    assert first_sites == second_sites
+    assert first_roots is not second_roots
+    assert first_dirs is not second_dirs
+    first_roots.append(Path("synthetic-do-not-leak"))
+    first_dirs.append(Path("synthetic-do-not-leak"))
+    third_roots, third_dirs, third_sites = mod._python_environment(executable)
+    assert Path("synthetic-do-not-leak") not in third_roots
+    assert Path("synthetic-do-not-leak") not in third_dirs
+    assert third_sites == first_sites
