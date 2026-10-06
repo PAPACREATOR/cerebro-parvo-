@@ -1,67 +1,72 @@
-# Pendências e portões — 28-09-2026
+# Pendências e portões atuais
 
-As pendências são testes de comportamento, não uma lista de programas a instalar.
+Este ficheiro descreve apenas pendências vigentes. Pendências Activepieces/Memory Provider de 28-09 pertencem à genealogia em Git/histórico.
 
-| ID | Portão | Fecho |
-| --- | --- | --- |
-| P01 | Memory Provider A | Testar RMANOV/sqlite-memory-mcp no Windows + MCP + SQLite |
-| P02 | Memory Provider B | Testar Beledarian/mcp-local-memory nas mesmas condições |
-| P03 | Escolha | Comparar PASS/FAIL; escolher o que exigir menos adaptação |
-| P04 | Activepieces -> MCP | Chamar create/search/relations/provenance sem bridge próprio |
-| P05 | 3 memórias | Working, Behavioral e Persistent como papéis lógicos |
-| P06 | 3 comparadores | Exato, semântico e relacional separados e cruzados |
-| P07 | Creative/Canonical | Contradição preservada; só humano promove |
-| P08 | Human Gate | Provider/IA não consegue contornar aprovação |
-| P09 | Offline | Internet OFF sem destruir núcleo |
-| P10 | Recovery | restart + backup + destroy + restore verificado |
-| P11 | Desmontagem | remover provider sem destruir Activepieces/leis; remover Activepieces sem perder SQLite/Canonical |
-| P12 | Windows/UX | utilizador não vê SQL/Markdown/IDs/MCP |
-| P13 | Licenças | fixar versões MIT/public-domain e notices antes de distribuição |
-| P14 | Providers periféricos | só entram por receita/FAIL real |
-| P15 | PiecesOS benchmark | opcional; comparar memória, nunca tornar requisito |
-| P16 | Eliminação | fora do MVP até existir política humana explícita |
+## P0 — fechar o PC físico
 
-## Candidatos atuais
+- sincronizar uma única cópia Nexus;
+- executar core, blocks, practical, all;
+- executar gates de confinamento/autoridade/bidirecionalidade;
+- produzir relatórios locais;
+- não confundir CI com PASS do hardware real.
 
-### A — sqlite-memory-mcp
-Pontos a verificar:
-- promoção approval-aware nunca pode substituir Human Gate;
-- funcionalidades premium/avançadas não podem tornar-se dependência;
-- confirmar funcionamento simples/unified MCP no Windows;
-- confirmar backup/restore do SQLite.
+## P1 — provisioning protegido
 
-### B — mcp-local-memory
-Pontos a verificar:
-- qualidade FTS + vector + temporal + graph;
-- lifecycle outdated/incorrect/restore respeita regra de não apagar;
-- dependências Node/build tools no Windows;
-- backup/restore do SQLite.
+Os entrypoints de instalação externa estão deliberadamente bloqueados até existir provisioning protegido demonstrado.
 
-## Fora do núcleo até prova contrária
+PASS exige:
+- inventário do que já existe;
+- pin/proveniência/licença;
+- staging delimitado;
+- verificação antes de execução;
+- instalação sem autoridade Nexus;
+- cleanup/recovery;
+- health check;
+- sem fallback inseguro.
 
-- PiecesOS;
-- Open Notebook;
-- K-DLC;
-- Qdrant;
-- Neo4j;
-- vector DB separado;
-- Python Core novo;
-- frontend próprio.
+## P2 — OpenNotebook físico completo
 
-## Critério de decisão
+Fechar no PC:
+`Kernel → fronteira OpenNotebook 1.15 → SurrealDB → modelo local → resultado → Creative → Human Gate → Canonical → restart sem reexecução`.
 
-1. cumpre as leis?
-2. liga diretamente por MCP?
-3. funciona offline?
-4. dados ficam num SQLite recuperável?
-5. pode ser desligado/substituído?
-6. licença permite o nosso uso?
-7. exige menos adaptação?
+## P3 — LibreOffice Writer completo
 
-Se empatar, escolher o mais simples.
+A capability atual prova DOCX/ODT → PDF. Ainda faltam como contratos separados:
+- criar/editar ODT/DOCX estruturado;
+- estilos de parágrafo/caracter;
+- formatos de página;
+- margens interior/exterior e gutter;
+- cabeçalhos/rodapés e numeração;
+- secções/capítulos;
+- viúvas/órfãos e keep-with-next;
+- imagens/legendas/referências;
+- índices/sumário;
+- templates de livro;
+- grelha editorial;
+- export PDF com verificação visual e estrutural;
+- round-trip sem perda relevante.
 
-## Regra permanente
+Nenhuma destas capacidades é presumida por existir LibreOffice.
 
-**LIGAR > CONFIGURAR > ADAPTAR > CRIAR.**
+## P4 — Zotero
 
-**NENHUM COMPONENTE ENTRA SEM UM FAIL QUE O JUSTIFIQUE.**
+Ligar como ferramenta externa delimitada para pesquisa/referências, sem autoridade sobre Canonical. Proveniência das fontes deve regressar ao Kernel.
+
+## P5 — multimédia física
+
+- ACE-Step real na RTX 2080;
+- Forge real com checkpoint explicitamente licenciado;
+- FFmpeg/avatar;
+- hashes/proveniência;
+- resultados sempre candidate/Creative;
+- GPU/VRAM/timeouts/recovery medidos.
+
+## P6 — IMP ainda abertos
+
+Continuar #3 e #4:
+- IMP-001 receção/contrato;
+- G10/IMP-019 e eliminação controlada.
+
+## Regra
+
+Nenhuma pendência é fechada por documentação ou por número de testes. É fechada por comportamento observado + evidência reproduzível.
