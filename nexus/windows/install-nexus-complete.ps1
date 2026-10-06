@@ -207,7 +207,7 @@ try {
         'OpenJS.NodeJS.LTS',
         'Microsoft.OpenJDK.17',
         'TheDocumentFoundation.LibreOffice',
-        'Zotero.Zotero',
+        'DigitalScholar.Zotero',
         'Gyan.FFmpeg',
         'astral-sh.uv',
         'Ollama.Ollama',
@@ -224,7 +224,7 @@ try {
     $npm = Resolve-Executable @('npm.cmd','npm') @("$env:ProgramFiles\nodejs\npm.cmd")
     $java = Resolve-Executable @('java.exe','java') @("$env:ProgramFiles\Microsoft\jdk-17*\bin\java.exe")
     $soffice = Resolve-Executable @('soffice.com') @("$env:ProgramFiles\LibreOffice\program\soffice.com")
-    $zotero = Resolve-Executable @('zotero.exe') @("$env:ProgramFiles\Zotero\zotero.exe","$env:LOCALAPPDATA\Programs\Zotero\zotero.exe")
+    $zotero = Resolve-Executable @('zotero.exe') @("$env:ProgramFiles\Zotero\zotero.exe","$([Environment]::GetFolderPath('ProgramFilesX86'))\Zotero\zotero.exe","$env:LOCALAPPDATA\Programs\Zotero\zotero.exe")
     $ffmpeg = Resolve-Executable @('ffmpeg.exe','ffmpeg')
     $ffprobe = Resolve-Executable @('ffprobe.exe','ffprobe')
     $uv = Resolve-Executable @('uv.exe','uv') @("$env:USERPROFILE\.local\bin\uv.exe","$env:LOCALAPPDATA\Microsoft\WinGet\Links\uv.exe")
