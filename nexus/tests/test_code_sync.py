@@ -24,15 +24,18 @@ def test_code_sync_is_single_checkout_fast_forward_only():
 def test_code_sync_refuses_dirty_tree_and_wrong_origin():
     assert "status --porcelain" in SYNC
     assert "NEXUS_DIRTY_TREE" in SYNC
-    assert "PAPACREATOR/cerebro-parvo-" in SYNC
     assert "NEXUS_WRONG_ORIGIN" in SYNC
+    assert "$OfficialOrigin = 'https://github.com/PAPACREATOR/cerebro-parvo-.git'" in SYNC
 
 
-def test_code_sync_can_find_common_existing_checkout_without_recursive_disk_scan():
-    assert "C:\\\\Nexos" in SYNC
-    assert "C:\\\\Nexus" in SYNC
-    assert "C:\\\\work\\\\nexus-publicacao" in SYNC
-    assert "Get-ChildItem" not in SYNC
+def test_code_sync_can_find_one_official_checkout_without_recursive_disk_scan():
+    assert "C:\\Nexos" in SYNC
+    assert "C:\\Nexus" in SYNC
+    assert "C:\\work\\nexus-publicacao" in SYNC
+    assert "Get-ChildItem" in SYNC
+    assert "-Recurse" not in SYNC
+    assert "NEXUS_MULTIPLE_REPOSITORIES" in SYNC
+    assert "Não foi criado clone novo" in SYNC
 
 
 def test_code_sync_does_not_provision_or_start_external_tools():
