@@ -122,9 +122,9 @@ def test_deforum_is_installed_inside_forge_but_not_claimed_functional_without_re
 def test_open_notebook_configuration_uses_public_api_and_local_models():
     for value in (
         "/api/credentials", "/api/models", "/api/models/defaults",
-        "/api/settings", "/api/speaker-profiles", "/api/episode-profiles",
+        "/api/settings", "/api/transformations", "/api/speaker-profiles", "/api/episode-profiles",
         "qwen3:4b", "nomic-embed-text", "speaches-ai/Kokoro-82M-v1.0-ONNX",
-        "Nexus Local Test Speaker", "Nexus Local Test Episode",
+        "Nexus Local Test Speaker", "Nexus Local Test Episode", "nexus_strict_cognitive_v1",
     ):
         assert value in OPEN_CONFIG
     assert '"auto_delete_files": "no"' in OPEN_CONFIG
@@ -146,3 +146,11 @@ def test_complete_installer_starts_only_loopback_configuration_services():
     ):
         assert value in MASTER
     assert "open-notebook-local-config.json" in MASTER
+
+
+def test_nexus_interpret_config_is_bound_to_real_open_notebook_ids():
+    assert "open-notebook.json" in MASTER
+    assert "model_id=$openConfig.models.language.id" in MASTER
+    assert "transformation_id=$openConfig.transformation.id" in MASTER
+    assert "Return ONLY one valid JSON object" in OPEN_CONFIG
+    assert "exact verbatim substrings" in OPEN_CONFIG
