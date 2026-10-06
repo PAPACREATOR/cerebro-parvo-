@@ -11,21 +11,22 @@ import pytest
 from nexus.contracts import ROOT
 
 pytestmark = pytest.mark.skipif(os.name != "nt", reason="Real Windows entrypoints only")
-MARKER = "NEXUS_PROTECTED_PROVISIONING_PENDING"
+LEGACY_MARKER = "NEXUS_PROTECTED_PROVISIONING_PENDING"
+AUTHORIZED_INSTALL_MARKER = "NEXUS_INSTALL_AUTHORIZATION_REQUIRED"
 TRIPWIRE = "NEXUS_TEST_UNPROTECTED_SIDE_EFFECT"
 PS_CASES = [
-    ("windows/install-media-tools.ps1", "ToolsRoot", [], None),
-    ("windows/install-media-tools.ps1", "ToolsRoot", ["SkipAceStep", "SkipForge"], None),
-    ("windows/sync-nexus-pc.ps1", "ToolsRoot", [], None),
-    ("windows/sync-nexus-pc.ps1", "ToolsRoot", ["SkipMediaInstall", "SkipMediaStart"], None),
-    ("lab/open_notebook_avatar/install-windows.ps1", "OpenNotebookRoot", [], "cpu"),
-    ("lab/open_notebook_avatar/install-windows.ps1", "OpenNotebookRoot", [], "cuda"),
-    ("windows/setup-isolation.ps1", None, [], None),
+    ("windows/install-media-tools.ps1", "ToolsRoot", [], None, AUTHORIZED_INSTALL_MARKER),
+    ("windows/install-media-tools.ps1", "ToolsRoot", ["SkipAceStep", "SkipForge"], None, AUTHORIZED_INSTALL_MARKER),
+    ("windows/sync-nexus-pc.ps1", "ToolsRoot", [], None, LEGACY_MARKER),
+    ("windows/sync-nexus-pc.ps1", "ToolsRoot", ["SkipMediaInstall", "SkipMediaStart"], None, LEGACY_MARKER),
+    ("lab/open_notebook_avatar/install-windows.ps1", "OpenNotebookRoot", [], "cpu", AUTHORIZED_INSTALL_MARKER),
+    ("lab/open_notebook_avatar/install-windows.ps1", "OpenNotebookRoot", [], "cuda", AUTHORIZED_INSTALL_MARKER),
+    ("windows/setup-isolation.ps1", None, [], None, LEGACY_MARKER),
 ]
 
 @pytest.mark.parametrize("relative,root_parameter,flags,device", PS_CASES)
 @pytest.mark.parametrize("mode", ["tripwires", "native"])
-def test_windows_provisioning_refuses_before_changes(tmp_path, relative, root_parameter, flags, device, mode):
+def test_windows_provisioning_refuses_before_changes(tmp_path, relative, root_parameter, flags, device, marker, mode):
     target = tmp_path / "not-created"
     original = tmp_path / "original"
     original.write_bytes(b"original")
@@ -52,7 +53,7 @@ def test_windows_provisioning_refuses_before_changes(tmp_path, relative, root_pa
         capture_output=True, text=True, timeout=15)
     observed = result.stdout + result.stderr
     assert result.returncode != 0, observed
-    assert MARKER in observed, observed
+    assert marker in observed, observed
     assert TRIPWIRE not in observed, observed
     assert not target.exists()
     assert original.read_bytes() == b"original"
@@ -84,7 +85,7 @@ else:
         cwd=tmp_path, capture_output=True, text=True, timeout=15)
     observed = result.stdout + result.stderr
     assert result.returncode != 0, observed
-    assert MARKER in observed, observed
+    assert AUTHORIZED_INSTALL_MARKER in observed, observed
     assert TRIPWIRE not in observed, observed
     assert not target.exists()
     assert original.read_bytes() == b"original"
