@@ -61,9 +61,9 @@ def test_post_install_acceptance_never_promotes_or_creates_accounts():
         "New-LocalUser",
         "Add-LocalGroupMember",
         "Read-Host",
-        "CreateProcessAsUser",
-        "LogonUser",
     ):
         assert forbidden not in POST
+    assert "NEXUS_REUSABLE_TOOL_IDENTITY_FOUND" in POST
+    assert "LogonUser" in POST and "CreateProcessAsUser" in POST
     assert "legacy_accounts_present" in POST
     assert "per-task AppContainer" in POST
