@@ -86,6 +86,7 @@ try {
             'nexus/tests/test_code_sync_functional.py',
             'nexus/tests/test_prepare_nexus_core.py',
             'nexus/tests/test_bootstrap_nexus_local.py'
+            'nexus/tests/test_external_inventory.py'
         ) }
         default { @('nexus/tests') }
     }
