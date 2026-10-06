@@ -36,7 +36,7 @@ Com Java e LanguageTool instalados, criar no diretório de dados `languagetool.j
 
 Com LibreOffice instalado, criar no diretório de dados `libreoffice.json` com o campo `executable`: caminho absoluto de `soffice.com`. Selecionar **Converter para PDF** e anexar ODT ou DOCX até 2 MB. O PDF fica em Creative e pode ser descarregado. A aprovação inclui o hash do ficheiro; PDF alterado bloqueia download/promoção. Usar inicialmente documentos confiáveis de ensaio. ODT teve prova real; DOCX ainda precisa de ensaio nesta versão.
 
-[Contrato, testes e limites](docs/F007-LIBREOFFICE.md).
+[Contrato, testes e limites](docs/F007-LIBREOFFICE.md). O Writer editorial completo (livros, estilos, paginação, gutter, viúvas/órfãos, imagens, sumário e round-trip) tem contrato separado em [CAPABILITY-WRITER-EDITORIAL.md](docs/CAPABILITY-WRITER-EDITORIAL.md) e ainda não deve ser confundido com a conversão PDF já provada.
 
 ## Testes
 
