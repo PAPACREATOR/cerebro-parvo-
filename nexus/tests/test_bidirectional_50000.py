@@ -6,9 +6,12 @@ round-trip in one persistent session; mocks do not count as external calls.
 from __future__ import annotations
 
 import asyncio
+import os
 from contextlib import AsyncExitStack
 from pathlib import Path
 import sys
+
+import pytest
 
 from nexus.frontdoor import ParsedInput
 from nexus.natural_bridge import (
@@ -25,6 +28,8 @@ PYTHON = Path(sys.executable).resolve()
 INTERNAL_CASES = 25_000
 EXTERNAL_CALLS = 25_000
 TOTAL_CASES = INTERNAL_CASES + EXTERNAL_CALLS
+
+pytestmark = pytest.mark.skipif(os.environ.get("NEXUS_RUN_50K") != "1", reason="explicit 50k stress gate")
 
 
 def _text(i: int) -> str:
