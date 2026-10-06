@@ -1,3 +1,5 @@
+> **Estado atual (06-10-2026):** o objetivo cognitivo permanece, mas Conductor/interpret.yaml foram substituídos no runtime ativo por Host → adapter OpenNotebook → validação → Creative. OpenNotebook continua ferramenta externa e Tiny/IA continua sem autoridade. O E2E físico completo OpenNotebook+SurrealDB+modelo local no PC ainda é gate separado.
+
 # F005 — ligação cognitiva
 INPUT: texto UTF-8 até 6000 caracteres e configuração administrativa local.
 OUTPUT: título, resumo e citações exatas, validados; candidato UNKNOWN em Creative.
