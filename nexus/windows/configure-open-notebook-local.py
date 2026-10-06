@@ -236,7 +236,7 @@ def product_plan_transformation(api: API, language_id: str):
         "The input begins with ROUTE: video, podcast or visual_podcast and then SOURCE:. "
         "Use exactly these keys: title, body, steps, quotes. "
         "Write in European Portuguese unless the source explicitly requests another language. "
-        "title: non-empty string up to 180 characters. "
+        "title: non-empty string up to 150 characters. "
         "body: the main usable script/content for the requested route, grounded only in SOURCE. "
         "steps: array of 2 to 40 concise microtasks; for video use shot/storyboard beats, for podcast use episode segments, "
         "for visual_podcast use episode segments with matching visual beats. "
