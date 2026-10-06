@@ -515,6 +515,13 @@ endlocal
     $null = New-Item -ItemType Directory -Force -Path $runtime
     @{ java=$java; jar=$ltJar.FullName } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $runtime 'languagetool.json') -Encoding UTF8
     @{ executable=$soffice } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $runtime 'libreoffice.json') -Encoding UTF8
+    @{
+        base_url='http://127.0.0.1:5055'
+        password=$apiPassword
+        model_id=$openConfig.models.language.id
+        transformation_id=$openConfig.transformation.id
+    } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $runtime 'open-notebook.json') -Encoding UTF8
+    $report.tools.open_notebook['nexus_adapter_config'] = (Join-Path $runtime 'open-notebook.json')
     Save-Report
 
     # Run the existing Windows core/regression/security preparation after installation.
