@@ -111,9 +111,8 @@ $security = @(
 )
 $securityLog = Join-Path $reportRoot 'security.stdout.txt'
 $securityErr = Join-Path $reportRoot 'security.stderr.txt'
-$proc = Start-Process -FilePath $venvPython -ArgumentList @(
-    '-m','pytest', *$security, '-q', '-o', 'pythonpath=.'
-) -WorkingDirectory $RepoRoot -RedirectStandardOutput $securityLog -RedirectStandardError $securityErr -PassThru -Wait -NoNewWindow
+$securityArgs = @('-m','pytest') + $security + @('-q','-o','pythonpath=.')
+$proc = Start-Process -FilePath $venvPython -ArgumentList $securityArgs -WorkingDirectory $RepoRoot -RedirectStandardOutput $securityLog -RedirectStandardError $securityErr -PassThru -Wait -NoNewWindow
 if ($proc.ExitCode -ne 0) {
     throw 'NEXUS_SECURITY_GATE_FAILED'
 }
