@@ -49,8 +49,8 @@ def setup_repositories(tmp_path):
     git(seed, "config", "user.email", "nexus-test@example.invalid")
     git(seed, "config", "user.name", "Nexus Test")
     git(seed, "switch", "-c", BRANCH)
-    (seed / "state.txt").write_text("v1\n", encoding="utf-8")
-    git(seed, "add", "state.txt")
+    (seed / "state.bin").write_bytes(b"v1\x00\n")
+    git(seed, "add", "state.bin")
     git(seed, "commit", "-m", "v1")
     git(seed, "remote", "add", "origin", remote)
     git(seed, "push", "-u", "origin", BRANCH)
@@ -67,8 +67,8 @@ def setup_repositories(tmp_path):
 
 
 def advance(seed: Path, value: str):
-    (seed / "state.txt").write_text(value + "\n", encoding="utf-8")
-    git(seed, "add", "state.txt")
+    (seed / "state.bin").write_bytes(value.encode("ascii") + b"\x00\n")
+    git(seed, "add", "state.bin")
     git(seed, "commit", "-m", value)
     git(seed, "push", "origin", BRANCH)
     return git(seed, "rev-parse", "HEAD").stdout.strip()
@@ -91,7 +91,7 @@ def test_clean_checkout_fast_forwards_exactly_to_remote(tmp_path):
     assert result.returncode == 0, result.stdout + result.stderr
     assert "NEXUS CODE SYNC = PASS" in result.stdout
     assert git(checkout, "rev-parse", "HEAD").stdout.strip() == target
-    assert (checkout / "state.txt").read_bytes() == b"v2\n"
+    assert (checkout / "state.bin").read_bytes() == b"v2\x00\n"
     assert git(checkout, "status", "--porcelain").stdout == ""
 
 
@@ -103,7 +103,7 @@ def test_dirty_checkout_refuses_remote_update_without_losing_local_bytes(tmp_pat
     assert git(checkout, "rev-parse", "HEAD").stdout.strip() == target_v2
 
     local = b"LOCAL-UNCOMMITTED-\xc3\xa7\xc3\xa3o\n"
-    (checkout / "state.txt").write_bytes(local)
+    (checkout / "state.bin").write_bytes(local)
     target_v3 = advance(seed, "v3")
     assert target_v3 != target_v2
 
@@ -112,5 +112,5 @@ def test_dirty_checkout_refuses_remote_update_without_losing_local_bytes(tmp_pat
     assert result.returncode != 0
     assert "NEXUS_DIRTY_TREE" in (result.stdout + result.stderr)
     assert git(checkout, "rev-parse", "HEAD").stdout.strip() == target_v2
-    assert (checkout / "state.txt").read_bytes() == local
+    assert (checkout / "state.bin").read_bytes() == local
     assert git(checkout, "status", "--porcelain").stdout.strip()
