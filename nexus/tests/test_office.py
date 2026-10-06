@@ -146,3 +146,17 @@ def test_http_pdf_requires_session_and_unchanged_bytes(tmp_path):
 def test_embedded_writer_objects_are_blocked(extra):
     with pytest.raises(Blocked):
         document_kind(odt(extra))
+
+
+@pytest.mark.parametrize("extra", [
+    ("../outside.xml", "x"),
+    ("/absolute.xml", "x"),
+    ("C:/drive.xml", "x"),
+    ("folder\\windows-path.xml", "x"),
+    ("links.xml", '<a xlink:href="ftp://example.invalid/file"/>'),
+    ("links.xml", '<a xlink:href="//server/share"/>'),
+    ("links.xml", '<a xlink:href="smb://server/share"/>'),
+])
+def test_writer_internal_path_traversal_and_external_uri_are_blocked(extra):
+    with pytest.raises(Blocked):
+        document_kind(odt(extra))
