@@ -118,7 +118,7 @@ try {
 
     $launcher = $install.launcher.path
     if (-not (Test-Path -LiteralPath $launcher)) { throw 'NEXUS_LAUNCHER_MISSING' }
-    foreach ($name in @('languagetool.json','libreoffice.json','open-notebook.json','open-notebook-documentary.json','moneyprinterturbo.json')) {
+    foreach ($name in @('languagetool.json','libreoffice.json','open-notebook.json','open-notebook-documentary.json','open-notebook-product.json','moneyprinterturbo.json')) {
         if (-not (Test-Path -LiteralPath (Join-Path $RepoRoot ('nexus\runtime\' + $name)))) {
             throw ('NEXUS_RUNTIME_CONFIG_MISSING: ' + $name)
         }
