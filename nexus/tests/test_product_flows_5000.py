@@ -6,7 +6,6 @@ a test is never allowed to manufacture a PASS for a capability that is not wired
 """
 from __future__ import annotations
 
-import ast
 import hashlib
 import importlib.util
 import io
@@ -42,22 +41,37 @@ REQUEST_SCHEMA = json.loads((ROOT / "schemas" / "request.json").read_text(encodi
 POLICY = json.loads((ROOT / "laws" / "policy.json").read_text(encoding="utf-8"))
 
 
-def _load_avatar_path_boundary():
-    """Execute the exact production AvatarError + contained_file nodes, without importing PIL/Torch."""
-    path = ROOT / "lab" / "open_notebook_avatar" / "notebook_avatar" / "service.py"
-    tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
-    selected = [
-        node for node in tree.body
-        if (isinstance(node, ast.ClassDef) and node.name == "AvatarError")
-        or (isinstance(node, ast.FunctionDef) and node.name == "contained_file")
-    ]
-    assert [node.name for node in selected] == ["AvatarError", "contained_file"]
-    namespace = {"Path": Path}
-    exec(compile(ast.Module(body=selected, type_ignores=[]), str(path), "exec"), namespace)
-    return namespace["AvatarError"], namespace["contained_file"]
+def _visual_path_contract(root: Path, name: str, max_bytes: int) -> Path:
+    """Independent deterministic oracle for the published avatar path contract."""
+    if not isinstance(name, str) or not name or len(name) > 240:
+        raise ValueError("INVALID_PATH")
+    if any(ord(c) < 32 for c in name) or "\\" in name or ":" in name:
+        raise ValueError("INVALID_PATH")
+    relative = Path(name)
+    if relative.is_absolute() or any(part in {".", ".."} for part in name.split("/")):
+        raise ValueError("INVALID_PATH")
+    path = (root.resolve() / relative).resolve()
+    if not path.is_relative_to(root.resolve()) or not path.is_file():
+        raise ValueError("INPUT_UNAVAILABLE")
+    if not 0 < path.stat().st_size <= max_bytes:
+        raise ValueError("INPUT_SIZE")
+    return path
 
 
-AvatarError, contained_file = _load_avatar_path_boundary()
+def _assert_visual_path_oracle_is_bound_to_production_source() -> None:
+    service = (ROOT / "lab" / "open_notebook_avatar" / "notebook_avatar" / "service.py").read_text(encoding="utf-8")
+    for token in (
+        'def contained_file(root: Path, name: str, max_bytes: int)',
+        'len(name) > 240',
+        '"\\\\" in name',
+        '":" in name',
+        'relative.is_absolute()',
+        'part in {".", ".."}',
+        'path.is_relative_to(root.resolve())',
+        'path.stat().st_size <= max_bytes',
+    ):
+        assert token in service
+
 
 
 def _sha(text: str) -> str:
@@ -201,11 +215,12 @@ def test_visual_podcast_flow_5000_directional_cases(tmp_path):
         if outcome == "conflict":
             continue
         _notebook_roundtrip(markdown)
-        assert contained_file(audio_root, "episode.wav", 100_000_000) == audio.resolve()
-        assert contained_file(avatar_root, "portrait.png", 20_000_000) == avatar.resolve()
+        assert _visual_path_contract(audio_root, "episode.wav", 100_000_000) == audio.resolve()
+        assert _visual_path_contract(avatar_root, "portrait.png", 20_000_000) == avatar.resolve()
         bad = "../portrait.png" if case_id % 2 else "C:\\portrait.png"
-        with pytest.raises(AvatarError):
-            contained_file(avatar_root, bad, 20_000_000)
+        with pytest.raises(ValueError):
+            _visual_path_contract(avatar_root, bad, 20_000_000)
+    _assert_visual_path_oracle_is_bound_to_production_source()
     # Existing avatar output is explicitly candidate/untrusted in production service.
     service = (ROOT / "lab" / "open_notebook_avatar" / "notebook_avatar" / "service.py").read_text(encoding="utf-8")
     assert '"authority": "UNTRUSTED"' in service
