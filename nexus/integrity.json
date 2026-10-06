@@ -1,13 +1,13 @@
 {
   "app.py": "a0cec14cb307cd4401b38614859a3541ddb9ce96576ffd7492137a4b502a94df",
   "contracts.py": "1825e7044d69ccb60488ff77183613b7b630a95a5354d7338d801130a0f02a8f",
-  "host.py": "310e9af291349165a0c63e24c43a3208b5b1d9602f3da875896a099dde179a53",
-  "store.py": "4bdf2882bb1e71a4d9ecb0b3bb8a1e8565b8b9f278660563fb46a43a211e33b5",
+  "host.py": "233c392b11611ca15b8fccc0a75386f02ec29705d18191a17fb8dee9a0ca7e77",
+  "store.py": "7a2b65ea3aa50c1bc5c9f204914af3f16bfac054206fdb5b420385552423fc60",
   "__init__.py": "b4f468051a062293cce504af2e229613a15f3d98ef90a6f9430d8e357e9f9591",
   "adapters/tools.py": "db6c0feb6beb658565a02e4feb1dea4f2c138a4a8d23cd8f27ccf3435af28de5",
   "laws/CONSTITUTION.md": "8c7cd4cf913a96b6e814dc5866d6ccd2482f046b0a0bfa47187ea93f2f132eb8",
-  "laws/policy.json": "d6d8ae28a42d3dbe36a67b6b0b8408f92b25912a4807c9a777c4236d337e9088",
-  "schemas/request.json": "641ed122b1d26f591dfcb65ee2a0a4b5a4be338bf5136d2b7438a7fb3cee03a9",
+  "laws/policy.json": "ed7a8de09564d30cf6e97bb0c99b19815ca213c91fe28efb637e8a5584858cb1",
+  "schemas/request.json": "5d28d505af087814fe276f630d7e36732ea8f5fe724f8d0e890a33d017b7fa32",
   "schemas/result.json": "50f49a1b214d3a8f9584c53a9de9c3b52cece39b20e96ee1031858d13bf84315",
   "adapters/notebook.py": "0bb65f8a1eeb6749f01e144271df7c8982a44141aa77c5678c6c9b88c80ed19d",
   "schemas/cognitive.json": "e38903b40c416c14f09877f1bae1ec0beadab8c90c228b7b62641856b429edc3",
@@ -23,11 +23,12 @@
   "families/multimedia/som.md": "d31057a867080291d183e9cde486b6079e686403cf7869ed749d0f005e770462",
   "families/multimedia/imagem.md": "4a321cdc18751a5d3e1dec770908aa5d992e17126e5569bbfd9045a2dc4583de",
   "instance.py": "a97ef1449ab8a2fe66dc0bcf79fe64dca93ae1b7a43bbfa296caeb90229120ac",
-  "adapters/runner.py": "d1f4e63f8d1e9a031771578591d90f4a0ccdb98c70bb7a806dbbd5ee7e94fc97",
+  "adapters/runner.py": "f9000ae405879560b26ec12c85f4323122ba2d5aabe8267d7eacb5922365ae12",
   "adapters/verify_direct.py": "0ed136dafad0bbccec348cb4a92d8f2153e688cee112d244fdea3f6905b6b74c",
   "mcp_client.py": "5b5a80353e768842bb3c684117f1d5d876d20069ac8c0dd1ea5061be23615f9b",
-  "mcp_tools_server.py": "8b47abd79a3ff30c560c1fe91fd0923c5c00f4ce739918f1d40850ee1ed52938",
+  "mcp_tools_server.py": "5578b9ecef32a1e47cb8f1b27b6f74d52229a2f4f48dae33a7783d351e1a31e6",
   "adapters/media_tools.py": "d4eedf365080c7eb4018097bc660606e3904d0de4784782265949af8a60f2e80",
   "windows_sandbox.py": "95e5b0424ea2019429365b6278619391093bb8d4309d6c067ad30898210f79c0",
-  "native_mcp.py": "c55c0497697f61469b6bde21e0a279847db7cb4bfd84f39a1c94ecbfacc090ac"
+  "native_mcp.py": "c55c0497697f61469b6bde21e0a279847db7cb4bfd84f39a1c94ecbfacc090ac",
+  "adapters/product_routes.py": "c3709eb5dfa0d1c1660841118474880f22b5bab496540d59fd5a7f3adfac1dc3"
 }
