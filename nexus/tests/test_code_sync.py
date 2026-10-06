@@ -55,3 +55,7 @@ def test_code_sync_requires_remote_head_match():
     assert 'rev-parse "origin/$Branch"' in SYNC
     assert "NEXUS_SYNC_MISMATCH" in SYNC
     assert "NEXUS CODE SYNC = PASS" in SYNC
+
+
+def test_code_sync_selects_one_git_executable_deterministically():
+    assert "Get-Command git.exe -CommandType Application -ErrorAction Stop | Select-Object -First 1" in SYNC
