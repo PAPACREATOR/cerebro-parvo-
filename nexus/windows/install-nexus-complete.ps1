@@ -21,6 +21,8 @@ $OpenNotebookOrigin = 'https://github.com/lfnovo/open-notebook.git'
 $OpenNotebookPin = '315d5255af2a5132aada41c94d5c3c5dc8e837aa'
 $SpeachesOrigin = 'https://github.com/speaches-ai/speaches.git'
 $SpeachesPin = '993994f7984bf3fe9655b267448328cf66fccb42'
+$MoneyPrinterOrigin = 'https://github.com/harry0703/MoneyPrinterTurbo.git'
+$MoneyPrinterPin = '68eb5a68b93cfe338198b3dfb151f6d5ec2fe4e5'
 $SurrealVersion = '2.7.0'
 $SurrealSha256 = '55c7e05ee2b68ec0d8b86c4b588e9b9807f257af8c15c05d17074514c64d8c91'
 $LanguageToolVersion = '6.6'
@@ -518,6 +520,34 @@ endlocal
     }
     Save-Report
 
+    # MoneyPrinterTurbo is the pinned audiovisual assembly block. Nexus supplies
+    # local cognition/assets; MPT supplies narration/subtitles/editing/FFmpeg assembly.
+    $moneyPrinter = Join-Path $ToolsRoot 'MoneyPrinterTurbo'
+    $moneyPrinterHead = Install-PinnedRepo $git $MoneyPrinterOrigin $MoneyPrinterPin $moneyPrinter
+    Invoke-Checked $uv @('sync','--frozen','--python',$python312) $moneyPrinter
+    $moneyPrinterConfigReport = Join-Path $ToolsRoot 'moneyprinterturbo-local-config.json'
+    $moneyPrinterConfigHelper = Join-Path $RepoRoot 'nexus\windows\configure-moneyprinterturbo-local.py'
+    Invoke-Checked $python312 @(
+        $moneyPrinterConfigHelper,'--root',$moneyPrinter,'--ffmpeg',$ffmpeg,
+        '--device',$Device,'--report',$moneyPrinterConfigReport,'--authorize-install'
+    ) $RepoRoot
+    $moneyPrinterConfig = Get-Content -LiteralPath $moneyPrinterConfigReport -Raw | ConvertFrom-Json
+    if ($moneyPrinterConfig.status -ne 'PASS' -or $moneyPrinterConfig.authority -ne 'NONE') {
+        throw 'NEXUS_MONEYPRINTER_LOCAL_CONFIG_FAILED'
+    }
+    Invoke-Checked $uv @('run','--frozen','python','cli.py','--help') $moneyPrinter
+    $report.tools.moneyprinterturbo = [ordered]@{
+        status='INSTALLED_CONFIGURED_CLI_TESTED'
+        path=$moneyPrinter
+        commit=$moneyPrinterHead
+        version='1.3.8'
+        license='MIT'
+        config_report=$moneyPrinterConfigReport
+        authority='NONE'
+        functional_status='REQUIRES_REAL_DOCUMENTARY_RENDER_ACCEPTANCE'
+    }
+    Save-Report
+
     # Configure deterministic Nexus adapters.
     $runtime = Join-Path $RepoRoot 'nexus\runtime'
     $null = New-Item -ItemType Directory -Force -Path $runtime
@@ -529,7 +559,24 @@ endlocal
         model_id=$openConfig.models.language.id
         transformation_id=$openConfig.transformation.id
     } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $runtime 'open-notebook.json') -Encoding UTF8
+    @{
+        base_url='http://127.0.0.1:5055'
+        password=$apiPassword
+        model_id=$openConfig.models.language.id
+        transformation_id=$openConfig.documentary_transformation.id
+    } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $runtime 'open-notebook-documentary.json') -Encoding UTF8
+    @{
+        root=$moneyPrinter
+        uv=$uv
+        ffmpeg=$ffmpeg
+        commit=$moneyPrinterHead
+        speaches_root=$speaches
+        voice='pf_dora'
+        tts_model='speaches-ai/Kokoro-82M-v1.0-ONNX'
+    } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $runtime 'moneyprinterturbo.json') -Encoding UTF8
     $report.tools.open_notebook['nexus_adapter_config'] = (Join-Path $runtime 'open-notebook.json')
+    $report.tools.open_notebook['documentary_adapter_config'] = (Join-Path $runtime 'open-notebook-documentary.json')
+    $report.tools.moneyprinterturbo['nexus_adapter_config'] = (Join-Path $runtime 'moneyprinterturbo.json')
     Save-Report
 
     # Run the existing Windows core/regression/security preparation after installation.
