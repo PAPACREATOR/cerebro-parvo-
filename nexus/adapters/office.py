@@ -24,13 +24,16 @@ def document_kind(raw):
                 raise Blocked("Documento com entradas repetidas.")
             for entry in entries:
                 name = entry.filename.lower()
-                if any(word in name for word in ("vbaproject", "scripts/", "basic/", "embeddings/")):
-                    raise Blocked("Conteúdo ativo não permitido neste ensaio.")
+                if (any(word in name for word in ("vbaproject", "scripts/", "basic/", "embeddings/"))
+                        or name.startswith("object ")
+                        or name.startswith("objectreplacements/")):
+                    raise Blocked("Conteúdo ativo ou objeto incorporado não permitido neste ensaio.")
                 if name.endswith((".xml", ".rels")):
                     body = archive.read(entry).lower()
                     import re
-                    if any(word in body for word in (b'<!entity', b'<!doctype')) or re.search(rb'targetmode\s*=\s*[\x22\x27]external|(?:xlink:href|href)\s*=\s*[\x22\x27](?:https?:|file:)', body):
-                        raise Blocked("Ligação externa não permitida neste ensaio.")
+                    if (any(word in body for word in (b'<!entity', b'<!doctype', b'<draw:object', b'<draw:object-ole'))
+                            or re.search(rb'targetmode\s*=\s*[\x22\x27]external|(?:xlink:href|href)\s*=\s*[\x22\x27](?:https?:|file:)', body)):
+                        raise Blocked("Ligação externa ou objeto incorporado não permitido neste ensaio.")
             if "word/document.xml" in names and "[Content_Types].xml" in names:
                 return ".docx"
             if "mimetype" in names and archive.read("mimetype") == b"application/vnd.oasis.opendocument.text" and "content.xml" in names:
