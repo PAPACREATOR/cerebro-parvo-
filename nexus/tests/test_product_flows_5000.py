@@ -6,6 +6,7 @@ a test is never allowed to manufacture a PASS for a capability that is not wired
 """
 from __future__ import annotations
 
+import ast
 import hashlib
 import importlib.util
 import io
@@ -20,7 +21,6 @@ from nexus.adapters.tools import compare
 from nexus.contracts import Blocked, ROOT, validate
 from nexus.frontdoor import parse
 from nexus.natural_bridge import from_markdown, kernel_from_notebook_boundary, kernel_to_notebook, to_markdown
-from nexus.lab.open_notebook_avatar.notebook_avatar.service import AvatarError, contained_file
 
 
 CASES = 5_000
@@ -40,6 +40,24 @@ DOCUMENTARY = _load("nexus_documentary_flow_test", "windows/documentary_bridge.p
 OPEN_CONFIG = _load("nexus_open_notebook_config_test", "windows/configure-open-notebook-local.py")
 REQUEST_SCHEMA = json.loads((ROOT / "schemas" / "request.json").read_text(encoding="utf-8"))
 POLICY = json.loads((ROOT / "laws" / "policy.json").read_text(encoding="utf-8"))
+
+
+def _load_avatar_path_boundary():
+    """Execute the exact production AvatarError + contained_file nodes, without importing PIL/Torch."""
+    path = ROOT / "lab" / "open_notebook_avatar" / "notebook_avatar" / "service.py"
+    tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+    selected = [
+        node for node in tree.body
+        if (isinstance(node, ast.ClassDef) and node.name == "AvatarError")
+        or (isinstance(node, ast.FunctionDef) and node.name == "contained_file")
+    ]
+    assert [node.name for node in selected] == ["AvatarError", "contained_file"]
+    namespace = {"Path": Path}
+    exec(compile(ast.Module(body=selected, type_ignores=[]), str(path), "exec"), namespace)
+    return namespace["AvatarError"], namespace["contained_file"]
+
+
+AvatarError, contained_file = _load_avatar_path_boundary()
 
 
 def _sha(text: str) -> str:
