@@ -58,3 +58,8 @@ def test_core_prepare_is_powershell_5_compatible_for_security_arguments():
 
 def test_core_prepare_selects_one_git_executable_deterministically():
     assert "Get-Command git.exe -CommandType Application -ErrorAction Stop | Select-Object -First 1" in SCRIPT
+
+
+def test_core_prepare_selects_one_python_launcher_deterministically():
+    assert "Get-Command py.exe -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1" in SCRIPT
+    assert "Get-Command python.exe -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1" in SCRIPT
