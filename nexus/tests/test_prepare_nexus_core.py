@@ -54,3 +54,7 @@ def test_core_prepare_is_powershell_5_compatible_for_security_arguments():
     assert "*$security" not in SCRIPT
     assert "$securityArgs = @('-m','pytest') + $security + @('-q','-o','pythonpath=.')" in SCRIPT
     assert "-ArgumentList $securityArgs" in SCRIPT
+
+
+def test_core_prepare_selects_one_git_executable_deterministically():
+    assert "Get-Command git.exe -CommandType Application -ErrorAction Stop | Select-Object -First 1" in SCRIPT
