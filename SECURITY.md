@@ -15,6 +15,6 @@ Para uma vulnerabilidade que possa expor dados, ultrapassar permissões, escreve
 - exposição de credenciais;
 - injeção de autoridade em resultados UNTRUSTED;
 - corrupção/replay incorreto do EventLog/SQLite/Markdown;
-- escalada de permissões via Activepieces/MCP.
+- escalada de permissões via MCP, adapters, ferramentas externas ou qualquer orquestração.
 
 Não inclua credenciais reais em testes ou relatórios.
