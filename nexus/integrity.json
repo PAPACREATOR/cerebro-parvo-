@@ -30,5 +30,5 @@
   "adapters/media_tools.py": "d4eedf365080c7eb4018097bc660606e3904d0de4784782265949af8a60f2e80",
   "windows_sandbox.py": "95e5b0424ea2019429365b6278619391093bb8d4309d6c067ad30898210f79c0",
   "native_mcp.py": "c55c0497697f61469b6bde21e0a279847db7cb4bfd84f39a1c94ecbfacc090ac",
-  "adapters/product_routes.py": "c3709eb5dfa0d1c1660841118474880f22b5bab496540d59fd5a7f3adfac1dc3"
+  "adapters/product_routes.py": "3df52c97f13bb5f3417c283f7c8cc86e203f1bf255cc4aa6db97d638aba17acd"
 }
