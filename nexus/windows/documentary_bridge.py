@@ -1,4 +1,4 @@
-"""Local documentary production bridge: OpenNotebook -> Forge -> MoneyPrinterTurbo.
+"""Local documentary production bridge: OpenNotebook -> Forge -> MoneyPrinterTurbo -> FFmpeg.
 
 This is an installation/lab entrypoint, not a Canonical writer. It produces an
 auditable candidate directory only. The Nexus Host will get a public route only
@@ -214,45 +214,6 @@ def render_scene_images(storyboard: dict, output: Path, aspect: str) -> list[Pat
     return paths
 
 
-def wait_speaches() -> None:
-    deadline = time.monotonic() + 120
-    while time.monotonic() < deadline:
-        try:
-            value = get_local_json(SPEACHES_BASE + "/v1/models", timeout=3)
-            if isinstance(value, dict):
-                return
-        except BridgeError:
-            pass
-        time.sleep(0.5)
-    raise BridgeError("Speaches did not become ready")
-
-
-def ensure_speaches(config: dict):
-    try:
-        value = get_local_json(SPEACHES_BASE + "/v1/models", timeout=3)
-        if isinstance(value, dict):
-            return None
-    except BridgeError:
-        pass
-    uv = Path(config["uv"])
-    root = Path(config["speaches_root"])
-    if not uv.is_file() or not root.is_dir():
-        raise BridgeError("Speaches runtime configuration is invalid")
-    proc = subprocess.Popen(
-        [str(uv), "run", "uvicorn", "--factory", "--host", "127.0.0.1", "--port", "8969", "speaches.main:create_app"],
-        cwd=root,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-        creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
-    )
-    try:
-        wait_speaches()
-    except Exception:
-        proc.terminate()
-        raise
-    return proc
-
-
 def _is_within(child: Path, parent: Path) -> bool:
     try:
         child.resolve().relative_to(parent.resolve())
@@ -270,9 +231,6 @@ def run_moneyprinter(config: dict, storyboard: dict, scene_paths: list[Path], ou
     ffmpeg = Path(config["ffmpeg"]).resolve()
     if not root.is_dir() or not uv.is_file() or not ffmpeg.is_file() or not (root / "cli.py").is_file():
         raise BridgeError("MoneyPrinterTurbo runtime is incomplete")
-    if config["voice"] != "pf_dora" or config["tts_model"] != "speaches-ai/Kokoro-82M-v1.0-ONNX":
-        raise BridgeError("MoneyPrinterTurbo voice/model contract changed")
-
     materials = ",".join(str(path.resolve()) for path in scene_paths)
     command = [
         str(uv), "run", "--frozen", "python", "cli.py",
@@ -284,12 +242,18 @@ def run_moneyprinter(config: dict, storyboard: dict, scene_paths: list[Path], ou
         "--video-concat-mode", "sequential",
         "--video-transition-mode", "fade-in",
         "--video-clip-duration", "10",
-        "--voice-name", "kokoro:" + config["voice"],
         "--bgm-type", "none",
         "--video-count", "1",
         "--n-threads", "2",
         "--stop-at", "video",
     ]
+    if audio is None:
+        command += ["--voice-name", "no-voice", "--no-subtitle-enabled"]
+    else:
+        audio = audio.resolve()
+        if not audio.is_file() or audio.suffix.lower() not in {".mp3", ".wav", ".m4a", ".aac", ".flac", ".ogg"}:
+            raise BridgeError("Narration audio must be an existing supported audio file")
+        command += ["--custom-audio-file", str(audio), "--subtitle-enabled"]
     env = dict(__import__("os").environ)
     env["PATH"] = str(ffmpeg.parent) + __import__("os").pathsep + env.get("PATH", "")
     completed = subprocess.run(
@@ -351,7 +315,7 @@ def main() -> int:
         "status": "RUNNING",
         "authority": "NONE",
         "canonical_write": False,
-        "pipeline": ["open-notebook", "forge", "moneyprinterturbo", "speaches-kokoro", "ffmpeg"],
+        "pipeline": ["open-notebook", "forge", "moneyprinterturbo", "ffmpeg"],\n        "narration": "custom-audio+whisper" if args.audio else "silent-for-clipchamp",
         "source_sha256": sha256_bytes(args.source.read_bytes()),
     }
     (output / "report.json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -362,8 +326,10 @@ def main() -> int:
         storyboard_raw = json.dumps(storyboard, ensure_ascii=False, indent=2).encode("utf-8")
         (output / "storyboard.json").write_bytes(storyboard_raw)
         scene_paths = render_scene_images(storyboard, output, args.aspect)
-        speech_process = ensure_speaches(mpt_config)
-        video = run_moneyprinter(mpt_config, storyboard, scene_paths, output, args.aspect)
+        video = run_moneyprinter(
+            mpt_config, storyboard, scene_paths, output, args.aspect,
+            args.audio.resolve() if args.audio else None,
+        )
         report.update({
             "status": "PASS_CANDIDATE",
             "title": storyboard["title"],
@@ -386,12 +352,6 @@ def main() -> int:
         report["error"] = str(error)
         raise
     finally:
-        if speech_process is not None and speech_process.poll() is None:
-            speech_process.terminate()
-            try:
-                speech_process.wait(timeout=10)
-            except subprocess.TimeoutExpired:
-                speech_process.kill()
         (output / "report.json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
