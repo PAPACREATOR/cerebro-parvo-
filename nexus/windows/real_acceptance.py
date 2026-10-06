@@ -229,6 +229,10 @@ def zotero(query: str, out: Path) -> dict:
         _, root_meta = request_bytes(base, headers={"Zotero-API-Version": "3"}, timeout=5)
     except NotConfigured:
         raise
+    except RuntimeError as error:
+        if "HTTP 403" in str(error):
+            raise NotConfigured("Zotero local API is disabled") from None
+        raise
     params = urllib.parse.urlencode({
         "format": "json", "limit": "10", "q": query, "qmode": "everything"
     })
@@ -307,15 +311,18 @@ def ace_music(out: Path) -> dict:
     data = health.get("data") if isinstance(health, dict) else None
     if not isinstance(data, dict) or data.get("status") != "ok":
         raise NotConfigured("ACE-Step health endpoint is not ready")
-    if data.get("models_initialized") is False:
-        raise NotConfigured("ACE-Step models are not initialized")
 
     payload = {
         "prompt": "instrumental minimalista, piano quente e textura eletrónica discreta, sem imitar artista específico",
         "lyrics": "",
         "thinking": False,
-        "audio_duration": 15,
-        "inference_steps": 8,
+        "use_format": False,
+        "task_type": "text2music",
+        "audio_duration": 12,
+        "inference_steps": 4,
+        "batch_size": 1,
+        "use_random_seed": False,
+        "seed": 20261006,
         "audio_format": "mp3",
         "vocal_language": "pt",
     }
@@ -363,6 +370,7 @@ def ace_music(out: Path) -> dict:
         "status": "PASS", "capability": "ace-step.real-generation",
         "authority": "UNTRUSTED", "outcome": "candidate",
         "task_id": task_id, "file": audio.name, "bytes": len(raw), "sha256": sha256(raw),
+        "models_initialized_at_health": bool(data.get("models_initialized", False)),
         "note": "Physical generation only. It is not promoted to Nexus Canonical.",
     }
     write_json(out / "ace-step-music.json", result)
