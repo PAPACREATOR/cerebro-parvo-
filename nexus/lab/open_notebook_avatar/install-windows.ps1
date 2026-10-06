@@ -2,14 +2,16 @@
 param(
     [Parameter(Mandatory=$true)][string]$OpenNotebookRoot,
     [Parameter(Mandatory=$true)][string]$ApiPython,
-    [ValidateSet('cpu','cuda')][string]$Device = 'cpu'
+    [ValidateSet('cpu','cuda')][string]$Device = 'cpu',
+    [switch]$AuthorizeInstall
 )
 $ErrorActionPreference = 'Stop'
 
-# Stop before any command, prompt, directory or external operation.
-throw 'NEXUS_PROTECTED_PROVISIONING_PENDING: protected avatar installation is not validated; refusing changes and external processes.'
+# Explicit human-authorized installation gate. Accidental/direct invocation remains fail-closed.
+if (-not $AuthorizeInstall) {
+    throw 'NEXUS_INSTALL_AUTHORIZATION_REQUIRED: rerun with -AuthorizeInstall only after explicit human approval.'
+}
 
-# Historical implementation retained below; unreachable while this gate is closed.
 $root = (Resolve-Path -LiteralPath $OpenNotebookRoot).Path
 $api = (Get-Command $ApiPython -CommandType Application -ErrorAction Stop).Source
 $workerDir = Join-Path $root 'venv-avatar'
