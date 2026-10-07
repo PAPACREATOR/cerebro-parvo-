@@ -46,8 +46,8 @@ def test_post_install_acceptance_runs_exact_stress_and_security_gates():
         "NEXUS_RUN_50K",
         "CreateAppContainerProfile",
         "AssignProcessToJobObject",
-        "nexus-qwen3-1.7b",
-        "nexus-qwen3-embedding-0.6b",
+        "$install.models.llamacpp.language.alias",
+        "$install.models.llamacpp.embedding.alias",
         "test_windows_stack_structural_300k.py",
         "torch.cuda.is_available",
         "MoneyPrinterTurbo",
@@ -56,6 +56,12 @@ def test_post_install_acceptance_runs_exact_stress_and_security_gates():
     )
     for token in required:
         assert token.lower() in POST.lower()
+
+    # The concrete aliases belong to the installer manifest, not to the
+    # post-install verifier. The verifier must consume them from the signed
+    # install report so changing a local model alias does not desynchronise it.
+    for alias in ("nexus-qwen3-1.7b", "nexus-qwen3-embedding-0.6b"):
+        assert alias in INSTALL
 
 
 def test_post_install_acceptance_never_promotes_or_creates_accounts():
