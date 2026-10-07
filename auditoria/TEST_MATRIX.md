@@ -13,10 +13,10 @@
 | T009 | Estado PREPARED antes da materialização final | test_real_process_crash_after_prepared_is_recoverable | PASSA | PASS | exit 97; reconcile NOT_COMMITTED |
 | T010 | fsync do temporário | A criar | NÃO TESTADO | — | Código chama os.fsync; falta prova específica |
 | T011 | Substituição atómica | test_after_replace_crash_leaves_prepared_until_reconcile | PASSA | PASS | Após morte pós-replace, ficheiro final contém bytes completos |
-| T012 | fsync do diretório pai | A criar | NÃO TESTADO | — | Linux executa; Windows retorna sem fsync |
+| T012 | fsync do diretório pai | Gate Windows por criar | NÃO TESTADO | — | Implementação atual retorna em Windows |
 | T013 | Ficheiro final verificado | test_write_creative / reconcile | PASSA | PASS | Hash final verificado |
 | T014 | COMMITTED só após persistência | test_after_replace_crash_leaves_prepared_until_reconcile | PASSA | PASS | BD permanece PREPARED após replace; reconcile só depois marca COMMITTED |
-| T015 | Evento de sucesso só após COMMITTED | A criar | NÃO TESTADO | — | Próximo ciclo E2E |
+| T015 | Evento de sucesso só após COMMITTED | test_core_to_persistence_commits_before_success_event | PASSA | PASS no CI | Evento COMMITTED só após receipt COMMITTED |
 | T016 | Crash antes do commit recupera | test_real_process_crash_after_prepared_is_recoverable | PASSA | PASS | Processo real, sem mock I/O |
 | T017 | Crash após replace reconcilia | test_real_process_crash_after_replace_reconciles | PASSA | PASS | Processo real, sem mock I/O |
 | T018 | Replay é idempotente | test_idempotent | PASSA | PASS | Mesmo operation_id/conteúdo |
@@ -26,4 +26,4 @@
 | T022 | Adulteração de hash não inventa sucesso | test_committed_tamper_requires_recovery | PASSA | PASS no CI | Tamper → RECOVERY_REQUIRED |
 | T023 | Concorrência mantém integridade | test_same_operation_concurrent_processes_remain_idempotent | PASSA | PASS no CI | 8 subprocessos, mesma operação e payload |
 | T024 | Permissões restritas tratadas explicitamente | test_real_permission_denial_does_not_commit | BLOQUEADO | PASS POSIX; Windows não provado | OSError real, sem mock |
-| T025 | core.py + persistência E2E | A criar | NÃO TESTADO | — | Próximo ciclo |
+| T025 | core.py + persistência E2E | test_core_to_persistence_commits_before_success_event | PASSA | FAIL esperado antes; PASS após integration.py | core.py e persistence.py não foram alterados |
