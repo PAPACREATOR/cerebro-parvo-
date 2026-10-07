@@ -218,11 +218,28 @@ def test_windows_acl_write_denial_does_not_commit(tmp_path):
         timeout=15,
     )
     assert deny.returncode == 0, deny.stdout + deny.stderr
+    script=f"""
+from pathlib import Path
+from cerebro.persistence import RecoverableMarkdownWriter
+root=Path({str(tmp_path)!r})
+w=RecoverableMarkdownWriter(root/'state'/'cerebro.sqlite3',root/'vault')
+try:
+    w.write('op-denied-win','CREATIVE','denied.md','payload')
+except OSError:
+    assert w.reconcile('op-denied-win') == 'NOT_COMMITTED'
+    assert not (root/'vault'/'creative'/'denied.md').exists()
+    raise SystemExit(0)
+raise SystemExit(3)
+"""
     try:
-        w=W(tmp_path)
-        with pytest.raises(OSError):
-            w.write("op-denied-win","CREATIVE","denied.md","payload")
-        assert w.reconcile("op-denied-win") == "NOT_COMMITTED"
+        denied=subprocess.run(
+            [sys.executable,"-c",script],
+            cwd=str(Path(__file__).parents[1]),
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        assert denied.returncode == 0, denied.stdout + denied.stderr
         assert not (parent/"denied.md").exists()
     finally:
         cleanup=subprocess.run(
