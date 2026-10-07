@@ -278,12 +278,19 @@ def main() -> int:
         raise SetupError("OPEN_NOTEBOOK_PASSWORD is required for the local installation contract")
     api = API(args.api, password)
 
-    ollama = credential(api, "ollama", "Nexus Local Ollama", {
-        "name": "Nexus Local Ollama",
-        "provider": "ollama",
-        "modalities": ["language", "embedding"],
-        "base_url": "http://127.0.0.1:11434",
-        "num_ctx": 8192,
+    language_credential = credential(api, "openai_compatible", "Nexus Local Language", {
+        "name": "Nexus Local Language",
+        "provider": "openai_compatible",
+        "modalities": ["language"],
+        "api_key": "nexus-local-not-a-secret",
+        "base_url": "http://127.0.0.1:18081/v1",
+    })
+    embedding_credential = credential(api, "openai_compatible", "Nexus Local Embedding", {
+        "name": "Nexus Local Embedding",
+        "provider": "openai_compatible",
+        "modalities": ["embedding"],
+        "api_key": "nexus-local-not-a-secret",
+        "base_url": "http://127.0.0.1:18082/v1",
     })
     speech = credential(api, "openai_compatible", "Nexus Local Speech", {
         "name": "Nexus Local Speech",
@@ -293,13 +300,25 @@ def main() -> int:
         "base_url": "http://127.0.0.1:8969/v1",
     })
 
-    for item in (ollama, speech):
+    for item in (language_credential, embedding_credential, speech):
         tested = api.call("POST", f"/api/credentials/{quote(item['id'], safe=':')}/test", {})
         if tested.get("success") is not True:
             raise SetupError(f"Provider test failed for {item['name']}: {tested.get('message')}")
 
-    language = model(api, name="qwen3:4b", provider="ollama", model_type="language", credential_id=ollama["id"])
-    embedding = model(api, name="nomic-embed-text", provider="ollama", model_type="embedding", credential_id=ollama["id"])
+    language = model(
+        api,
+        name="nexus-qwen3-1.7b",
+        provider="openai_compatible",
+        model_type="language",
+        credential_id=language_credential["id"],
+    )
+    embedding = model(
+        api,
+        name="nexus-qwen3-embedding-0.6b",
+        provider="openai_compatible",
+        model_type="embedding",
+        credential_id=embedding_credential["id"],
+    )
     tts = model(
         api,
         name="speaches-ai/Kokoro-82M-v1.0-ONNX",
@@ -341,7 +360,18 @@ def main() -> int:
         "schema": "nexus.open-notebook-local-config.v1",
         "status": "PASS",
         "providers": {
-            "ollama": {"credential_id": ollama["id"], "base_url": ollama.get("base_url")},
+            "language": {
+                "provider": "openai_compatible",
+                "runtime": "llama.cpp",
+                "credential_id": language_credential["id"],
+                "base_url": language_credential.get("base_url"),
+            },
+            "embedding": {
+                "provider": "openai_compatible",
+                "runtime": "llama.cpp",
+                "credential_id": embedding_credential["id"],
+                "base_url": embedding_credential.get("base_url"),
+            },
             "speech": {"credential_id": speech["id"], "base_url": speech.get("base_url")},
         },
         "models": {
