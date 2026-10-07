@@ -1,13 +1,13 @@
 # Estado de Trabalho
-- Fase: FASE 5 — INTEGRAÇÃO validada no percurso mínimo; FASE 3 Windows ainda pendente
-- Ciclo: 6
-- Objetivo atual: Fechar persistência Windows sem alterar semântica do Kernel.
-- Bloqueio atual: RecoverableMarkdownWriter._fsync_dir retorna imediatamente em Windows; não há prova de flush real do diretório pai.
-- Última alteração: Criada camada mínima cerebro/integration.py para ligar evento PREPARED ao writer e emitir sucesso apenas após receipt COMMITTED.
-- Último teste executado: GitHub Actions “Auditoria e suites” no head d503a0eb6f9eafa85e1b63d9fb12bed4bd4680c9.
-- Resultado: PASS. Antes da correção, o teste E2E falhou por ModuleNotFoundError de cerebro.integration; após a criação do único ficheiro de integração, o workflow passou.
-- Ficheiros alterados: implementacao/ativa-2026-09-28/tests/test_integration_e2e.py; implementacao/ativa-2026-09-28/cerebro/integration.py; auditoria/WORK_STATE.md; auditoria/TEST_MATRIX.md; auditoria/CHANGELOG-AUDIT.md
-- Próxima ação: Criar gate Windows real para fsync de diretório; confirmar FAIL no comportamento atual; corrigir apenas _fsync_dir com API Win32 documentada.
-- Critérios pendentes: fsync do temporário provado especificamente; fsync do diretório pai em Windows; permissões Windows; prova Windows da suite ativa; auditoria final.
-- Limitações: Ollama é proibido como dependência obrigatória. PR #29 permanece separado e usa llama.cpp/OpenAI-compatible. A implementação ativa ainda não garante flush de diretório no Windows.
-- Última atualização: 2026-10-07T12:42:00+01:00
+- Fase: FASE 3/4 — persistência e reinício; Windows durable replace validado
+- Ciclo: 7
+- Objetivo atual: Provar crash após fsync do temporário e recuperação sem resíduos.
+- Bloqueio atual: Ainda não existe crashpoint entre fsync do ficheiro temporário e a substituição final; esse ponto não foi exercitado.
+- Última alteração: persistence.py passou a serializar prepare com BEGIN IMMEDIATE antes da decisão de INSERT e a usar MoveFileExW(REPLACE_EXISTING|WRITE_THROUGH) no Windows; POSIX mantém os.replace + fsync do diretório pai.
+- Último teste executado: GitHub Actions “Auditoria e suites” no head f716b8560f4e2f2d360f4bbd06e9c613aece355c, incluindo job Persistência ativa — Windows.
+- Resultado: PASS em Ubuntu e Windows. Antes da correção, Windows reproduziu 2 FAIL: sqlite3.IntegrityError sob 8 processos e ausência de durable replace Windows.
+- Ficheiros alterados: implementacao/ativa-2026-09-28/cerebro/persistence.py; implementacao/ativa-2026-09-28/tests/test_persistence.py; .github/workflows/auditoria.yml; auditoria/WORK_STATE.md; auditoria/TEST_MATRIX.md; auditoria/CHANGELOG-AUDIT.md
+- Próxima ação: Adicionar crashpoint after_temp_fsync e teste de processo real; verificar que resume termina COMMITTED e não deixa .partial órfão.
+- Critérios pendentes: crash após fsync temporário; limpeza/recovery de temporários órfãos; permissões Windows físicas; auditoria final.
+- Limitações: Ollama é proibido como dependência obrigatória. Windows usa MoveFileExW WRITE_THROUGH como equivalente documentado de persistência da renomeação; não é usado FlushFileBuffers em handle de diretório não documentado.
+- Última atualização: 2026-10-07T12:48:00+01:00
