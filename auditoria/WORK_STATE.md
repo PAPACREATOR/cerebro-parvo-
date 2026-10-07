@@ -1,13 +1,13 @@
 # Estado de Trabalho
-- Fase: FASE 4 — REINÍCIO validada nos três pontos de crash exercitados; FASE 6 continua
-- Ciclo: 8
-- Objetivo atual: Fechar colisão lógica de hash e permissões Windows reais; depois auditoria final.
-- Bloqueio atual: Permissões restritas só têm prova POSIX na implementação ativa. Falta também prova explícita de digest igual com bytes diferentes.
-- Última alteração: Corrigidas apenas fronteiras Windows de persistência: normalização do prefixo \\?\ e corrida de replace idêntico; adicionado crashpoint após fsync do temporário.
-- Último teste executado: GitHub Actions “Auditoria e suites” no head c8c0840de83a7034cff2aa011a88dafdb2b582ae.
-- Resultado: PASS em Ubuntu e Windows. Crash after_temp_fsync sobrevive com PREPARED/NOT_COMMITTED e resume para COMMITTED. Concorrência de 8 processos também passa nos dois sistemas.
-- Ficheiros alterados: implementacao/ativa-2026-09-28/cerebro/persistence.py; implementacao/ativa-2026-09-28/tests/test_persistence.py; auditoria/WORK_STATE.md; auditoria/TEST_MATRIX.md; auditoria/CHANGELOG-AUDIT.md
-- Próxima ação: Testar digest igual com bytes diferentes; depois permissão Windows real sem mocks; por fim auditar cláusulas genéricas except e regressão completa.
-- Critérios pendentes: colisão lógica de hash; permissões Windows; política de exceções genéricas; auditoria final. Housekeeping de .partial órfão após morte permanece limitação não destrutiva.
-- Limitações: Ollama é proibido como dependência obrigatória. Um .partial fsynced pode permanecer após morte dura antes do replace; não é apagado automaticamente para não criar corrida destrutiva com writers ativos.
-- Última atualização: 2026-10-07T12:55:00+01:00
+- Fase: FASE 7 — AUDITORIA FINAL
+- Ciclo: 11
+- Objetivo atual: Confirmar regressão final do estado persistente/documental após todos os gates funcionais.
+- Bloqueio atual: Nenhum bloqueio funcional conhecido no núcleo auditado; falta apenas o CI disparado por esta atualização documental concluir.
+- Última alteração: Ajustado somente o teste de crash após fsync para aceitar o nome temporário Windows opaco e seguro; produto permaneceu inalterado nesse último ciclo.
+- Último teste executado: GitHub Actions “Auditoria e suites” no head e052f5d0785581951f6eb2cf368e9464bbda4fcd.
+- Resultado: PASS completo em Ubuntu e Windows. Ingestão, preservação byte-a-byte, hash, PREPARED/COMMITTED, fsync/durabilidade, crash real, reconcile, idempotência, proveniência, path traversal, symlink, digest igual com bytes diferentes, adulteração, concorrência, permissões reais e integração E2E passaram sem mocks de filesystem.
+- Ficheiros alterados: implementacao/ativa-2026-09-28/cerebro/persistence.py; implementacao/ativa-2026-09-28/tests/test_persistence.py; implementacao/ativa-2026-09-28/tests/test_core_invariants.py; implementacao/ativa-2026-09-28/tests/test_exception_policy.py; implementacao/ativa-2026-09-28/tests/test_final_audit.py; auditoria/WORK_STATE.md; auditoria/TEST_MATRIX.md; auditoria/CHANGELOG-AUDIT.md
+- Próxima ação: Confirmar CI desta atualização de estado; se permanecer verde, manter PR #31 como evidência auditável e não alterar mais o Kernel sem novo FAIL real.
+- Critérios pendentes: Apenas confirmação de regressão CI após atualização documental. Housekeeping automático de .partial órfão permanece deliberadamente fora do MVP para não introduzir eliminação concorrente/destrutiva.
+- Limitações: Ollama é proibido como dependência obrigatória; o percurso ativo de instalação usa llama.cpp. Um .partial fsynced pode permanecer após morte dura antes do replace e é preservado em vez de apagado automaticamente.
+- Última atualização: 2026-10-07
