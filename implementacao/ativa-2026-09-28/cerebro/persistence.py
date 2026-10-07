@@ -74,15 +74,18 @@ class RecoverableMarkdownWriter:
         if not operation_id or not isinstance(content,str): raise PersistenceError("invalid operation/content")
         target=self._resolve_target(domain,relative_path)
         expected=self._hash_bytes(content.encode("utf-8"))
-        existing=self._row(operation_id)
-        if existing:
-            if (existing["domain"],existing["relative_path"],existing["expected_hash"],existing["content"]) != (domain,relative_path,expected,content):
-                raise RecoveryRequired("operation_id reused with different materialization")
-            return self._receipt(existing)
-        if target.exists() and self._hash_file(target)!=expected:
-            raise RecoveryRequired("target already exists with different bytes")
         with self._connect() as con:
             con.execute("BEGIN IMMEDIATE")
+            existing=con.execute(
+                "SELECT * FROM materializations WHERE operation_id=?",
+                (operation_id,),
+            ).fetchone()
+            if existing:
+                if (existing["domain"],existing["relative_path"],existing["expected_hash"],existing["content"]) != (domain,relative_path,expected,content):
+                    raise RecoveryRequired("operation_id reused with different materialization")
+                return self._receipt(existing)
+            if target.exists() and self._hash_file(target)!=expected:
+                raise RecoveryRequired("target already exists with different bytes")
             con.execute("""INSERT INTO materializations
             (operation_id,domain,relative_path,content,expected_hash,state,prepared_at,committed_at)
             VALUES (?,?,?,?,?,'PREPARED',?,NULL)""",(operation_id,domain,relative_path,content,expected,time.time()))
@@ -105,7 +108,7 @@ class RecoverableMarkdownWriter:
             with os.fdopen(fd,"wb") as f:
                 f.write(content.encode("utf-8")); f.flush(); os.fsync(f.fileno())
             if self._hash_file(tmp)!=receipt.expected_hash: raise RecoveryRequired("temporary file hash mismatch")
-            os.replace(tmp,target); self._fsync_dir(target.parent)
+            self._replace_and_sync(tmp,target)
             if hard_crashpoint=="after_replace": os._exit(98)
             if failpoint=="after_replace": raise RuntimeError("SIMULATED_CRASH_AFTER_REPLACE")
             return self._mark_committed(operation_id,target,receipt.expected_hash)
@@ -146,8 +149,29 @@ class RecoverableMarkdownWriter:
         return self._receipt(self._row(operation_id))
 
     @staticmethod
+    def _replace_and_sync(source,target):
+        source,target=Path(source),Path(target)
+        if os.name=="nt":
+            import ctypes
+            move=ctypes.WinDLL("kernel32",use_last_error=True).MoveFileExW
+            move.argtypes=[ctypes.c_wchar_p,ctypes.c_wchar_p,ctypes.c_uint32]
+            move.restype=ctypes.c_int
+            MOVEFILE_REPLACE_EXISTING=0x1
+            MOVEFILE_WRITE_THROUGH=0x8
+            if not move(str(source),str(target),MOVEFILE_REPLACE_EXISTING|MOVEFILE_WRITE_THROUGH):
+                raise ctypes.WinError(ctypes.get_last_error())
+            return True
+        os.replace(source,target)
+        RecoverableMarkdownWriter._fsync_dir(target.parent)
+        return True
+
+    @staticmethod
     def _fsync_dir(path):
-        if os.name=="nt": return
+        if os.name=="nt":
+            raise PersistenceError("directory fsync is not the Windows durability primitive")
         fd=os.open(path,os.O_RDONLY)
-        try: os.fsync(fd)
-        finally: os.close(fd)
+        try:
+            os.fsync(fd)
+            return True
+        finally:
+            os.close(fd)
