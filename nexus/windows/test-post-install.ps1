@@ -225,6 +225,41 @@ try {
     $uv = $install.tools.uv.path
     $aceImport = Invoke-Checked $uv @('run','--no-sync','python','-c','import acestep; import acestep.api_server; print("ACE_STEP_IMPORT=PASS")') $mediaReport.ace_step.path
     Stage-Pass 'ace-step-runtime' $aceImport
+    $aceCuda = Invoke-Checked $uv @(
+        'run','--no-sync','python','-c',
+        'import torch; assert torch.cuda.is_available(); print(torch.cuda.get_device_name(0)); print(torch.__version__)'
+    ) $mediaReport.ace_step.path
+    Stage-Pass 'ace-step-cuda' $aceCuda
+
+    # Real local TTS probe using the exact Speaches/Kokoro installation.
+    $speachesRoot = [string]$install.tools.speaches.path
+    $speechOutLog = Join-Path $ToolsRoot 'logs\post-speaches.stdout.txt'
+    $speechErrLog = Join-Path $ToolsRoot 'logs\post-speaches.stderr.txt'
+    $speechProbeFile = Join-Path $ToolsRoot 'post-install-kokoro-probe.wav'
+    $speechProcess = $null
+    try {
+        $speechProcess = Start-Process -FilePath $uv -ArgumentList @(
+            'run','uvicorn','--factory','--host','127.0.0.1','--port','8969','speaches.main:create_app'
+        ) -WorkingDirectory $speachesRoot -RedirectStandardOutput $speechOutLog -RedirectStandardError $speechErrLog -PassThru -WindowStyle Hidden
+        Wait-Http 'http://127.0.0.1:8969/v1/models' 120
+        $speechBody = @{
+            input='Nexus local speech acceptance.'
+            model='speaches-ai/Kokoro-82M-v1.0-ONNX'
+            voice='af_heart'
+            response_format='wav'
+            speed=1
+        } | ConvertTo-Json
+        Invoke-WebRequest -Method Post -Uri 'http://127.0.0.1:8969/v1/audio/speech' -ContentType 'application/json' -Body $speechBody -OutFile $speechProbeFile -UseBasicParsing -TimeoutSec 120
+        $speechBytes = (Get-Item -LiteralPath $speechProbeFile).Length
+        if ($speechBytes -lt 1000) { throw 'NEXUS_KOKORO_TTS_PROBE_TOO_SMALL' }
+        Stage-Pass 'speaches-kokoro-real' ([ordered]@{model='speaches-ai/Kokoro-82M-v1.0-ONNX'; voice='af_heart'; bytes=$speechBytes})
+    }
+    finally {
+        if ($speechProcess -and -not $speechProcess.HasExited) {
+            Stop-Process -Id $speechProcess.Id -Force -ErrorAction SilentlyContinue
+            $speechProcess.WaitForExit()
+        }
+    }
 
     $mptRoot = $install.tools.moneyprinterturbo.path
     $mptHelp = Invoke-Checked $uv @('run','--frozen','python','cli.py','--help') $mptRoot
