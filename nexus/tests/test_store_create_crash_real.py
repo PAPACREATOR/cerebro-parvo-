@@ -7,6 +7,7 @@ from nexus.store import Store
 
 
 def test_restart_surfaces_create_crash_after_input_is_durable(tmp_path):
+    expected = "bytes preservados após crash".encode("utf-8")
     script = r"""
 import os
 import sys
@@ -45,7 +46,7 @@ store_module.Store(root).create(request)
     assert len(runs) == 1
     run = runs[0]
     original = run / "input.bin"
-    assert original.read_bytes() == b"bytes preservados apÃ³s crash"
+    assert original.read_bytes() == expected
     assert not (run / "state.json").exists()
 
     restarted = Store(tmp_path)
@@ -55,5 +56,5 @@ store_module.Store(root).create(request)
     assert recovered["commit_status"] == "RECOVERY_REQUIRED"
     assert recovered["run_id"] == run.name
     assert recovered["input_sha256"]
-    assert original.read_bytes() == b"bytes preservados apÃ³s crash"
+    assert original.read_bytes() == expected
     assert not (tmp_path / "canonical" / run.name).exists()
