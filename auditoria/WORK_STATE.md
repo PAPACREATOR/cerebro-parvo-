@@ -1,0 +1,13 @@
+# Estado de Trabalho
+- Fase: FASE 0 — DIAGNÓSTICO
+- Ciclo: 0
+- Objetivo atual: Recuperar estado persistente real e mapear o núcleo antes de qualquer alteração funcional.
+- Bloqueio atual: Estado persistente obrigatório não existia no repositório.
+- Última alteração: Criação dos ficheiros obrigatórios de auditoria/estado numa branch isolada.
+- Último teste executado: NÃO EXECUTADO
+- Resultado: NÃO TESTADO
+- Ficheiros alterados: auditoria/WORK_STATE.md; auditoria/TEST_MATRIX.md; auditoria/CHANGELOG-AUDIT.md
+- Próxima ação: Mapear ficheiros de código/testes do núcleo, comparar documentação com implementação e executar a suíte existente relacionada.
+- Critérios pendentes: ingestão; preservação byte-a-byte; hash; PREPARED/COMMITTED; fsync ficheiro; replace atómico; fsync diretório; verificação final; recovery/reconcile; proveniência; idempotência; path traversal; symlink; colisão; concorrência; permissões; integração E2E; crash real.
+- Limitações: Ainda sem execução local/CI desta branch; nenhum comportamento funcional validado neste ciclo.
+- Última atualização: 2026-10-07T12:11:00+01:00
