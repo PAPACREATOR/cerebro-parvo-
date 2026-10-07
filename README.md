@@ -13,7 +13,7 @@ A composição candidata continua a ser:
 Em 07-10-2026 existem duas frentes técnicas que ainda não formam um único HEAD:
 
 - [PR #31](https://github.com/PAPACREATOR/cerebro-parvo-/pull/31): núcleo transacional auditado — ingestão, preservação de bytes, hash, PREPARED/COMMITTED, atomicidade, recovery/reconcile, idempotência, permissões e concorrência.
-- [PR #32](https://github.com/PAPACREATOR/cerebro-parvo-/pull/32): continuação Windows da PR #29 — percurso `llama.cpp` local, compatibilidade OpenNotebook e remoção de referências ativas ao runtime legado.
+- [PR #32](https://github.com/PAPACREATOR/cerebro-parvo-/pull/32): continuação Windows da PR #29 — percurso `llama.cpp` local, compatibilidade OpenNotebook e remoção de referências ativas ao runtime local substituído.
 
 Os ramos #31 e #32 estão divergentes. Não se somam os PASS como se fossem uma única versão. A convergência só é aceite quando o código necessário estiver num mesmo SHA e os gates aplicáveis voltarem a passar.
 
@@ -33,7 +33,7 @@ Os ramos #31 e #32 estão divergentes. Não se somam os PASS como se fossem uma 
 
 ## Runtime local de modelos
 
-O percurso Windows ativo usa `llama.cpp` por endpoints OpenAI-compatible locais. Ollama não é dependência obrigatória nem requisito do instalador/runtime candidato.
+O percurso Windows ativo usa `llama.cpp` por endpoints OpenAI-compatible locais. O runtime local anteriormente considerado foi retirado do percurso candidato e não é requisito do instalador.
 
 Os testes de fronteira `llama.cpp` incluem contratos determinísticos e testes de compatibilidade. Isso não deve ser descrito como milhares de inferências físicas de modelo; a aceitação real de modelo/GPU continua separada.
 
