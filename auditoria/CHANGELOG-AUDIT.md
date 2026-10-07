@@ -118,3 +118,24 @@ A correção acrescenta um único ficheiro de cola; não altera regras de autori
 ### Estado persistente atualizado: SIM
 ### Próxima ação
 Abrir gate Windows específico para fsync do diretório pai e corrigir apenas a implementação privada _fsync_dir se o teste falhar como esperado.
+
+
+## Ciclo 7
+### Problema
+O gate Windows revelou que a concorrência não era deterministicamente idempotente e que a implementação ativa não tinha uma primitiva de persistência equivalente ao fsync do diretório no Windows.
+### Evidência
+No commit 553f6d40566ad9bf4e5bc44210bb0869aa549f8e o job Windows falhou com sqlite3.IntegrityError: UNIQUE constraint failed em concorrência e com None no teste de flush Windows. A documentação Microsoft mostra MOVEFILE_WRITE_THROUGH como mecanismo documentado que só retorna quando o move foi efetivamente escrito em disco.
+### Alteração
+Em persistence.py, prepare agora adquire BEGIN IMMEDIATE antes de reler/inserir operation_id. A substituição passou para _replace_and_sync: POSIX usa os.replace + fsync(dir); Windows usa MoveFileExW com MOVEFILE_REPLACE_EXISTING|MOVEFILE_WRITE_THROUGH. Nenhuma alteração em core.py.
+### Teste criado ou atualizado
+test_windows_replace_is_write_through_and_persists_target; teste concorrente existente passou a ser executado também no runner Windows.
+### Comando executado
+GitHub Actions “Auditoria e suites” antes e depois da correção, incluindo o job Persistência ativa — Windows.
+### Resultado real
+Antes: 2 failed, 25 passed, 1 skipped no Windows. Depois: job Windows PASS e job Ubuntu PASS.
+### Revisão
+Alteração limitada a um ficheiro de código, um ficheiro de testes e workflow de CI. A autoridade, Creative/Canonical, proveniência e contratos do Core não mudaram.
+### Decisão: ACEITE
+### Estado persistente atualizado: SIM
+### Próxima ação
+Provar interrupção real após fsync do temporário e antes do replace, incluindo recuperação sem ficheiros .partial órfãos.
