@@ -18,9 +18,18 @@ TESTS=list((ROOT/"tests").glob("test_*.py"))
 def test_active_suite_does_not_use_filesystem_mocks():
     violations=[]
     for path in TESTS:
-        text=path.read_text(encoding="utf-8")
-        if "unittest.mock" in text or "mock.patch" in text:
-            violations.append(path.name)
+        tree=ast.parse(path.read_text(encoding="utf-8"),filename=str(path))
+        for node in ast.walk(tree):
+            if isinstance(node,ast.ImportFrom) and node.module == "unittest.mock":
+                violations.append((path.name,node.lineno))
+            if isinstance(node,ast.Import):
+                for alias in node.names:
+                    if alias.name in {"mock","unittest.mock"}:
+                        violations.append((path.name,node.lineno))
+            if isinstance(node,ast.Call) and isinstance(node.func,ast.Attribute) and node.func.attr == "patch":
+                owner=node.func.value
+                if isinstance(owner,ast.Name) and owner.id == "mock":
+                    violations.append((path.name,node.lineno))
     assert violations == []
 
 
