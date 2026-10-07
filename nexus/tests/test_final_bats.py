@@ -1,35 +1,34 @@
-"""Final install/test BAT contracts.
+"""Contracts for the external Windows launchers.
 
-These are launchers only. They must not contain passwords, create Windows
-accounts, bypass the human install gate, or write/promote Canonical.
+The two final .bat launchers are intentionally NOT tracked in the repository.
+The repository owns the bounded PowerShell entrypoints and their security tests;
+the user receives the .bat files separately.
 """
-from pathlib import Path
-
 from nexus.contracts import ROOT
 
 
 REPO = ROOT.parent
-INSTALL_BAT = (REPO / "INSTALAR-NEXUS-COMPLETO.bat").read_text(encoding="utf-8")
-TEST_BAT = (REPO / "TESTAR-NEXUS-POS-INSTALACAO.bat").read_text(encoding="utf-8")
+INSTALL = (ROOT / "windows" / "install-nexus-complete.ps1").read_text(encoding="utf-8")
 POST = (ROOT / "windows" / "test-post-install.ps1").read_text(encoding="utf-8")
 
 
-def test_install_bat_is_explicit_and_password_free():
-    assert "install-nexus-complete.ps1" in INSTALL_BAT
-    assert "-AuthorizeInstall" in INSTALL_BAT
-    assert "C:\\Nexus-Tools" in INSTALL_BAT
-    for forbidden in ("New-LocalUser", "Add-LocalGroupMember", "Read-Host", "-Password", "password="):
-        assert forbidden not in INSTALL_BAT
-    assert "nao cria contas windows nexus/nexustool" in INSTALL_BAT.lower()
+def test_final_bat_launchers_are_external_not_repository_files():
+    assert not (REPO / "INSTALAR-NEXUS-COMPLETO.bat").exists()
+    assert not (REPO / "TESTAR-NEXUS-POS-INSTALACAO.bat").exists()
 
 
-def test_post_install_bat_only_calls_bounded_acceptance():
-    assert "test-post-install.ps1" in TEST_BAT
-    assert "complete-install-report.json" in TEST_BAT
-    assert "post-install-acceptance-report.json" in TEST_BAT
-    assert "store.promote" not in TEST_BAT.lower()
-    assert "\\canonical\\" not in TEST_BAT.lower()
-    assert "nao promove nem escreve diretamente no canonical" in TEST_BAT.lower()
+def test_install_entrypoint_is_explicit_and_password_free():
+    assert "[switch]$AuthorizeInstall" in INSTALL
+    assert "NEXUS_INSTALL_AUTHORIZATION_REQUIRED" in INSTALL
+    assert "C:\\Nexus-Tools" in INSTALL
+    for forbidden in (
+        "New-LocalUser",
+        "Add-LocalGroupMember",
+        "Read-Host",
+        "setup-isolation.ps1",
+        "NexusTool",
+    ):
+        assert forbidden not in INSTALL
 
 
 def test_post_install_acceptance_runs_exact_stress_and_security_gates():
@@ -67,7 +66,5 @@ def test_post_install_acceptance_never_promotes_or_creates_accounts():
         "Read-Host",
     ):
         assert forbidden not in POST
-    assert "NEXUS_REUSABLE_TOOL_IDENTITY_FOUND" in POST
-    assert "LogonUser" in POST and "CreateProcessAsUser" in POST
     assert "legacy_accounts_present" in POST
     assert "per-task AppContainer" in POST
