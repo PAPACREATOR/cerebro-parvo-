@@ -20,10 +20,10 @@
 | T016 | Crash antes do commit recupera | test_real_process_crash_after_prepared_is_recoverable | PASSA | PASS | Processo real, sem mock I/O |
 | T017 | Crash após replace reconcilia | test_real_process_crash_after_replace_reconciles | PASSA | PASS | Processo real, sem mock I/O |
 | T018 | Replay é idempotente | test_idempotent | PASSA | PASS | Mesmo operation_id/conteúdo |
-| T019 | Proveniência não altera conteúdo | A localizar/criar | NÃO TESTADO | — | Contrato separado |
+| T019 | Proveniência não altera conteúdo | A criar | NÃO TESTADO | — | Próximo ciclo |
 | T020 | Original nunca é apagado | test_ingest_preserves_bytes_exactly | PASSA | PASS | Originais permanecem byte-a-byte nos casos exercitados |
-| T021 | Symlink malicioso bloqueado | A criar | NÃO TESTADO | — | Próximo ciclo |
-| T022 | Colisão de hash não inventa sucesso | A criar | NÃO TESTADO | — | Segurança/integridade |
-| T023 | Concorrência mantém integridade | A criar | NÃO TESTADO | — | Próximo ciclo |
+| T021 | Symlink malicioso bloqueado | test_symlink_escape_is_blocked_without_writing_outside | PASSA | PASS no CI | Sem escrita no destino externo |
+| T022 | Colisão/adulteração de hash não inventa sucesso | A criar | NÃO TESTADO | — | Segurança/integridade |
+| T023 | Concorrência mantém integridade | test_same_operation_concurrent_processes_remain_idempotent | PASSA | PASS no CI | 8 subprocessos, mesma operação e payload |
 | T024 | Permissões restritas tratadas explicitamente | A criar | NÃO TESTADO | — | OSError real |
 | T025 | core.py + persistência E2E | A criar | NÃO TESTADO | — | Integração |
