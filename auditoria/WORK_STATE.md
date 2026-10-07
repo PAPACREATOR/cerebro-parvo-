@@ -1,13 +1,13 @@
 # Estado de Trabalho
 - Fase: FASE 7 — AUDITORIA FINAL
-- Ciclo: 12
-- Objetivo atual: Confirmar regressão final após correção mínima da corrida transitória de leitura no Windows.
-- Bloqueio atual: Nenhum bloqueio funcional conhecido no núcleo auditado; CodeQL do head funcional ainda estava em execução no momento deste registo.
-- Última alteração: persistence.py repete por no máximo 0,5 s apenas PermissionError transitório ao abrir ficheiro para hash no Windows; erro persistente continua a ser propagado. core.py não foi alterado.
-- Último teste executado: GitHub Actions “Auditoria e suites”, run 37657894986, head d7bcd4e3d17d3cd6da7939b12248317de06055c6.
-- Resultado: PASS completo em Ubuntu e Windows. O FAIL anterior de concorrência Windows (PermissionError ao reler o alvo durante 8 processos) não reapareceu.
-- Ficheiros alterados: implementacao/ativa-2026-09-28/cerebro/persistence.py; auditoria/WORK_STATE.md; auditoria/TEST_MATRIX.md; auditoria/CHANGELOG-AUDIT.md
-- Próxima ação: Confirmar CodeQL do head funcional; se verde, manter PR #31 como evidência auditável e não alterar mais o Kernel sem novo FAIL real.
-- Critérios pendentes: Apenas confirmação CodeQL do head funcional. Housekeeping automático de .partial órfão permanece deliberadamente fora do MVP para evitar eliminação concorrente/destrutiva.
-- Limitações: Ollama é proibido como dependência obrigatória. O ramo de instalação lab/windows-full-install-20261006 usa llama.cpp; referências a Ollama existentes nesse ramo são testes negativos que impedem regressão. Um .partial fsynced pode permanecer após morte dura antes do replace e é preservado.
+- Ciclo: 13
+- Objetivo atual: Congelar o Kernel após prova repetida de estabilidade da concorrência Windows e manter apenas vigilância por FAIL real.
+- Bloqueio atual: Nenhum bloqueio funcional conhecido no núcleo auditado.
+- Última alteração: Nenhuma alteração de produto neste ciclo; repetido três vezes o job Windows no mesmo head para testar a corrida intermitente.
+- Último teste executado: GitHub Actions “Auditoria e suites”, run 37658064553, tentativa 4, job “Persistência ativa — Windows”.
+- Resultado: SUCCESS. O job Windows passou no run original e em três repetições consecutivas adicionais; Ubuntu/documental e CodeQL também estavam SUCCESS no head.
+- Ficheiros alterados: auditoria/WORK_STATE.md; auditoria/TEST_MATRIX.md; auditoria/CHANGELOG-AUDIT.md
+- Próxima ação: Não alterar core.py nem persistence.py sem novo FAIL real e reproduzível. Manter PR #31 como evidência auditável; qualquer próximo trabalho funcional deve partir de teste que falhe primeiro.
+- Critérios pendentes: Nenhum dos T001–T025. Housekeeping automático de .partial órfão continua deliberadamente fora do MVP para evitar eliminação concorrente/destrutiva.
+- Limitações: Ollama é proibido como dependência obrigatória. O ramo de instalação lab/windows-full-install-20261006 usa llama.cpp e mantém referências a Ollama apenas como testes negativos anti-regressão. Um .partial fsynced pode permanecer após morte dura antes do replace e é preservado.
 - Última atualização: 2026-10-07
