@@ -160,7 +160,13 @@ function Ensure-WingetPackage {
     Refresh-ProcessPath
 
     if ($installExit -eq 0) {
-        return 'WINGET_INSTALLED'
+        if ($Id -eq 'Microsoft.VCRedist.2015+.x64') {
+            return 'WINGET_INSTALLED'
+        }
+        if (Test-PackageRuntime $Id) {
+            return 'WINGET_INSTALLED_RUNTIME_VERIFIED'
+        }
+        throw ('NEXUS_WINGET_RUNTIME_MISSING_AFTER_INSTALL: ' + $Id)
     }
 
     if (Test-PackageRuntime $Id) {
