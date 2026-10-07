@@ -28,6 +28,14 @@ $SurrealSha256 = '55c7e05ee2b68ec0d8b86c4b588e9b9807f257af8c15c05d17074514c64d8c
 $LanguageToolVersion = '6.6'
 $LanguageToolSha256 = '53600506b399bb5ffe1e4c8dec794fd378212f14aaf38ccef9b6f89314d11631'
 $PyInstallerVersion = '6.16.0'
+$LlamaLanguageRevision = '90862c4b9d2787eaed51d12237eafdfe7c5f6077'
+$LlamaLanguageSha256 = '061b54daade076b5d3362dac252678d17da8c68f07560be70818cace6590cb1a'
+$LlamaEmbeddingRevision = 'd20cf9c16f82914a21dbd9c645f56895fb1d7750'
+$LlamaEmbeddingSha256 = '06507c7b42688469c4e7298b0a1e16deff06caf291cf0a5b278c308249c3e439'
+$LlamaLanguagePort = 18081
+$LlamaEmbeddingPort = 18082
+$LlamaLanguageAlias = 'nexus-qwen3-1.7b'
+$LlamaEmbeddingAlias = 'nexus-qwen3-embedding-0.6b'
 $StableDiffusion15Url = 'https://huggingface.co/stable-diffusion-v1-5/stable-diffusion-v1-5/resolve/main/v1-5-pruned-emaonly.safetensors'
 $StableDiffusion15Sha256 = '6ce0161689b3853acaa03779ec93eafe75a02f4ced659bee03f50797806fa2fa'
 
@@ -114,8 +122,11 @@ function Test-PackageRuntime {
                 "$env:LOCALAPPDATA\Microsoft\WinGet\Links\uv.exe"
             ))
         }
-        'Ollama.Ollama' {
-            return [bool](Resolve-Executable @('ollama.exe','ollama') @("$env:LOCALAPPDATA\Programs\Ollama\ollama.exe"))
+        'ggml.llamacpp' {
+            $server = Resolve-Executable @('llama-server.exe','llama-server')
+            if (-not $server) { return $false }
+            & $server --version *> $null
+            return ($LASTEXITCODE -eq 0)
         }
         default {
             return $false
@@ -131,7 +142,13 @@ function Ensure-WingetPackage {
     $listed = & $winget list --id $Id --exact --accept-source-agreements 2>&1
     if ($LASTEXITCODE -eq 0 -and ("$listed" -match [regex]::Escape($Id))) {
         Refresh-ProcessPath
-        return 'WINGET_PRESENT'
+        if ($Id -eq 'Microsoft.VCRedist.2015+.x64') {
+            return 'WINGET_PRESENT'
+        }
+        if (Test-PackageRuntime $Id) {
+            return 'RUNTIME_PRESENT'
+        }
+        Write-Warning ('winget lists ' + $Id + ' but its executable runtime is unavailable; attempting repair/install.')
     }
 
     if (Test-PackageRuntime $Id) {
@@ -310,7 +327,7 @@ try {
         'DigitalScholar.Zotero',
         'Gyan.FFmpeg',
         'astral-sh.uv',
-        'Ollama.Ollama',
+        'ggml.llamacpp',
         'Microsoft.VCRedist.2015+.x64'
     )) {
         $packageState = Ensure-WingetPackage $id
@@ -324,16 +341,17 @@ try {
     $npm = Resolve-Executable @('npm.cmd','npm') @("$env:ProgramFiles\nodejs\npm.cmd")
     $java = Resolve-Executable @('java.exe','java') @("$env:ProgramFiles\Microsoft\jdk-17*\bin\java.exe")
     $soffice = Resolve-Executable @('soffice.com') @("$env:ProgramFiles\LibreOffice\program\soffice.com")
+    $unopkg = Resolve-Executable @('unopkg.com') @("$env:ProgramFiles\LibreOffice\program\unopkg.com")
     $zotero = Resolve-Executable @('zotero.exe') @("$env:ProgramFiles\Zotero\zotero.exe","$([Environment]::GetFolderPath('ProgramFilesX86'))\Zotero\zotero.exe","$env:LOCALAPPDATA\Programs\Zotero\zotero.exe")
     $ffmpeg = Resolve-Executable @('ffmpeg.exe','ffmpeg')
     $ffprobe = Resolve-Executable @('ffprobe.exe','ffprobe')
     $uv = Resolve-Executable @('uv.exe','uv') @("$env:USERPROFILE\.local\bin\uv.exe","$env:LOCALAPPDATA\Microsoft\WinGet\Links\uv.exe")
-    $ollama = Resolve-Executable @('ollama.exe','ollama') @("$env:LOCALAPPDATA\Programs\Ollama\ollama.exe")
+    $llamaServer = Resolve-Executable @('llama-server.exe','llama-server')
 
     foreach ($pair in @(
         @('git',$git),@('py',$py),@('node',$node),@('npm',$npm),@('java',$java),
-        @('libreoffice',$soffice),@('zotero',$zotero),@('ffmpeg',$ffmpeg),@('ffprobe',$ffprobe),
-        @('uv',$uv),@('ollama',$ollama)
+        @('libreoffice',$soffice),@('unopkg',$unopkg),@('zotero',$zotero),@('ffmpeg',$ffmpeg),@('ffprobe',$ffprobe),
+        @('uv',$uv),@('llamacpp',$llamaServer)
     )) {
         if (-not $pair[1] -or -not (Test-Path -LiteralPath $pair[1])) {
             throw ('NEXUS_REQUIRED_EXECUTABLE_MISSING: ' + $pair[0])
@@ -350,6 +368,18 @@ try {
     $report.tools.libreoffice.version = (& $soffice --version 2>&1 | Out-String).Trim()
     $report.tools.ffmpeg.version = (& $ffmpeg -version 2>&1 | Select-Object -First 1 | Out-String).Trim()
     $report.tools.zotero.version = (Get-Item -LiteralPath $zotero).VersionInfo.FileVersion
+    $report.tools.llamacpp.version = (& $llamaServer --version 2>&1 | Out-String).Trim()
+
+    # Zotero <-> LibreOffice structural gate. The official OXT must be shipped by Zotero,
+    # and Java + LibreOffice must both be real executables before we claim compatibility.
+    $zoteroRoot = Split-Path -Parent $zotero
+    $zoteroOxt = Join-Path $zoteroRoot 'integration\libreoffice\Zotero_OpenOffice_Integration.oxt'
+    if (-not (Test-Path -LiteralPath $zoteroOxt)) { throw 'NEXUS_ZOTERO_LIBREOFFICE_EXTENSION_MISSING' }
+    Invoke-Checked $java @('-version')
+    Invoke-Checked $soffice @('--version')
+    Invoke-Checked $unopkg @('--version')
+    $report.tools.zotero['libreoffice_oxt'] = $zoteroOxt
+    $report.tools.zotero['integration_status'] = 'OXT_PRESENT_JAVA_LIBREOFFICE_VERIFIED'
     Save-Report
 
     # Stable standalone LanguageTool 6.6, fixed checksum from the project release announcement.
@@ -406,19 +436,38 @@ try {
     }
     Save-Report
 
-    # Local LLM and embeddings used later by Open Notebook. Do not expose Ollama outside loopback.
-    try { Invoke-WebRequest -Uri 'http://127.0.0.1:11434/api/tags' -UseBasicParsing -TimeoutSec 2 | Out-Null }
-    catch {
-        Start-Process -FilePath $ollama -ArgumentList @('serve') -WindowStyle Hidden | Out-Null
-        Wait-Http 'http://127.0.0.1:11434/api/tags' 60
+    # Local language + embedding runtimes for Open Notebook. llama.cpp is an external,
+    # replaceable tool; the Python Kernel and Human Gate remain authoritative.
+    $llamaModels = Join-Path $Models 'llamacpp'
+    $null = New-Item -ItemType Directory -Force -Path $llamaModels
+    $languageModel = Join-Path $llamaModels 'Qwen3-1.7B-Q8_0.gguf'
+    $embeddingModel = Join-Path $llamaModels 'Qwen3-Embedding-0.6B-Q8_0.gguf'
+    $languageUrl = 'https://huggingface.co/Qwen/Qwen3-1.7B-GGUF/resolve/' + $LlamaLanguageRevision + '/Qwen3-1.7B-Q8_0.gguf'
+    $embeddingUrl = 'https://huggingface.co/Qwen/Qwen3-Embedding-0.6B-GGUF/resolve/' + $LlamaEmbeddingRevision + '/Qwen3-Embedding-0.6B-Q8_0.gguf'
+    Download-Verified $languageUrl $languageModel $LlamaLanguageSha256 | Out-Null
+    Download-Verified $embeddingUrl $embeddingModel $LlamaEmbeddingSha256 | Out-Null
+
+    $languageLauncher = Join-Path $BinRoot 'Start-Llama-Language-Nexus.cmd'
+    @"
+@echo off
+"$llamaServer" -m "$languageModel" --host 127.0.0.1 --port $LlamaLanguagePort --alias $LlamaLanguageAlias -c 8192 -ngl 99
+"@ | Set-Content -LiteralPath $languageLauncher -Encoding ASCII
+
+    $embeddingLauncher = Join-Path $BinRoot 'Start-Llama-Embedding-Nexus.cmd'
+    @"
+@echo off
+"$llamaServer" -m "$embeddingModel" --host 127.0.0.1 --port $LlamaEmbeddingPort --alias $LlamaEmbeddingAlias --embedding --pooling last --embd-normalize 2 -c 8192 -ngl 99 -np 1 --no-cont-batching
+"@ | Set-Content -LiteralPath $embeddingLauncher -Encoding ASCII
+
+    $report.tools.llamacpp['language_port'] = $LlamaLanguagePort
+    $report.tools.llamacpp['embedding_port'] = $LlamaEmbeddingPort
+    $report.tools.llamacpp['language_launcher'] = $languageLauncher
+    $report.tools.llamacpp['embedding_launcher'] = $embeddingLauncher
+    $report.models.llamacpp = [ordered]@{
+        status='DOWNLOADED_VERIFIED_PENDING_RUNTIME_PROBE'
+        language=[ordered]@{alias=$LlamaLanguageAlias; path=$languageModel; revision=$LlamaLanguageRevision; sha256=$LlamaLanguageSha256}
+        embedding=[ordered]@{alias=$LlamaEmbeddingAlias; path=$embeddingModel; revision=$LlamaEmbeddingRevision; sha256=$LlamaEmbeddingSha256}
     }
-    Invoke-Checked $ollama @('pull','qwen3:4b')
-    Invoke-Checked $ollama @('pull','nomic-embed-text')
-    $ollamaList = (& $ollama list | Out-String)
-    if ($ollamaList -notmatch 'qwen3:4b' -or $ollamaList -notmatch 'nomic-embed-text') {
-        throw 'NEXUS_OLLAMA_MODELS_MISSING'
-    }
-    $report.models.ollama = [ordered]@{ status='INSTALLED_TESTED'; language='qwen3:4b'; embedding='nomic-embed-text' }
     Save-Report
 
     # Local TTS server for podcast audio, pinned to an observed upstream commit.
@@ -543,14 +592,51 @@ endlocal
     $apiErr = Join-Path $Logs 'open-notebook-api.stderr.txt'
     $speechConfigLog = Join-Path $Logs 'speaches-config.stdout.txt'
     $speechConfigErr = Join-Path $Logs 'speaches-config.stderr.txt'
+    $languageLog = Join-Path $Logs 'llamacpp-language.stdout.txt'
+    $languageErr = Join-Path $Logs 'llamacpp-language.stderr.txt'
+    $embeddingLog = Join-Path $Logs 'llamacpp-embedding.stdout.txt'
+    $embeddingErr = Join-Path $Logs 'llamacpp-embedding.stderr.txt'
     $surrealProcess = $null
     $apiProcess = $null
     $speechConfigProcess = $null
+    $languageProcess = $null
+    $embeddingProcess = $null
     try {
         $surrealProcess = Start-Process -FilePath $surreal -ArgumentList @(
             'start','--no-banner','--bind','127.0.0.1:8000','--user','root','--pass',$dbPassword,('rocksdb:' + $surrealData)
         ) -WorkingDirectory $openNotebook -RedirectStandardOutput $surrealLog -RedirectStandardError $surrealErr -PassThru -WindowStyle Hidden
         Wait-Http 'http://127.0.0.1:8000/health' 90
+
+        $languageProcess = Start-Process -FilePath $llamaServer -ArgumentList @(
+            '-m',('"' + $languageModel + '"'),'--host','127.0.0.1','--port',[string]$LlamaLanguagePort,
+            '--alias',$LlamaLanguageAlias,'-c','8192','-ngl','99'
+        ) -RedirectStandardOutput $languageLog -RedirectStandardError $languageErr -PassThru -WindowStyle Hidden
+        Wait-Http ('http://127.0.0.1:' + $LlamaLanguagePort + '/health') 180
+
+        $embeddingProcess = Start-Process -FilePath $llamaServer -ArgumentList @(
+            '-m',('"' + $embeddingModel + '"'),'--host','127.0.0.1','--port',[string]$LlamaEmbeddingPort,
+            '--alias',$LlamaEmbeddingAlias,'--embedding','--pooling','last','--embd-normalize','2',
+            '-c','8192','-ngl','99','-np','1','--no-cont-batching'
+        ) -RedirectStandardOutput $embeddingLog -RedirectStandardError $embeddingErr -PassThru -WindowStyle Hidden
+        Wait-Http ('http://127.0.0.1:' + $LlamaEmbeddingPort + '/health') 180
+
+        $languageProbeBody = @{
+            model=$LlamaLanguageAlias
+            messages=@(@{role='user'; content='Reply briefly with the word Nexus.'})
+            max_tokens=32
+            temperature=0
+        } | ConvertTo-Json -Depth 5
+        $languageProbe = Invoke-RestMethod -Method Post -Uri ('http://127.0.0.1:' + $LlamaLanguagePort + '/v1/chat/completions') -ContentType 'application/json' -Body $languageProbeBody -TimeoutSec 120
+        if (-not $languageProbe.choices -or $languageProbe.choices.Count -lt 1) {
+            throw 'NEXUS_LLAMACPP_LANGUAGE_PROBE_FAILED'
+        }
+
+        $embeddingProbeBody = @{model=$LlamaEmbeddingAlias; input='nexus bidirectional embedding probe'} | ConvertTo-Json
+        $embeddingProbe = Invoke-RestMethod -Method Post -Uri ('http://127.0.0.1:' + $LlamaEmbeddingPort + '/v1/embeddings') -ContentType 'application/json' -Body $embeddingProbeBody -TimeoutSec 120
+        if (-not $embeddingProbe.data -or -not $embeddingProbe.data[0].embedding -or $embeddingProbe.data[0].embedding.Count -lt 32) {
+            throw 'NEXUS_LLAMACPP_EMBEDDING_PROBE_FAILED'
+        }
+        $report.models.llamacpp.status = 'DOWNLOADED_VERIFIED_RUNTIME_PROBED'
 
         $speechConfigProcess = Start-Process -FilePath $uv -ArgumentList @(
             'run','uvicorn','--factory','--host','127.0.0.1','--port','8969','speaches.main:create_app'
@@ -583,7 +669,7 @@ endlocal
         }
     }
     finally {
-        foreach ($process in @($apiProcess,$speechConfigProcess,$surrealProcess)) {
+        foreach ($process in @($apiProcess,$speechConfigProcess,$embeddingProcess,$languageProcess,$surrealProcess)) {
             if ($process -and -not $process.HasExited) {
                 Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
                 $process.WaitForExit()
