@@ -1,5 +1,17 @@
 # Nexus — ponto de situação atual
 
+## Atualização operacional — 07-10-2026
+
+Estado atual auditado:
+
+- **PR #32 / `cleanup/llamacpp-only-20261007`** é a linha mais completa do produto Windows atual. HEAD auditado de referência: `b5cb20c308099c3e153358bcc28e7571119db081`. Os cinco gates relevantes desse HEAD terminaram SUCCESS, incluindo compatibilidade OpenNotebook + llama.cpp, Windows, Confinement, Integration Stress e Auditoria.
+- **PR #31 / `work-core-audit-20261007`** auditou ingestão, preservação byte-a-byte, SHA-256, persistência, atomicidade, crash/recovery, idempotência, concorrência e permissões em `implementacao/ativa-2026-09-28/cerebro/`. HEAD de referência: `628359cb4dfc363734894e0724eba25fb164acd8`. Auditoria Ubuntu/Windows e CodeQL passaram.
+- Os dois ramos estão **divergentes**. O runtime executável atual entra por `nexus.app -> nexus.host -> nexus.store`; por isso os PASS da #31 não são automaticamente PASS do produto Nexus atual.
+- Convergência definida no issue #33: usar a linha #32 como base, transformar garantias da #31 em testes contra `nexus/`, corrigir apenas FAIL real e repetir todos os gates no mesmo SHA.
+- Nenhum destes PASS substitui a aceitação física no PC para instalação/modelos/GPU.
+- Ollama não é dependência obrigatória do percurso ativo. O candidato Windows usa llama.cpp por endpoints OpenAI-compatible locais.
+- A genealogia deve ser preservada. Documentação histórica abaixo permanece como evidência datada e não como descrição do HEAD atual.
+
 ## Atualização documental e capacidades — 06-10-2026
 
 - Constituição e arquitetura ativa reconciliadas com Kernel/Host/Store + MCP;
