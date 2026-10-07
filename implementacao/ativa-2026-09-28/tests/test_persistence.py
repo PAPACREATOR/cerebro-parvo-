@@ -196,3 +196,39 @@ def test_real_process_crash_after_temp_fsync_resumes_safely(tmp_path):
     assert w.resume("op-hard").state == "COMMITTED"
     assert (parent/"a.md").read_bytes() == b"payload"
     assert w.reconcile("op-hard") == "COMMITTED"
+
+
+def test_windows_acl_write_denial_does_not_commit(tmp_path):
+    import os
+    if os.name != "nt":
+        pytest.skip("Windows ACL gate")
+    parent=tmp_path/"vault"/"creative"
+    parent.mkdir(parents=True,exist_ok=True)
+    who=subprocess.run(
+        ["whoami"],
+        capture_output=True,
+        text=True,
+        timeout=10,
+        check=True,
+    ).stdout.strip()
+    deny=subprocess.run(
+        ["icacls",str(parent),"/deny",f"{who}:(W)"],
+        capture_output=True,
+        text=True,
+        timeout=15,
+    )
+    assert deny.returncode == 0, deny.stdout + deny.stderr
+    try:
+        w=W(tmp_path)
+        with pytest.raises(OSError):
+            w.write("op-denied-win","CREATIVE","denied.md","payload")
+        assert w.reconcile("op-denied-win") == "NOT_COMMITTED"
+        assert not (parent/"denied.md").exists()
+    finally:
+        cleanup=subprocess.run(
+            ["icacls",str(parent),"/remove:d",who],
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+        assert cleanup.returncode == 0, cleanup.stdout + cleanup.stderr
