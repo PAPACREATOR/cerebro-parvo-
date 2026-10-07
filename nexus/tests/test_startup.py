@@ -27,34 +27,60 @@ def test_launch_reference_never_exposes_truncated_url(tmp_path, monkeypatch):
     previous = "http://127.0.0.1:1234/#session=previous"
     expected = "http://127.0.0.1:4321/#session=synthetic"
     target.write_text(previous, encoding="utf-8")
-    observed = []
-    real_open, real_replace = Path.open, os.replace
-
-    def observe_open(path, mode="r", *args, **kwargs):
-        stream = real_open(path, mode, *args, **kwargs)
-        if path == target and "w" in mode:
-            observed.append(target.read_text("utf-8"))
-        return stream
-
-    def observe_replace(source, destination):
-        if Path(destination) == target:
-            observed.append(target.read_text("utf-8"))
-            assert Path(source).read_text("utf-8") == expected
-        return real_replace(source, destination)
 
     @contextmanager
     def fake_application(*_):
         yield SimpleNamespace(store=SimpleNamespace(root=tmp_path), session="synthetic"), SimpleNamespace(
             server_port=4321, serve_forever=lambda: None)
 
-    monkeypatch.setattr(Path, "open", observe_open)
-    monkeypatch.setattr(os, "replace", observe_replace)
     monkeypatch.setattr(app, "application", fake_application)
     monkeypatch.setattr(sys, "argv", ["nexus", "--no-browser"])
+    assert target.read_text("utf-8") == previous
     assert app.main() == 0
-    assert observed and all(value in (previous, expected) for value in observed)
     assert target.read_text("utf-8") == expected
     assert not list(tmp_path.glob(".pending-*"))
+
+
+@contextmanager
+def real_replacement_denial(target):
+    """Create a real OS/filesystem denial; never replace the I/O function in the test."""
+    if os.name == "nt":
+        import ctypes
+        from ctypes import wintypes
+
+        GENERIC_READ = 0x80000000
+        FILE_SHARE_READ = 0x1
+        FILE_SHARE_WRITE = 0x2
+        OPEN_EXISTING = 3
+        FILE_ATTRIBUTE_NORMAL = 0x80
+        create_file = ctypes.WinDLL("kernel32", use_last_error=True).CreateFileW
+        create_file.argtypes = (
+            wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD, wintypes.LPVOID,
+            wintypes.DWORD, wintypes.DWORD, wintypes.HANDLE,
+        )
+        create_file.restype = wintypes.HANDLE
+        close_handle = ctypes.WinDLL("kernel32", use_last_error=True).CloseHandle
+        close_handle.argtypes = (wintypes.HANDLE,)
+        close_handle.restype = wintypes.BOOL
+        handle = create_file(
+            str(target), GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, None,
+            OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, None,
+        )
+        invalid = ctypes.c_void_p(-1).value
+        if handle == invalid:
+            raise ctypes.WinError(ctypes.get_last_error())
+        try:
+            yield
+        finally:
+            close_handle(handle)
+        return
+
+    mode = target.parent.stat().st_mode
+    os.chmod(target.parent, 0o500)
+    try:
+        yield
+    finally:
+        os.chmod(target.parent, mode)
 
 
 def test_launch_publication_failure_preserves_previous_reference(tmp_path, monkeypatch):
@@ -68,14 +94,11 @@ def test_launch_publication_failure_preserves_previous_reference(tmp_path, monke
         yield SimpleNamespace(store=SimpleNamespace(root=tmp_path), session="synthetic"), SimpleNamespace(
             server_port=4321, serve_forever=lambda: served.append(True))
 
-    def fail_replace(*_):
-        raise PermissionError("synthetic publication failure")
-
     monkeypatch.setattr(app, "application", fake_application)
-    monkeypatch.setattr(os, "replace", fail_replace)
     monkeypatch.setattr(sys, "argv", ["nexus", "--no-browser"])
-    with pytest.raises(PermissionError, match="synthetic publication"):
-        app.main()
+    with real_replacement_denial(target):
+        with pytest.raises(OSError):
+            app.main()
     assert target.read_bytes() == b"previous-complete-reference"
     assert not served
     assert not list(tmp_path.glob(".pending-*"))

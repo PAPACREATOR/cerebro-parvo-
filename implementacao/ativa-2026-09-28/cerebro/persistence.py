@@ -102,7 +102,7 @@ class RecoverableMarkdownWriter:
             with os.fdopen(fd,"wb") as f:
                 f.write(content.encode("utf-8")); f.flush(); os.fsync(f.fileno())
             if self._hash_file(tmp)!=receipt.expected_hash: raise RecoveryRequired("temporary file hash mismatch")
-            os.replace(tmp,target); self._fsync_dir(target.parent)
+            self._durable_replace(tmp,target)
             if failpoint=="after_replace": raise RuntimeError("SIMULATED_CRASH_AFTER_REPLACE")
             return self._mark_committed(operation_id,target,receipt.expected_hash)
         finally:
@@ -143,7 +143,30 @@ class RecoverableMarkdownWriter:
 
     @staticmethod
     def _fsync_dir(path):
-        if os.name=="nt": return
-        fd=os.open(path,os.O_RDONLY)
+        path=Path(path)
+        flags=os.O_RDONLY | getattr(os,"O_DIRECTORY",0)
+        fd=os.open(os.fspath(path),flags)
         try: os.fsync(fd)
         finally: os.close(fd)
+
+    @staticmethod
+    def _windows_replace_write_through(source,target):
+        import ctypes
+        from ctypes import wintypes
+        MOVEFILE_REPLACE_EXISTING=0x1
+        MOVEFILE_WRITE_THROUGH=0x8
+        move_file_ex=ctypes.WinDLL("kernel32",use_last_error=True).MoveFileExW
+        move_file_ex.argtypes=(wintypes.LPCWSTR,wintypes.LPCWSTR,wintypes.DWORD)
+        move_file_ex.restype=wintypes.BOOL
+        if not move_file_ex(
+                os.fspath(source),os.fspath(target),
+                MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH):
+            raise ctypes.WinError(ctypes.get_last_error())
+
+    def _durable_replace(self,source,target):
+        source=Path(source); target=Path(target)
+        if os.name=="nt":
+            self._windows_replace_write_through(source,target)
+        else:
+            os.replace(source,target)
+            self._fsync_dir(target.parent)

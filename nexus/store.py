@@ -33,6 +33,43 @@ def digest(data):
     return hashlib.sha256(data).hexdigest()
 
 
+def _fsync_directory(directory):
+    """Flush a POSIX directory entry after an atomic rename."""
+    directory = Path(directory)
+    flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0)
+    fd = os.open(os.fspath(directory), flags)
+    try:
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+
+
+def _windows_replace_write_through(source, target):
+    """Replace on Windows and request write-through durability from the OS."""
+    import ctypes
+    from ctypes import wintypes
+
+    MOVEFILE_REPLACE_EXISTING = 0x1
+    MOVEFILE_WRITE_THROUGH = 0x8
+    move_file_ex = ctypes.WinDLL("kernel32", use_last_error=True).MoveFileExW
+    move_file_ex.argtypes = (wintypes.LPCWSTR, wintypes.LPCWSTR, wintypes.DWORD)
+    move_file_ex.restype = wintypes.BOOL
+    if not move_file_ex(
+            os.fspath(source), os.fspath(target),
+            MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH):
+        raise ctypes.WinError(ctypes.get_last_error())
+
+
+def _durable_replace(source, target):
+    source = Path(source)
+    target = Path(target)
+    if os.name == "nt":
+        _windows_replace_write_through(source, target)
+    else:
+        os.replace(source, target)
+        _fsync_directory(target.parent)
+
+
 def atomic(path, data):
     path = Path(path)
     raw = data if isinstance(data, bytes) else json.dumps(data, ensure_ascii=False, indent=2).encode("utf-8")
@@ -42,7 +79,7 @@ def atomic(path, data):
             stream.write(raw)
             stream.flush()
             os.fsync(stream.fileno())
-        os.replace(name, path)
+        _durable_replace(name, path)
     finally:
         if os.path.exists(name):
             os.unlink(name)
