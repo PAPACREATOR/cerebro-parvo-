@@ -58,7 +58,36 @@ class Store:
             if target.is_symlink() or target.is_junction():
                 raise Blocked("Diretório de dados redirecionado.")
             target.mkdir(parents=True, exist_ok=True)
-        for item in (self.root / "runs").glob("*/state.json"):
+        runs_root = self.root / "runs"
+        for directory in runs_root.iterdir():
+            if not directory.is_dir() or not re.fullmatch(r"[0-9a-f]{32}", directory.name):
+                continue
+            if directory.is_symlink() or directory.is_junction():
+                raise Blocked("Pedido interrompido redirecionado.")
+            state_path = directory / "state.json"
+            if state_path.is_symlink() or state_path.is_junction():
+                raise Blocked("Estado autoritativo redirecionado.")
+            if state_path.exists():
+                continue
+            input_path = directory / "input.bin"
+            input_sha256 = None
+            if not input_path.is_symlink() and not input_path.is_junction() and input_path.is_file():
+                input_sha256 = digest(input_path.read_bytes())
+            created_at = datetime.fromtimestamp(directory.stat().st_mtime, timezone.utc).isoformat()
+            recovered = {
+                "run_id": directory.name,
+                "status": "BLOCKED",
+                "commit_status": "RECOVERY_REQUIRED",
+                "execution_phase": "PREPARED",
+                "created_at": created_at,
+                "updated_at": now(),
+                "title": "Pedido interrompido",
+                "message": "A receção foi interrompida antes do estado autoritativo. Conteúdo conservado para reconciliação.",
+            }
+            if input_sha256 is not None:
+                recovered["input_sha256"] = input_sha256
+            atomic(state_path, recovered)
+        for item in runs_root.glob("*/state.json"):
             if item.is_symlink() or item.is_junction():
                 raise Blocked("Estado autoritativo redirecionado.")
             state = strict_json(item.read_bytes())
