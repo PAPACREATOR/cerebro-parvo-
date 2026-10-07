@@ -55,3 +55,24 @@
 - Regressões: Nenhuma observada nos gates executados.
 - Decisão: ACEITE
 - Próxima ação: Testar concorrência real e symlink malicioso; alterar código apenas se o teste falhar pelo motivo esperado.
+
+
+## Ciclo 4
+### Problema
+Symlink malicioso e concorrência real ainda estavam marcados NÃO TESTADO.
+### Evidência
+Teste preliminar com filesystem real bloqueou um symlink de CREATIVE para fora do cofre. Oito processos reais escreveram simultaneamente a mesma operação e terminaram com uma única materialização válida.
+### Alteração
+Apenas testes; nenhuma alteração em core.py ou persistence.py.
+### Teste criado ou atualizado
+test_symlink_escape_is_blocked_without_writing_outside; test_same_operation_concurrent_processes_remain_idempotent.
+### Comando executado
+GitHub Actions “Auditoria e suites” no commit a78f2f05b6c464c1429fc705022b04983fff47e5.
+### Resultado real
+PASS. O workflow concluiu SUCCESS.
+### Revisão
+O diff deste ciclo altera só test_persistence.py e os ficheiros obrigatórios de estado. Não muda semântica do Kernel.
+### Decisão: ACEITE
+### Estado persistente atualizado: SIM
+### Próxima ação
+Testar permissões reais, proveniência imutável e a ordem PREPARED→COMMITTED; alterar código apenas perante FAIL real.
