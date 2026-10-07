@@ -221,3 +221,24 @@ O último diff é exclusivamente de teste. Ollama continua fora do percurso obri
 ### Estado persistente atualizado: SIM
 ### Próxima ação
 Executar a regressão final disparada por esta atualização documental. Se verde, não alterar mais o núcleo sem novo FAIL real.
+
+
+## Ciclo 12
+### Problema
+A regressão documental seguinte ao ciclo 11 voltou a reproduzir uma corrida rara no Windows: um dos oito processos concorrentes recebeu PermissionError ao abrir o ficheiro final para verificação de hash, depois da substituição concorrente.
+### Evidência
+GitHub Actions run 37620363035: Ubuntu PASS; Windows 34 PASS, 1 skipped e 1 FAIL em test_same_operation_concurrent_processes_remain_idempotent. A stack terminou em persistence.py::_hash_file, Path.open("rb"), PermissionError [Errno 13].
+### Alteração
+Apenas persistence.py: _hash_file repete PermissionError exclusivamente no Windows durante no máximo 0,5 s, em intervalos de 10 ms. Qualquer bloqueio persistente ou qualquer outro erro continua a propagar-se. core.py não foi alterado.
+### Teste criado ou atualizado
+Nenhum teste novo; reutilizado o teste concorrente real existente com oito subprocessos e toda a regressão Ubuntu/Windows.
+### Comando executado
+GitHub Actions “Auditoria e suites”, run 37657894986, head d7bcd4e3d17d3cd6da7939b12248317de06055c6.
+### Resultado real
+SUCCESS. Job “Integridade + suite histórica + persistência ativa” PASS e job “Persistência ativa — Windows” PASS.
+### Revisão
+Patch mínimo e localizado na leitura de hash. Não altera PREPARED/COMMITTED, replace, autoridade, proveniência, Creative/Canonical ou core.py. Erros persistentes não são escondidos.
+### Decisão: ACEITE
+### Estado persistente atualizado: SIM
+### Próxima ação
+Confirmar CodeQL do head funcional. Se verde, congelar o Kernel até novo FAIL real.
