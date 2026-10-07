@@ -1,13 +1,13 @@
 # Estado de Trabalho
-- Fase: FASE 3/4 — persistência e reinício; Windows durable replace validado
-- Ciclo: 7
-- Objetivo atual: Provar crash após fsync do temporário e recuperação sem resíduos.
-- Bloqueio atual: Ainda não existe crashpoint entre fsync do ficheiro temporário e a substituição final; esse ponto não foi exercitado.
-- Última alteração: persistence.py passou a serializar prepare com BEGIN IMMEDIATE antes da decisão de INSERT e a usar MoveFileExW(REPLACE_EXISTING|WRITE_THROUGH) no Windows; POSIX mantém os.replace + fsync do diretório pai.
-- Último teste executado: GitHub Actions “Auditoria e suites” no head f716b8560f4e2f2d360f4bbd06e9c613aece355c, incluindo job Persistência ativa — Windows.
-- Resultado: PASS em Ubuntu e Windows. Antes da correção, Windows reproduziu 2 FAIL: sqlite3.IntegrityError sob 8 processos e ausência de durable replace Windows.
-- Ficheiros alterados: implementacao/ativa-2026-09-28/cerebro/persistence.py; implementacao/ativa-2026-09-28/tests/test_persistence.py; .github/workflows/auditoria.yml; auditoria/WORK_STATE.md; auditoria/TEST_MATRIX.md; auditoria/CHANGELOG-AUDIT.md
-- Próxima ação: Adicionar crashpoint after_temp_fsync e teste de processo real; verificar que resume termina COMMITTED e não deixa .partial órfão.
-- Critérios pendentes: crash após fsync temporário; limpeza/recovery de temporários órfãos; permissões Windows físicas; auditoria final.
-- Limitações: Ollama é proibido como dependência obrigatória. Windows usa MoveFileExW WRITE_THROUGH como equivalente documentado de persistência da renomeação; não é usado FlushFileBuffers em handle de diretório não documentado.
-- Última atualização: 2026-10-07T12:48:00+01:00
+- Fase: FASE 4 — REINÍCIO validada nos três pontos de crash exercitados; FASE 6 continua
+- Ciclo: 8
+- Objetivo atual: Fechar colisão lógica de hash e permissões Windows reais; depois auditoria final.
+- Bloqueio atual: Permissões restritas só têm prova POSIX na implementação ativa. Falta também prova explícita de digest igual com bytes diferentes.
+- Última alteração: Corrigidas apenas fronteiras Windows de persistência: normalização do prefixo \\?\ e corrida de replace idêntico; adicionado crashpoint após fsync do temporário.
+- Último teste executado: GitHub Actions “Auditoria e suites” no head c8c0840de83a7034cff2aa011a88dafdb2b582ae.
+- Resultado: PASS em Ubuntu e Windows. Crash after_temp_fsync sobrevive com PREPARED/NOT_COMMITTED e resume para COMMITTED. Concorrência de 8 processos também passa nos dois sistemas.
+- Ficheiros alterados: implementacao/ativa-2026-09-28/cerebro/persistence.py; implementacao/ativa-2026-09-28/tests/test_persistence.py; auditoria/WORK_STATE.md; auditoria/TEST_MATRIX.md; auditoria/CHANGELOG-AUDIT.md
+- Próxima ação: Testar digest igual com bytes diferentes; depois permissão Windows real sem mocks; por fim auditar cláusulas genéricas except e regressão completa.
+- Critérios pendentes: colisão lógica de hash; permissões Windows; política de exceções genéricas; auditoria final. Housekeeping de .partial órfão após morte permanece limitação não destrutiva.
+- Limitações: Ollama é proibido como dependência obrigatória. Um .partial fsynced pode permanecer após morte dura antes do replace; não é apagado automaticamente para não criar corrida destrutiva com writers ativos.
+- Última atualização: 2026-10-07T12:55:00+01:00
