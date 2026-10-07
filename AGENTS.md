@@ -10,7 +10,7 @@
 - Preservar `historico/`, relatórios e genealogia. Limpeza documental não autoriza apagar evidência.
 - Ollama não é requisito do percurso ativo; `llama.cpp` é a fronteira local candidata.
 
-Ler primeiro [STATUS](STATUS.md) e o [ponto de situação operacional](nexus/docs/PONTO-DE-SITUACAO.md), depois `CEREBRO_CONSTITUTION.md`, `CEREBRO_ARCHITECTURE.md`, `DECISIONS.md` e o contrato da tarefa.
+Ler primeiro o [ponto de situação operacional](nexus/docs/PONTO-DE-SITUACAO.md), depois `CEREBRO_CONSTITUTION.md`, `CEREBRO_ARCHITECTURE.md`, `DECISIONS.md` e o contrato da tarefa.
 
 ## Regras de autoridade
 
