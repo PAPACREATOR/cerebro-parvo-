@@ -139,3 +139,24 @@ Alteração limitada a um ficheiro de código, um ficheiro de testes e workflow 
 ### Estado persistente atualizado: SIM
 ### Próxima ação
 Provar interrupção real após fsync do temporário e antes do replace, incluindo recuperação sem ficheiros .partial órfãos.
+
+
+## Ciclo 8
+### Problema
+Faltava prova de crash real entre fsync do temporário e a substituição final; o primeiro teste também revelou diferenças Windows de path canonicalization e de replace concorrente.
+### Evidência
+Primeiro FAIL: hard_crashpoint after_temp_fsync inexistente. Segundo FAIL: após suportar o ponto de morte, resume chegava a COMMITTED mas o .partial do processo morto permanecia. O teste foi corrigido para não exigir limpeza potencialmente destrutiva. No Windows, a mesma suite revelou prefixo \\?\ no Path.resolve e WinError 5 em replace concorrente de bytes idênticos.
+### Alteração
+Adicionado hard_crashpoint after_temp_fsync. No Windows, _resolve_target normaliza apenas o prefixo de caminho estendido antes da verificação commonpath. Uma falha PermissionError no replace concorrente só é tolerada quando o alvo já existe e o seu hash é exatamente o esperado; bytes divergentes continuam a propagar erro.
+### Teste criado ou atualizado
+test_real_process_crash_after_temp_fsync_resumes_safely; regressão de test_same_operation_concurrent_processes_remain_idempotent nos dois SO.
+### Comando executado
+GitHub Actions “Auditoria e suites” nos commits d395f30f..., 273f8e35..., 306fc24a... e c8c0840d..., com jobs Ubuntu e Windows.
+### Resultado real
+As fases intermédias falharam pelos motivos registados. No head c8c0840de83a7034cff2aa011a88dafdb2b582ae: Ubuntu PASS e Windows PASS.
+### Revisão
+Nenhuma alteração em core.py. As mudanças ficam confinadas a persistence.py e testes. Não há eliminação automática de .partial órfão porque isso exigiria coordenação/locking adicional e poderia apagar trabalho ainda ativo.
+### Decisão: ACEITE
+### Estado persistente atualizado: SIM
+### Próxima ação
+Testar digest igual com bytes diferentes, depois permissões Windows reais e auditoria da proibição de except Exception engolido.
