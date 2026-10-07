@@ -11,19 +11,19 @@
 | T007 | Path traversal ../ bloqueado | test_escape_rejected | PASSA | PASS | ../ e x/../../ |
 | T008 | Hash da entrada correto | test_ingest_preserves_bytes_exactly / test_ingest_large_file_preserves_hash_and_bytes | PASSA | PASS | SHA-256 recalculado no teste |
 | T009 | Estado PREPARED antes da materialização final | test_real_process_crash_after_prepared_is_recoverable | PASSA | PASS | exit 97; reconcile NOT_COMMITTED |
-| T010 | fsync do temporário | A criar | NÃO TESTADO | — | Código chama os.fsync; falta prova específica |
-| T011 | Substituição atómica | test_after_replace_crash_leaves_prepared_until_reconcile | PASSA | PASS | Após morte pós-replace, ficheiro final contém bytes completos |
-| T012 | fsync do diretório pai | Gate Windows por criar | NÃO TESTADO | — | Implementação atual retorna em Windows |
+| T010 | fsync do temporário | Crashpoint por criar | NÃO TESTADO | — | Próximo ciclo |
+| T011 | Substituição atómica/durável | test_after_replace_crash_leaves_prepared_until_reconcile + test_windows_replace_is_write_through_and_persists_target | PASSA | PASS Ubuntu + Windows | POSIX os.replace; Windows MoveFileExW WRITE_THROUGH |
+| T012 | Persistência do diretório/rename | suite Windows + POSIX | PASSA | PASS | POSIX fsync(dir); Windows durable MoveFileExW equivalente documentado |
 | T013 | Ficheiro final verificado | test_write_creative / reconcile | PASSA | PASS | Hash final verificado |
 | T014 | COMMITTED só após persistência | test_after_replace_crash_leaves_prepared_until_reconcile | PASSA | PASS | BD permanece PREPARED após replace; reconcile só depois marca COMMITTED |
-| T015 | Evento de sucesso só após COMMITTED | test_core_to_persistence_commits_before_success_event | PASSA | PASS no CI | Evento COMMITTED só após receipt COMMITTED |
-| T016 | Crash antes do commit recupera | test_real_process_crash_after_prepared_is_recoverable | PASSA | PASS | Processo real, sem mock I/O |
-| T017 | Crash após replace reconcilia | test_real_process_crash_after_replace_reconciles | PASSA | PASS | Processo real, sem mock I/O |
+| T015 | Evento de sucesso só após COMMITTED | test_core_to_persistence_commits_before_success_event | PASSA | PASS | Evento construído após receipt COMMITTED |
+| T016 | Crash antes do commit recupera | test_real_process_crash_after_prepared_is_recoverable | PASSA | PASS | Processo real |
+| T017 | Crash após replace reconcilia | test_real_process_crash_after_replace_reconciles | PASSA | PASS | Processo real |
 | T018 | Replay é idempotente | test_idempotent | PASSA | PASS | Mesmo operation_id/conteúdo |
-| T019 | Proveniência não altera conteúdo | test_provenance_does_not_modify_candidate_content | PASSA | PASS no CI | Candidate e conteúdo permanecem iguais |
-| T020 | Original nunca é apagado | test_ingest_preserves_bytes_exactly | PASSA | PASS | Originais permanecem byte-a-byte nos casos exercitados |
-| T021 | Symlink malicioso bloqueado | test_symlink_escape_is_blocked_without_writing_outside | PASSA | PASS no CI | Sem escrita no destino externo |
-| T022 | Adulteração de hash não inventa sucesso | test_committed_tamper_requires_recovery | PASSA | PASS no CI | Tamper → RECOVERY_REQUIRED |
-| T023 | Concorrência mantém integridade | test_same_operation_concurrent_processes_remain_idempotent | PASSA | PASS no CI | 8 subprocessos, mesma operação e payload |
-| T024 | Permissões restritas tratadas explicitamente | test_real_permission_denial_does_not_commit | BLOQUEADO | PASS POSIX; Windows não provado | OSError real, sem mock |
-| T025 | core.py + persistência E2E | test_core_to_persistence_commits_before_success_event | PASSA | FAIL esperado antes; PASS após integration.py | core.py e persistence.py não foram alterados |
+| T019 | Proveniência não altera conteúdo | test_provenance_does_not_modify_candidate_content | PASSA | PASS | Candidate intacto |
+| T020 | Original nunca é apagado | test_ingest_preserves_bytes_exactly | PASSA | PASS | Originais intactos |
+| T021 | Symlink malicioso bloqueado | test_symlink_escape_is_blocked_without_writing_outside | PASSA | PASS | Sem escrita externa |
+| T022 | Adulteração de hash não inventa sucesso | test_committed_tamper_requires_recovery | PASSA | PASS | Tamper → RECOVERY_REQUIRED |
+| T023 | Concorrência mantém integridade | test_same_operation_concurrent_processes_remain_idempotent | PASSA | PASS Ubuntu + Windows | Race SQLite reproduzida no Windows e corrigida |
+| T024 | Permissões restritas tratadas explicitamente | test_real_permission_denial_does_not_commit | BLOQUEADO | PASS POSIX; Windows físico pendente | Sem mock |
+| T025 | core.py + persistência E2E | test_core_to_persistence_commits_before_success_event | PASSA | PASS | Camada mínima integration.py |
