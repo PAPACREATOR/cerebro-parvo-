@@ -76,3 +76,24 @@ O diff deste ciclo altera só test_persistence.py e os ficheiros obrigatórios d
 ### Estado persistente atualizado: SIM
 ### Próxima ação
 Testar permissões reais, proveniência imutável e a ordem PREPARED→COMMITTED; alterar código apenas perante FAIL real.
+
+
+## Ciclo 5
+### Problema
+Ordem PREPARED→COMMITTED, adulteração pós-commit, permissões reais e imutabilidade da proveniência ainda não tinham prova direta.
+### Evidência
+Foram adicionados testes que matam o processo após o replace e inspecionam SQLite diretamente, adulteram o ficheiro já COMMITTED, removem permissão de escrita no filesystem POSIX e comparam o candidato antes/depois de criar proveniência.
+### Alteração
+Apenas testes; core.py e persistence.py não foram alterados.
+### Teste criado ou atualizado
+test_after_replace_crash_leaves_prepared_until_reconcile; test_committed_tamper_requires_recovery; test_real_permission_denial_does_not_commit; test_provenance_does_not_modify_candidate_content.
+### Comando executado
+GitHub Actions “Auditoria e suites” no commit 8f76d4113a414f9e9ae2c3f5bc4edf761552285d.
+### Resultado real
+PASS. Workflow completo SUCCESS.
+### Revisão
+Os testes confirmam que o estado continua PREPARED após a substituição física até reconcile/commit, adulteração força RECOVERY_REQUIRED e proveniência não modifica o candidato. A prova de permissões é POSIX; Windows continua pendente.
+### Decisão: ACEITE
+### Estado persistente atualizado: SIM
+### Próxima ação
+Criar e executar o teste E2E core + persistência; confirmar FAIL do stub materialize e implementar apenas uma camada mínima de integração fora do Kernel existente.
