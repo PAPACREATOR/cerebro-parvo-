@@ -1,13 +1,13 @@
 # Estado de Trabalho
-- Fase: FASE 0 — DIAGNÓSTICO
-- Ciclo: 0
-- Objetivo atual: Recuperar estado persistente real e mapear o núcleo antes de qualquer alteração funcional.
-- Bloqueio atual: Estado persistente obrigatório não existia no repositório.
-- Última alteração: Criação dos ficheiros obrigatórios de auditoria/estado numa branch isolada.
-- Último teste executado: NÃO EXECUTADO
-- Resultado: NÃO TESTADO
-- Ficheiros alterados: auditoria/WORK_STATE.md; auditoria/TEST_MATRIX.md; auditoria/CHANGELOG-AUDIT.md
-- Próxima ação: Mapear ficheiros de código/testes do núcleo, comparar documentação com implementação e executar a suíte existente relacionada.
-- Critérios pendentes: ingestão; preservação byte-a-byte; hash; PREPARED/COMMITTED; fsync ficheiro; replace atómico; fsync diretório; verificação final; recovery/reconcile; proveniência; idempotência; path traversal; symlink; colisão; concorrência; permissões; integração E2E; crash real.
-- Limitações: Ainda sem execução local/CI desta branch; nenhum comportamento funcional validado neste ciclo.
-- Última atualização: 2026-10-07T12:11:00+01:00
+- Fase: FASE 4 — REINÍCIO (em validação), com regressão de FASE 3
+- Ciclo: 2
+- Objetivo atual: Provar crash real/reconcile da persistência e desbloquear a regressão CI do repositório.
+- Bloqueio atual: Workflow de auditoria estava bloqueado por verificador documental desatualizado; correção mínima publicada e novo CI em execução.
+- Última alteração: README voltou a declarar M1–M14 para satisfazer o contrato explícito de ferramentas/verificar_documentacao.py; antes disso foram adicionados hard crashpoints e testes subprocess reais.
+- Último teste executado: python -m pytest -q --color=no tests/test_persistence.py
+- Resultado: 13 PASS no ambiente isolado; inclui 2 testes de término real do processo (exit 97 após PREPARED; exit 98 após replace) e recovery/reconcile. CI da cabeça 7be6d92b83c50858311af3f2935e9607df3682f1 ainda em execução no momento deste registo.
+- Ficheiros alterados: implementacao/ativa-2026-09-28/cerebro/persistence.py; implementacao/ativa-2026-09-28/tests/test_persistence.py; README.md; auditoria/WORK_STATE.md; auditoria/TEST_MATRIX.md; auditoria/CHANGELOG-AUDIT.md
+- Próxima ação: Confirmar CI; depois testar receção/preservação byte-a-byte, incluindo normal, vazio, Unicode, binário, grande, inexistente e traversal, antes de alterar core.py.
+- Critérios pendentes: cobertura formal de fsync do temporário; fsync do diretório pai; ordem COMMITTED/evento; ingestão byte-a-byte; proveniência integrada; symlink; colisão; concorrência; permissões; integração core.py + persistência E2E.
+- Limitações: Clone de rede indisponível no ambiente local; execução local foi feita com cópia exata dos ficheiros ativos obtidos do GitHub. Windows fsync de diretório continua não provado porque _fsync_dir retorna em os.name=="nt".
+- Última atualização: 2026-10-07T12:19:00+01:00
