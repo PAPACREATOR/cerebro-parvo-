@@ -1,5 +1,11 @@
 # Decisões vigentes e genealogia
 
+## 07-10-2026 — convergência #31/#32
+
+A auditoria identificou duas frentes válidas mas divergentes. A PR #32 é a linha de produto Nexus/Windows mais completa. A PR #31 auditou profundamente ingestão/persistência/atomicidade em `implementacao/ativa-2026-09-28/cerebro/`, que não é o entrypoint do runtime atual `nexus.app -> nexus.host -> nexus.store`.
+
+Decisão: não copiar o núcleo antigo por atacado. Cada garantia útil da #31 deve primeiro tornar-se teste contra o runtime ativo; só um FAIL reproduzível autoriza correção mínima em `nexus/`. A convergência só existe num SHA único com os gates conjuntos verdes. Histórico e relatórios FAIL→correção→PASS permanecem preservados.
+
 ## 06-10-2026 — reconciliação documental e Writer editorial
 
 A documentação ativa foi alinhada com o runtime candidato realmente testado: Kernel/Host/Store Python + MCP determinístico + ferramentas externas. Activepieces, Memory Provider, Spiff e Conductor permanecem preservados como genealogia em decisões, histórico e relatórios, mas deixam de aparecer como dependências vigentes.
