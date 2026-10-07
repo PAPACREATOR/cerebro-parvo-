@@ -92,7 +92,7 @@ class RecoverableMarkdownWriter:
         return MaterializationReceipt(operation_id,domain,relative_path,expected,"PREPARED")
 
     def write(self,operation_id,domain,relative_path,content,failpoint:Optional[str]=None,hard_crashpoint:Optional[str]=None):
-        if hard_crashpoint not in (None,"after_prepared","after_replace"):
+        if hard_crashpoint not in (None,"after_prepared","after_temp_fsync","after_replace"):
             raise PersistenceError("invalid hard crashpoint")
         receipt=self.prepare(operation_id,domain,relative_path,content)
         if hard_crashpoint=="after_prepared": os._exit(97)
@@ -107,6 +107,7 @@ class RecoverableMarkdownWriter:
         try:
             with os.fdopen(fd,"wb") as f:
                 f.write(content.encode("utf-8")); f.flush(); os.fsync(f.fileno())
+            if hard_crashpoint=="after_temp_fsync": os._exit(99)
             if self._hash_file(tmp)!=receipt.expected_hash: raise RecoveryRequired("temporary file hash mismatch")
             self._replace_and_sync(tmp,target)
             if hard_crashpoint=="after_replace": os._exit(98)
