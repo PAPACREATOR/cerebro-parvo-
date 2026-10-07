@@ -23,7 +23,7 @@
 | T019 | Proveniência não altera conteúdo | test_provenance_does_not_modify_candidate_content | PASSA | PASS | Candidate intacto |
 | T020 | Original nunca é apagado | test_ingest_preserves_bytes_exactly | PASSA | PASS | Originais intactos |
 | T021 | Symlink malicioso bloqueado | test_symlink_escape_is_blocked_without_writing_outside | PASSA | PASS | Sem escrita externa |
-| T022 | Colisão/adulteração de hash não inventa sucesso | test_committed_tamper_requires_recovery + teste de digest colidente por criar | A FALHAR | Tamper PASS; colisão ainda sem prova | Próximo ciclo |
+| T022 | Colisão/adulteração de hash não inventa sucesso | test_committed_tamper_requires_recovery + test_equal_digest_never_overrides_byte_comparison | PASSA | PASS Ubuntu + Windows | Digest igual nunca substitui comparação byte-a-byte; adulteração exige recovery |
 | T023 | Concorrência mantém integridade | test_same_operation_concurrent_processes_remain_idempotent | PASSA | PASS Ubuntu + Windows | 8 subprocessos |
-| T024 | Permissões restritas tratadas explicitamente | test_real_permission_denial_does_not_commit | BLOQUEADO | PASS POSIX; Windows físico pendente | Sem mock |
+| T024 | Permissões restritas tratadas explicitamente | test_real_permission_denial_does_not_commit + test_windows_acl_write_denial_does_not_commit | PASSA | PASS Ubuntu + Windows | chmod POSIX e ACL icacls Windows reais; sem mock |
 | T025 | core.py + persistência E2E | test_core_to_persistence_commits_before_success_event | PASSA | PASS | Camada mínima integration.py |
