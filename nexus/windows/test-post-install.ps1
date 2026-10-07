@@ -65,6 +65,19 @@ function Invoke-Checked {
     }
 }
 
+function Wait-Http {
+    param([string]$Uri,[int]$Seconds = 120)
+    $deadline = (Get-Date).AddSeconds($Seconds)
+    while ((Get-Date) -lt $deadline) {
+        try {
+            $response = Invoke-WebRequest -Uri $Uri -UseBasicParsing -TimeoutSec 3
+            if ($response.StatusCode -ge 200 -and $response.StatusCode -lt 500) { return }
+        } catch {}
+        Start-Sleep -Milliseconds 500
+    }
+    throw ('NEXUS_HTTP_TIMEOUT: ' + $Uri)
+}
+
 function Run-Pytest {
     param([string]$Name, [string[]]$Targets, [hashtable]$Environment = @{})
     $python = Join-Path $RepoRoot '.venv\Scripts\python.exe'
@@ -125,6 +138,9 @@ try {
     }
     Stage-Pass 'launcher-and-runtime' ([ordered]@{launcher=$launcher})
 
+    # Structural matrix first: 300,000 deterministic bidirectional compatibility cases.
+    Run-Pytest 'windows-stack-structural-300000' @('nexus/tests/test_windows_stack_structural_300k.py')
+
     # Installed executable/runtime smoke checks use exact installer paths.
     $versions = [ordered]@{}
     $versions.git = Invoke-Checked $install.tools.git.path @('--version')
@@ -135,9 +151,68 @@ try {
     $versions.ffmpeg = (Invoke-Checked $install.tools.ffmpeg.path @('-version')).Split([Environment]::NewLine)[0]
     if (-not (Test-Path -LiteralPath $install.tools.zotero.path)) { throw 'NEXUS_ZOTERO_MISSING' }
     $versions.zotero = (Get-Item -LiteralPath $install.tools.zotero.path).VersionInfo.FileVersion
-    $ollamaList = Invoke-Checked $install.tools.ollama.path @('list')
-    if ($ollamaList -notmatch 'qwen3:4b' -or $ollamaList -notmatch 'nomic-embed-text') { throw 'NEXUS_OLLAMA_MODELS_MISSING' }
-    $versions.ollama = 'qwen3:4b + nomic-embed-text'
+    $zoteroOxt = [string]$install.tools.zotero.libreoffice_oxt
+    if (-not $zoteroOxt -or -not (Test-Path -LiteralPath $zoteroOxt)) { throw 'NEXUS_ZOTERO_LIBREOFFICE_EXTENSION_MISSING' }
+    $zoteroExtensions = Invoke-Checked $install.tools.unopkg.path @('list')
+    if ($zoteroExtensions -notmatch '(?i)zotero') { throw 'NEXUS_ZOTERO_LIBREOFFICE_EXTENSION_NOT_REGISTERED' }
+    $versions.zotero_libreoffice = 'OXT_REGISTERED_JAVA_LIBREOFFICE_VERIFIED'
+
+    $llamaServer = [string]$install.tools.llamacpp.path
+    $versions.llamacpp = Invoke-Checked $llamaServer @('--version')
+    $languageModel = [string]$install.models.llamacpp.language.path
+    $embeddingModel = [string]$install.models.llamacpp.embedding.path
+    $languageAlias = [string]$install.models.llamacpp.language.alias
+    $embeddingAlias = [string]$install.models.llamacpp.embedding.alias
+    $languagePort = [int]$install.tools.llamacpp.language_port
+    $embeddingPort = [int]$install.tools.llamacpp.embedding_port
+    foreach ($modelPath in @($languageModel,$embeddingModel)) {
+        if (-not (Test-Path -LiteralPath $modelPath)) { throw ('NEXUS_LLAMACPP_MODEL_MISSING: ' + $modelPath) }
+    }
+
+    $llamaLangOut = Join-Path $ToolsRoot 'logs\post-llamacpp-language.stdout.txt'
+    $llamaLangErr = Join-Path $ToolsRoot 'logs\post-llamacpp-language.stderr.txt'
+    $llamaEmbOut = Join-Path $ToolsRoot 'logs\post-llamacpp-embedding.stdout.txt'
+    $llamaEmbErr = Join-Path $ToolsRoot 'logs\post-llamacpp-embedding.stderr.txt'
+    $llamaLangProcess = $null
+    $llamaEmbProcess = $null
+    try {
+        $llamaLangProcess = Start-Process -FilePath $llamaServer -ArgumentList @(
+            '-m',('"' + $languageModel + '"'),'--host','127.0.0.1','--port',[string]$languagePort,
+            '--alias',$languageAlias,'-c','8192','-ngl','99'
+        ) -RedirectStandardOutput $llamaLangOut -RedirectStandardError $llamaLangErr -PassThru -WindowStyle Hidden
+        Wait-Http ('http://127.0.0.1:' + $languagePort + '/health') 180
+
+        $llamaEmbProcess = Start-Process -FilePath $llamaServer -ArgumentList @(
+            '-m',('"' + $embeddingModel + '"'),'--host','127.0.0.1','--port',[string]$embeddingPort,
+            '--alias',$embeddingAlias,'--embedding','--pooling','last','--embd-normalize','2',
+            '-c','8192','-ngl','99','-np','1','--no-cont-batching'
+        ) -RedirectStandardOutput $llamaEmbOut -RedirectStandardError $llamaEmbErr -PassThru -WindowStyle Hidden
+        Wait-Http ('http://127.0.0.1:' + $embeddingPort + '/health') 180
+
+        $languageBody = @{
+            model=$languageAlias
+            messages=@(@{role='user'; content='Reply briefly with the word Nexus.'})
+            max_tokens=32
+            temperature=0
+        } | ConvertTo-Json -Depth 5
+        $languageResult = Invoke-RestMethod -Method Post -Uri ('http://127.0.0.1:' + $languagePort + '/v1/chat/completions') -ContentType 'application/json' -Body $languageBody -TimeoutSec 120
+        if (-not $languageResult.choices -or $languageResult.choices.Count -lt 1) { throw 'NEXUS_LLAMACPP_LANGUAGE_PROBE_FAILED' }
+        Stage-Pass 'llamacpp-language-real' ([ordered]@{model=$languageAlias; port=$languagePort; choices=$languageResult.choices.Count})
+
+        $embeddingBody = @{model=$embeddingAlias; input='nexus post install bidirectional embedding probe'} | ConvertTo-Json
+        $embeddingResult = Invoke-RestMethod -Method Post -Uri ('http://127.0.0.1:' + $embeddingPort + '/v1/embeddings') -ContentType 'application/json' -Body $embeddingBody -TimeoutSec 120
+        $dimensions = $embeddingResult.data[0].embedding.Count
+        if (-not $embeddingResult.data -or $dimensions -lt 32) { throw 'NEXUS_LLAMACPP_EMBEDDING_PROBE_FAILED' }
+        Stage-Pass 'llamacpp-embedding-real' ([ordered]@{model=$embeddingAlias; port=$embeddingPort; dimensions=$dimensions})
+    }
+    finally {
+        foreach ($process in @($llamaEmbProcess,$llamaLangProcess)) {
+            if ($process -and -not $process.HasExited) {
+                Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+                $process.WaitForExit()
+            }
+        }
+    }
     Stage-Pass 'installed-runtimes' $versions
 
     # GPU/runtime proof without claiming a real render.
@@ -155,7 +230,7 @@ try {
     $mptHelp = Invoke-Checked $uv @('run','--frozen','python','cli.py','--help') $mptRoot
     Stage-Pass 'moneyprinterturbo-cli' (($mptHelp -split [Environment]::NewLine | Select-Object -First 5) -join [Environment]::NewLine)
 
-    # Standard Nexus blocks first.
+    # Normal Nexus suites after the 300,000-case structural gate.
     foreach ($suite in @('core','blocks','practical')) {
         $dir = Join-Path $ToolsRoot ('post-install-' + $suite)
         if (Test-Path -LiteralPath $dir) { Remove-Item -LiteralPath $dir -Recurse -Force }
