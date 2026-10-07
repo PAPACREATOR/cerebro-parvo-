@@ -167,3 +167,12 @@ def test_real_permission_denial_does_not_commit(tmp_path):
         parent.chmod(0o700)
     assert w.reconcile("op-denied") == "NOT_COMMITTED"
     assert not (parent/"denied.md").exists()
+
+
+def test_windows_directory_flush_is_executed(tmp_path):
+    import os
+    if os.name != "nt":
+        pytest.skip("Windows-only directory flush gate")
+    directory=tmp_path/"flush-me"
+    directory.mkdir()
+    assert RecoverableMarkdownWriter._fsync_dir(directory) is True
