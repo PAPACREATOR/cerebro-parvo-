@@ -383,7 +383,6 @@ try {
     if (-not (Test-Path -LiteralPath $zoteroOxt)) { throw 'NEXUS_ZOTERO_LIBREOFFICE_EXTENSION_MISSING' }
     Invoke-Checked $java @('-version')
     Invoke-Checked $soffice @('--version')
-    Invoke-Checked $unopkg @('--version')
     $extensionList = (& $unopkg list 2>&1 | Out-String)
     if ($extensionList -notmatch '(?i)zotero') {
         Invoke-Checked $unopkg @('add','--force',$zoteroOxt)
