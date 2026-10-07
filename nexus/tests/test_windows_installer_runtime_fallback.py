@@ -29,3 +29,10 @@ def test_nonzero_winget_exit_is_accepted_only_after_runtime_probe():
 def test_prerequisite_report_keeps_observed_package_state():
     assert "$packageState = Ensure-WingetPackage $id" in INSTALL
     assert "$report.prerequisites[$id] = $packageState" in INSTALL
+
+
+def test_winget_success_is_not_enough_without_real_executable():
+    assert "NEXUS_WINGET_RUNTIME_MISSING_AFTER_INSTALL" in INSTALL
+    assert "WINGET_INSTALLED_RUNTIME_VERIFIED" in INSTALL
+    assert "winget lists " in INSTALL
+    assert "its executable runtime is unavailable" in INSTALL
