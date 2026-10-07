@@ -27,7 +27,16 @@ class RecoverableMarkdownWriter:
         con=sqlite3.connect(self.db_path,timeout=30)
         con.row_factory=sqlite3.Row
         con.execute("PRAGMA busy_timeout=30000")
-        con.execute("PRAGMA journal_mode=WAL")
+        deadline=time.monotonic()+30
+        while True:
+            try:
+                con.execute("PRAGMA journal_mode=WAL")
+                break
+            except sqlite3.OperationalError as error:
+                if "locked" not in str(error).lower() or time.monotonic() >= deadline:
+                    con.close()
+                    raise
+                time.sleep(0.01)
         con.execute("PRAGMA synchronous=FULL")
         return con
 
