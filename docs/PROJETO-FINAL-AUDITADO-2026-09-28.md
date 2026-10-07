@@ -294,4 +294,4 @@ Esta arquitetura só reabre por:
 
 A disponibilidade de uma ferramenta nova não obriga redesenho: normalmente apenas muda o provider de uma capacidade.
 
-[Constituição](../CEREBRO_CONSTITUTION.md) · [Arquitetura](../CEREBRO_ARCHITECTURE.md) · [Compatibilidade](../COMPATIBILITY-MATRIX.md) · [Plano](../IMPLEMENTATION_PLAN.md) · [Estado](../STATUS.md)
+[Constituição](../CEREBRO_CONSTITUTION.md) · [Arquitetura](../CEREBRO_ARCHITECTURE.md) · [Compatibilidade](../COMPATIBILITY-MATRIX.md) · [Decisões atuais](../DECISIONS.md) · [Estado atual](../nexus/docs/PONTO-DE-SITUACAO.md)
