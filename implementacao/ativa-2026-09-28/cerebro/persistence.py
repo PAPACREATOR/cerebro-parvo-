@@ -57,10 +57,17 @@ class RecoverableMarkdownWriter:
 
     @staticmethod
     def _hash_file(path:Path)->str:
-        h=hashlib.sha256()
-        with path.open("rb") as f:
-            for chunk in iter(lambda:f.read(1024*1024),b""): h.update(chunk)
-        return h.hexdigest()
+        deadline=time.monotonic()+0.5 if os.name=="nt" else None
+        while True:
+            try:
+                h=hashlib.sha256()
+                with path.open("rb") as f:
+                    for chunk in iter(lambda:f.read(1024*1024),b""): h.update(chunk)
+                return h.hexdigest()
+            except PermissionError:
+                if deadline is None or time.monotonic() >= deadline:
+                    raise
+                time.sleep(0.01)
 
     def _resolve_target(self,domain,relative_path):
         if domain not in self.DOMAINS: raise PersistenceError("invalid domain")
