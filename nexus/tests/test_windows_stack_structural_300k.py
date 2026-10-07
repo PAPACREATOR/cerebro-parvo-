@@ -200,8 +200,8 @@ def test_50000_cross_file_bindings_are_bidirectional():
         ("nexus-qwen3-embedding-0.6b", INSTALL, OPEN_CONFIG),
         ("18081", INSTALL, MPT_CONFIG),
         ("nexus-qwen3-1.7b", OPEN_CONFIG, MPT_CONFIG),
-        ("llamacpp-language-real", POST, POST),
-        ("Zotero_OpenOffice_Integration.oxt", INSTALL, POST),
+        ("18082", INSTALL, OPEN_CONFIG),
+        ("libreoffice_oxt", INSTALL, POST),
     )
     checked = 0
     for i in range(CASES):
