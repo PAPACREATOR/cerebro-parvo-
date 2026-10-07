@@ -71,5 +71,11 @@ jobs:
           assert embedding is not None
           print("OPEN_NOTEBOOK_LLAMACPP_COMPAT=PASS")
           '@
-          $probe | & $python -
-          if ($LASTEXITCODE -ne 0) { throw 'OPEN_NOTEBOOK_OPENAI_COMPAT_SMOKE_FAILED' }
+          Push-Location $target
+          try {
+            $probe | & $python -
+            if ($LASTEXITCODE -ne 0) { throw 'OPEN_NOTEBOOK_OPENAI_COMPAT_SMOKE_FAILED' }
+          }
+          finally {
+            Pop-Location
+          }
