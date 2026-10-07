@@ -1,13 +1,13 @@
 # Estado de Trabalho
-- Fase: FASE 0 — DIAGNÓSTICO
-- Ciclo: 0
-- Objetivo atual: Recuperar estado real, localizar o núcleo de ingestão/persistência e estabelecer testes observáveis antes de alterar código.
-- Bloqueio atual: Nenhum teste deste novo contrato de atomicidade foi executado neste ciclo; estado anterior não conta automaticamente como PASS.
-- Última alteração: Criação do estado persistente exigido pelo contrato de trabalho de 07-10-2026.
-- Último teste executado: NÃO EXECUTADO neste ciclo.
-- Resultado: NÃO TESTADO.
+- Fase: FASE 0 — DIAGNÓSTICO / reconciliação de evidência
+- Ciclo: 1
+- Objetivo atual: Fechar as lacunas reais de persistência durável antes de avançar: primeiro o RecoverableMarkdownWriter, depois crash/restart real e ingestão byte-a-byte.
+- Bloqueio atual: O writer ativo ainda usa os.replace diretamente e _fsync_dir() é no-op no Windows; os testes de crash do writer usam failpoints sintéticos. core.py continua com materialize() por definir.
+- Última alteração: No PR #30, nexus/store.py passou a usar substituição durável (fsync do temporário + replace + fsync do diretório em POSIX; MoveFileExW com WRITE_THROUGH no Windows) e test_startup.py deixou de simular falha de I/O por patch do filesystem.
+- Último teste executado: GitHub Actions no HEAD d51858cef2d395dd8bc97729eb0f6998b8475177 — Auditoria e suites run 37607954581; Nexus Windows Confinement Gate run 37607954542.
+- Resultado: PASS parcial. Auditoria: documentação 47 ficheiros/84 ligações; teste documental 5 PASS; atomicidade Linux 3 PASS/1 SKIP Windows; suite histórica 34 PASS; writer ativo 11 PASS. Confinement Windows: SUCCESS em windows-2022 e windows-latest, incluindo concorrência/autoridade e E2E confinados. Isto não prova ainda o contrato final deste trabalho.
 - Ficheiros alterados: auditoria/WORK_STATE.md; auditoria/TEST_MATRIX.md; auditoria/CHANGELOG-AUDIT.md.
-- Próxima ação: Executar diagnóstico do código real de ingestão/persistência e identificar o primeiro comportamento crítico não provado.
-- Critérios pendentes: ingestão; preservação byte-a-byte; hash; PREPARED/COMMITTED; fsync de ficheiro; replace atómico; fsync do diretório; verificação final; recovery/reconcile; proveniência; idempotência; path traversal; symlinks; concorrência; permissões; integração E2E; regressão completa.
-- Limitações: O GitHub permite validar código e CI; falhas físicas específicas do PC pessoal só podem ser consideradas PASS quando houver evidência executada nesse ambiente.
-- Última atualização: 2026-10-07 11:16 Europe/Lisbon
+- Próxima ação: Criar teste FAIL, com filesystem real, que exija uma fronteira de substituição durável no RecoverableMarkdownWriter; observar o FAIL em CI antes da correção.
+- Critérios pendentes: ingestão normal/vazio/Unicode/binário/grande/inexistente; preservação byte-a-byte; hash ponta a ponta; PREPARED/COMMITTED no fluxo integrado; writer durável em Windows; crash real por processo antes/depois do replace; replay idempotente real; proveniência integrada; symlink; path traversal revalidado no HEAD; concorrência do writer; permissões restritas; core.py + persistência E2E; regressão completa.
+- Limitações: Os jobs Nexus Windows e parte do Integration Stress do HEAD ainda estavam em execução nesta reconciliação. PASS de stress genérico não substitui prova específica de crash, atomicidade ou ingestão.
+- Última atualização: 2026-10-07 11:37 Europe/Lisbon
