@@ -1,13 +1,13 @@
 # Estado de Trabalho
 - Fase: FASE 0 — DIAGNÓSTICO / reconciliação de evidência
-- Ciclo: 1
-- Objetivo atual: Fechar as lacunas reais de persistência durável antes de avançar: primeiro o RecoverableMarkdownWriter, depois crash/restart real e ingestão byte-a-byte.
-- Bloqueio atual: O writer ativo ainda usa os.replace diretamente e _fsync_dir() é no-op no Windows; os testes de crash do writer usam failpoints sintéticos. core.py continua com materialize() por definir.
-- Última alteração: No PR #30, nexus/store.py passou a usar substituição durável (fsync do temporário + replace + fsync do diretório em POSIX; MoveFileExW com WRITE_THROUGH no Windows) e test_startup.py deixou de simular falha de I/O por patch do filesystem.
-- Último teste executado: GitHub Actions no HEAD d51858cef2d395dd8bc97729eb0f6998b8475177 — Auditoria e suites run 37607954581; Nexus Windows Confinement Gate run 37607954542.
-- Resultado: PASS parcial. Auditoria: documentação 47 ficheiros/84 ligações; teste documental 5 PASS; atomicidade Linux 3 PASS/1 SKIP Windows; suite histórica 34 PASS; writer ativo 11 PASS. Confinement Windows: SUCCESS em windows-2022 e windows-latest, incluindo concorrência/autoridade e E2E confinados. Isto não prova ainda o contrato final deste trabalho.
-- Ficheiros alterados: auditoria/WORK_STATE.md; auditoria/TEST_MATRIX.md; auditoria/CHANGELOG-AUDIT.md.
-- Próxima ação: Criar teste FAIL, com filesystem real, que exija uma fronteira de substituição durável no RecoverableMarkdownWriter; observar o FAIL em CI antes da correção.
+- Ciclo: 2
+- Objetivo atual: Fechar a regressão Windows que bloqueia o gate após a correção de durabilidade do RecoverableMarkdownWriter.
+- Bloqueio atual: nexus/tests/test_final_bats.py exige aliases Qwen literais dentro de test-post-install.ps1, mas o script atual lê os aliases do relatório verificado do instalador llama.cpp; a regressão termina 1 FAIL.
+- Última alteração: RecoverableMarkdownWriter passou a publicar por fronteira durável cross-platform; o workflow Windows passou a executar o writer a partir da raiz correta do pacote.
+- Último teste executado: Nexus Windows run 37609707266 no HEAD 22004e55dc4ac686571c5c972faf2e9a45b9beb1.
+- Resultado: REJEITADO como ciclo completo. Writer ativo: 13 PASS Linux e PASS no passo Windows real. Suites Windows core 140 PASS, blocks 1079 PASS, practical 79 PASS; regressão standard: 1494 PASS, 14 SKIP, 1 FAIL em test_final_bats.py por contrato textual obsoleto.
+- Ficheiros alterados: implementacao/ativa-2026-09-28/cerebro/persistence.py; implementacao/ativa-2026-09-28/tests/test_persistence.py; .github/workflows/nexus-windows.yml; ficheiros de estado.
+- Próxima ação: Corrigir apenas o teste obsoleto de pós-instalação para validar que os aliases são lidos de install.models.llamacpp.* e que os probes llama.cpp reais permanecem obrigatórios; executar teste específico e regressão completa.
 - Critérios pendentes: ingestão normal/vazio/Unicode/binário/grande/inexistente; preservação byte-a-byte; hash ponta a ponta; PREPARED/COMMITTED no fluxo integrado; writer durável em Windows; crash real por processo antes/depois do replace; replay idempotente real; proveniência integrada; symlink; path traversal revalidado no HEAD; concorrência do writer; permissões restritas; core.py + persistência E2E; regressão completa.
 - Limitações: Os jobs Nexus Windows e parte do Integration Stress do HEAD ainda estavam em execução nesta reconciliação. PASS de stress genérico não substitui prova específica de crash, atomicidade ou ingestão.
-- Última atualização: 2026-10-07 11:37 Europe/Lisbon
+- Última atualização: 2026-10-07 12:02 Europe/Lisbon

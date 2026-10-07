@@ -39,3 +39,31 @@ Não foi atribuído PASS a crash/restart, ingestão, writer Windows ou E2E apena
 ### Estado persistente atualizado: SIM
 ### Próxima ação
 Criar e executar um teste FAIL de filesystem real para a fronteira durável do `RecoverableMarkdownWriter`; só depois corrigir o writer e reexecutar unidade + regressão Linux/Windows.
+
+## Ciclo 2
+### Problema
+O `RecoverableMarkdownWriter` publicava o ficheiro final com `os.replace` e tratava `_fsync_dir` como no-op no Windows, portanto não havia fronteira de publicação durável equivalente à já implementada em `nexus.store.atomic`.
+
+### Evidência
+Commit de teste `b50e2355bb86130b455d50eda90336ed87955c01`: Auditoria run `37609412794` falhou exatamente no writer com `2 failed, 11 passed`. As falhas foram ausência de `_durable_replace` e publicação direta por `os.replace`. Não houve mock de filesystem.
+
+### Alteração
+Em `persistence.py`, foi criada `_durable_replace`: POSIX usa `os.replace` seguido de `fsync` do diretório; Windows usa `MoveFileExW` com `MOVEFILE_WRITE_THROUGH`. O workflow Windows passou a executar a suite do writer a partir da raiz do pacote; o primeiro comando tinha `pythonpath` relativo incorreto e foi corrigido sem alterar runtime.
+
+### Teste criado ou atualizado
+Dois testes em `test_persistence.py`: um exige que `write()` use a fronteira durável; outro executa a substituição em filesystem real e verifica bytes finais e remoção da origem temporária.
+
+### Comando executado
+Linux: workflow Auditoria e suites, run `37609531406`, passo `Testar writer recuperavel ativo`. Windows: workflow Nexus Windows, run `37609707266`, passo `Writer recuperavel - persistencia real`, seguido das suites core/blocks/practical e regressão standard.
+
+### Resultado real
+Linux writer: `13 passed`. Windows writer: SUCCESS. Windows core: `140 passed`; blocks: `1079 passed`; practical: `79 passed`. Regressão standard: `1494 passed, 14 skipped, 1 failed`. A única falha foi `test_post_install_acceptance_runs_exact_stress_and_security_gates`, porque procura os literais `nexus-qwen3-1.7b` e `nexus-qwen3-embedding-0.6b` em `test-post-install.ps1`, enquanto o script lê os aliases de `$install.models.llamacpp.*.alias`.
+
+### Revisão
+O diff funcional do ciclo limita-se ao writer e ao gate Windows. A correção de durabilidade passou nos dois sistemas operativos. A regressão não ficou verde por uma contradição pré-existente entre o teste final e o contrato atual de instalação llama.cpp; não foi escondida nem ignorada.
+
+### Decisão: REJEITADO
+### Estado persistente atualizado: SIM
+### Próxima ação
+Corrigir o contrato de teste obsoleto de `test_final_bats.py` para validar a origem verificada dos aliases e os probes llama.cpp reais, depois repetir teste específico e regressão completa.
+
