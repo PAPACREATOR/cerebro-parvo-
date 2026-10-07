@@ -378,8 +378,16 @@ try {
     Invoke-Checked $java @('-version')
     Invoke-Checked $soffice @('--version')
     Invoke-Checked $unopkg @('--version')
+    $extensionList = (& $unopkg list 2>&1 | Out-String)
+    if ($extensionList -notmatch '(?i)zotero') {
+        Invoke-Checked $unopkg @('add','--force',$zoteroOxt)
+        $extensionList = (& $unopkg list 2>&1 | Out-String)
+    }
+    if ($extensionList -notmatch '(?i)zotero') {
+        throw 'NEXUS_ZOTERO_LIBREOFFICE_EXTENSION_NOT_REGISTERED'
+    }
     $report.tools.zotero['libreoffice_oxt'] = $zoteroOxt
-    $report.tools.zotero['integration_status'] = 'OXT_PRESENT_JAVA_LIBREOFFICE_VERIFIED'
+    $report.tools.zotero['integration_status'] = 'OXT_REGISTERED_JAVA_LIBREOFFICE_VERIFIED'
     Save-Report
 
     # Stable standalone LanguageTool 6.6, fixed checksum from the project release announcement.
