@@ -79,3 +79,46 @@ def test_real_process_crash_after_replace_reconciles(tmp_path):
     assert r.returncode == 98
     w=W(tmp_path)
     assert w.reconcile('op-hard') == 'COMMITTED'
+
+
+def test_symlink_escape_is_blocked_without_writing_outside(tmp_path):
+    outside=tmp_path/"outside"
+    outside.mkdir()
+    link=tmp_path/"vault"/"creative"/"link"
+    link.parent.mkdir(parents=True,exist_ok=True)
+    try:
+        link.symlink_to(outside,target_is_directory=True)
+    except OSError as error:
+        pytest.skip(f"symlink unavailable in this environment: {error}")
+    w=W(tmp_path)
+    with pytest.raises(PersistenceError,match="path escapes domain root"):
+        w.write("op-symlink","CREATIVE","link/escape.md","payload")
+    assert list(outside.iterdir()) == []
+
+
+def test_same_operation_concurrent_processes_remain_idempotent(tmp_path):
+    worker = """
+from pathlib import Path
+import sys
+from cerebro.persistence import RecoverableMarkdownWriter
+root=Path(sys.argv[1])
+w=RecoverableMarkdownWriter(root/'state'/'cerebro.sqlite3',root/'vault')
+receipt=w.write('op-concurrent','CREATIVE','same.md','payload')
+assert receipt.state == 'COMMITTED'
+"""
+    processes=[
+        subprocess.Popen(
+            [sys.executable,"-c",worker,str(tmp_path)],
+            cwd=str(Path(__file__).parents[1]),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+        for _ in range(8)
+    ]
+    results=[process.communicate(timeout=30) + (process.returncode,) for process in processes]
+    failures=[result for result in results if result[2] != 0]
+    assert failures == []
+    w=W(tmp_path)
+    assert w.reconcile("op-concurrent") == "COMMITTED"
+    assert (tmp_path/"vault"/"creative"/"same.md").read_text() == "payload"
