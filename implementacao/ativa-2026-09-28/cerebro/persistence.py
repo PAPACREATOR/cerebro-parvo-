@@ -2,7 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
-import hashlib, os, sqlite3, tempfile, time
+import hashlib, os, sqlite3, tempfile, time, uuid
 
 class PersistenceError(RuntimeError): pass
 class RecoveryRequired(PersistenceError): pass
@@ -129,8 +129,15 @@ class RecoverableMarkdownWriter:
             return self._verify_committed(row)
         target=self._resolve_target(domain,relative_path)
         target.parent.mkdir(parents=True,exist_ok=True)
-        fd,tmp_name=tempfile.mkstemp(prefix=f".{operation_id}.",suffix=".partial",dir=target.parent)
-        tmp=Path(tmp_name)
+        if os.name=="nt":
+            safe_operation=hashlib.sha256(operation_id.encode("utf-8")).hexdigest()[:16]
+            tmp=target.parent/f".{safe_operation}.{uuid.uuid4().hex}.partial"
+            flags=os.O_RDWR|os.O_CREAT|os.O_EXCL|getattr(os,"O_BINARY",0)
+            fd=os.open(tmp,flags,0o600)
+            tmp_name=str(tmp)
+        else:
+            fd,tmp_name=tempfile.mkstemp(prefix=f".{operation_id}.",suffix=".partial",dir=target.parent)
+            tmp=Path(tmp_name)
         try:
             with os.fdopen(fd,"wb") as f:
                 f.write(content.encode("utf-8")); f.flush(); os.fsync(f.fileno())
