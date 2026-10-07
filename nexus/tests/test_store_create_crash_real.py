@@ -82,7 +82,7 @@ root = Path(sys.argv[1])
 def die_before_replace(source, target):
     os._exit(92)
 
-store_module.os.replace = die_before_replace
+store_module._replace_durable = die_before_replace
 request = {
     "process": "verify",
     "text": "bytes preservados após crash",
@@ -120,13 +120,13 @@ from pathlib import Path
 import nexus.store as store_module
 
 root = Path(sys.argv[1])
-real_replace = store_module.os.replace
+real_replace = store_module._replace_durable
 
 def die_after_replace(source, target):
     real_replace(source, target)
     os._exit(93)
 
-store_module.os.replace = die_after_replace
+store_module._replace_durable = die_after_replace
 request = {
     "process": "verify",
     "text": "bytes preservados após crash",
