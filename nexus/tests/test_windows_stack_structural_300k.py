@@ -150,6 +150,8 @@ def test_static_stack_contract_is_coherent_before_volume():
     for practical_token in (
         "forge-cuda",
         "ace-step-runtime",
+        "ace-step-cuda",
+        "speaches-kokoro-real",
         "moneyprinterturbo-cli",
         "writer-libreoffice-real",
         "bidirectional-50000-real-mcp",
@@ -238,6 +240,8 @@ def test_50000_full_component_bindings_are_bidirectional():
         ("libreoffice_oxt", INSTALL, POST),
         ("forge-cuda", POST, POST),
         ("ace-step-runtime", POST, POST),
+        ("ace-step-cuda", POST, POST),
+        ("speaches-kokoro-real", POST, POST),
         ("moneyprinterturbo-cli", POST, POST),
         ("bidirectional-50000-real-mcp", POST, POST),
     )
