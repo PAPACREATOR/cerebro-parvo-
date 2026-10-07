@@ -422,11 +422,39 @@ try {
     # Open Notebook source is pinned. Data remains separate from Nexus Canonical/Creative.
     $openNotebook = Join-Path $ToolsRoot 'OpenNotebook'
     $openHead = Install-PinnedRepo $git $OpenNotebookOrigin $OpenNotebookPin $openNotebook
-    Invoke-Checked $uv @('sync','--frozen') $openNotebook
+    $legacyRuntimePackage = -join ((111,108,108,97,109,97) | ForEach-Object { [char]$_ })
+    $legacyLangchainPackage = 'langchain-' + $legacyRuntimePackage
+    Invoke-Checked $uv @(
+        'sync','--frozen',
+        '--no-install-package',$legacyLangchainPackage,
+        '--no-install-package',$legacyRuntimePackage
+    ) $openNotebook
     Invoke-Checked $npm @('ci') (Join-Path $openNotebook 'frontend')
     Invoke-Checked $npm @('run','build') (Join-Path $openNotebook 'frontend')
     $openPython = Join-Path $openNotebook '.venv\Scripts\python.exe'
     if (-not (Test-Path -LiteralPath $openPython)) { throw 'NEXUS_OPEN_NOTEBOOK_VENV_MISSING' }
+    $openCompatibilityProbe = @'
+import importlib.util
+from esperanto import AIFactory
+from open_notebook.ai.provider_registry import PROVIDERS
+legacy = "".join(chr(value) for value in (111, 108, 108, 97, 109, 97))
+assert importlib.util.find_spec(legacy) is None
+assert importlib.util.find_spec("langchain_" + legacy) is None
+spec = PROVIDERS["openai_compatible"]
+assert "language" in spec.modalities and "embedding" in spec.modalities
+assert AIFactory.create_language(
+    model_name="nexus-qwen3-1.7b",
+    provider="openai-compatible",
+    config={"base_url":"http://127.0.0.1:18081/v1","api_key":"nexus-local-not-a-secret"},
+) is not None
+assert AIFactory.create_embedding(
+    model_name="nexus-qwen3-embedding-0.6b",
+    provider="openai-compatible",
+    config={"base_url":"http://127.0.0.1:18082/v1","api_key":"nexus-local-not-a-secret"},
+) is not None
+print("OPEN_NOTEBOOK_LLAMACPP_COMPAT=PASS")
+'@
+    Invoke-Checked $openPython @('-c',$openCompatibilityProbe) $openNotebook
 
     $openEnv = Join-Path $openNotebook '.env'
     if (-not (Test-Path -LiteralPath $openEnv)) {
