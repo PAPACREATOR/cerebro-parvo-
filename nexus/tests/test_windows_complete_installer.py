@@ -55,14 +55,16 @@ def test_installer_uses_current_zotero_and_expected_windows_dependencies():
     for package in (
         "Git.Git", "Python.Python.3.12", "OpenJS.NodeJS.LTS",
         "Microsoft.OpenJDK.17", "TheDocumentFoundation.LibreOffice",
-        "DigitalScholar.Zotero", "Gyan.FFmpeg", "astral-sh.uv", "Ollama.Ollama",
+        "DigitalScholar.Zotero", "Gyan.FFmpeg", "astral-sh.uv", "ggml.llamacpp",
     ):
         assert package in MASTER
 
 
 def test_installer_prepares_local_models_needed_for_later_physical_acceptance():
     for value in (
-        "qwen3:4b", "nomic-embed-text",
+        "Qwen3-1.7B-Q8_0.gguf", "Qwen3-Embedding-0.6B-Q8_0.gguf",
+        "061b54daade076b5d3362dac252678d17da8c68f07560be70818cace6590cb1a",
+        "06507c7b42688469c4e7298b0a1e16deff06caf291cf0a5b278c308249c3e439",
         "speaches-ai/Kokoro-82M-v1.0-ONNX",
         "acestep-v15-turbo", "wav2lip.pth", "s3fd.pth",
     ):
@@ -126,7 +128,7 @@ def test_open_notebook_configuration_uses_public_api_and_local_models():
     for value in (
         "/api/credentials", "/api/models", "/api/models/defaults",
         "/api/settings", "/api/transformations", "/api/speaker-profiles", "/api/episode-profiles",
-        "qwen3:4b", "nomic-embed-text", "speaches-ai/Kokoro-82M-v1.0-ONNX",
+        "nexus-qwen3-1.7b", "nexus-qwen3-embedding-0.6b", "speaches-ai/Kokoro-82M-v1.0-ONNX",
         "Nexus Local Test Speaker", "Nexus Local Test Episode", "nexus_strict_cognitive_v1",
     ):
         assert value in OPEN_CONFIG
@@ -146,6 +148,7 @@ def test_complete_installer_starts_only_loopback_configuration_services():
     for value in (
         "'127.0.0.1:8000'", "'127.0.0.1','--port','8969'",
         "'127.0.0.1','--port','5055'",
+        "$LlamaLanguagePort = 18081", "$LlamaEmbeddingPort = 18082",
     ):
         assert value in MASTER
     assert "open-notebook-local-config.json" in MASTER
@@ -169,7 +172,9 @@ def test_moneyprinter_is_pinned_and_documentary_path_has_no_tts_dependency():
     assert "https://github.com/harry0703/MoneyPrinterTurbo.git" in MASTER
     assert "68eb5a68b93cfe338198b3dfb151f6d5ec2fe4e5" in MASTER
     assert "INSTALLED_CONFIGURED_CLI_TESTED" in MASTER
-    assert 'llm_provider = "ollama"' in MPT_CONFIG
+    assert 'llm_provider = "openai"' in MPT_CONFIG
+    assert 'openai_base_url = "http://127.0.0.1:18081/v1"' in MPT_CONFIG
+    assert 'openai_model_name = "nexus-qwen3-1.7b"' in MPT_CONFIG
     assert 'subtitle_provider = "whisper"' in MPT_CONFIG
     assert '"provider": "none"' in MPT_CONFIG
     assert "kokoro:" not in DOCUMENTARY.lower()
@@ -178,6 +183,18 @@ def test_moneyprinter_is_pinned_and_documentary_path_has_no_tts_dependency():
     assert '"--custom-audio-file"' in DOCUMENTARY
     assert '"--no-subtitle-enabled"' in DOCUMENTARY
 
+
+
+def test_complete_installer_has_no_ollama_dependency_and_zotero_writer_is_structural():
+    joined = MASTER + OPEN_CONFIG + MPT_CONFIG
+    for forbidden in ("Ollama.Ollama", "qwen3:4b", "nomic-embed-text", "127.0.0.1:11434"):
+        assert forbidden.lower() not in joined.lower()
+    assert "Zotero_OpenOffice_Integration.oxt" in MASTER
+    assert "OXT_REGISTERED_JAVA_LIBREOFFICE_VERIFIED" in MASTER
+    assert "unopkg" in MASTER.lower()
+    assert "ggml.llamacpp" in MASTER
+    assert "NEXUS_LLAMACPP_LANGUAGE_PROBE_FAILED" in MASTER
+    assert "NEXUS_LLAMACPP_EMBEDDING_PROBE_FAILED" in MASTER
 
 def test_documentary_output_is_candidate_only_and_never_promotes():
     assert '"canonical_write": False' in DOCUMENTARY
