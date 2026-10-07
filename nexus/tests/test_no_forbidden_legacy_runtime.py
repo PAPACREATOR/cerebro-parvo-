@@ -6,7 +6,7 @@ TEXT_SUFFIXES = {
     ".py", ".ps1", ".psm1", ".cmd", ".bat", ".md", ".txt", ".json",
     ".yml", ".yaml", ".toml", ".ini", ".cfg", ".xml", ".html", ".js", ".ts",
 }
-EXCLUDED_TOP_LEVEL = {"historico", ".git"}
+EXCLUDED_TOP_LEVEL = {".git"}
 FORBIDDEN = "".join(chr(value) for value in (111, 108, 108, 97, 109, 97))
 
 
