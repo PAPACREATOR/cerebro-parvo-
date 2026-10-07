@@ -34,9 +34,10 @@ def configure(root: Path, ffmpeg: Path, device: str) -> dict:
         raise SetupError("FFmpeg executable missing")
 
     text = example.read_text(encoding="utf-8")
-    text = replace_once(text, r'^llm_provider = "moonshot"$', 'llm_provider = "ollama"', "llm_provider")
-    text = replace_once(text, r'^ollama_base_url = ""$', 'ollama_base_url = "http://127.0.0.1:11434"', "ollama_base_url")
-    text = replace_once(text, r'^ollama_model_name = ""$', 'ollama_model_name = "qwen3:4b"', "ollama_model_name")
+    text = replace_once(text, r'^llm_provider = "moonshot"$', 'llm_provider = "openai"', "llm_provider")
+    text = replace_once(text, r'^openai_api_key = ""$', 'openai_api_key = "nexus-local-not-a-secret"', "openai_api_key")
+    text = replace_once(text, r'^openai_base_url = ""$', 'openai_base_url = "http://127.0.0.1:18081/v1"', "openai_base_url")
+    text = replace_once(text, r'^openai_model_name = ""$', 'openai_model_name = "nexus-qwen3-1.7b"', "openai_model_name")
     text = replace_once(text, r'^subtitle_provider = "edge"$', 'subtitle_provider = "whisper"', "subtitle_provider")
 
     ffmpeg_toml = ffmpeg.resolve().as_posix().replace('"', '\\"')
@@ -72,9 +73,10 @@ def configure(root: Path, ffmpeg: Path, device: str) -> dict:
         raise SetupError(f"Generated MoneyPrinterTurbo config is invalid TOML: {error}") from error
 
     expected = {
-        "llm_provider": "ollama",
-        "ollama_base_url": "http://127.0.0.1:11434",
-        "ollama_model_name": "qwen3:4b",
+        "llm_provider": "openai",
+        "openai_api_key": "nexus-local-not-a-secret",
+        "openai_base_url": "http://127.0.0.1:18081/v1",
+        "openai_model_name": "nexus-qwen3-1.7b",
         "subtitle_provider": "whisper",
         "ffmpeg_path": ffmpeg.resolve().as_posix(),
     }
@@ -85,7 +87,13 @@ def configure(root: Path, ffmpeg: Path, device: str) -> dict:
         "schema": "nexus.moneyprinterturbo-local-config.v1",
         "status": "PASS",
         "config": str(target),
-        "llm": {"provider": "ollama", "base_url": expected["ollama_base_url"], "model": "qwen3:4b"},
+        "llm": {
+            "provider": "openai",
+            "transport": "local-openai-compatible",
+            "runtime": "llama.cpp",
+            "base_url": expected["openai_base_url"],
+            "model": expected["openai_model_name"],
+        },
         "tts": {"provider": "none", "mode": "custom-audio-or-silent"},
         "subtitles": {"provider": "whisper", "model": "small", "device": device, "compute_type": compute},
         "ffmpeg": str(ffmpeg.resolve()),
