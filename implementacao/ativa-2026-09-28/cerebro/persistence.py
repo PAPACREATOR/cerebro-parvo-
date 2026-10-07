@@ -88,8 +88,11 @@ class RecoverableMarkdownWriter:
             VALUES (?,?,?,?,?,'PREPARED',?,NULL)""",(operation_id,domain,relative_path,content,expected,time.time()))
         return MaterializationReceipt(operation_id,domain,relative_path,expected,"PREPARED")
 
-    def write(self,operation_id,domain,relative_path,content,failpoint:Optional[str]=None):
+    def write(self,operation_id,domain,relative_path,content,failpoint:Optional[str]=None,hard_crashpoint:Optional[str]=None):
+        if hard_crashpoint not in (None,"after_prepared","after_replace"):
+            raise PersistenceError("invalid hard crashpoint")
         receipt=self.prepare(operation_id,domain,relative_path,content)
+        if hard_crashpoint=="after_prepared": os._exit(97)
         if failpoint=="after_prepared": raise RuntimeError("SIMULATED_CRASH_AFTER_PREPARED")
         row=self._row(operation_id)
         if row["state"]=="COMMITTED":
@@ -103,6 +106,7 @@ class RecoverableMarkdownWriter:
                 f.write(content.encode("utf-8")); f.flush(); os.fsync(f.fileno())
             if self._hash_file(tmp)!=receipt.expected_hash: raise RecoveryRequired("temporary file hash mismatch")
             os.replace(tmp,target); self._fsync_dir(target.parent)
+            if hard_crashpoint=="after_replace": os._exit(98)
             if failpoint=="after_replace": raise RuntimeError("SIMULATED_CRASH_AFTER_REPLACE")
             return self._mark_committed(operation_id,target,receipt.expected_hash)
         finally:
