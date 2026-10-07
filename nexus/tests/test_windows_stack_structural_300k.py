@@ -65,7 +65,6 @@ MODEL_PINS = (
 
 ACTIVE_SURFACES = (INSTALL, OPEN_CONFIG, MPT_CONFIG, POST)
 LEGACY_FORBIDDEN = (
-    "Ollama.Ollama",
     "qwen3:4b",
     "nomic-embed-text",
     "127.0.0.1:11434",
