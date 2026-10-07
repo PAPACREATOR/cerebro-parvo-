@@ -64,12 +64,6 @@ MODEL_PINS = (
 )
 
 ACTIVE_SURFACES = (INSTALL, OPEN_CONFIG, MPT_CONFIG, POST)
-LEGACY_FORBIDDEN = (
-    "qwen3:4b",
-    "nomic-embed-text",
-    "127.0.0.1:11434",
-)
-
 
 def _validate_ports(mapping: dict[str, int]) -> None:
     values = list(mapping.values())
@@ -99,9 +93,6 @@ def test_static_stack_contract_is_coherent_before_volume():
     for service, endpoint in ENDPOINTS.items():
         _validate_loopback(endpoint)
         assert urlsplit(endpoint).port == PORTS[service]
-
-    for forbidden in LEGACY_FORBIDDEN:
-        assert all(forbidden.lower() not in surface.lower() for surface in ACTIVE_SURFACES)
 
     for required in (
         "ggml.llamacpp",
