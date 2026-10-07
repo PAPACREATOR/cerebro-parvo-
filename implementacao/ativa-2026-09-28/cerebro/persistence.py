@@ -24,8 +24,9 @@ class RecoverableMarkdownWriter:
         self._init_db()
 
     def _connect(self):
-        con=sqlite3.connect(self.db_path)
+        con=sqlite3.connect(self.db_path,timeout=30)
         con.row_factory=sqlite3.Row
+        con.execute("PRAGMA busy_timeout=30000")
         con.execute("PRAGMA journal_mode=WAL")
         con.execute("PRAGMA synchronous=FULL")
         return con
