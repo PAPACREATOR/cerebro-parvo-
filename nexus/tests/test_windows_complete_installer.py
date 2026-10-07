@@ -124,6 +124,14 @@ def test_deforum_is_installed_inside_forge_but_not_claimed_functional_without_re
     assert "NEXUS_DEFORUM_INSTALL_NOT_VERIFIED" in MASTER
 
 
+def test_open_notebook_install_excludes_unused_legacy_runtime_packages():
+    assert "'--no-install-package'" in MASTER
+    assert "OPEN_NOTEBOOK_LLAMACPP_COMPAT=PASS" in MASTER
+    assert "openai-compatible" in MASTER
+    assert "127.0.0.1:18081/v1" in MASTER
+    assert "127.0.0.1:18082/v1" in MASTER
+
+
 def test_open_notebook_configuration_uses_public_api_and_local_models():
     for value in (
         "/api/credentials", "/api/models", "/api/models/defaults",
