@@ -53,3 +53,29 @@ def test_canonical_same_writer_separate_domain(tmp_path):
 def test_escape_rejected(tmp_path,path):
     w=W(tmp_path)
     with pytest.raises(PersistenceError): w.write("op","CREATIVE",path,"x")
+
+import subprocess, sys
+from pathlib import Path
+
+def _run_hard_crash(tmp_path, point):
+    script = f"""
+from pathlib import Path
+from cerebro.persistence import RecoverableMarkdownWriter
+root=Path({str(tmp_path)!r})
+w=RecoverableMarkdownWriter(root/'state'/'cerebro.sqlite3', root/'vault')
+w.write('op-hard','CREATIVE','a.md','payload',hard_crashpoint={point!r})
+"""
+    return subprocess.run([sys.executable, '-c', script], cwd=str(Path(__file__).parents[1]))
+
+def test_real_process_crash_after_prepared_is_recoverable(tmp_path):
+    r=_run_hard_crash(tmp_path, 'after_prepared')
+    assert r.returncode == 97
+    w=W(tmp_path)
+    assert w.reconcile('op-hard') == 'NOT_COMMITTED'
+    assert w.resume('op-hard').state == 'COMMITTED'
+
+def test_real_process_crash_after_replace_reconciles(tmp_path):
+    r=_run_hard_crash(tmp_path, 'after_replace')
+    assert r.returncode == 98
+    w=W(tmp_path)
+    assert w.reconcile('op-hard') == 'COMMITTED'
