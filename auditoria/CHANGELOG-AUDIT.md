@@ -160,3 +160,64 @@ Nenhuma alteração em core.py. As mudanças ficam confinadas a persistence.py e
 ### Estado persistente atualizado: SIM
 ### Próxima ação
 Testar digest igual com bytes diferentes, depois permissões Windows reais e auditoria da proibição de except Exception engolido.
+
+
+## Ciclo 9
+### Problema
+Restavam sem prova explícita a colisão lógica de digest, a política de exceções e a eliminação de originais; o gate Windows de ACL também revelou bloqueio do teste.
+### Evidência
+test_equal_digest_never_overrides_byte_comparison provou que um digest forçado igual não autoriza duplicação quando os bytes diferem. A auditoria AST confirmou que handlers genéricos existentes fazem re-raise e que não há bare except/silent pass. delete_authorized_original permaneceu fail-closed e o original ficou byte-a-byte intacto.
+### Alteração
+Foram acrescentados apenas testes de invariantes/auditoria. Em core.py a única correção foi restringir a captura do detector ZIP a OSError, RuntimeError e zipfile.BadZipFile, sem alterar contratos ou autoridade.
+### Teste criado ou atualizado
+test_equal_digest_never_overrides_byte_comparison; test_generic_exception_handlers_must_reraise_explicitly; test_no_bare_except_or_silent_pass_handlers; test_original_deletion_remains_fail_closed.
+### Comando executado
+GitHub Actions “Auditoria e suites” e CodeQL em múltiplos heads do PR #31, com inspeção dos jobs/logs reais.
+### Resultado real
+PASS nos gates de digest, adulteração, exceções e eliminação fail-closed. O gate Windows de permissões continuou em diagnóstico neste ciclo.
+### Revisão
+Nenhuma mudança de arquitetura. Nenhuma promoção de autoridade. Nenhum mock de filesystem. Nenhum original apagado.
+### Decisão: ACEITE
+### Estado persistente atualizado: SIM
+### Próxima ação
+Isolar e diagnosticar a permissão Windows real sem alterar o Kernel por hipótese.
+
+## Ciclo 10
+### Problema
+Dois FAIL reais apareceram na regressão: concorrência podia falhar durante PRAGMA journal_mode=WAL com sqlite3.OperationalError: database is locked; sob ACL Windows negada, tempfile.mkstemp ficava preso em _mkstemp_inner.
+### Evidência
+Os logs GitHub Actions mostraram a stack SQLite no PRAGMA WAL. Depois, faulthandler no subprocesso Windows mostrou bloqueio em tempfile.py::_mkstemp_inner chamado por persistence.py::write. O teste ACL usou icacls real e nenhum mock.
+### Alteração
+Em persistence.py foi adicionado retry estritamente limitado a OperationalError contendo “locked” durante ativação WAL, preservando WAL e propagando qualquer outro erro. No Windows, a criação do temporário usa uma única os.open exclusiva com nome opaco; POSIX mantém tempfile.mkstemp. Nenhuma alteração em core.py.
+### Teste criado ou atualizado
+test_same_operation_concurrent_processes_remain_idempotent; test_windows_acl_write_denial_does_not_commit; diagnóstico temporário com faulthandler.
+### Comando executado
+GitHub Actions “Auditoria e suites” em Ubuntu e Windows, incluindo execuções que reproduziram os FAIL e a regressão após as correções.
+### Resultado real
+A concorrência deixou de apresentar lock intermitente nos runs seguintes. A ACL Windows passou a falhar prontamente em vez de bloquear. A primeira regressão após essa correção revelou apenas uma expectativa de nome antigo do .partial no teste de crash.
+### Revisão
+As mudanças ficaram confinadas à fronteira de persistência; PREPARED/COMMITTED, autoridade, proveniência e integração não foram alterados.
+### Decisão: ACEITE
+### Estado persistente atualizado: SIM
+### Próxima ação
+Corrigir apenas a expectativa do teste de .partial Windows e repetir regressão completa.
+
+## Ciclo 11
+### Problema
+test_real_process_crash_after_temp_fsync_resumes_safely procurava exclusivamente .op-hard.*.partial, mas a criação temporária Windows passou legitimamente a usar nome opaco.
+### Evidência
+No run 37619895907, Ubuntu passou; Windows teve 34 PASS, 1 skipped e apenas este teste falhou porque partials=[] apesar do crashpoint exit 99 ter ocorrido.
+### Alteração
+Apenas o teste foi atualizado para procurar um único ficheiro oculto com sufixo .partial e verificar que contém exatamente b"payload". Nenhum ficheiro de produto foi alterado neste ciclo.
+### Teste criado ou atualizado
+test_real_process_crash_after_temp_fsync_resumes_safely.
+### Comando executado
+GitHub Actions “Auditoria e suites”, run 37620145579, head e052f5d0785581951f6eb2cf368e9464bbda4fcd.
+### Resultado real
+SUCCESS. Job Ubuntu PASS e job “Persistência ativa — Windows” PASS. Todos os comportamentos T001–T025 estão agora PASSA com execução real.
+### Revisão
+O último diff é exclusivamente de teste. Ollama continua fora do percurso obrigatório; a branch de instalação lab/windows-full-install-20261006 em 90683cd3744db074c4ea3b3c170aad6218f2b8ed usa llama.cpp e tem os workflows de instalação/stress/Windows verdes já auditados.
+### Decisão: ACEITE
+### Estado persistente atualizado: SIM
+### Próxima ação
+Executar a regressão final disparada por esta atualização documental. Se verde, não alterar mais o núcleo sem novo FAIL real.
