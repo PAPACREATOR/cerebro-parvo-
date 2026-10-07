@@ -76,7 +76,7 @@ Continuam vigentes:
 
 ## Runtime local de modelos
 
-Ollama não é dependência obrigatória nem requisito do percurso ativo.
+O runtime local legado anteriormente considerado não é dependência obrigatória nem requisito do percurso ativo.
 
 O candidato Windows usa `llama.cpp` por endpoints OpenAI-compatible locais para linguagem/embeddings. OpenNotebook e outras ferramentas devem permanecer subordinados ao Kernel e substituíveis.
 
