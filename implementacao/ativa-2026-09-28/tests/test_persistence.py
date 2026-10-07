@@ -219,13 +219,16 @@ def test_windows_acl_write_denial_does_not_commit(tmp_path):
     )
     assert deny.returncode == 0, deny.stdout + deny.stderr
     script=f"""
+import faulthandler
 from pathlib import Path
 from cerebro.persistence import RecoverableMarkdownWriter
+faulthandler.dump_traceback_later(5,repeat=False)
 root=Path({str(tmp_path)!r})
 w=RecoverableMarkdownWriter(root/'state'/'cerebro.sqlite3',root/'vault')
 try:
     w.write('op-denied-win','CREATIVE','denied.md','payload')
 except OSError:
+    faulthandler.cancel_dump_traceback_later()
     raise SystemExit(0)
 raise SystemExit(3)
 """
