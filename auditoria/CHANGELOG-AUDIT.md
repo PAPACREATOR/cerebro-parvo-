@@ -36,8 +36,22 @@
 - Ficheiros alterados: README.md.
 - Teste criado/alterado: Nenhum teste de produto; reutilizado workflow Auditoria e suites.
 - Comando executado: GitHub Actions pull_request, run 37612649448/37612938346; inspeção dos jobs/logs.
-- Resultado: Falha reproduzida em “Verificar preservacao e links ativos”: Missing architecture reference: README.md. Correção publicada em 7be6d92b83c50858311af3f2935e9607df3682f1; novo workflow em execução.
+- Resultado: Falha reproduzida em “Verificar preservacao e links ativos”: Missing architecture reference: README.md. Correção publicada em 7be6d92b83c50858311af3f2935e9607df3682f1; workflow posterior passou.
 - Revisão do diff: Uma frase adicionada; sem mudança de arquitetura ou execução.
-- Regressões: Pendente do novo CI.
+- Regressões: Auditoria e CodeQL PASS.
 - Decisão: ACEITE
-- Próxima ação: Confirmar CI; se verde, iniciar FASE 2 com testes reais de bytes.
+- Próxima ação: Iniciar FASE 2 com testes reais de bytes.
+
+## Ciclo 3
+- Data: 2026-10-07
+- Problema: Receção/quarentena/hash tinham código, mas faltava prova direta dos casos byte-a-byte exigidos.
+- Causa: Suite ativa estava concentrada no writer recuperável.
+- Hipótese: Testes de I/O real sobre normal, vazio, Unicode, binário, grande e inexistente provam o contrato sem tocar no Kernel.
+- Ficheiros alterados: implementacao/ativa-2026-09-28/tests/test_ingest_real.py. Fora do Kernel, descrição do PR #29 corrigida para refletir runtime Ollama-free.
+- Teste criado/alterado: test_ingest_preserves_bytes_exactly; test_ingest_large_file_preserves_hash_and_bytes; test_receive_missing_file_fails_explicitly; test_empty_rejected_when_policy_disallows.
+- Comando executado: suite real de ingestão 7 casos; GitHub Actions Auditoria e suites + CodeQL no head 1ffe4923dfc3216910a12e8079f89782302af717.
+- Resultado: 7/7 ingestão PASS; CI Auditoria PASS; CodeQL PASS.
+- Revisão do diff: Apenas novo teste de ingestão; nenhuma mudança de lógica do Kernel neste ciclo. O ramo de instalação já continha testes explícitos que proíbem Ollama e exigem llama.cpp.
+- Regressões: Nenhuma observada nos gates executados.
+- Decisão: ACEITE
+- Próxima ação: Testar concorrência real e symlink malicioso; alterar código apenas se o teste falhar pelo motivo esperado.
