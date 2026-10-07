@@ -1,13 +1,13 @@
 # Estado de Trabalho
-- Fase: FASE 2 — RECEÇÃO concluída no subconjunto básico; FASE 4 crash real validada; FASE 3 ainda com critérios por fechar
-- Ciclo: 3
-- Objetivo atual: Consolidar ingestão byte-a-byte e manter o Kernel sem alterações de lógica desnecessárias.
-- Bloqueio atual: Instalação Windows completa permanece separada no PR #29; dois workflows físicos/integração desse ramo ainda estavam em execução na última verificação.
-- Última alteração: Adicionado teste real de ingestão byte-a-byte; descrição do PR #29 corrigida para refletir que Ollama não é dependência e que o runtime local usa llama.cpp/OpenAI-compatible.
-- Último teste executado: GitHub Actions “Auditoria e suites” e CodeQL no head 1ffe4923dfc3216910a12e8079f89782302af717.
-- Resultado: PASS em ambos. Testes locais adicionais: 7/7 ingestão real e 13/13 persistência, incluindo 2 crashes de processo reais.
-- Ficheiros alterados: implementacao/ativa-2026-09-28/tests/test_ingest_real.py; documentação/estado de auditoria. Nenhuma nova alteração de lógica do Kernel neste ciclo.
-- Próxima ação: Testar concorrência real e symlink malicioso antes de qualquer alteração funcional; só corrigir código se houver FAIL reproduzido.
-- Critérios pendentes: prova específica de fsync do temporário; fsync de diretório em Windows; ordem COMMITTED/evento; proveniência integrada; symlink; colisão; concorrência; permissões; integração core.py + persistência E2E.
-- Limitações: Ollama é proibido como dependência obrigatória. O ramo Windows usa llama.cpp local substituível; o PR #29 continua draft e não deve ser promovido antes dos gates Windows/Integration e aceitação física no PC.
-- Última atualização: 2026-10-07T12:27:00+01:00
+- Fase: FASE 6 — SEGURANÇA em validação; FASE 3/5 ainda com critérios por fechar
+- Ciclo: 4
+- Objetivo atual: Fechar segurança de symlink e concorrência sem alterar a lógica do Kernel.
+- Bloqueio atual: fsync de diretório em Windows continua não provado; integração core.py + persistência ainda não existe.
+- Última alteração: Apenas testes: symlink de fuga do cofre e 8 processos concorrentes sobre a mesma operação.
+- Último teste executado: GitHub Actions “Auditoria e suites” no head a78f2f05b6c464c1429fc705022b04983fff47e5.
+- Resultado: PASS. Symlink externo bloqueado sem escrita fora do cofre; concorrência idempotente preserva uma materialização COMMITTED. CodeQL do mesmo head estava ainda em execução no momento deste registo.
+- Ficheiros alterados: implementacao/ativa-2026-09-28/tests/test_persistence.py; auditoria/WORK_STATE.md; auditoria/TEST_MATRIX.md; auditoria/CHANGELOG-AUDIT.md
+- Próxima ação: Testar permissões reais, proveniência imutável e ordem PREPARED→COMMITTED; não alterar Kernel sem FAIL reproduzido.
+- Critérios pendentes: prova específica de fsync do temporário; fsync do diretório pai em Windows; ordem COMMITTED/evento; proveniência integrada; colisão/adulteração de hash; permissões; integração core.py + persistência E2E.
+- Limitações: Ollama é proibido como dependência obrigatória. PR #29 usa llama.cpp/OpenAI-compatible e permanece draft. Windows não executa fsync de diretório na implementação ativa atual.
+- Última atualização: 2026-10-07T12:32:00+01:00
