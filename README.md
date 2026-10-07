@@ -4,7 +4,7 @@ Sistema local-first de criação, conhecimento e execução governada para uma p
 
 ## Estado atual
 
-O protótipo Windows está em [nexus/](nexus/README.md). O estado operacional corrente está em [nexus/docs/PONTO-DE-SITUACAO.md](nexus/docs/PONTO-DE-SITUACAO.md).
+O protótipo Windows está em [nexus/](nexus/README.md). O estado operacional corrente está apenas em [nexus/docs/PONTO-DE-SITUACAO.md](nexus/docs/PONTO-DE-SITUACAO.md).
 
 A composição candidata continua a ser:
 
@@ -51,7 +51,6 @@ Não reabrir a arquitetura sem FAIL concreto e reproduzível. Não alterar o Ker
 
 ## Estrutura documental
 
-- [STATUS.md](STATUS.md): resumo curto;
 - [PONTO-DE-SITUACAO.md](nexus/docs/PONTO-DE-SITUACAO.md): fonte operacional;
 - [CEREBRO_CONSTITUTION.md](CEREBRO_CONSTITUTION.md): invariantes;
 - [CEREBRO_ARCHITECTURE.md](CEREBRO_ARCHITECTURE.md): responsabilidades;
