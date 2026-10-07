@@ -18,6 +18,9 @@ OPEN_CONFIG = (ROOT / "windows" / "configure-open-notebook-local.py").read_text(
 MPT_CONFIG = (ROOT / "windows" / "configure-moneyprinterturbo-local.py").read_text(encoding="utf-8")
 POST = (ROOT / "windows" / "test-post-install.ps1").read_text(encoding="utf-8")
 MEDIA = (ROOT / "windows" / "install-media-tools.ps1").read_text(encoding="utf-8")
+AVATAR = (ROOT / "lab" / "open_notebook_avatar" / "install-windows.ps1").read_text(encoding="utf-8")
+OFFICE = (ROOT / "adapters" / "office.py").read_text(encoding="utf-8")
+REQUIREMENTS = (ROOT / "requirements.txt").read_text(encoding="utf-8")
 
 CASES = 50_000
 
@@ -141,6 +144,17 @@ def test_static_stack_contract_is_coherent_before_volume():
     assert "$ForgePort = 7861" in MEDIA
     assert "'--port','5055'" in INSTALL
     assert "'--port','8969'" in INSTALL
+    assert "mcp==1.23.2" in REQUIREMENTS
+    assert "writer_pdf_Export" in OFFICE
+    assert "wav2lip.pth" in AVATAR
+    for practical_token in (
+        "forge-cuda",
+        "ace-step-runtime",
+        "moneyprinterturbo-cli",
+        "writer-libreoffice-real",
+        "bidirectional-50000-real-mcp",
+    ):
+        assert practical_token in POST
 
 
 def test_50000_service_port_roundtrips_bidirectionally():
@@ -194,21 +208,44 @@ def test_50000_model_pin_url_hash_roundtrips_bidirectionally():
     assert checked == CASES
 
 
-def test_50000_cross_file_bindings_are_bidirectional():
+def test_50000_full_component_bindings_are_bidirectional():
     bindings = (
+        ("Git.Git", INSTALL, INSTALL),
+        ("Python.Python.3.12", INSTALL, INSTALL),
+        ("OpenJS.NodeJS.LTS", INSTALL, INSTALL),
+        ("Microsoft.OpenJDK.17", INSTALL, INSTALL),
+        ("TheDocumentFoundation.LibreOffice", INSTALL, INSTALL),
+        ("DigitalScholar.Zotero", INSTALL, INSTALL),
+        ("Gyan.FFmpeg", INSTALL, INSTALL),
+        ("astral-sh.uv", INSTALL, INSTALL),
+        ("ggml.llamacpp", INSTALL, INSTALL),
+        ("LanguageTool-6.6", INSTALL, INSTALL),
+        ("2.7.0", INSTALL, INSTALL),
+        ("315d5255af2a5132aada41c94d5c3c5dc8e837aa", INSTALL, INSTALL),
+        ("993994f7984bf3fe9655b267448328cf66fccb42", INSTALL, INSTALL),
+        ("ca1e85fe9430179831e6bc6be790c332190a3866", MEDIA, MEDIA),
+        ("dfdcbab685e57677014f05a3309b48cc87383167", MEDIA, MEDIA),
+        ("d9426c121eddadc76648be20034bc087acd0240c", MEDIA, MEDIA),
+        ("wav2lip.pth", INSTALL, AVATAR),
+        ("68eb5a68b93cfe338198b3dfb151f6d5ec2fe4e5", INSTALL, INSTALL),
+        ("mcp==1.23.2", REQUIREMENTS, REQUIREMENTS),
+        ("writer_pdf_Export", OFFICE, OFFICE),
         ("nexus-qwen3-1.7b", INSTALL, OPEN_CONFIG),
         ("nexus-qwen3-embedding-0.6b", INSTALL, OPEN_CONFIG),
         ("18081", INSTALL, MPT_CONFIG),
         ("nexus-qwen3-1.7b", OPEN_CONFIG, MPT_CONFIG),
         ("18082", INSTALL, OPEN_CONFIG),
         ("libreoffice_oxt", INSTALL, POST),
+        ("forge-cuda", POST, POST),
+        ("ace-step-runtime", POST, POST),
+        ("moneyprinterturbo-cli", POST, POST),
+        ("bidirectional-50000-real-mcp", POST, POST),
     )
     checked = 0
     for i in range(CASES):
         token, left, right = bindings[(i * 23 + 1) % len(bindings)]
         assert token in left
         assert token in right
-        # Reverse traversal must resolve the same token on the opposite surface.
         assert right.find(token) >= 0
         assert left.rfind(token) >= 0
         checked += 1
