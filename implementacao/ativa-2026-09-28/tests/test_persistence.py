@@ -179,3 +179,19 @@ def test_windows_replace_is_write_through_and_persists_target(tmp_path):
     assert RecoverableMarkdownWriter._replace_and_sync(source,target) is True
     assert not source.exists()
     assert target.read_bytes() == b"payload"
+
+
+def test_real_process_crash_after_temp_fsync_resumes_without_orphans(tmp_path):
+    r=_run_hard_crash(tmp_path,"after_temp_fsync")
+    assert r.returncode == 99
+    parent=tmp_path/"vault"/"creative"
+    partials=lambda: [
+        path for path in parent.iterdir()
+        if path.name.startswith(".op-hard.") and path.name.endswith(".partial")
+    ] if parent.exists() else []
+    assert partials()
+    w=W(tmp_path)
+    assert w.reconcile("op-hard") == "NOT_COMMITTED"
+    assert w.resume("op-hard").state == "COMMITTED"
+    assert (parent/"a.md").read_bytes() == b"payload"
+    assert partials() == []
