@@ -187,9 +187,10 @@ def test_real_process_crash_after_temp_fsync_resumes_safely(tmp_path):
     parent=tmp_path/"vault"/"creative"
     partials=[
         path for path in parent.iterdir()
-        if path.name.startswith(".op-hard.") and path.name.endswith(".partial")
+        if path.name.startswith(".") and path.name.endswith(".partial")
     ] if parent.exists() else []
-    assert partials
+    assert len(partials) == 1
+    assert partials[0].read_bytes() == b"payload"
     assert all(path.read_bytes() == b"payload" for path in partials)
     w=W(tmp_path)
     assert w.reconcile("op-hard") == "NOT_COMMITTED"
