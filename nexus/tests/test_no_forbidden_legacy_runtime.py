@@ -8,7 +8,12 @@ TEXT_SUFFIXES = {
 }
 EXCLUDED_TOP_LEVEL = {".git"}
 FORBIDDEN = "".join(chr(value) for value in (111, 108, 108, 97, 109, 97))
-FORBIDDEN_TOKENS = (FORBIDDEN, "11434", "qwen3:4b", "nomic-embed-text")
+FORBIDDEN_TOKENS = (
+    FORBIDDEN,
+    "".join(str(value) for value in (1, 1, 4, 3, 4)),
+    "".join(("qwen", "3", ":", "4", "b")),
+    "".join(("nomic", "-embed", "-text")),
+)
 
 
 def test_active_repository_has_no_forbidden_legacy_runtime_reference():
