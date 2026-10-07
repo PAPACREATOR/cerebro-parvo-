@@ -8,6 +8,7 @@ TEXT_SUFFIXES = {
 }
 EXCLUDED_TOP_LEVEL = {".git"}
 FORBIDDEN = "".join(chr(value) for value in (111, 108, 108, 97, 109, 97))
+FORBIDDEN_TOKENS = (FORBIDDEN, "11434", "qwen3:4b", "nomic-embed-text")
 
 
 def test_active_repository_has_no_forbidden_legacy_runtime_reference():
@@ -23,6 +24,7 @@ def test_active_repository_has_no_forbidden_legacy_runtime_reference():
         except UnicodeDecodeError:
             continue
         for number, line in enumerate(lines, 1):
-            if FORBIDDEN in line.casefold():
+            folded = line.casefold()
+            if any(token in folded for token in FORBIDDEN_TOKENS):
                 violations.append(f"{relative}:{number}")
     assert violations == [], "forbidden legacy runtime references: " + ", ".join(violations)
