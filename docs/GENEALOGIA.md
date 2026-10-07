@@ -22,4 +22,4 @@ Fontes: [decisões históricas](../historico/repositorio-2026-09-24/DECISIONS.md
 - ELIZA: decomposição/reconhecimento de padrões; inspiração operacional, sem autoridade epistemológica.
 - Open-Self, Portable-KB e dogankoc: referências do pacote candidato; identificação de repositório/commit/ficheiro ainda pendente antes de qualquer reutilização.
 
-A presente tarefa preserva o que os estudos anteriores afirmaram. Não repete a pesquisa externa nem certifica licenças, desempenho ou afirmações históricas sem nova verificação. [LEGO e proveniência](../LEGO-LOCK.md) mantém essa distinção.
+A presente tarefa preserva o que os estudos anteriores afirmaram. Não repete a pesquisa externa nem certifica licenças, desempenho ou afirmações históricas sem nova verificação. [LEGO e proveniência histórica](../historico/repositorio-2026-09-24/LEGO-LOCK.md) mantém essa distinção.
