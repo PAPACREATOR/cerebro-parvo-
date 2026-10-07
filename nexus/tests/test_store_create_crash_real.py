@@ -1,9 +1,11 @@
 import hashlib
+import inspect
 import os
 import subprocess
 import sys
 from pathlib import Path
 
+import nexus.store as store_module
 from nexus.store import Store
 
 
@@ -150,3 +152,15 @@ store_module.Store(root).create(request)
     assert recovered["input_sha256"] == hashlib.sha256(EXPECTED).hexdigest()
     assert original.read_bytes() == EXPECTED
     assert not (tmp_path / "canonical" / run.name).exists()
+
+
+def test_atomic_declares_platform_durable_rename_contract():
+    source = inspect.getsource(store_module)
+    atomic_source = inspect.getsource(store_module.atomic)
+    assert "_replace_durable" in atomic_source
+    if os.name == "nt":
+        assert "MoveFileExW" in source
+        assert "MOVEFILE_WRITE_THROUGH" in source
+    else:
+        assert "_fsync_parent" in source
+        assert "os.fsync" in source
