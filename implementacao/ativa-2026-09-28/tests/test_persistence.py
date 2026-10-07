@@ -233,13 +233,18 @@ except OSError:
 raise SystemExit(3)
 """
     try:
-        denied=subprocess.run(
-            [sys.executable,"-c",script],
-            cwd=str(Path(__file__).parents[1]),
-            capture_output=True,
-            text=True,
-            timeout=30,
-        )
+        try:
+            denied=subprocess.run(
+                [sys.executable,"-c",script],
+                cwd=str(Path(__file__).parents[1]),
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+        except subprocess.TimeoutExpired as error:
+            stderr=error.stderr or ""
+            stdout=error.stdout or ""
+            pytest.fail("Windows ACL subprocess timed out. stdout=" + str(stdout) + " stderr=" + str(stderr))
         assert denied.returncode == 0, denied.stdout + denied.stderr
     finally:
         cleanup=subprocess.run(
