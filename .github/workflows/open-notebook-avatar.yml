@@ -8,6 +8,9 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: open-notebook-avatar-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   contracts:
     strategy:

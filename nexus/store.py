@@ -16,6 +16,15 @@ from nexus.approval_binding import HumanDecision, promotion_allowed
 from nexus.contracts import Blocked, ROOT, load_policy, strict_json, validate
 
 
+CANDIDATE_PROCESSES = {
+    "interpret", "proofread", "convert_pdf",
+    "video", "podcast", "visual_podcast", "book", "music", "web",
+}
+AI_PROCESSES = {"interpret", "video", "podcast", "visual_podcast"}
+NO_AI_PROCESSES = {"verify", "proofread", "convert_pdf", "book", "music", "web"}
+PDF_PROCESSES = {"convert_pdf", "book"}
+
+
 def now():
     return datetime.now(timezone.utc).isoformat()
 
@@ -259,15 +268,15 @@ class Store:
             self.check_input(state)
             if not isinstance(trace, dict) or trace.get("process_sha256") != state.get("process_sha256"):
                 raise Blocked("O resultado não corresponde à versão do processo fixada no pedido.")
-            if state["process_id"] in ("interpret", "proofread", "convert_pdf"):
+            if state["process_id"] in CANDIDATE_PROCESSES:
                 if result["status"] != "UNKNOWN" or result["outcome"] != "candidate":
                     raise Blocked("Este processo só pode devolver um candidato por rever.")
-            if state["process_id"] == "interpret" and result["ai_calls"] != 1:
+            if state["process_id"] in AI_PROCESSES and result["ai_calls"] != 1:
                 raise Blocked("Contagem cognitiva incompatível com o processo.")
-            if state["process_id"] in ("verify", "proofread", "convert_pdf") and result["ai_calls"] != 0:
+            if state["process_id"] in NO_AI_PROCESSES and result["ai_calls"] != 0:
                 raise Blocked("IA proibida neste processo.")
             artifact = result.get("artifact")
-            if (state["process_id"] == "convert_pdf") != (artifact is not None):
+            if (state["process_id"] in PDF_PROCESSES) != (artifact is not None):
                 raise Blocked("Contrato de artefacto incompatível com o processo.")
             raw_pdf = None
             if artifact:

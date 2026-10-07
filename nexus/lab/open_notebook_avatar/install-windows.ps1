@@ -2,14 +2,16 @@
 param(
     [Parameter(Mandatory=$true)][string]$OpenNotebookRoot,
     [Parameter(Mandatory=$true)][string]$ApiPython,
-    [ValidateSet('cpu','cuda')][string]$Device = 'cpu'
+    [ValidateSet('cpu','cuda')][string]$Device = 'cpu',
+    [switch]$AuthorizeInstall
 )
 $ErrorActionPreference = 'Stop'
 
-# Stop before any command, prompt, directory or external operation.
-throw 'NEXUS_PROTECTED_PROVISIONING_PENDING: protected avatar installation is not validated; refusing changes and external processes.'
+# Explicit human-authorized installation gate. Accidental/direct invocation remains fail-closed.
+if (-not $AuthorizeInstall) {
+    throw 'NEXUS_INSTALL_AUTHORIZATION_REQUIRED: rerun with -AuthorizeInstall only after explicit human approval.'
+}
 
-# Historical implementation retained below; unreachable while this gate is closed.
 $root = (Resolve-Path -LiteralPath $OpenNotebookRoot).Path
 $api = (Get-Command $ApiPython -CommandType Application -ErrorAction Stop).Source
 $workerDir = Join-Path $root 'venv-avatar'
@@ -26,14 +28,16 @@ function Run-Step {
 $index = if ($Device -eq 'cuda') { 'https://download.pytorch.org/whl/cu124' } else { 'https://download.pytorch.org/whl/cpu' }
 Run-Step $worker @('-m','pip','install','torch==2.5.1','torchvision==0.20.1','--index-url',$index)
 Run-Step $worker @('-m','pip','install','--only-binary=av','-r',(Join-Path $PSScriptRoot 'requirements-worker.txt'),'gdown==6.4.1',($PSScriptRoot + '[mcp]'))
-Run-Step $api @('-m','pip','install',$PSScriptRoot)
+$uv = (Get-Command uv.exe -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
+& $uv pip install --python $api $PSScriptRoot
+if ($LASTEXITCODE -ne 0) { throw 'Avatar API extension installation failed; do not mark PASS' }
 $models = Join-Path $root 'data/avatar-models'
 $portraits = Join-Path $root 'data/avatars'
 $outputs = Join-Path $root 'data/avatar-videos'
 foreach ($directory in @($models,$portraits,$outputs)) {
     $null = New-Item -ItemType Directory -Path $directory -Force
 }
-Run-Step $worker @((Join-Path $PSScriptRoot 'provision_models.py'),$models)
+Run-Step $worker @((Join-Path $PSScriptRoot 'provision_models.py'),$models,'--authorize-install')
 Run-Step $worker @('-c',"import shutil; assert shutil.which('ffmpeg') and shutil.which('ffprobe'); from lipsync import LipSync; print('DEPENDENCIES=PASS')")
 Run-Step $api @((Join-Path $PSScriptRoot 'install_router.py'),$root)
 # Preserve unrelated settings and secrets. Only these four capability paths are changed.

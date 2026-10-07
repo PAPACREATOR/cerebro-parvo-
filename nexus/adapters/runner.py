@@ -1,6 +1,6 @@
 """Minimal deterministic Nexus executor through local MCP.
 
-The Kernel selects one of four Host-authorized processes. MCP is transport only:
+The Kernel selects one Host-authorized process from the fixed policy. MCP is transport only:
 no model, agent, reasoning or authority is present in this executor.
 """
 import hashlib
@@ -33,6 +33,12 @@ PROCESS_TO_TOOL = {
     "interpret": "interpret_file",
     "proofread": "proofread_file",
     "convert_pdf": "convert_pdf_file",
+    "video": "video_plan_file",
+    "podcast": "podcast_plan_file",
+    "visual_podcast": "visual_podcast_plan_file",
+    "book": "book_file",
+    "music": "music_plan_file",
+    "web": "web_plan_file",
 }
 
 PROCESS_FILES = {
@@ -51,6 +57,30 @@ PROCESS_FILES = {
     "convert_pdf": (
         "adapters/runner.py", "mcp_client.py", "mcp_tools_server.py",
         "adapters/office.py",
+    ),
+    "video": (
+        "adapters/runner.py", "mcp_client.py", "mcp_tools_server.py",
+        "adapters/product_routes.py",
+    ),
+    "podcast": (
+        "adapters/runner.py", "mcp_client.py", "mcp_tools_server.py",
+        "adapters/product_routes.py",
+    ),
+    "visual_podcast": (
+        "adapters/runner.py", "mcp_client.py", "mcp_tools_server.py",
+        "adapters/product_routes.py",
+    ),
+    "book": (
+        "adapters/runner.py", "mcp_client.py", "mcp_tools_server.py",
+        "adapters/office.py",
+    ),
+    "music": (
+        "adapters/runner.py", "mcp_client.py", "mcp_tools_server.py",
+        "adapters/product_routes.py",
+    ),
+    "web": (
+        "adapters/runner.py", "mcp_client.py", "mcp_tools_server.py",
+        "adapters/product_routes.py",
     ),
 }
 
@@ -109,7 +139,15 @@ def prepare_task(process, input_path, work, *, config_root=None):
         response = fetch_output(prepare_source(raw), config)
         (work / "open-notebook-response.json").write_text(
             json.dumps(response, ensure_ascii=False), encoding="utf-8")
-    elif process in ("proofread", "convert_pdf"):
+    elif process in ("video", "podcast", "visual_podcast"):
+        from nexus.adapters.product_routes import fetch_plan, prepare_text
+        if not (config_root / "open-notebook-product.json").is_file():
+            raise Blocked("A rota precisa do OpenNotebook local configurado.")
+        config = strict_json((config_root / "open-notebook-product.json").read_bytes())
+        response = fetch_plan(prepare_text(raw), process, config)
+        (work / "product-plan-response.json").write_text(
+            json.dumps(response, ensure_ascii=False), encoding="utf-8")
+    elif process in ("proofread", "convert_pdf", "book"):
         name = "languagetool.json" if process == "proofread" else "libreoffice.json"
         if not (config_root / name).is_file():
             raise Blocked("A ferramenta precisa de configuração local.")
@@ -161,7 +199,7 @@ def execute_confined(process, input_path):
         command = [sys.executable, "-I", str(ROOT / "adapters/runner.py"), process, str(work / "input.bin")]
         with launch_confined(command, cwd=work, env=task_environment(work), read_roots=roots,
                              deny_roots=(path.parent.parent.parent,)) as proc:
-            stdout, stderr = proc.communicate(timeout=150 if process == "interpret" else 75)
+            stdout, stderr = proc.communicate(timeout=150 if process in ("interpret", "video", "podcast", "visual_podcast") else 75)
             code = proc.returncode
         if code:
             raise Blocked("A execução protegida falhou.")

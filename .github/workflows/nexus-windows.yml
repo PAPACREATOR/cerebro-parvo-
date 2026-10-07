@@ -37,7 +37,10 @@ jobs:
         shell: pwsh
         run: |
           $python = (Get-Command python).Source
-          foreach ($suite in @('core', 'blocks', 'all', 'practical')) {
+          python -m pytest nexus/tests/test_windows_stack_structural_300k.py -q -p no:cacheprovider -o pythonpath=.
+          if ($LASTEXITCODE -ne 0) { throw '300K structural compatibility gate failed' }
+          Write-Output 'NEXUS_STRUCTURAL_300000=PASS'
+          foreach ($suite in @('core', 'blocks', 'practical')) {
             $report = Join-Path $env:RUNNER_TEMP ('nexus-' + $suite)
             powershell.exe -NoProfile -File nexus/windows/check-nexus.ps1 -PythonPath $python -Suite $suite -ReportDirectory $report
             if ($LASTEXITCODE -ne 0) {
@@ -46,10 +49,17 @@ jobs:
             }
             $state = Get-Content (Join-Path $report 'state.json') -Raw | ConvertFrom-Json
             if ($state.status -ne 'PASS' -or $state.suite -ne $suite) { throw "Missing PASS report for $suite" }
-            $stage = if ($suite -eq 'all') { 'TESTS' } else { 'TESTS-' + $suite.ToUpperInvariant() }
+            $stage = 'TESTS-' + $suite.ToUpperInvariant()
             Get-Content (Join-Path $report ($stage + '.stdout.txt'))
             Write-Output ("NEXUS_SUITE_" + $suite.ToUpperInvariant() + "=PASS")
           }
+          # Product-flow stress has its own explicit 6x5000 + 50000 gate in
+          # nexus-integration-stress.yml. Do not duplicate it inside the ordinary
+          # Windows regression: duplicate heavy runs previously terminated pytest
+          # without a failure summary after the dedicated gates had already passed.
+          python -m pytest nexus/tests -q -p no:cacheprovider -o pythonpath=. --ignore=nexus/tests/test_product_flows_5000.py --ignore=nexus/tests/test_product_system_50000.py --ignore=nexus/tests/test_product_themes_canonical_200k.py --ignore=nexus/tests/test_public_product_routes_10000.py --ignore=nexus/tests/test_public_product_routes_all_50000.py --ignore=nexus/tests/test_windows_stack_structural_300k.py
+          if ($LASTEXITCODE -ne 0) { throw 'Standard Windows regression failed' }
+          Write-Output 'NEXUS_SUITE_ALL_STANDARD=PASS'
           $bad = Join-Path $env:RUNNER_TEMP 'nexus-fail'
           powershell.exe -NoProfile -File nexus/windows/check-nexus.ps1 -PythonPath 'NEXUS-MISSING-PYTHON.exe' -ReportDirectory $bad
           if ($LASTEXITCODE -eq 0) { throw 'Missing Python was accepted' }
