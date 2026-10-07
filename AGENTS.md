@@ -8,7 +8,7 @@
 - Os ramos só formam um candidato quando houver um único SHA com regressão conjunta verde.
 - PR #34 trata apenas da documentação desta convergência.
 - Preservar `historico/`, relatórios e genealogia. Limpeza documental não autoriza apagar evidência.
-- Ollama não é requisito do percurso ativo; `llama.cpp` é a fronteira local candidata.
+- O runtime local legado retirado não é requisito do percurso ativo; `llama.cpp` é a fronteira local candidata.
 
 Ler primeiro o [ponto de situação operacional](nexus/docs/PONTO-DE-SITUACAO.md), depois `CEREBRO_CONSTITUTION.md`, `CEREBRO_ARCHITECTURE.md`, `DECISIONS.md` e o contrato da tarefa.
 
