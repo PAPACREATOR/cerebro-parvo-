@@ -169,10 +169,13 @@ def test_real_permission_denial_does_not_commit(tmp_path):
     assert not (parent/"denied.md").exists()
 
 
-def test_windows_directory_flush_is_executed(tmp_path):
+def test_windows_replace_is_write_through_and_persists_target(tmp_path):
     import os
     if os.name != "nt":
-        pytest.skip("Windows-only directory flush gate")
-    directory=tmp_path/"flush-me"
-    directory.mkdir()
-    assert RecoverableMarkdownWriter._fsync_dir(directory) is True
+        pytest.skip("Windows-only durable replace gate")
+    source=tmp_path/"source.partial"
+    target=tmp_path/"target.md"
+    source.write_bytes(b"payload")
+    assert RecoverableMarkdownWriter._replace_and_sync(source,target) is True
+    assert not source.exists()
+    assert target.read_bytes() == b"payload"
