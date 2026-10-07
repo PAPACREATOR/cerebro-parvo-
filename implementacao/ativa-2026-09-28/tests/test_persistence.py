@@ -1,3 +1,5 @@
+import inspect
+
 import pytest
 from cerebro.persistence import RecoverableMarkdownWriter, PersistenceError, RecoveryRequired
 
@@ -53,3 +55,27 @@ def test_canonical_same_writer_separate_domain(tmp_path):
 def test_escape_rejected(tmp_path,path):
     w=W(tmp_path)
     with pytest.raises(PersistenceError): w.write("op","CREATIVE",path,"x")
+
+
+def test_writer_routes_final_replace_through_durable_boundary():
+    source = inspect.getsource(RecoverableMarkdownWriter.write)
+    assert "_durable_replace" in source, (
+        "write() still publishes the final file through os.replace directly; "
+        "the writer has no cross-platform durable replacement boundary"
+    )
+
+
+def test_writer_durable_replace_is_real_filesystem_operation(tmp_path):
+    w = W(tmp_path)
+    replace = getattr(w, "_durable_replace", None)
+    assert replace is not None, "RecoverableMarkdownWriter has no durable replacement helper"
+
+    source = tmp_path / "pending.bin"
+    target = tmp_path / "final.bin"
+    source.write_bytes(b"new-bytes")
+    target.write_bytes(b"old-bytes")
+
+    replace(source, target)
+
+    assert not source.exists()
+    assert target.read_bytes() == b"new-bytes"
