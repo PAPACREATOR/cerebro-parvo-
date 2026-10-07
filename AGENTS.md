@@ -2,90 +2,60 @@
 
 ## Coordenação atual — 07-10-2026
 
-- PR #32 é a linha mais completa do produto Nexus/Windows atual.
-- PR #31 é evidência transacional em `implementacao/ativa-2026-09-28/cerebro/`, não PASS automático do runtime `nexus/`.
-- Os dois ramos estão divergentes; não somar PASS nem declarar produto integrado antes de um único SHA verde.
-- Transportar garantias da #31 primeiro como testes contra `nexus/`; alterar runtime apenas perante FAIL real e reproduzível.
-- Preservar `historico/` e genealogia; limpeza textual não autoriza reescrever evidência histórica.
+- PR #32 é a linha de produto Nexus/Windows mais completa.
+- PR #31 é evidência transacional em `implementacao/ativa-2026-09-28/cerebro/`; não transfere PASS automaticamente para `nexus/`.
+- Issue #33 define a convergência: levar primeiro as garantias da #31 para testes contra `nexus/`; alterar runtime apenas perante FAIL real e reproduzível.
+- Os ramos só formam um candidato quando houver um único SHA com regressão conjunta verde.
+- PR #34 trata apenas da documentação desta convergência.
+- Preservar `historico/`, relatórios e genealogia. Limpeza documental não autoriza apagar evidência.
 - Ollama não é requisito do percurso ativo; `llama.cpp` é a fronteira local candidata.
 
-Ler primeiro [STATUS](STATUS.md) e o [ponto de situação operacional](nexus/docs/PONTO-DE-SITUACAO.md), depois CEREBRO_CONSTITUTION.md, CEREBRO_ARCHITECTURE.md, DECISIONS.md e o contrato da tarefa. O [projeto auditado de 28/09](docs/PROJETO-FINAL-AUDITADO-2026-09-28.md) conserva a composição daquela data; não é uma ordem para reintroduzir Activepieces/Conductor no runtime candidato.
+Ler primeiro [STATUS](STATUS.md) e o [ponto de situação operacional](nexus/docs/PONTO-DE-SITUACAO.md), depois `CEREBRO_CONSTITUTION.md`, `CEREBRO_ARCHITECTURE.md`, `DECISIONS.md` e o contrato da tarefa.
 
-## Reconciliação operacional — 05-10-2026
-
-A PR #23 e a branch `lab-open-notebook-avatar-20261004` são a continuação ativa. Kernel/Host/Store Python mantêm estado e política; a pessoa é autoridade máxima. MCP transporta; ferramentas externas devolvem propostas/evidência. Conductor/Spiff/YAML de execução foram retirados do ativo, conforme a PR #21 preservada. As referências a Activepieces abaixo aplicam-se à genealogia ou a integrações que o usem; não impõem uma dependência atual.
-
-Manter um único documento de estado: `nexus/docs/PONTO-DE-SITUACAO.md`. Não recriar filas/handoffs removidos. Contratos, comparações, relatórios PASS/FAIL e histórico devem ser preservados. Antes de editar, conferir HEAD e comentários recentes; PASS anterior não cobre automaticamente um novo SHA. Limpeza documental não autoriza alterar arquitetura ou enfraquecer testes.
-
-## Regra principal
-
-Não defender uma tecnologia porque já foi escolhida. Comparar primeiro. Manter uma decisão apenas se continuar a ser a forma mais simples de preservar o comportamento exigido.
-
-Aplicar sempre:
-
-USE > ADAPT > CREATE.
-
-## Autoridade
+## Regras de autoridade
 
 - A pessoa é autoridade final.
-- Kernel/Host/Store governam e executam o runtime candidato; ferramentas externas executam apenas capacidades delimitadas.
-- Open Notebook/tiny produz proposta/evidência; não decide autoridade.
-- Ferramentas externas devolvem UNTRUSTED.
-- Instrução humana atual prevalece sobre comportamento aprendido.
+- Kernel/Host/Store governam estado e política.
+- MCP transporta; não decide.
+- Ferramentas externas devolvem apenas resultados/candidatos delimitados.
 - Creative e Canonical têm autoridade distinta.
+- Promoção para Canonical exige Human Gate.
+- Instrução humana atual prevalece sobre comportamento aprendido.
 - Similaridade semântica nunca autoriza eliminação.
-- Nenhuma ferramenta publica, apaga ou promove diretamente sem o portão aplicável.
+- Eliminação automática só pode resultar de duplicação absolutamente exata e das regras humanas aplicáveis.
+- M1–M14 são responsabilidades/invariantes; não redesenhar sem decisão humana explícita ou FAIL estrutural demonstrado.
+
+## Regra de engenharia
+
+**LIGAR > CONFIGURAR > ADAPTAR > CRIAR.**
+
+Não defender uma tecnologia por inércia. Não criar código próprio quando uma interface madura resolve sem violar as invariantes.
+
+Para cada alteração:
+
+`contrato → teste positivo/negativo/adversarial → FAIL real → correção mínima → regressão do bloco → regressão total → E2E`.
+
+Separar sempre: desenhado, implementado, testado, integrado e aprovado.
+
+PASS, FAIL, BLOCKED, NOT RUN e UNKNOWN não são equivalentes. Um PASS parcial não é release e não é transferido para outro SHA ou outro ramo.
 
 ## Implementação
 
-- M1–M14 são responsabilidades/invariantes, não exigem 14 serviços.
-- IMP-001–026 são contratos/testes da família de importação, não exigem 26 módulos.
-- Preferir API/CLI/MCP/adapters finos de ferramentas maduras a código próprio.
-- Não duplicar fora do Kernel regras que pertencem ao Core.
-- Não criar adapter próprio quando uma interface estável existente resolve.
-- Todo o processo deve ter explicação equivalente em linguagem natural.
-- Open Notebook usa um único espaço cognitivo por defeito; contexto e sessão são delimitados por tarefa.
-- A tiny recebe contexto temático, fontes permitidas, budget e schema de saída.
-- SQLite não é um terceiro cofre; coordena eventos/IDs/relações/estado/índices.
-- Markdown/formatos abertos materializam Creative/Canonical.
-- Obsidian/Joplin/Logseq não são dependências obrigatórias.
+- Runtime candidato: `nexus.app → nexus.host → nexus.store`.
+- `implementacao/ativa-2026-09-28/cerebro/` é atualmente fonte de contratos/evidência transacional, não entrypoint do produto.
+- Preferir adapters finos/API/CLI/MCP a duplicação de capacidades.
+- OpenNotebook é bancada cognitiva substituível, não memória soberana.
+- SQLite não é terceiro cofre; coordena estado/índices quando necessário.
+- Markdown e formatos abertos materializam Creative/Canonical.
+- IA/modelos não recebem autoridade.
+- G10/persistência deve provar PREPARED → materialização durável → verificação → COMMITTED → reconcile/replay.
 
-## Método de trabalho
+## Continuidade
 
-Implementar vertical slices curtas:
-
-contrato -> implementação mínima -> testes positivos/negativos/adversariais -> regressão -> evidência -> PASS/FAIL/NOT RUN.
-
-Separar sempre:
-
-- desenhado;
-- implementado;
-- testado;
-- integrado;
-- aprovado.
-
-Não transformar um PASS unitário em release.
-
-Para G10 usar o desenho PREPARED -> materialização Markdown -> verificação de hash -> COMMITTED -> reconcile, mas não declarar fechado antes dos testes de crash/replay.
-
-Não aceitar segredos em prompts, publicar automaticamente, dar auto-approve global ou aumentar permissões silenciosamente.
-
-## Continuidade e testes — instrução humana de 04-10-2026
-
-- Trabalhar no GitHub; Pedro executa os scripts no PC. Validação pessoal pendente
-  não bloqueia implementação e testes que possam ser concluídos no repositório.
-- Registar cada etapa em nexus/docs/PONTO-DE-SITUACAO.md: pedido, branch/commit,
-  ficheiros, evidência, PASS/FAIL/NOT RUN, bloqueio e próximo passo.
-- Para cada ligação alterada, testar ida (pedido -> execução -> resultado) e
-  retorno (resultado -> processo/evidência -> fonte/pedido), além de erro,
-  timeout/indisponibilidade quando aplicável, saída inválida e recuperação.
-- Conferir que o retorno não repete ferramentas nem cria aprovação humana nova.
-  Usar dados sintéticos e testar que falhas não promovem nem eliminam conhecimento.
-- Declarar a cobertura e as exclusões; nenhum PASS parcial prova todas as ligações.
-- Genealogia de 04-10: Conductor era o executor e o handoff da PR #7 relatava
-  Spiff -> Conductor. A PR #21 documenta a substituição no candidato por Python.
-  Não usar esta entrada histórica para repor executores removidos ou presumir
-  que a instalação do PC já foi atualizada.
-- Coordenar sessões por branches/PRs, preservando caminhos relativos e indicando
-  commit de base e evidência. Espelhar código/documentação; excluir credenciais,
-  ambientes, runtime e cofres. Consultar comentários recentes antes de editar.
+- Antes de editar: ler HEAD, diffs recentes, comentários/reviews e workflows.
+- Não criar novas filas, handoffs ou ficheiros de “estado” por sessão.
+- Estado operacional: `nexus/docs/PONTO-DE-SITUACAO.md`.
+- Decisões e genealogia: `DECISIONS.md`, `historico/` e relatórios datados.
+- Coordenar trabalho paralelo por branches/PRs e nunca somar PASS de ramos divergentes.
+- Não incluir credenciais, ambientes, runtime local ou cofres no Git.
+- PC físico, modelos/GPU e instalações externas mantêm gates próprios; CI não substitui esses gates.
