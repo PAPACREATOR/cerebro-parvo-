@@ -1,5 +1,14 @@
 # Instruções correntes — Cérebro
 
+## Coordenação atual — 07-10-2026
+
+- PR #32 é a linha mais completa do produto Nexus/Windows atual.
+- PR #31 é evidência transacional em `implementacao/ativa-2026-09-28/cerebro/`, não PASS automático do runtime `nexus/`.
+- Os dois ramos estão divergentes; não somar PASS nem declarar produto integrado antes de um único SHA verde.
+- Transportar garantias da #31 primeiro como testes contra `nexus/`; alterar runtime apenas perante FAIL real e reproduzível.
+- Preservar `historico/` e genealogia; limpeza textual não autoriza reescrever evidência histórica.
+- Ollama não é requisito do percurso ativo; `llama.cpp` é a fronteira local candidata.
+
 Ler primeiro [STATUS](STATUS.md) e o [ponto de situação operacional](nexus/docs/PONTO-DE-SITUACAO.md), depois CEREBRO_CONSTITUTION.md, CEREBRO_ARCHITECTURE.md, DECISIONS.md e o contrato da tarefa. O [projeto auditado de 28/09](docs/PROJETO-FINAL-AUDITADO-2026-09-28.md) conserva a composição daquela data; não é uma ordem para reintroduzir Activepieces/Conductor no runtime candidato.
 
 ## Reconciliação operacional — 05-10-2026
