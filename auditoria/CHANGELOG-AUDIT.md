@@ -242,3 +242,24 @@ Patch mínimo e localizado na leitura de hash. Não altera PREPARED/COMMITTED, r
 ### Estado persistente atualizado: SIM
 ### Próxima ação
 Confirmar CodeQL do head funcional. Se verde, congelar o Kernel até novo FAIL real.
+
+
+## Ciclo 13
+### Problema
+A falha de concorrência Windows do ciclo 12 era rara/intermitente; um único PASS posterior não era evidência suficiente de estabilidade.
+### Evidência
+Sem alterar código, o job “Persistência ativa — Windows” do run 37658064553 foi repetido três vezes sobre o mesmo head 9eb3994b9ed28ad0f67c6e77eab9b3f63358cbb4. O run original e as tentativas 2, 3 e 4 terminaram SUCCESS.
+### Alteração
+Nenhuma alteração de produto. Apenas repetição de CI e atualização dos ficheiros persistentes de auditoria.
+### Teste criado ou atualizado
+Nenhum teste novo; reutilizada a suite completa Windows, incluindo test_same_operation_concurrent_processes_remain_idempotent com oito subprocessos.
+### Comando executado
+GitHub Actions rerun do job Windows do run 37658064553 por três execuções adicionais.
+### Resultado real
+3/3 reruns adicionais SUCCESS; somando a execução original do mesmo head, 4 execuções Windows consecutivas SUCCESS. Ubuntu/documental e CodeQL estavam SUCCESS.
+### Revisão
+Nenhuma mudança em core.py, persistence.py ou integration.py neste ciclo. O teste repetido ataca diretamente a natureza intermitente do FAIL anterior.
+### Decisão: ACEITE
+### Estado persistente atualizado: SIM
+### Próxima ação
+Congelar o Kernel. Só reabrir alteração funcional perante novo FAIL real e reproduzível.
