@@ -24,6 +24,6 @@
 | T020 | Original nunca é apagado | test_ingest_preserves_bytes_exactly | PASSA | PASS | Originais intactos |
 | T021 | Symlink malicioso bloqueado | test_symlink_escape_is_blocked_without_writing_outside | PASSA | PASS | Sem escrita externa |
 | T022 | Colisão/adulteração de hash não inventa sucesso | test_committed_tamper_requires_recovery + test_equal_digest_never_overrides_byte_comparison | PASSA | PASS Ubuntu + Windows | Digest igual nunca substitui comparação byte-a-byte; adulteração exige recovery |
-| T023 | Concorrência mantém integridade | test_same_operation_concurrent_processes_remain_idempotent | PASSA | PASS Ubuntu + Windows no run 37657894986 | 8 subprocessos; retry de leitura Windows limitado a 0,5 s após FAIL real transitório |
+| T023 | Concorrência mantém integridade | test_same_operation_concurrent_processes_remain_idempotent | PASSA | PASS original + 3 reruns Windows consecutivos no run 37658064553 | 8 subprocessos por execução; retry de leitura Windows limitado a 0,5 s; nenhum novo FAIL |
 | T024 | Permissões restritas tratadas explicitamente | test_real_permission_denial_does_not_commit + test_windows_acl_write_denial_does_not_commit | PASSA | PASS Ubuntu + Windows | chmod POSIX e ACL icacls Windows reais; sem mock |
 | T025 | core.py + persistência E2E | test_core_to_persistence_commits_before_success_event | PASSA | PASS | Camada mínima integration.py |
