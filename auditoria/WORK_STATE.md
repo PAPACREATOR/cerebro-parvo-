@@ -1,13 +1,13 @@
 # Estado de Trabalho
-- Fase: FASE 6 — SEGURANÇA em validação; FASE 3/5 ainda com critérios por fechar
-- Ciclo: 4
-- Objetivo atual: Fechar segurança de symlink e concorrência sem alterar a lógica do Kernel.
-- Bloqueio atual: fsync de diretório em Windows continua não provado; integração core.py + persistência ainda não existe.
-- Última alteração: Apenas testes: symlink de fuga do cofre e 8 processos concorrentes sobre a mesma operação.
-- Último teste executado: GitHub Actions “Auditoria e suites” no head a78f2f05b6c464c1429fc705022b04983fff47e5.
-- Resultado: PASS. Symlink externo bloqueado sem escrita fora do cofre; concorrência idempotente preserva uma materialização COMMITTED. CodeQL do mesmo head estava ainda em execução no momento deste registo.
-- Ficheiros alterados: implementacao/ativa-2026-09-28/tests/test_persistence.py; auditoria/WORK_STATE.md; auditoria/TEST_MATRIX.md; auditoria/CHANGELOG-AUDIT.md
-- Próxima ação: Testar permissões reais, proveniência imutável e ordem PREPARED→COMMITTED; não alterar Kernel sem FAIL reproduzido.
-- Critérios pendentes: prova específica de fsync do temporário; fsync do diretório pai em Windows; ordem COMMITTED/evento; proveniência integrada; colisão/adulteração de hash; permissões; integração core.py + persistência E2E.
-- Limitações: Ollama é proibido como dependência obrigatória. PR #29 usa llama.cpp/OpenAI-compatible e permanece draft. Windows não executa fsync de diretório na implementação ativa atual.
-- Última atualização: 2026-10-07T12:32:00+01:00
+- Fase: FASE 5 — INTEGRAÇÃO (próximo bloqueio); FASE 6 parcialmente validada
+- Ciclo: 5
+- Objetivo atual: Integrar core.py + persistência sem alterar a lógica existente do Kernel; usar apenas camada mínima de composição.
+- Bloqueio atual: core.materialize() permanece fail-closed com PolicyUndefined; não existe ainda caminho E2E PREPARED → writer → COMMITTED → evento de sucesso.
+- Última alteração: Apenas testes para ordem PREPARED/COMMITTED, adulteração pós-commit, permissões reais POSIX e proveniência imutável.
+- Último teste executado: GitHub Actions “Auditoria e suites” no head 8f76d4113a414f9e9ae2c3f5bc4edf761552285d.
+- Resultado: PASS. Workflow completo SUCCESS. CodeQL estava ainda em execução na última verificação.
+- Ficheiros alterados: implementacao/ativa-2026-09-28/tests/test_persistence.py; implementacao/ativa-2026-09-28/tests/test_core_invariants.py; auditoria/WORK_STATE.md; auditoria/TEST_MATRIX.md; auditoria/CHANGELOG-AUDIT.md
+- Próxima ação: Criar teste E2E que exige core + writer e confirma que sucesso só existe após COMMITTED; reproduzir FAIL; implementar camada mínima de integração fora de core.py/persistence.py.
+- Critérios pendentes: fsync do temporário provado especificamente; fsync do diretório pai em Windows; evento de sucesso pós-COMMITTED; integração core.py + persistência E2E; permissões Windows; colisão criptográfica real não é gerável em teste normal.
+- Limitações: Ollama é proibido como dependência obrigatória. PR #29 usa llama.cpp/OpenAI-compatible. A implementação ativa continua sem fsync de diretório em Windows porque _fsync_dir retorna quando os.name=="nt".
+- Última atualização: 2026-10-07T12:38:00+01:00
