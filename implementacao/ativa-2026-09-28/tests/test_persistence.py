@@ -122,3 +122,48 @@ assert receipt.state == 'COMMITTED'
     w=W(tmp_path)
     assert w.reconcile("op-concurrent") == "COMMITTED"
     assert (tmp_path/"vault"/"creative"/"same.md").read_text() == "payload"
+
+
+def test_after_replace_crash_leaves_prepared_until_reconcile(tmp_path):
+    r=_run_hard_crash(tmp_path,"after_replace")
+    assert r.returncode == 98
+    import sqlite3
+    con=sqlite3.connect(tmp_path/"state"/"cerebro.sqlite3")
+    try:
+        row=con.execute(
+            "SELECT state FROM materializations WHERE operation_id=?",
+            ("op-hard",),
+        ).fetchone()
+    finally:
+        con.close()
+    assert row == ("PREPARED",)
+    assert (tmp_path/"vault"/"creative"/"a.md").read_bytes() == b"payload"
+    w=W(tmp_path)
+    assert w.reconcile("op-hard") == "COMMITTED"
+
+
+def test_committed_tamper_requires_recovery(tmp_path):
+    w=W(tmp_path)
+    w.write("op-tamper","CREATIVE","a.md","original")
+    target=tmp_path/"vault"/"creative"/"a.md"
+    target.write_text("alterado",encoding="utf-8")
+    assert w.reconcile("op-tamper") == "RECOVERY_REQUIRED"
+    with pytest.raises(RecoveryRequired):
+        w.resume("op-tamper")
+
+
+def test_real_permission_denial_does_not_commit(tmp_path):
+    import os
+    if os.name == "nt":
+        pytest.skip("POSIX chmod test; Windows ACL proof is a separate physical gate")
+    w=W(tmp_path)
+    parent=tmp_path/"vault"/"creative"
+    parent.mkdir(parents=True,exist_ok=True)
+    parent.chmod(0o500)
+    try:
+        with pytest.raises(PermissionError):
+            w.write("op-denied","CREATIVE","denied.md","payload")
+    finally:
+        parent.chmod(0o700)
+    assert w.reconcile("op-denied") == "NOT_COMMITTED"
+    assert not (parent/"denied.md").exists()
