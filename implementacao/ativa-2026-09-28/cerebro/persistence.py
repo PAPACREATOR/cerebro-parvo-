@@ -58,6 +58,23 @@ class RecoverableMarkdownWriter:
         if rel.is_absolute() or ".." in rel.parts or not rel.parts: raise PersistenceError("invalid relative path")
         root=(self.vault_root/domain.lower()).resolve()
         target=(root/rel).resolve()
+        if os.name=="nt":
+            def plain(value):
+                text=str(value)
+                if text.startswith("\\\\?\\UNC\\"):
+                    return "\\\\"+text[8:]
+                if text.startswith("\\\\?\\"):
+                    return text[4:]
+                return text
+            root_text=plain(root)
+            target_text=plain(target)
+            try:
+                inside=os.path.commonpath([os.path.normcase(root_text),os.path.normcase(target_text)])
+            except ValueError as e:
+                raise PersistenceError("path escapes domain root") from e
+            if inside!=os.path.normcase(root_text):
+                raise PersistenceError("path escapes domain root")
+            return Path(target_text)
         try: target.relative_to(root)
         except ValueError as e: raise PersistenceError("path escapes domain root") from e
         return target
@@ -109,7 +126,11 @@ class RecoverableMarkdownWriter:
                 f.write(content.encode("utf-8")); f.flush(); os.fsync(f.fileno())
             if hard_crashpoint=="after_temp_fsync": os._exit(99)
             if self._hash_file(tmp)!=receipt.expected_hash: raise RecoveryRequired("temporary file hash mismatch")
-            self._replace_and_sync(tmp,target)
+            try:
+                self._replace_and_sync(tmp,target)
+            except PermissionError:
+                if not target.exists() or self._hash_file(target)!=receipt.expected_hash:
+                    raise
             if hard_crashpoint=="after_replace": os._exit(98)
             if failpoint=="after_replace": raise RuntimeError("SIMULATED_CRASH_AFTER_REPLACE")
             return self._mark_committed(operation_id,target,receipt.expected_hash)
