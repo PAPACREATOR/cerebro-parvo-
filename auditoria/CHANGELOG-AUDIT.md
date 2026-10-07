@@ -97,3 +97,24 @@ Os testes confirmam que o estado continua PREPARED após a substituição físic
 ### Estado persistente atualizado: SIM
 ### Próxima ação
 Criar e executar o teste E2E core + persistência; confirmar FAIL do stub materialize e implementar apenas uma camada mínima de integração fora do Kernel existente.
+
+
+## Ciclo 6
+### Problema
+Não existia integração executável entre os eventos preparados do core e o writer recuperável; core.materialize permanecia fail-closed.
+### Evidência
+Foi criado primeiro test_integration_e2e.py. O GitHub Actions falhou com ModuleNotFoundError: No module named 'cerebro.integration', provando a ausência concreta da fronteira de integração.
+### Alteração
+Criado apenas cerebro/integration.py. core.py e persistence.py permaneceram byte-a-byte inalterados neste ciclo. A camada valida correlação/autoridade, chama o writer real e só devolve CREATIVE_CANDIDATE_COMMITTED após receipt.state == COMMITTED.
+### Teste criado ou atualizado
+test_core_to_persistence_commits_before_success_event.
+### Comando executado
+GitHub Actions “Auditoria e suites” no commit de teste 1f71bc6474a3196ef47b2bd50d4a7a69759a3a7e e novamente após correção no commit d503a0eb6f9eafa85e1b63d9fb12bed4bd4680c9.
+### Resultado real
+Primeiro run: FAIL esperado na recolha por ausência de cerebro.integration. Segundo run: PASS completo.
+### Revisão
+A correção acrescenta um único ficheiro de cola; não altera regras de autoridade, persistência, core.py nem persistence.py. O evento de sucesso é construído apenas depois do writer devolver COMMITTED.
+### Decisão: ACEITE
+### Estado persistente atualizado: SIM
+### Próxima ação
+Abrir gate Windows específico para fsync do diretório pai e corrigir apenas a implementação privada _fsync_dir se o teste falhar como esperado.
