@@ -33,6 +33,32 @@ def digest(data):
     return hashlib.sha256(data).hexdigest()
 
 
+def _fsync_parent(path):
+    parent = Path(path).parent
+    fd = os.open(parent, os.O_RDONLY)
+    try:
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+
+
+def _replace_durable(source, target):
+    source = str(source)
+    target = str(target)
+    if os.name == "nt":
+        import ctypes
+        move = ctypes.WinDLL("kernel32", use_last_error=True).MoveFileExW
+        move.argtypes = [ctypes.c_wchar_p, ctypes.c_wchar_p, ctypes.c_uint32]
+        move.restype = ctypes.c_int
+        MOVEFILE_REPLACE_EXISTING = 0x1
+        MOVEFILE_WRITE_THROUGH = 0x8
+        if not move(source, target, MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH):
+            raise ctypes.WinError(ctypes.get_last_error())
+        return
+    os.replace(source, target)
+    _fsync_parent(target)
+
+
 def atomic(path, data):
     path = Path(path)
     raw = data if isinstance(data, bytes) else json.dumps(data, ensure_ascii=False, indent=2).encode("utf-8")
@@ -42,7 +68,7 @@ def atomic(path, data):
             stream.write(raw)
             stream.flush()
             os.fsync(stream.fileno())
-        os.replace(name, path)
+        _replace_durable(name, path)
     finally:
         if os.path.exists(name):
             os.unlink(name)
