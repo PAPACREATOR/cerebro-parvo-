@@ -1,13 +1,13 @@
 # Estado de Trabalho
-- Fase: FASE 4 — REINÍCIO (em validação), com regressão de FASE 3
-- Ciclo: 2
-- Objetivo atual: Provar crash real/reconcile da persistência e desbloquear a regressão CI do repositório.
-- Bloqueio atual: Workflow de auditoria estava bloqueado por verificador documental desatualizado; correção mínima publicada e novo CI em execução.
-- Última alteração: README voltou a declarar M1–M14 para satisfazer o contrato explícito de ferramentas/verificar_documentacao.py; antes disso foram adicionados hard crashpoints e testes subprocess reais.
-- Último teste executado: python -m pytest -q --color=no tests/test_persistence.py
-- Resultado: 13 PASS no ambiente isolado; inclui 2 testes de término real do processo (exit 97 após PREPARED; exit 98 após replace) e recovery/reconcile. CI da cabeça 7be6d92b83c50858311af3f2935e9607df3682f1 ainda em execução no momento deste registo.
-- Ficheiros alterados: implementacao/ativa-2026-09-28/cerebro/persistence.py; implementacao/ativa-2026-09-28/tests/test_persistence.py; README.md; auditoria/WORK_STATE.md; auditoria/TEST_MATRIX.md; auditoria/CHANGELOG-AUDIT.md
-- Próxima ação: Confirmar CI; depois testar receção/preservação byte-a-byte, incluindo normal, vazio, Unicode, binário, grande, inexistente e traversal, antes de alterar core.py.
-- Critérios pendentes: cobertura formal de fsync do temporário; fsync do diretório pai; ordem COMMITTED/evento; ingestão byte-a-byte; proveniência integrada; symlink; colisão; concorrência; permissões; integração core.py + persistência E2E.
-- Limitações: Clone de rede indisponível no ambiente local; execução local foi feita com cópia exata dos ficheiros ativos obtidos do GitHub. Windows fsync de diretório continua não provado porque _fsync_dir retorna em os.name=="nt".
-- Última atualização: 2026-10-07T12:19:00+01:00
+- Fase: FASE 2 — RECEÇÃO concluída no subconjunto básico; FASE 4 crash real validada; FASE 3 ainda com critérios por fechar
+- Ciclo: 3
+- Objetivo atual: Consolidar ingestão byte-a-byte e manter o Kernel sem alterações de lógica desnecessárias.
+- Bloqueio atual: Instalação Windows completa permanece separada no PR #29; dois workflows físicos/integração desse ramo ainda estavam em execução na última verificação.
+- Última alteração: Adicionado teste real de ingestão byte-a-byte; descrição do PR #29 corrigida para refletir que Ollama não é dependência e que o runtime local usa llama.cpp/OpenAI-compatible.
+- Último teste executado: GitHub Actions “Auditoria e suites” e CodeQL no head 1ffe4923dfc3216910a12e8079f89782302af717.
+- Resultado: PASS em ambos. Testes locais adicionais: 7/7 ingestão real e 13/13 persistência, incluindo 2 crashes de processo reais.
+- Ficheiros alterados: implementacao/ativa-2026-09-28/tests/test_ingest_real.py; documentação/estado de auditoria. Nenhuma nova alteração de lógica do Kernel neste ciclo.
+- Próxima ação: Testar concorrência real e symlink malicioso antes de qualquer alteração funcional; só corrigir código se houver FAIL reproduzido.
+- Critérios pendentes: prova específica de fsync do temporário; fsync de diretório em Windows; ordem COMMITTED/evento; proveniência integrada; symlink; colisão; concorrência; permissões; integração core.py + persistência E2E.
+- Limitações: Ollama é proibido como dependência obrigatória. O ramo Windows usa llama.cpp local substituível; o PR #29 continua draft e não deve ser promovido antes dos gates Windows/Integration e aceitação física no PC.
+- Última atualização: 2026-10-07T12:27:00+01:00
