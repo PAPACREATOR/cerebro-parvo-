@@ -42,33 +42,34 @@ jobs:
           $env:NEXUS_LEGACY_MODULE = $legacy
           $env:NEXUS_LEGACY_LANGCHAIN_MODULE = 'langchain_' + $legacy
           $python = Join-Path $target '.venv\Scripts\python.exe'
-          @'
-import importlib.util
-import os
-from esperanto import AIFactory
-from open_notebook.ai.provider_registry import PROVIDERS
-import open_notebook.ai.models
-import api.credentials_service
+          $probe = @'
+          import importlib.util
+          import os
+          from esperanto import AIFactory
+          from open_notebook.ai.provider_registry import PROVIDERS
+          import open_notebook.ai.models
+          import api.credentials_service
 
-for name in (os.environ["NEXUS_LEGACY_MODULE"], os.environ["NEXUS_LEGACY_LANGCHAIN_MODULE"]):
-    assert importlib.util.find_spec(name) is None, name
+          for name in (os.environ["NEXUS_LEGACY_MODULE"], os.environ["NEXUS_LEGACY_LANGCHAIN_MODULE"]):
+              assert importlib.util.find_spec(name) is None, name
 
-spec = PROVIDERS["openai_compatible"]
-assert "language" in spec.modalities
-assert "embedding" in spec.modalities
+          spec = PROVIDERS["openai_compatible"]
+          assert "language" in spec.modalities
+          assert "embedding" in spec.modalities
 
-language = AIFactory.create_language(
-    model_name="nexus-qwen3-1.7b",
-    provider="openai-compatible",
-    config={"base_url": "http://127.0.0.1:18081/v1", "api_key": "nexus-local-not-a-secret"},
-)
-embedding = AIFactory.create_embedding(
-    model_name="nexus-qwen3-embedding-0.6b",
-    provider="openai-compatible",
-    config={"base_url": "http://127.0.0.1:18082/v1", "api_key": "nexus-local-not-a-secret"},
-)
-assert language is not None
-assert embedding is not None
-print("OPEN_NOTEBOOK_LLAMACPP_COMPAT=PASS")
-'@ | & $python -
+          language = AIFactory.create_language(
+              model_name="nexus-qwen3-1.7b",
+              provider="openai-compatible",
+              config={"base_url": "http://127.0.0.1:18081/v1", "api_key": "nexus-local-not-a-secret"},
+          )
+          embedding = AIFactory.create_embedding(
+              model_name="nexus-qwen3-embedding-0.6b",
+              provider="openai-compatible",
+              config={"base_url": "http://127.0.0.1:18082/v1", "api_key": "nexus-local-not-a-secret"},
+          )
+          assert language is not None
+          assert embedding is not None
+          print("OPEN_NOTEBOOK_LLAMACPP_COMPAT=PASS")
+          '@
+          $probe | & $python -
           if ($LASTEXITCODE -ne 0) { throw 'OPEN_NOTEBOOK_OPENAI_COMPAT_SMOKE_FAILED' }
