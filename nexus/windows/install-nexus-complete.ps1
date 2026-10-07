@@ -70,16 +70,88 @@ function Resolve-Executable {
     return $null
 }
 
+function Test-PackageRuntime {
+    param([Parameter(Mandatory=$true)][string]$Id)
+    Refresh-ProcessPath
+    switch ($Id) {
+        'Git.Git' {
+            return [bool](Resolve-Executable @('git.exe','git') @("$env:ProgramFiles\Git\cmd\git.exe"))
+        }
+        'Python.Python.3.12' {
+            $py = Resolve-Executable @('py.exe','py') @("$env:SystemRoot\py.exe")
+            if (-not $py) { return $false }
+            & $py -3.12 -c "import sys; raise SystemExit(0 if sys.version_info[:2] == (3,12) else 1)" 2>$null
+            return ($LASTEXITCODE -eq 0)
+        }
+        'OpenJS.NodeJS.LTS' {
+            $node = Resolve-Executable @('node.exe','node') @("$env:ProgramFiles\nodejs\node.exe")
+            $npm = Resolve-Executable @('npm.cmd','npm') @("$env:ProgramFiles\nodejs\npm.cmd")
+            if (-not $node -or -not $npm) { return $false }
+            & $node --version *> $null
+            if ($LASTEXITCODE -ne 0) { return $false }
+            & $npm --version *> $null
+            return ($LASTEXITCODE -eq 0)
+        }
+        'Microsoft.OpenJDK.17' {
+            return [bool](Resolve-Executable @('java.exe','java') @("$env:ProgramFiles\Microsoft\jdk-17*\bin\java.exe"))
+        }
+        'TheDocumentFoundation.LibreOffice' {
+            return [bool](Resolve-Executable @('soffice.com') @("$env:ProgramFiles\LibreOffice\program\soffice.com"))
+        }
+        'DigitalScholar.Zotero' {
+            return [bool](Resolve-Executable @('zotero.exe') @(
+                "$env:ProgramFiles\Zotero\zotero.exe",
+                "$([Environment]::GetFolderPath('ProgramFilesX86'))\Zotero\zotero.exe",
+                "$env:LOCALAPPDATA\Programs\Zotero\zotero.exe"
+            ))
+        }
+        'Gyan.FFmpeg' {
+            return [bool](Resolve-Executable @('ffmpeg.exe','ffmpeg'))
+        }
+        'astral-sh.uv' {
+            return [bool](Resolve-Executable @('uv.exe','uv') @(
+                "$env:USERPROFILE\.local\bin\uv.exe",
+                "$env:LOCALAPPDATA\Microsoft\WinGet\Links\uv.exe"
+            ))
+        }
+        'Ollama.Ollama' {
+            return [bool](Resolve-Executable @('ollama.exe','ollama') @("$env:LOCALAPPDATA\Programs\Ollama\ollama.exe"))
+        }
+        default {
+            return $false
+        }
+    }
+}
+
 function Ensure-WingetPackage {
     param([Parameter(Mandatory=$true)][string]$Id)
     $winget = Resolve-Executable @('winget.exe')
     if (-not $winget) { throw 'NEXUS_WINGET_REQUIRED: install Microsoft App Installer first.' }
+
     $listed = & $winget list --id $Id --exact --accept-source-agreements 2>&1
-    if ($LASTEXITCODE -ne 0 -or ("$listed" -notmatch [regex]::Escape($Id))) {
-        & $winget install --id $Id --exact --source winget --silent --accept-package-agreements --accept-source-agreements --disable-interactivity
-        if ($LASTEXITCODE -ne 0) { throw ('NEXUS_WINGET_INSTALL_FAILED: ' + $Id) }
+    if ($LASTEXITCODE -eq 0 -and ("$listed" -match [regex]::Escape($Id))) {
+        Refresh-ProcessPath
+        return 'WINGET_PRESENT'
     }
+
+    if (Test-PackageRuntime $Id) {
+        return 'RUNTIME_PRESENT'
+    }
+
+    & $winget install --id $Id --exact --source winget --silent --accept-package-agreements --accept-source-agreements --disable-interactivity
+    $installExit = $LASTEXITCODE
     Refresh-ProcessPath
+
+    if ($installExit -eq 0) {
+        return 'WINGET_INSTALLED'
+    }
+
+    if (Test-PackageRuntime $Id) {
+        Write-Warning ('winget returned exit=' + $installExit + ' for ' + $Id + ', but its runtime is present and executable; continuing with runtime verification.')
+        return ('RUNTIME_PRESENT_AFTER_WINGET_FAILURE_' + $installExit)
+    }
+
+    throw ('NEXUS_WINGET_INSTALL_FAILED: ' + $Id + ' exit=' + $installExit)
 }
 
 function Install-PinnedRepo {
@@ -241,8 +313,8 @@ try {
         'Ollama.Ollama',
         'Microsoft.VCRedist.2015+.x64'
     )) {
-        Ensure-WingetPackage $id
-        $report.prerequisites[$id] = 'INSTALLED_OR_PRESENT'
+        $packageState = Ensure-WingetPackage $id
+        $report.prerequisites[$id] = $packageState
         Save-Report
     }
 
