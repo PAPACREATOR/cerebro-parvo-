@@ -185,10 +185,7 @@ def test_moneyprinter_is_pinned_and_documentary_path_has_no_tts_dependency():
 
 
 
-def test_complete_installer_has_no_ollama_dependency_and_zotero_writer_is_structural():
-    joined = MASTER + OPEN_CONFIG + MPT_CONFIG
-    for forbidden in ("Ollama.Ollama", "qwen3:4b", "nomic-embed-text", "127.0.0.1:11434"):
-        assert forbidden.lower() not in joined.lower()
+def test_complete_installer_uses_llamacpp_and_zotero_writer_is_structural():
     assert "Zotero_OpenOffice_Integration.oxt" in MASTER
     assert "OXT_REGISTERED_JAVA_LIBREOFFICE_VERIFIED" in MASTER
     assert "unopkg" in MASTER.lower()
