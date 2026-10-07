@@ -226,8 +226,6 @@ w=RecoverableMarkdownWriter(root/'state'/'cerebro.sqlite3',root/'vault')
 try:
     w.write('op-denied-win','CREATIVE','denied.md','payload')
 except OSError:
-    assert w.reconcile('op-denied-win') == 'NOT_COMMITTED'
-    assert not (root/'vault'/'creative'/'denied.md').exists()
     raise SystemExit(0)
 raise SystemExit(3)
 """
@@ -240,7 +238,6 @@ raise SystemExit(3)
             timeout=30,
         )
         assert denied.returncode == 0, denied.stdout + denied.stderr
-        assert not (parent/"denied.md").exists()
     finally:
         cleanup=subprocess.run(
             ["icacls",str(parent),"/remove:d",who],
@@ -249,3 +246,6 @@ raise SystemExit(3)
             timeout=15,
         )
         assert cleanup.returncode == 0, cleanup.stdout + cleanup.stderr
+    w=W(tmp_path)
+    assert w.reconcile("op-denied-win") == "NOT_COMMITTED"
+    assert not (parent/"denied.md").exists()
