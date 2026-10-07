@@ -2,7 +2,7 @@
 
 Folha → Kernel/Host Python → MCP/ferramenta → JSON validado → Creative. A promoção para Canonical exige confirmação humana ligada ao conteúdo.
 
-Estado, SHA validado e falhas pendentes: [ponto de situação único](docs/PONTO-DE-SITUACAO.md). A branch candidata da [PR #23](https://github.com/PAPACREATOR/cerebro-parvo-/pull/23) ainda não foi integrada em `main`.
+Estado, SHA validado e falhas pendentes: [ponto de situação único](docs/PONTO-DE-SITUACAO.md). Em 07-10-2026, a linha de produto Windows mais completa está na [PR #32](https://github.com/PAPACREATOR/cerebro-parvo-/pull/32). A [PR #31](https://github.com/PAPACREATOR/cerebro-parvo-/pull/31) contém auditoria transacional de um núcleo anterior e não valida automaticamente este runtime. Nenhuma destas frentes está integrada em `main`.
 
 ## Arranque determinístico
 
