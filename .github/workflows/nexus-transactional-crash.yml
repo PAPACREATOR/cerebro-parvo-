@@ -5,6 +5,7 @@ on:
     paths:
       - 'nexus/store.py'
       - 'nexus/tests/test_store_create_crash_real.py'
+      - 'nexus/tests/test_canonical_crash_real.py'
       - '.github/workflows/nexus-transactional-crash.yml'
   workflow_dispatch:
 
@@ -32,5 +33,5 @@ jobs:
           python-version: '3.12'
       - name: Install pinned test dependencies
         run: python -m pip install -r nexus/requirements-test.txt
-      - name: Real create crash recovery
-        run: python -m pytest nexus/tests/test_store_create_crash_real.py -q -p no:cacheprovider -o pythonpath=.
+      - name: Real create and Canonical publication crash recovery
+        run: python -m pytest nexus/tests/test_store_create_crash_real.py nexus/tests/test_canonical_crash_real.py -q -p no:cacheprovider -o pythonpath=.
