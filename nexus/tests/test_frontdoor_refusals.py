@@ -25,6 +25,9 @@ REFUSALS = [
     ("Não corrige esta frase.", "trabalhar"),
     ('O documento contém "guarda este texto".', "arquivo"),
     ("O texto diz «corrige este parágrafo».", "trabalhar"),
+    ("O texto diz «guarda esta nota.", "arquivo"),
+    ("O texto diz “corrige este parágrafo.", "trabalhar"),
+    ('O documento contém "calcula estes valores.', "calcular"),
     ("A palavra guarda aparece no documento.", "arquivo"),
     ("A frase calcula foi citada.", "calcular"),
 ]
