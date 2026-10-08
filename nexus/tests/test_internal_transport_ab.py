@@ -267,7 +267,12 @@ def test_direct_product_capability_is_pinned_then_human_approved_without_restart
         while state["status"] == "RUNNING" and time.monotonic() < deadline:
             time.sleep(0.05)
             state = call("/api/runs/" + run)
-        assert state["status"] == "HUMAN_REQUIRED", state
+        if state["status"] != "HUMAN_REQUIRED":
+            folder = data / "runs" / run
+            diagnostics = {p.name: p.read_text("utf-8", errors="replace")[-12000:]
+                           for p in folder.iterdir() if p.name in {
+                               "execution.stderr.txt", "execution.stdout.json", "failure.json"}}
+            pytest.fail(json.dumps({"state": state, "diagnostics": diagnostics}, ensure_ascii=False))
         assert pinned == process_fingerprint(process)
         assert (data / "runs" / run / "input.bin").read_bytes() == raw
         assert not (data / "canonical" / run).exists()

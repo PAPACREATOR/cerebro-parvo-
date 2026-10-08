@@ -222,7 +222,7 @@ def test_50000_full_component_bindings_are_bidirectional():
         ("d9426c121eddadc76648be20034bc087acd0240c", MEDIA, MEDIA),
         ("wav2lip.pth", INSTALL, AVATAR),
         ("68eb5a68b93cfe338198b3dfb151f6d5ec2fe4e5", INSTALL, INSTALL),
-        ("mcp==1.23.2", REQUIREMENTS, REQUIREMENTS),
+        ("mcp==1.23.2", MCP_REQUIREMENTS, MCP_REQUIREMENTS),
         ("writer_pdf_Export", OFFICE, OFFICE),
         ("nexus-qwen3-1.7b", INSTALL, OPEN_CONFIG),
         ("nexus-qwen3-embedding-0.6b", INSTALL, OPEN_CONFIG),

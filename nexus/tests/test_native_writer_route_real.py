@@ -5,6 +5,7 @@ import io
 import json
 import os
 from pathlib import Path
+import sys
 import time
 import zipfile
 
@@ -16,6 +17,44 @@ from nexus.tests.test_reverse_flow import http
 pytestmark = pytest.mark.skipif(
     os.name != "nt" or os.environ.get("NEXUS_REAL_WRITER") != "1",
     reason="Explicit installed Writer native Windows gate NOT RUN here")
+
+
+def test_writer_ipc_namespace_observation_inside_native_boundary(tmp_path):
+    """Observe Writer's pipe convention; this is no conversion PASS."""
+    from nexus.windows_sandbox import launch_confined, task_environment
+    work = tmp_path / "ipc-probe"
+    work.mkdir()
+    script = r'''
+import ctypes as C, json, uuid
+from ctypes import wintypes as W
+k=C.WinDLL('kernel32',use_last_error=True)
+k.CreateMutexW.argtypes=[C.c_void_p,W.BOOL,W.LPCWSTR]
+k.CreateMutexW.restype=W.HANDLE
+k.CreateNamedPipeW.argtypes=[W.LPCWSTR,W.DWORD,W.DWORD,W.DWORD,W.DWORD,W.DWORD,W.DWORD,C.c_void_p]
+k.CreateNamedPipeW.restype=W.HANDLE
+k.CloseHandle.argtypes=[W.HANDLE]
+result={}
+for namespace in ('legacy','LOCAL'):
+    name='OSL_PIPE_nexus_diagnostic_'+uuid.uuid4().hex
+    mutex=k.CreateMutexW(None,False,name)
+    mutex_error=C.get_last_error()
+    path='\\\\.\\pipe\\'+('LOCAL\\' if namespace=='LOCAL' else '')+name
+    pipe=k.CreateNamedPipeW(path,3|0x40000000,4|2,255,4096,4096,0xffffffff,None)
+    error=C.get_last_error()
+    ok=pipe not in (None,C.c_void_p(-1).value)
+    result[namespace]={'mutex_created':bool(mutex),'mutex_error':mutex_error,
+                       'pipe_created':ok,'pipe_error':0 if ok else error}
+    if ok: k.CloseHandle(pipe)
+    if mutex: k.CloseHandle(mutex)
+print(json.dumps(result))
+'''
+    with launch_confined([sys.executable, "-I", "-c", script], cwd=work,
+                         env=task_environment(work), read_roots=(sys.prefix, sys.base_prefix)) as worker:
+        stdout, stderr = worker.communicate(timeout=15)
+        assert worker.returncode == 0, stderr.decode(errors="replace")
+    observed = json.loads(stdout)
+    print("Writer IPC namespace observation (LPAC unchanged): " + json.dumps(observed))
+    assert observed["LOCAL"]["pipe_created"], observed
 
 
 def document():

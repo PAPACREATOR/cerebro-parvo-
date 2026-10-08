@@ -77,4 +77,11 @@ jobs:
       - name: Install pinned Nexus test dependencies
         run: python -m pip install -r nexus/requirements-test.txt
       - name: Real LibreOffice Writer Windows gate
-        run: python -m pytest nexus/tests/test_writer_real_libreoffice.py nexus/tests/test_native_writer_route_real.py -q -p no:cacheprovider -o pythonpath=.
+        run: python -m pytest nexus/tests/test_writer_real_libreoffice.py nexus/tests/test_native_writer_route_real.py -q -rP -p no:cacheprovider -o pythonpath=. --junitxml=writer-evidence/native-writer.xml
+      - name: Preserve native Writer observations even on FAIL
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-writer-evidence
+          path: writer-evidence/
+          if-no-files-found: error
