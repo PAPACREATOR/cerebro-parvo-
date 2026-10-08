@@ -67,15 +67,20 @@ jobs:
       - name: Delimitar evidencia
         shell: pwsh
         run: |
-          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value 'Suites Nexus core, blocks, practical e all executadas num runner Windows. Practical cobre apenas contratos reais ja automatizados. Nao prova a instalacao no PC de Pedro, Open Notebook/tiny, LibreOffice real, ACL da conta Nexus, homelab ou o produto completo.'
+          Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value 'Suites Nexus core, blocks e practical executadas num runner Windows; regressao integral nos jobs complementares. Practical cobre apenas contratos reais ja automatizados. Nao prova a instalacao no PC de Pedro, Open Notebook/tiny, LibreOffice real, ACL da conta Nexus, homelab ou o produto completo.'
 
   regression:
-    name: Nexus Windows — complete standard regression
+    name: Nexus Windows — standard regression partition ${{ matrix.shard }}
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1]
     runs-on: windows-latest
     timeout-minutes: 15
     env:
       PYTHONUTF8: '1'
       PYTHONIOENCODING: utf-8
+      NEXUS_REGRESSION_SHARD: ${{ matrix.shard }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -89,14 +94,33 @@ jobs:
       - name: Complete standard regression on the same candidate
         shell: pwsh
         run: |
-          # Volume gates stay in their existing dedicated workflow.
-          python -m pytest nexus/tests -q -p no:cacheprovider -o pythonpath=. --ignore=nexus/tests/test_product_flows_5000.py --ignore=nexus/tests/test_product_system_50000.py --ignore=nexus/tests/test_product_themes_canonical_200k.py --ignore=nexus/tests/test_public_product_routes_10000.py --ignore=nexus/tests/test_public_product_routes_all_50000.py --ignore=nexus/tests/test_windows_stack_structural_300k.py --junitxml=windows-regression-evidence/standard.xml
-          if ($LASTEXITCODE -ne 0) { throw 'Standard Windows regression failed' }
-          Write-Output 'NEXUS_SUITE_ALL_STANDARD=PASS'
+          # Same standard coverage; six volume modules remain in dedicated gates.
+          $volume = @(
+            'nexus/tests/test_product_flows_5000.py',
+            'nexus/tests/test_product_system_50000.py',
+            'nexus/tests/test_product_themes_canonical_200k.py',
+            'nexus/tests/test_public_product_routes_10000.py',
+            'nexus/tests/test_public_product_routes_all_50000.py',
+            'nexus/tests/test_windows_stack_structural_300k.py'
+          )
+          $modules = @(Get-ChildItem -LiteralPath nexus/tests -File -Recurse |
+            Where-Object { $_.Name -like 'test_*.py' -or $_.Name -like '*_test.py' } |
+            ForEach-Object { [IO.Path]::GetRelativePath($PWD.Path, $_.FullName).Replace('\', '/') } |
+            Where-Object { $volume -notcontains $_ } | Sort-Object)
+          $shard = [int]$env:NEXUS_REGRESSION_SHARD
+          $selected = @(for ($i = 0; $i -lt $modules.Count; $i++) {
+            if (($i % 2) -eq $shard) { $modules[$i] }
+          })
+          if ($selected.Count -eq 0) { throw 'Empty regression partition' }
+          Write-Output ("STANDARD_MODULES=" + $modules.Count + " PARTITION=" + $shard + " SELECTED=" + $selected.Count)
+          $selected | ForEach-Object { Write-Output ("STANDARD_MODULE=" + $_) }
+          python -m pytest @selected -vv -p no:cacheprovider -o pythonpath=. --durations=20 "--junitxml=windows-regression-evidence/standard-$shard.xml"
+          if ($LASTEXITCODE -ne 0) { throw 'Standard Windows regression partition failed' }
+          Write-Output ("NEXUS_SUITE_ALL_STANDARD_PARTITION_" + $shard + "=PASS")
       - name: Preserve complete regression evidence even on FAIL
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: windows-standard-regression-evidence
+          name: windows-standard-regression-evidence-${{ matrix.shard }}
           path: windows-regression-evidence/
           if-no-files-found: error

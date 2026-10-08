@@ -30,6 +30,10 @@ Atualização de provas em a2d76ff: confinement concluiu nos dois Windows, inclu
 
 Regressão Windows: Core 140, Blocks 1079 e Practical 79 PASS; suite completa interrompida pelo limite do job de 15 min após 1525 PASS/12 SKIP. CANCELLED não é PASS. As suites passam a jobs separados com os mesmos comandos/limites, sem retirar testes. Novo HEAD exige repetir os oito workflows antes da matriz final em #32/#33.
 
+Continuação em `d7798a4`: auditoria, CodeQL, crash/recovery, compatibilidade, confinement nos dois Windows e os seis jobs de integração concluíram SUCCESS. Confinement repetiu os 41 testes nativos por OS. Writer repetiu 2 FAIL/5 PASS; limites/fronteira intactos. A regressão standard isolada também foi CANCELLED aos 15 min, após 1530 PASS/12 SKIP (interrupção observada em ssl.py, sem prova de FAIL funcional). [Run e XML preservados](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37785435070).
+
+Correção apenas da distribuição CI: os mesmos 64 módulos standard são enumerados e repartidos por índice par/ímpar em dois jobs Windows. União = 64, interseção = 0; as seis exclusões de volume existentes mantêm os gates dedicados. Não se reduz cobertura nem se aumenta prazo. Log por teste, vinte durações e XML por partição permitem localizar uma eventual demora individual. Novo HEAD deve repetir os oito workflows; o PASS de uma partição não valida a outra nem o Writer.
+
 ### Runtime e redundâncias justificadas
 
 A Folha conserva dez processos explícitos da política. **Front Door natural/tiny com sete intenções: NOT INTEGRATED**; não existe mapa 7→10 aprovado nesta convergência. A seleção explícita é o protótipo autorizado; não foi inventado router novo.
