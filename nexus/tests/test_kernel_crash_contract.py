@@ -62,6 +62,11 @@ def test_restart_after_kernel_dies_during_executor_is_recovery_required(tmp_path
         seen_phase.append(host.store.state(run_id).get("execution_phase"))
         raise SystemExit("synthetic hard crash during executor")
 
+    # This is a phase/recovery unit double, not a native execution proof.
+    # Select the Windows branch without changing the global platform module.
+    from types import SimpleNamespace
+    from nexus import host as host_module
+    monkeypatch.setattr(host_module, "os", SimpleNamespace(name="nt"))
     monkeypatch.setattr("nexus.host.launch_confined", crash_after_external_entry)
 
     host.busy.acquire()

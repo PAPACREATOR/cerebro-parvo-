@@ -21,6 +21,7 @@ MEDIA = (ROOT / "windows" / "install-media-tools.ps1").read_text(encoding="utf-8
 AVATAR = (ROOT / "lab" / "open_notebook_avatar" / "install-windows.ps1").read_text(encoding="utf-8")
 OFFICE = (ROOT / "adapters" / "office.py").read_text(encoding="utf-8")
 REQUIREMENTS = (ROOT / "requirements.txt").read_text(encoding="utf-8")
+MCP_REQUIREMENTS = (ROOT / "requirements-mcp.txt").read_text(encoding="utf-8")
 
 CASES = 50_000
 
@@ -134,7 +135,8 @@ def test_static_stack_contract_is_coherent_before_volume():
     assert "$ForgePort = 7861" in MEDIA
     assert "'--port','5055'" in INSTALL
     assert "'--port','8969'" in INSTALL
-    assert "mcp==1.23.2" in REQUIREMENTS
+    assert REQUIREMENTS.splitlines() == ["jsonschema==4.26.0"]
+    assert MCP_REQUIREMENTS.splitlines() == ["mcp==1.23.2", "trio==0.34.0"]
     assert "writer_pdf_Export" in OFFICE
     assert "wav2lip.pth" in AVATAR
     for practical_token in (

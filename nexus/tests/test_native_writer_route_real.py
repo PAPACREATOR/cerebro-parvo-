@@ -37,6 +37,25 @@ def document():
 
 @pytest.mark.parametrize("process", ["book", "convert_pdf"])
 def test_installed_writer_is_confined_and_returns_only_a_human_approved_candidate(tmp_path, monkeypatch, process):
+    from nexus import host as host_module
+    real_launch = host_module.launch_confined
+    tool_diagnostics = []
+    def observed_launch(command, **kwargs):
+        kwargs["env"] = {**kwargs["env"], "SAL_LOG": "+WARN"}
+        worker = real_launch(command, **kwargs)
+        communicate = worker.communicate
+        def observed_communication(*args, **options):
+            try:
+                return communicate(*args, **options)
+            finally:
+                work = Path(kwargs["cwd"])
+                for name in ["office/stdout.txt", "office/stderr.txt"]:
+                    path = work / name
+                    if path.is_file():
+                        tool_diagnostics.append({name: path.read_bytes()[:12000].decode("utf-8", errors="replace")})
+        worker.communicate = observed_communication
+        return worker
+    monkeypatch.setattr(host_module, "launch_confined", observed_launch)
     executable = Path(os.environ["LIBREOFFICE_EXE"])
     assert executable.is_file()
     data = tmp_path / "data"
@@ -56,7 +75,7 @@ def test_installed_writer_is_confined_and_returns_only_a_human_approved_candidat
             folder = data / "runs" / run
             diagnostics = {p.name: p.read_text("utf-8", errors="replace")[-12000:]
                            for p in folder.iterdir() if p.suffix in {".json", ".txt"}}
-            pytest.fail(json.dumps({"state": state, "diagnostics": diagnostics}, ensure_ascii=False))
+            pytest.fail(json.dumps({"state": state, "diagnostics": diagnostics, "tool": tool_diagnostics}, ensure_ascii=False))
         assert state["result"]["status"] == "UNKNOWN"
         assert state["result"]["ai_calls"] == 0
         assert not (data / "canonical" / run).exists()

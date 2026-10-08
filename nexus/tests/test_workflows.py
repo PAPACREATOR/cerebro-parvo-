@@ -2,7 +2,7 @@ import hashlib
 
 import pytest
 
-from nexus.adapters.runner import execute
+from nexus.tests._mcp_baseline import execute
 from nexus.adapters.verify_direct import POLICY
 from nexus.adapters.tools import compare, report
 from nexus.contracts import Blocked, validate

@@ -13,7 +13,7 @@ import time
 
 import pytest
 
-from nexus.adapters.runner import execute
+from nexus.tests._mcp_baseline import execute
 from nexus.contracts import Blocked
 from nexus.host import Host
 from nexus.tests.test_reverse_flow import http

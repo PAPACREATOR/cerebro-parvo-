@@ -16,7 +16,7 @@ import pytest
 
 from nexus.adapters.runner import PROCESS_TO_TOOL, process_fingerprint
 from nexus.contracts import Blocked, ROOT, validate
-from nexus.tests import _direct_candidate as direct
+from nexus.adapters import runner as direct
 
 SOURCE = "Lisboa recebeu 12 caixas."
 PDF = b"%PDF-1.4\n% deterministic CLI fixture\n%%EOF\n"
@@ -122,8 +122,8 @@ def test_all_internal_capabilities_across_real_native_mcp_and_direct(tmp_path, m
     marker.write_bytes(b"human-owned")
     results, inputs, counts = [], [], []
     pinned = process_fingerprint(process)
-    for name, script in [("A", ROOT / "adapters/runner.py"),
-                         ("B", ROOT / "tests/_direct_candidate.py")]:
+    for name, script in [("A", ROOT / "tests/_mcp_baseline.py"),
+                         ("B", ROOT / "adapters/runner.py")]:
         work = tmp_path / (".nexus-task-" + name) / "runs" / ("a" * 32)
         work.mkdir(parents=True)
         source = prepare(work, process, cli_peers)
@@ -221,3 +221,71 @@ def test_direct_rejects_traversal_and_redirected_input(tmp_path, monkeypatch):
         with pytest.raises(Blocked):
             direct.execute("verify", path)
     assert not called
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Full native Host capability path NOT RUN on this OS")
+@pytest.mark.parametrize("process", sorted(PROCESS_TO_TOOL))
+def test_direct_product_capability_is_pinned_then_human_approved_without_restart_replay(tmp_path, monkeypatch, cli_peers, process):
+    import base64
+    import time
+    from nexus.host import Host
+    from nexus.tests.test_reverse_flow import http
+    from nexus import host as host_module
+    data = tmp_path / "data"
+    data.mkdir()
+    raw = prepare(data, process, cli_peers).read_bytes()
+    config = {"base_url": "http://127.0.0.1:5055", "password": "synthetic-host-only-password",
+              "model_id": "model:fixture", "transformation_id": "transformation:fixture"}
+    brokers = []
+    if process in {"interpret", "video", "podcast", "visual_podcast"}:
+        name = "open-notebook.json" if process == "interpret" else "open-notebook-product.json"
+        (data / name).write_text(json.dumps(config), encoding="utf-8")
+        snapshot = data / ("open-notebook-response.json" if process == "interpret" else "product-plan-response.json")
+        def broker(*args):
+            assert args[-1] == config
+            brokers.append(process)
+            return json.loads(snapshot.read_text("utf-8"))
+        target = "nexus.adapters.notebook.fetch_output" if process == "interpret" else "nexus.adapters.product_routes.fetch_plan"
+        monkeypatch.setattr(target, broker)
+    monkeypatch.setenv("OPENAI_API_KEY", "synthetic-parent-only-secret")
+    launches = []
+    original_launch = host_module.launch_confined
+    def launch(command, **kwargs):
+        launches.append((command, kwargs))
+        assert data.resolve() in kwargs["deny_roots"]
+        assert "OPENAI_API_KEY" not in kwargs["env"]
+        assert config["password"] not in kwargs["env"].values()
+        return original_launch(command, **kwargs)
+    monkeypatch.setattr(host_module, "launch_confined", launch)
+    host = Host(data)
+    with http(host) as call:
+        run = call("/api/run", {"process": process, "text": "", "filename": "source.bin",
+                               "attachment": base64.b64encode(raw).decode("ascii")})["run_id"]
+        pinned = host.store.state(run)["process_sha256"]
+        deadline = time.monotonic() + 60
+        state = call("/api/runs/" + run)
+        while state["status"] == "RUNNING" and time.monotonic() < deadline:
+            time.sleep(0.05)
+            state = call("/api/runs/" + run)
+        assert state["status"] == "HUMAN_REQUIRED", state
+        assert pinned == process_fingerprint(process)
+        assert (data / "runs" / run / "input.bin").read_bytes() == raw
+        assert not (data / "canonical" / run).exists()
+        provenance = json.loads((data / "creative" / run / "provenance.json").read_text("utf-8"))
+        assert provenance["execution"]["engine"] == "nexus/python-direct"
+        assert provenance["execution"]["process_sha256"] == pinned
+        assert state["result"]["ai_calls"] == int(process in {"interpret", "video", "podcast", "visual_podcast"})
+        ticket = call("/api/prepare", {"run_id": run})["ticket"]
+        assert call("/api/approve", {"run_id": run, "ticket": ticket, "confirmed": True})["status"] == "PASS"
+    assert len(launches) == 1
+    assert len(brokers) == int(process in {"interpret", "video", "podcast", "visual_podcast"})
+    package = {p.name: p.read_bytes() for p in (data / "canonical" / run).iterdir()}
+    def no_replay(*args, **kwargs):
+        pytest.fail("Committed recovery replayed a tool or broker")
+    monkeypatch.setattr(host_module, "launch_confined", no_replay)
+    monkeypatch.setattr("nexus.adapters.notebook.fetch_output", no_replay)
+    monkeypatch.setattr("nexus.adapters.product_routes.fetch_plan", no_replay)
+    restored = Host(data)
+    restored.store.check_commit(restored.store.state(run))
+    assert restored.store.state(run)["status"] == "PASS"
+    assert {p.name: p.read_bytes() for p in (data / "canonical" / run).iterdir()} == package

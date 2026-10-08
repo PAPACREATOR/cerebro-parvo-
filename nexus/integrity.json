@@ -23,7 +23,7 @@
   "families/multimedia/som.md": "d31057a867080291d183e9cde486b6079e686403cf7869ed749d0f005e770462",
   "families/multimedia/imagem.md": "4a321cdc18751a5d3e1dec770908aa5d992e17126e5569bbfd9045a2dc4583de",
   "instance.py": "a97ef1449ab8a2fe66dc0bcf79fe64dca93ae1b7a43bbfa296caeb90229120ac",
-  "adapters/runner.py": "f9000ae405879560b26ec12c85f4323122ba2d5aabe8267d7eacb5922365ae12",
+  "adapters/runner.py": "1c873da5a907d5ca5d92b48beba46b12d1fd9fcb5852489a270d390fe87fe408",
   "adapters/verify_direct.py": "0ed136dafad0bbccec348cb4a92d8f2153e688cee112d244fdea3f6905b6b74c",
   "mcp_client.py": "5b5a80353e768842bb3c684117f1d5d876d20069ac8c0dd1ea5061be23615f9b",
   "mcp_tools_server.py": "5578b9ecef32a1e47cb8f1b27b6f74d52229a2f4f48dae33a7783d351e1a31e6",
