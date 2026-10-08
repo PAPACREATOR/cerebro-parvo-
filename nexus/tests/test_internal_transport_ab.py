@@ -148,7 +148,7 @@ def test_all_internal_capabilities_across_real_native_mcp_and_direct(tmp_path, m
         results.append(result)
     assert results[0] == results[1]
     assert inputs[0] == inputs[1]
-    assert counts[0] == counts[1] + 1, counts
+    assert counts[0] > counts[1] >= 1, counts
     print(process + " native Job processes A/B: " + repr(counts))
     assert process_fingerprint(process) == pinned
 

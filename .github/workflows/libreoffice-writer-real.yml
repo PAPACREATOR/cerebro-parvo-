@@ -7,6 +7,7 @@ on:
       - 'nexus/adapters/office.py'
       - 'nexus/tests/test_office.py'
       - 'nexus/tests/test_writer_real_libreoffice.py'
+      - 'nexus/tests/test_native_writer_route_real.py'
       - 'nexus/tests/fixtures/writer-fixed-test.ott'
       - 'nexus/docs/F007-LIBREOFFICE.md'
       - 'nexus/docs/CAPABILITY-WRITER-EDITORIAL.md'
@@ -16,6 +17,7 @@ on:
       - 'nexus/adapters/office.py'
       - 'nexus/tests/test_office.py'
       - 'nexus/tests/test_writer_real_libreoffice.py'
+      - 'nexus/tests/test_native_writer_route_real.py'
       - 'nexus/tests/fixtures/writer-fixed-test.ott'
       - 'nexus/docs/F007-LIBREOFFICE.md'
       - 'nexus/docs/CAPABILITY-WRITER-EDITORIAL.md'
@@ -72,7 +74,7 @@ jobs:
           if (-not (Test-Path -LiteralPath $exe)) { throw 'LibreOffice soffice.com not found' }
           & $exe --version
           "LIBREOFFICE_EXE=$exe" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-      - name: Install pytest
-        run: python -m pip install pytest
+      - name: Install pinned Nexus test dependencies
+        run: python -m pip install -r nexus/requirements-test.txt
       - name: Real LibreOffice Writer Windows gate
-        run: python -m pytest nexus/tests/test_writer_real_libreoffice.py -q -p no:cacheprovider -o pythonpath=.
+        run: python -m pytest nexus/tests/test_writer_real_libreoffice.py nexus/tests/test_native_writer_route_real.py -q -p no:cacheprovider -o pythonpath=.
