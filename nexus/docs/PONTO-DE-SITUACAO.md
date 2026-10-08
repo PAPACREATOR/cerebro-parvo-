@@ -24,6 +24,8 @@ Contagens de funções, operações e inputs não são somáveis: suites sobrep�
 
 Correção seguinte dos peers: o diagnóstico em a7bc403 mostrou WinError 5 ao consultar soffice.com. A fixture colocou o executável diretamente numa pasta pytest privada, pelo que a raiz de leitura calculada era o diretório pai de pytest. O peer passa ao layout LibreOffice/program, com a raiz própria esperada pelo adapter. Apenas teste alterado; ACL/token/Host/Store conservados. Repetição nativa PENDENTE neste commit.
 
+Auditoria do SHA efetivamente testado: os logs de checkout mostravam refs/pull/32/merge e um SHA de merge sintético, mesmo com os runs associados ao HEAD candidato. Os oito workflows passam a fixar ref no pull_request.head.sha (ou github.sha fora de PR). A repetição seguinte verifica o próprio commit candidato; os resultados anteriores ficam associados aos seus runs/árvores, sem serem transferidos ao novo SHA.
+
 ### Runtime e redundâncias justificadas
 
 A Folha conserva dez processos explícitos da política. **Front Door natural/tiny com sete intenções: NOT INTEGRATED**; não existe mapa 7→10 aprovado nesta convergência. A seleção explícita é o protótipo autorizado; não foi inventado router novo.
