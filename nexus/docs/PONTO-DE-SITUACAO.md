@@ -1,5 +1,60 @@
 # Nexus — ponto de situação atual
 
+## Convergência técnica Work — 08-10-2026
+
+Pedido corrente: convergir a PR #32 num único produto Windows, seguindo #31, #32, #34 e #33. Work altera código/testes e regista operação; a PR #34 conserva arquitetura/documentação/auditoria. Os relatórios datados abaixo continuam como história; não validam o HEAD corrente.
+
+Candidato único: [PR #32](https://github.com/PAPACREATOR/cerebro-parvo-/pull/32), branch `cleanup/llamacpp-only-20261007`, base `lab/windows-full-install-20261006` (`90683cd3744db074c4ea3b3c170aad6218f2b8ed`). Último SHA de código/diagnóstico registado nesta atualização: `a7bc403091d628db1af802b2cf8c496d6f78e055`. O HEAD exato e a matriz concluída de workflows devem ser conferidos no comentário de continuação da PR: um novo commit exige repetir todos os gates aplicáveis. **Sem PASS global enquanto existir um FAIL ou gate por executar. Sem merge em main.**
+
+`main` observado: `2033ff25c37786a5e0853d894cc31514659c7d8a`. PR #31: `628359cb4dfc363734894e0724eba25fb164acd8`; PR #34: `2c91ad036f94c03777183d60b4c977a4ee9dc68e`. Nenhuma PR sucessora encontrada na recuperação de 08-10. #31 fornece genealogia dos contratos transacionais; não foi transplantado outro Kernel. Os apontamentos CodeQL dessa PR sobre `Path`/`tmp_name` não usados permanecem documentados como dívida estática histórica, sem FAIL funcional que justifique tocar nessa implementação.
+
+### Ciclos e provas por SHA
+
+| Alteração | FAIL preservado e correção mínima | Evidência |
+|---|---|---|
+| Startup, `5a0559c` | Dois testes interceptavam os.replace embora Windows publique por _replace_durable/MoveFileExW. Passaram a observar e falhar na fronteira durável real; bytes antigos/novos completos e ausência de temporários mantidos. Runtime intacto. | Seis workflows então aplicáveis SUCCESS no mesmo SHA: auditoria, compatibilidade, crash, confinement, Windows, Integration. [Windows 37770378941](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37770378941); [Integration 37770378926](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37770378926). |
+| Contratos, `4b89dd0` / `6d96a96` | A/B das dez capacidades, morte real antes/depois da publicação Canonical, consistência e bootstrap funcional. Peer CLI inicial exigia leitura de uma pasta Windows protegida; substituído por PE C nativo, sem essa concessão. | FAILs e relatórios nos comentários #32. Peers não provam instalações reais de Java/Writer/modelos. |
+| Binding, `2c928f7` | Bootstrap: 3 FAIL/5 PASS antes; launcher com Git real: 8 FAIL/8 PASS antes. Autorização explícita, SHA/origin/checkout limpo, binding externo expected_head, BOM PowerShell e renovação explícita. | Launcher 16 PASS após; bootstrap 8 PASS em cada Windows. Mantidos helpers/entrada existentes; bundle completo opcional. |
+| Stdio LPAC, `5ae70d2` | A/B expôs PermissionError: nul em Java/Writer. Pipe/EOF vazio substituiu DEVNULL, conservando prazo, erro e kill da árvore. | Mesmos resultados/bytes passam; selo atualizado só para adapters afetados. Nenhuma concessão ao NUL global. |
+| A/B, `80976b5` | Redução medida sem presumir um único processo adicional: A/B 4/2 nas rotas Python, 6/4 nos peers CLI. | [Confinement 37777486939](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37777486939): 31 PASS por Windows. [Writer 37777486997](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37777486997): timeout real no Host/LPAC; PASS global recusado. |
+| Via direta, `7fe89c3` | Três contratos FAIL-first: importação MCP obrigatória, segunda sandbox no runner e dependências core. Após A/B verde, B passou a ser o runner selado. | Local 94 PASS/20 gates Windows NOT RUN. A/B 10/10; novo Host completo 8/10, dois FAILs PDF; [Confinement 37780160271](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37780160271). |
+| Diagnóstico, `a7bc403` | Binding estrutural residual procurava pin MCP no core; corrigido mantendo o critério em requirements-mcp. Diagnóstico limitado dos FAILs Host e probe nativa IPC Writer. | Contratos locais afetados 10 PASS. Novo SHA exige nova prova. XML Writer preservado também em FAIL. |
+
+Contagens de funções, operações e inputs não são somáveis: suites sobrepõem-se e repetições por OS/SHA não acrescentam inputs distintos. Morte de processo não equivale a corte de energia/disco físico.
+
+Correção seguinte dos peers: o diagnóstico em a7bc403 mostrou WinError 5 ao consultar soffice.com. A fixture colocou o executável diretamente numa pasta pytest privada, pelo que a raiz de leitura calculada era o diretório pai de pytest. O peer passa ao layout LibreOffice/program, com a raiz própria esperada pelo adapter. Apenas teste alterado; ACL/token/Host/Store conservados. Repetição nativa PENDENTE neste commit.
+
+### Runtime e redundâncias justificadas
+
+A Folha conserva dez processos explícitos da política. **Front Door natural/tiny com sete intenções: NOT INTEGRATED**; não existe mapa 7→10 aprovado nesta convergência. A seleção explícita é o protótipo autorizado; não foi inventado router novo.
+
+Host é o único dono de launch/LPAC/AppContainer SID/Job/deny roots/timeout. O runner faz dispatch fixo para adapters existentes, recusa execução Windows fora dessa fronteira, valida JSON/schema/bytes e devolve `nexus/python-direct`. Não há modelo, rede ou segredo no filho; o broker confiado entrega snapshots delimitados. Fingerprint continua fixado antes da execução e verificado pelo Store. Alterar runner muda o fingerprint; pedidos pendentes antigos exigem reconciliação explícita. Canonical comprometido é verificado sem repetir ferramentas.
+
+Retirados da via interna: relay cliente/servidor MCP, importação obrigatória do SDK e segundo dono de sandbox execute_confined. MCP externo, ferramentas e testes reais de protocolo permanecem; baseline A só em `tests/_mcp_baseline.py`. `requirements.txt` contém jsonschema; `requirements-mcp.txt` fixa MCP/trio; requirements-test inclui ambos. Preparar o core instala dependências de teste para executar gates; MCP não é importação necessária ao runtime.
+
+Mantidos: SHA-256 Windows CNG + Python/hashlib independentes; selo Host e binding externo ao Git; validações independentes runner/Store/UI/policy/schema; bytes originais e proveniência inversa; Creative/Canonical separados; HumanDecision ligada ao hash; atomicidade Windows WRITE_THROUGH e crash/restart/idempotência. PS/.NET é diagnóstico externo, sem substituir CNG. **Host/Store, M1–M14 e lógica do Kernel não foram alterados.**
+
+Ficheiros centrais: adapters/runner.py, languagetool.py, office.py, integrity.json e requirements; windows/bootstrap-nexus-local.ps1, sync-nexus-code.ps1, nexus-launcher.py e binding no instalador completo; testes startup/A-B/consistência/crash/dependências/bootstrap/launcher/Writer e workflows. História de FAILs e candidato A/B preservada no Git/GitHub.
+
+### Entrada humana e limites
+
+Na raiz de checkout oficial, depois de conferir o SHA candidato:
+
+```powershell
+$accepted = git rev-parse HEAD
+powershell.exe -NoProfile -File nexus/windows/bootstrap-nexus-local.ps1 -RepoRoot (Get-Location).Path -ExpectedHead $accepted -AuthorizePrepare
+```
+
+Bootstrap core existente: confere origin, Git limpo e HEAD esperado, reutiliza preparação/inventário/plano e copia launcher para fora do repositório com expected_head. Nexus.lnk usa esse binding; HEAD diferente ou ficheiros alterados recusam arranque. Aceitar atualização exige repetir bootstrap com novo SHA explícito. Não executar preparação como se os FAILs atuais fossem release aprovada.
+
+Instalador completo/bundle cerca de 70 GiB é opcional e dependente da aceitação física; não foi executado. Provisioning protegido, modelos/GPU, contas/serviços/perfis Windows e PC de Pedro: **NOT RUN**. CI usa runners descartáveis e dados sintéticos.
+
+### Bloqueios e continuação
+
+PDF pelos peers no novo Host tem causa de fixture localizada e correção mínima em validação; LibreOffice 26.2.6 instalado excede 45 s dentro da fronteira existente, embora Writer fora dela passe. Stdout/stderr Writer vazios em 7fe89c3, sem PDF/proposta promovida. IPC Win32 incompatível com AppContainer é hipótese; a observação legacy/LOCAL deve ser confrontada com binário/fontes da mesma versão antes de atribuir causa.
+
+Próximo ciclo: verificar a correção nativa dos peers, manter Writer a falhar enquanto não existir solução equivalente dentro da fronteira aprovada; repetir auditoria, sintaxe, unitários, integração/stress, segurança, crash/recovery, bootstrap/launcher e E2E no mesmo HEAD. Registar matriz e bloqueios reais em #32 e #33. Nenhum prazo/permissão aumentado para fabricar PASS.
+
 ## Atualização documental e capacidades — 06-10-2026
 
 - Constituição e arquitetura ativa reconciliadas com Kernel/Host/Store + MCP;

@@ -61,7 +61,9 @@ int main(int argc, char **argv) {
     built = subprocess.run(["cmd.exe", "/d", "/c", str(root / "build.cmd")],
                            cwd=root, capture_output=True, timeout=60)
     assert built.returncode == 0, built.stderr.decode(errors="replace")
-    (root / "soffice.com").write_bytes((root / "java.exe").read_bytes())
+    office = root / "LibreOffice/program"
+    office.mkdir(parents=True)
+    (office / "soffice.com").write_bytes((root / "java.exe").read_bytes())
     (root / "languagetool-commandline.jar").write_bytes(b"fixture, never loaded by a JVM")
     return root
 
@@ -92,7 +94,7 @@ def prepare(work, process, tools):
         (work / "languagetool.json").write_text(json.dumps({
             "java": str(tools / "java.exe"), "jar": str(tools / "languagetool-commandline.jar")}), encoding="utf-8")
     elif process in {"convert_pdf", "book"}:
-        (work / "libreoffice.json").write_text(json.dumps({"executable": str(tools / "soffice.com")}), encoding="utf-8")
+        (work / "libreoffice.json").write_text(json.dumps({"executable": str(tools / "LibreOffice/program/soffice.com")}), encoding="utf-8")
     return source
 
 
