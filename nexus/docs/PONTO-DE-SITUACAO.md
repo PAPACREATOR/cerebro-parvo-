@@ -4,7 +4,7 @@
 
 Pedido corrente: convergir a PR #32 num único produto Windows, seguindo #31, #32, #34 e #33. Work altera código/testes e regista operação; a PR #34 conserva arquitetura/documentação/auditoria. Os relatórios datados abaixo continuam como história; não validam o HEAD corrente.
 
-Candidato único: [PR #32](https://github.com/PAPACREATOR/cerebro-parvo-/pull/32), branch `cleanup/llamacpp-only-20261007`, base `lab/windows-full-install-20261006` (`90683cd3744db074c4ea3b3c170aad6218f2b8ed`). Código da correção de interpretação deste ciclo: `dfbd7c9b7d3b48ef5af82f0979e3c896939ee22b`, depois do baseline `b4d50ab8469cf60dfa3228c7c34ef9a1285ac827`. O HEAD exato e a matriz concluída de workflows devem ser conferidos no comentário de continuação da PR: um novo commit exige repetir todos os gates aplicáveis. **Sem PASS global enquanto existir um FAIL ou gate por executar. Sem merge em main.**
+Candidato único: [PR #32](https://github.com/PAPACREATOR/cerebro-parvo-/pull/32), branch `cleanup/llamacpp-only-20261007`, base `lab/windows-full-install-20261006` (`90683cd3744db074c4ea3b3c170aad6218f2b8ed`). Esta retoma parte do HEAD `a13d316117024ffc7923bcfc49d5517e8184828e`, que fixou o checkout do Front Door Lab. A correção anterior de interpretação foi `dfbd7c9b7d3b48ef5af82f0979e3c896939ee22b`, depois do baseline `b4d50ab8469cf60dfa3228c7c34ef9a1285ac827`. O HEAD exato e a matriz concluída de workflows devem ser conferidos no comentário de continuação da PR: um novo commit exige repetir todos os gates aplicáveis. **Sem PASS global enquanto existir um FAIL ou gate por executar. Sem merge em main.**
 
 `main` observado: `aeeb6f662a8282b3793708aa3e6782ef20d2d0ca` (mudança documental externa; não houve merge do candidato). PR #31: `628359cb4dfc363734894e0724eba25fb164acd8`; PR #34: `2c91ad036f94c03777183d60b4c977a4ee9dc68e`. Nenhuma PR sucessora encontrada na recuperação de 08-10. #31 fornece genealogia dos contratos transacionais; não foi transplantado outro Kernel. Os apontamentos CodeQL dessa PR sobre `Path`/`tmp_name` não usados permanecem documentados como dívida estática histórica, sem FAIL funcional que justifique tocar nessa implementação.
 
@@ -35,7 +35,7 @@ apagam essa recusa nem escolhem uma das ações incompatíveis. A expressão de 
 não atravessa outro marcador de abertura, evitando o custo quadrático observado.
 Prefixos explícitos, original UTF-8 e funcionamento sem IA mantidos.
 
-Regressão local Python 3.12/Linux: **213 PASS**, incluindo os 33 novos casos,
+Primeira regressão local Python 3.12/Linux: **213 PASS**, incluindo os 33 novos casos,
 100K de ambiguidade, round trips de linguagem, contratos/sintaxe, Store, startup e
 morte real em criação/Canonical. **4 PASS** adicionais no HTTP/Host real comprovam
 recusa de propostas naturais sem correspondência autorizada, zero runs/ferramentas
@@ -70,6 +70,41 @@ bytes apresentados; nenhuma tradução automática das sete intenções para dez
 processos. Só depois provar frase natural → Host → Creative → Human Gate → Canonical
 e restart. O fallback técnico não satisfaz a aceitação normal definida em #33.
 PC físico, serviços/modelos instalados e power-loss continuam NOT RUN.
+
+### Retoma Work — citações sem fecho, 08-10-2026
+
+Retomada a segunda revisão da interpretação conservadora, preparada no checkout
+anterior. A retoma preservou os checkouts anteriores e os laboratórios
+Codex/Folha, trabalhando numa cópia isolada de a13d316.
+
+FAIL-first preservado em `e9b2489471e5513f70c25641b071f4b598094e5d`: três
+citações abertas com «, “ e aspas ASCII tornavam-se comandos positivos. Os mesmos
+casos foram testados no parser e contra uma hint tiny: **6 FAIL / 33 PASS** em
+0,66 s. A árvore desse commit foi conferida contra a árvore local reproduzida.
+
+Correção mínima: uma expressão declarativa em `frontdoor_rules.json` aceita o
+fim do texto como limite da citação. A expressão continua sem atravessar outro
+marcador de abertura. Nenhum motor, mapeamento de processo ou autoridade foi criado.
+Após a correção: **39 PASS** focais em 0,56 s; **189 PASS** na regressão local em
+28,71 s, incluindo os quatro testes HTTP/Host de recusa, prefixos, LanguageTool,
+ambiguidade 100K, round trips 20K, contratos/sintaxe, Store, startup e morte real;
+**17 PASS** adicionais no contrato tiny loopback em 1,78 s. O gate focal é parte
+da regressão e não deve ser somado. O servidor loopback é uma fixture, não um
+modelo instalado. Comandos e contagens XML ficam registados no comentário de continuação.
+
+O selo ativo foi verificado. Host/Store/Kernel, runner, sandbox, UI, Writer,
+manifesto e instalação continuam idênticos ao baseline. Apenas a regra, os três
+casos no teste existente e este ponto operacional mudam. A Front Door continua
+**NOT INTEGRATED**; recusa HTTP não prova aceitação natural no produto.
+
+Matriz anterior em a13d316: **7 SUCCESS / 2 FAIL**, em nove workflows. Confinement
+Server 2022 teve timeout de 15 s numa invocação PowerShell de recusa de instalação
+(19 outros testes desse passo passaram); Server 2025 passou. Writer Windows teve
+**2 FAIL / 5 PASS**, por timeout de 45 s em book/convert_pdf dentro de LPAC. Os
+logs confirmam o checkout de a13d316. Estes resultados não são transferidos para
+o novo HEAD: repetir os nove gates e verificar o SHA nos logs. Não aumentar
+prazos/permissões, nem incorporar trabalho dos laboratórios alheios para fabricar
+PASS. A matriz final e qualquer bloqueio real ficam nos comentários #32/#33.
 
 ### Ciclos e provas por SHA
 
