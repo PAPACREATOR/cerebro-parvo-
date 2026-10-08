@@ -808,6 +808,10 @@ endlocal
     $builtExe = Join-Path $dist 'Nexus.exe'
     if (-not (Test-Path -LiteralPath $builtExe)) { throw 'NEXUS_EXE_BUILD_MISSING' }
     $finalExe = Join-Path $BinRoot 'Nexus.exe'
+    $boundHead = (& $git -C $RepoRoot rev-parse HEAD).Trim()
+    if ($LASTEXITCODE -ne 0 -or $boundHead -ne $NexusHead) { throw 'NEXUS_HEAD_CHANGED_DURING_INSTALL' }
+    $dirty = & $git -C $RepoRoot status --porcelain --untracked-files=all
+    if ($LASTEXITCODE -ne 0 -or $dirty) { throw 'NEXUS_DIRTY_TREE' }
     Copy-Item -LiteralPath $builtExe -Destination $finalExe -Force
     $launcherConfig = [ordered]@{
         repo_root = $RepoRoot
@@ -815,6 +819,7 @@ endlocal
         git = $git
         data_root = $runtime
         expected_origin = $ExpectedOrigin
+        expected_head = $NexusHead
     }
     $launcherConfig | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $BinRoot 'nexus-launcher.json') -Encoding UTF8
     $exeHash = (Get-FileHash -LiteralPath $finalExe -Algorithm SHA256).Hash.ToLowerInvariant()

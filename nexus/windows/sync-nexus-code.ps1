@@ -1,11 +1,17 @@
 [CmdletBinding()]
 param(
     [string]$RepoRoot = '',
-    [string]$Branch = 'lab-open-notebook-avatar-20261004'
+    [string]$Branch = '',
+    [string]$ExpectedHead = ''
 )
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
+
+if ((-not $Branch -and -not $ExpectedHead) -or
+    ($ExpectedHead -and $ExpectedHead -cnotmatch '^[0-9a-f]{40}$')) {
+    throw 'NEXUS_EXPECTED_HEAD_REQUIRED'
+}
 
 $Git = (Get-Command git.exe -CommandType Application -ErrorAction Stop | Select-Object -First 1).Source
 $OfficialOrigin = 'https://github.com/PAPACREATOR/cerebro-parvo-.git'
@@ -94,13 +100,19 @@ if ($LASTEXITCODE -ne 0 -or $origin -ne $OfficialOrigin) {
     throw 'NEXUS_WRONG_ORIGIN: o checkout não aponta exatamente para PAPACREATOR/cerebro-parvo-.'
 }
 
-$dirty = & $Git -C $RepoRoot status --porcelain
+$dirty = & $Git -C $RepoRoot status --porcelain --untracked-files=all
 if ($LASTEXITCODE -ne 0) { throw 'NEXUS_GIT_STATUS_FAILED' }
 if ($dirty) {
     throw 'NEXUS_DIRTY_TREE: existem alterações locais; nada foi atualizado.'
 }
 
+if ($Branch) {
+Invoke-GitChecked -Arguments @('check-ref-format','--branch',$Branch) -WorkingDirectory $RepoRoot
 Invoke-GitChecked -Arguments @('fetch','--prune','origin',$Branch) -WorkingDirectory $RepoRoot
+$remote = (& $Git -C $RepoRoot rev-parse "origin/$Branch").Trim()
+if ($LASTEXITCODE -ne 0 -or ($ExpectedHead -and $remote -ne $ExpectedHead)) {
+    throw 'NEXUS_HEAD_NOT_ACCEPTED'
+}
 
 & $Git -C $RepoRoot show-ref --verify --quiet "refs/heads/$Branch"
 $localExists = ($LASTEXITCODE -eq 0)
@@ -117,6 +129,10 @@ $head = (& $Git -C $RepoRoot rev-parse HEAD).Trim()
 $remote = (& $Git -C $RepoRoot rev-parse "origin/$Branch").Trim()
 if ($LASTEXITCODE -ne 0 -or $head -ne $remote) {
     throw 'NEXUS_SYNC_MISMATCH: HEAD local não corresponde ao remoto.'
+}
+} else {
+    $head = (& $Git -C $RepoRoot rev-parse HEAD).Trim()
+    if ($LASTEXITCODE -ne 0 -or $head -ne $ExpectedHead) { throw 'NEXUS_HEAD_NOT_ACCEPTED' }
 }
 
 Write-Host 'NEXUS CODE SYNC = PASS'

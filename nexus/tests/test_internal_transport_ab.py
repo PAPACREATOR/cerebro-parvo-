@@ -85,7 +85,7 @@ def prepare(work, process, tools):
             "model_id": "model:fixture", "transformation_id": "transformation:fixture"}), encoding="utf-8")
     elif process in {"video", "podcast", "visual_podcast"}:
         (work / "product-plan-response.json").write_text(json.dumps({
-            "output": json.dumps({"title": "Entrega", "body": SOURCE, "steps": ["Rever"], "quotes": [SOURCE]}),
+            "output": json.dumps({"title": "Entrega", "body": SOURCE, "steps": ["Rever fonte", "Rever plano"], "quotes": [SOURCE]}),
             "model_id": "model:fixture", "transformation_id": "transformation:fixture"}), encoding="utf-8")
     elif process == "proofread":
         (work / "languagetool.json").write_text(json.dumps({
@@ -118,7 +118,7 @@ def test_all_internal_capabilities_across_real_native_mcp_and_direct(tmp_path, m
                              read_roots=(ROOT, sys.prefix, sys.base_prefix, work.parent.parent, cli_peers),
                              deny_roots=(denied,)) as worker:
             stdout, stderr = worker.communicate(timeout=150 if process in {"interpret", "video", "podcast", "visual_podcast"} else 75)
-            assert worker.returncode == 0, (name, process, stderr.decode(errors="replace"))
+            assert worker.returncode == 0, name + "/" + process + ":\n" + stderr.decode(errors="replace")
         result = validate("result", json.loads(stdout)["result"])
         assert source.read_bytes() == raw
         assert marker.read_bytes() == b"human-owned"
