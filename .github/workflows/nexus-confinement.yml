@@ -56,6 +56,9 @@ jobs:
       - name: Internal MCP versus direct adapter - native A/B before removal
         if: always()
         run: python -m pytest nexus/tests/test_internal_transport_ab.py -q -o pythonpath=. --junitxml=security-evidence/internal-transport-ab.xml
+      - name: Bootstrap authorization and accepted checkout - functional Windows
+        if: always()
+        run: python -m pytest nexus/tests/test_bootstrap_binding_functional.py -q -o pythonpath=. --junitxml=security-evidence/bootstrap-binding.xml
       - name: Preserve observations even on FAIL
         if: always()
         uses: actions/upload-artifact@v4

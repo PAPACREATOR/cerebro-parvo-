@@ -28,28 +28,37 @@ def cli_peers(tmp_path_factory):
     # A real PE process exercises inherited token/Job and stdio. Only the
     # external tool's semantic output is substituted in this transport proof.
     definition = r'''
-using System;
-using System.IO;
-public class Peer {
-  public static int Main(string[] args) {
-    if (Environment.GetEnvironmentVariable("OPENAI_API_KEY") != null) return 90;
-    if (Path.GetFileName(Environment.GetCommandLineArgs()[0]).ToLowerInvariant() == "java.exe") {
-      Console.Write("{\"software\":{\"name\":\"LanguageTool\",\"version\":\"fixture\"},\"language\":{\"name\":\"Portuguese\",\"code\":\"pt-PT\"},\"matches\":[],\"warnings\":{\"incompleteResults\":false}}");
-    } else {
-      int index = Array.IndexOf(args, "--outdir");
-      if (index < 0) return 91;
-      File.WriteAllBytes(Path.Combine(args[index+1], "resultado.pdf"), System.Text.Encoding.ASCII.GetBytes("%PDF-1.4\n% deterministic CLI fixture\n%%EOF\n"));
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+int main(int argc, char **argv) {
+  const char *base = strrchr(argv[0], '\\');
+  if (getenv("OPENAI_API_KEY")) return 90;
+  if (strcmp(base ? base + 1 : argv[0], "java.exe") == 0) {
+    printf("{\"software\":{\"name\":\"LanguageTool\",\"version\":\"fixture\"},\"language\":{\"name\":\"Portuguese\",\"code\":\"pt-PT\"},\"matches\":[],\"warnings\":{\"incompleteResults\":false}}");
+  } else {
+    int i; char path[32768]; FILE *pdf = NULL;
+    for (i=1; i+1<argc; i++) if (!strcmp(argv[i], "--outdir")) {
+      if (snprintf(path, sizeof(path), "%s/resultado.pdf", argv[i+1]) >= sizeof(path)) return 91;
+      pdf = fopen(path, "wb"); break;
     }
-    return 0;
+    if (!pdf) return 92;
+    fputs("%PDF-1.4\n% deterministic CLI fixture\n%%EOF\n", pdf);
+    if (fclose(pdf)) return 93;
   }
+  return 0;
 }
 '''
-    (root / "peer.cs").write_text(definition, encoding="utf-8")
-    script = "param($source,$target); Add-Type -TypeDefinition (Get-Content -LiteralPath $source -Raw) -OutputAssembly $target -OutputType ConsoleApplication"
-    (root / "build.ps1").write_text(script, encoding="utf-8")
-    built = subprocess.run(["powershell.exe", "-NoProfile", "-NonInteractive", "-File",
-                            str(root / "build.ps1"), str(root / "peer.cs"), str(root / "java.exe")],
-                           capture_output=True, timeout=60)
+    (root / "peer.c").write_text(definition, encoding="utf-8")
+    vswhere = Path(os.environ["ProgramFiles(x86)"]) / "Microsoft Visual Studio/Installer/vswhere.exe"
+    found = subprocess.run([str(vswhere), "-latest", "-products", "*", "-requires",
+                            "Microsoft.VisualStudio.Component.VC.Tools.x86.x64", "-property", "installationPath"],
+                           capture_output=True, text=True, timeout=15)
+    assert found.returncode == 0 and found.stdout.strip(), "Native CLI fixture compiler NOT RUN"
+    vcvars = Path(found.stdout.strip()) / "VC/Auxiliary/Build/vcvars64.bat"
+    (root / "build.cmd").write_text('@echo off\ncall "' + str(vcvars) + '"\nif errorlevel 1 exit /b 1\ncl /nologo /MT peer.c /Fe:java.exe\n', encoding="utf-8")
+    built = subprocess.run(["cmd.exe", "/d", "/c", str(root / "build.cmd")],
+                           cwd=root, capture_output=True, timeout=60)
     assert built.returncode == 0, built.stderr.decode(errors="replace")
     (root / "soffice.com").write_bytes((root / "java.exe").read_bytes())
     (root / "languagetool-commandline.jar").write_bytes(b"fixture, never loaded by a JVM")
@@ -106,8 +115,7 @@ def test_all_internal_capabilities_across_real_native_mcp_and_direct(tmp_path, m
         inputs.append(raw)
         with launch_confined([sys.executable, "-I", str(script), process, str(source)],
                              cwd=work, env=task_environment(work),
-                             read_roots=(ROOT, sys.prefix, sys.base_prefix, work.parent.parent,
-                                         cli_peers, Path(os.environ["SystemRoot"]) / "Microsoft.NET"),
+                             read_roots=(ROOT, sys.prefix, sys.base_prefix, work.parent.parent, cli_peers),
                              deny_roots=(denied,)) as worker:
             stdout, stderr = worker.communicate(timeout=150 if process in {"interpret", "video", "podcast", "visual_podcast"} else 75)
             assert worker.returncode == 0, (name, process, stderr.decode(errors="replace"))
