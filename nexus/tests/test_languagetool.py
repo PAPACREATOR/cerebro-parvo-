@@ -57,9 +57,11 @@ def test_missing_tool_blocked(tmp_path):
 def test_timeout_preserves_source(tmp_path, monkeypatch):
     # Adapter normalization/process unit double; separate native security gate.
     monkeypatch.setattr("nexus.adapters.languagetool.require_native_boundary", lambda: None)
+    monkeypatch.setattr(subprocess, "CREATE_NO_WINDOW", getattr(subprocess, "CREATE_NO_WINDOW", 0), raising=False)
     source = setup(tmp_path)
     original = source.read_bytes()
     def timeout(*args, **kwargs):
+        assert kwargs["input"] == b""
         raise subprocess.TimeoutExpired("java", 45)
     monkeypatch.setattr(subprocess, "run", timeout)
     with pytest.raises(Blocked):
@@ -70,7 +72,11 @@ def test_timeout_preserves_source(tmp_path, monkeypatch):
 def test_tool_failure_rejected(tmp_path, monkeypatch):
     # Adapter normalization/process unit double; separate native security gate.
     monkeypatch.setattr("nexus.adapters.languagetool.require_native_boundary", lambda: None)
+    monkeypatch.setattr(subprocess, "CREATE_NO_WINDOW", getattr(subprocess, "CREATE_NO_WINDOW", 0), raising=False)
     source = setup(tmp_path)
-    monkeypatch.setattr(subprocess, "run", lambda *a, **kw: SimpleNamespace(returncode=1))
+    def failed(*args, **kwargs):
+        assert kwargs["input"] == b""
+        return SimpleNamespace(returncode=1)
+    monkeypatch.setattr(subprocess, "run", failed)
     with pytest.raises(Blocked):
         run(source)

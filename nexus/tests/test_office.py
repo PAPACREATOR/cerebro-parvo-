@@ -87,22 +87,31 @@ def test_missing_office(tmp_path):
 def test_office_failure(tmp_path, monkeypatch):
     # Process/timeout unit double only; real native security is tested separately.
     monkeypatch.setattr("nexus.adapters.office.require_native_boundary", lambda: None)
+    monkeypatch.setattr(subprocess, "CREATE_NO_WINDOW", getattr(subprocess, "CREATE_NO_WINDOW", 0), raising=False)
     source, exe = configure(tmp_path); exe.touch()
     original = source.read_bytes()
     class Failed:
+        stdin = io.BytesIO()
         def wait(self, **kw): return 1
-    monkeypatch.setattr(subprocess, "Popen", lambda *a, **kw: Failed())
+    def failed(*args, **kwargs):
+        assert kwargs["stdin"] == subprocess.PIPE
+        return Failed()
+    monkeypatch.setattr(subprocess, "Popen", failed)
     with pytest.raises(Blocked): convert(source)
     assert source.read_bytes() == original
+    assert Failed.stdin.closed
 
 
 def test_office_timeout_kills_tree(tmp_path, monkeypatch):
     # Process/timeout unit double only; real native security is tested separately.
     monkeypatch.setattr("nexus.adapters.office.require_native_boundary", lambda: None)
+    monkeypatch.setattr(subprocess, "CREATE_NO_WINDOW", getattr(subprocess, "CREATE_NO_WINDOW", 0), raising=False)
+    monkeypatch.setenv("SystemRoot", str(tmp_path / "Windows"))
     source, exe = configure(tmp_path); exe.touch()
     events = []
     class TimedOut:
         pid = 123
+        stdin = io.BytesIO()
         def wait(self, **kw):
             if kw: raise subprocess.TimeoutExpired("soffice", 45)
             return 1
@@ -112,6 +121,7 @@ def test_office_timeout_kills_tree(tmp_path, monkeypatch):
     with pytest.raises(Blocked): convert(source)
     assert events[0][-4:] == ["/PID", "123", "/T", "/F"]
     assert events[-1] == "kill"
+    assert TimedOut.stdin.closed
 
 
 def test_http_pdf_requires_session_and_unchanged_bytes(tmp_path):

@@ -34,6 +34,7 @@ def cli_peers(tmp_path_factory):
 int main(int argc, char **argv) {
   const char *base = strrchr(argv[0], '\\');
   if (getenv("OPENAI_API_KEY")) return 90;
+  if (getchar() != EOF) return 94;
   if (strcmp(base ? base + 1 : argv[0], "java.exe") == 0) {
     printf("{\"software\":{\"name\":\"LanguageTool\",\"version\":\"fixture\"},\"language\":{\"name\":\"Portuguese\",\"code\":\"pt-PT\"},\"matches\":[],\"warnings\":{\"incompleteResults\":false}}");
   } else {
@@ -95,6 +96,21 @@ def prepare(work, process, tools):
     return source
 
 
+def job_process_count(worker):
+    import ctypes as C
+    class Accounting(C.Structure):
+        _fields_ = [("user", C.c_int64), ("kernel", C.c_int64),
+                    ("period_user", C.c_int64), ("period_kernel", C.c_int64),
+                    ("faults", C.c_ulong), ("total", C.c_ulong),
+                    ("active", C.c_ulong), ("terminated", C.c_ulong)]
+    query = C.WinDLL("kernel32", use_last_error=True).QueryInformationJobObject
+    query.argtypes = [C.c_void_p, C.c_int, C.c_void_p, C.c_ulong, C.c_void_p]
+    query.restype = C.c_int
+    info = Accounting()
+    assert query(worker.job, 1, C.byref(info), C.sizeof(info), None), C.get_last_error()
+    return info.total
+
+
 @pytest.mark.skipif(os.name != "nt", reason="A/B native Windows execution NOT RUN on this OS")
 @pytest.mark.parametrize("process", sorted(PROCESS_TO_TOOL))
 def test_all_internal_capabilities_across_real_native_mcp_and_direct(tmp_path, monkeypatch, cli_peers, process):
@@ -104,7 +120,7 @@ def test_all_internal_capabilities_across_real_native_mcp_and_direct(tmp_path, m
     denied.mkdir()
     marker = denied / "canonical"
     marker.write_bytes(b"human-owned")
-    results, inputs = [], []
+    results, inputs, counts = [], [], []
     pinned = process_fingerprint(process)
     for name, script in [("A", ROOT / "adapters/runner.py"),
                          ("B", ROOT / "tests/_direct_candidate.py")]:
@@ -119,6 +135,7 @@ def test_all_internal_capabilities_across_real_native_mcp_and_direct(tmp_path, m
                              deny_roots=(denied,)) as worker:
             stdout, stderr = worker.communicate(timeout=150 if process in {"interpret", "video", "podcast", "visual_podcast"} else 75)
             assert worker.returncode == 0, name + "/" + process + ":\n" + stderr.decode(errors="replace")
+            counts.append(job_process_count(worker))
         result = validate("result", json.loads(stdout)["result"])
         assert source.read_bytes() == raw
         assert marker.read_bytes() == b"human-owned"
@@ -131,6 +148,8 @@ def test_all_internal_capabilities_across_real_native_mcp_and_direct(tmp_path, m
         results.append(result)
     assert results[0] == results[1]
     assert inputs[0] == inputs[1]
+    assert counts[0] == counts[1] + 1, counts
+    print(process + " native Job processes A/B: " + repr(counts))
     assert process_fingerprint(process) == pinned
 
 

@@ -86,7 +86,7 @@ def run(input_path):
         try:
             result = subprocess.run([config["java"], "-Xmx512m", "-jar", config["jar"],
                                      "-l", "pt-PT", "-c", "utf-8", "--json", str(source)],
-                                    stdin=subprocess.DEVNULL, stdout=stdout, stderr=stderr,
+                                    input=b"", stdout=stdout, stderr=stderr,
                                     timeout=45, creationflags=subprocess.CREATE_NO_WINDOW)
         except subprocess.TimeoutExpired:
             raise Blocked("A revisão linguística excedeu o tempo permitido.") from None
