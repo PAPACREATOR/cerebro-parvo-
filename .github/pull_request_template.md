@@ -19,5 +19,12 @@ Casos FAIL / NOT RUN / POR DEFINIR:
 - [ ] Nenhum teste omitido/ignorado apresentado como PASS
 - [ ] Cobertura necessária ao IMP demonstrada, ou portão explicitamente não fechado
 - [ ] Matrizes e STATUS atualizados
+- [ ] Dependências e material de terceiros identificados com origem e licença
+
+## Licença da contribuição
+
+- [ ] Tenho autoridade para submeter esta contribuição e aceito o [Contributor License Agreement](../CONTRIBUTOR_LICENSE_AGREEMENT.md).
+
+O contribuidor mantém o copyright da sua contribuição. O CLA concede ao mantenedor os direitos necessários para distribuir e relicenciar a contribuição, incluindo em ofertas comerciais. Contribuir não cria automaticamente emprego, participação societária, royalties ou direito a receitas; qualquer relação comercial exige acordo escrito separado.
 
 Um check verde da suite fornecida não declara o sistema completo nem o IMP aprovado.
