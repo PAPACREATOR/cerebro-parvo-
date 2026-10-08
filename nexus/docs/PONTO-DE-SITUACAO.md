@@ -4,9 +4,63 @@
 
 Pedido corrente: convergir a PR #32 num único produto Windows, seguindo #31, #32, #34 e #33. Work altera código/testes e regista operação; a PR #34 conserva arquitetura/documentação/auditoria. Os relatórios datados abaixo continuam como história; não validam o HEAD corrente.
 
-Candidato único: [PR #32](https://github.com/PAPACREATOR/cerebro-parvo-/pull/32), branch `cleanup/llamacpp-only-20261007`, base `lab/windows-full-install-20261006` (`90683cd3744db074c4ea3b3c170aad6218f2b8ed`). Último SHA de código/diagnóstico registado nesta atualização: `a7bc403091d628db1af802b2cf8c496d6f78e055`. O HEAD exato e a matriz concluída de workflows devem ser conferidos no comentário de continuação da PR: um novo commit exige repetir todos os gates aplicáveis. **Sem PASS global enquanto existir um FAIL ou gate por executar. Sem merge em main.**
+Candidato único: [PR #32](https://github.com/PAPACREATOR/cerebro-parvo-/pull/32), branch `cleanup/llamacpp-only-20261007`, base `lab/windows-full-install-20261006` (`90683cd3744db074c4ea3b3c170aad6218f2b8ed`). Código da correção de interpretação deste ciclo: `dfbd7c9b7d3b48ef5af82f0979e3c896939ee22b`, depois do baseline `b4d50ab8469cf60dfa3228c7c34ef9a1285ac827`. O HEAD exato e a matriz concluída de workflows devem ser conferidos no comentário de continuação da PR: um novo commit exige repetir todos os gates aplicáveis. **Sem PASS global enquanto existir um FAIL ou gate por executar. Sem merge em main.**
 
-`main` observado: `2033ff25c37786a5e0853d894cc31514659c7d8a`. PR #31: `628359cb4dfc363734894e0724eba25fb164acd8`; PR #34: `2c91ad036f94c03777183d60b4c977a4ee9dc68e`. Nenhuma PR sucessora encontrada na recuperação de 08-10. #31 fornece genealogia dos contratos transacionais; não foi transplantado outro Kernel. Os apontamentos CodeQL dessa PR sobre `Path`/`tmp_name` não usados permanecem documentados como dívida estática histórica, sem FAIL funcional que justifique tocar nessa implementação.
+`main` observado: `aeeb6f662a8282b3793708aa3e6782ef20d2d0ca` (mudança documental externa; não houve merge do candidato). PR #31: `628359cb4dfc363734894e0724eba25fb164acd8`; PR #34: `2c91ad036f94c03777183d60b4c977a4ee9dc68e`. Nenhuma PR sucessora encontrada na recuperação de 08-10. #31 fornece genealogia dos contratos transacionais; não foi transplantado outro Kernel. Os apontamentos CodeQL dessa PR sobre `Path`/`tmp_name` não usados permanecem documentados como dívida estática histórica, sem FAIL funcional que justifique tocar nessa implementação.
+
+### Ciclo Work — interpretação conservadora antes da integração
+
+Pedro confirmou a divisão por repositórios: Work mantém a PR #32; Codex mantém
+`nexus-writer-lab`; a Folha funcional mantém `nexus-folha-lab`. Clonar, comparar e
+testar numa cópia Work é autorizado; editar os laboratórios dos outros ou copiar
+automaticamente os seus patches não é. O checkout local antigo, incluindo dois
+testes não rastreados, foi preservado; alterações preparadas numa worktree isolada.
+
+Fontes recuperadas: Front Door E2E histórica `7006184d1148faeefae2ba5b27a41a0d0e4dec60`
+e Folha `116b2dcea97e7bc8b5ace414e3f53243ff770bd6`. Parser, regras e schema do
+baseline b4d50ab são idênticos aos da branch E2E histórica; não era necessário
+transplantá-los. A Folha forneceu a proteção inicial de negações/citações, adaptada
+e testada no Work, sem copiar o seu servidor, UI, IA ou backend.
+
+FAIL-first: commit `184954f29722b2c0e9fe832aaee6b7f86fa2cb3f` acrescentou 28 casos; execução contra o parser anterior
+produziu **22 FAIL / 6 PASS**. «Não guarda esta nota» e instruções citadas tornavam-se
+RESOLVED. A primeira adaptação isolada passou esses casos, mas a revisão encontrou
+outros FAILs: uma hint tiny escolhia arbitrariamente entre intenções determinísticas
+conflituosas; uma sombra corrigida conflituosa também podia ser sobreposta; citações
+incompletas com 100.000 caracteres excediam o orçamento de teste de 5 s.
+
+Correção mínima: regras de clarificação declarativas no JSON/schema existentes;
+negações/citações e conflitos ficam UNRESOLVED/ASK_HUMAN; LanguageTool/tiny não
+apagam essa recusa nem escolhem uma das ações incompatíveis. A expressão de citação
+não atravessa outro marcador de abertura, evitando o custo quadrático observado.
+Prefixos explícitos, original UTF-8 e funcionamento sem IA mantidos.
+
+Regressão local Python 3.12/Linux: **213 PASS**, incluindo os 33 novos casos,
+100K de ambiguidade, round trips de linguagem, contratos/sintaxe, Store, startup e
+morte real em criação/Canonical. **4 PASS** adicionais no HTTP/Host real comprovam
+recusa de propostas naturais sem correspondência autorizada, zero runs/ferramentas
+e zero Creative/Canonical. Essas contagens não provam 217 inputs distintos nem
+Windows/PC; as matrizes internas e repetições não são somáveis.
+
+Host/Store/Kernel/M1–M14, sandbox, Writer, runner, manifesto ativo, instalação e UI
+ficaram byte-a-byte iguais ao baseline. O selo ativo continua válido. Front Door
+continua **NOT INTEGRATED**: estas mudanças corrigem interpretação testada, sem a
+transformar num novo caminho de execução. O HTTP sem process continua a devolver
+403, uma recusa segura que comprova o bloqueio de integração.
+
+Gates seguintes: repetir os oito workflows no HEAD final, conferir checkout real,
+regressões, confinamento, crash/recovery e E2E existentes. Não transferir os sete
+SUCCESS do b4d50ab para outro SHA. Writer real conserva o FAIL independente;
+o diagnóstico permanece no laboratório Codex, sem sobreposição de alterações.
+
+Bloqueio contratual da Folha: não existe correspondência aprovada entre intenções
+e operações, nem integração da confirmação pré-execução exigida pelo seu contrato.
+Próximo passo para arquitetura/auditoria: rever uma correspondência mínima para a
+operação verify já existente, com anexo explícito e confirmação da operação e dos
+bytes apresentados; nenhuma tradução automática das sete intenções para dez
+processos. Só depois provar frase natural → Host → Creative → Human Gate → Canonical
+e restart. O fallback técnico não satisfaz a aceitação normal definida em #33.
+PC físico, serviços/modelos instalados e power-loss continuam NOT RUN.
 
 ### Ciclos e provas por SHA
 
