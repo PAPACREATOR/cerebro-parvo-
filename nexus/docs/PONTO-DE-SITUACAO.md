@@ -26,6 +26,10 @@ Correção seguinte dos peers: o diagnóstico em a7bc403 mostrou WinError 5 ao c
 
 Auditoria do SHA efetivamente testado: os logs de checkout mostravam refs/pull/32/merge e um SHA de merge sintético, mesmo com os runs associados ao HEAD candidato. Os oito workflows passam a fixar ref no pull_request.head.sha (ou github.sha fora de PR). A repetição seguinte verifica o próprio commit candidato; os resultados anteriores ficam associados aos seus runs/árvores, sem serem transferidos ao novo SHA.
 
+Atualização de provas em a2d76ff: confinement concluiu nos dois Windows, incluindo 41 PASS por job (A/B + dez capacidades Host/Human Gate/Canonical/restart) e bootstrap 8 PASS. Windows 2022 precisou de repetição por timeout de vswhere antes dos peers; log original conservado, limites intactos. Writer instalado repetiu 2 FAIL/5 PASS. Legacy pipe foi recusado com WinError 5, LOCAL funcionou; a fonte 26.2.6.2 usa legacy. O ponto interno preciso do timeout continua inferência, não rastreio completo.
+
+Regressão Windows: Core 140, Blocks 1079 e Practical 79 PASS; suite completa interrompida pelo limite do job de 15 min após 1525 PASS/12 SKIP. CANCELLED não é PASS. As suites passam a jobs separados com os mesmos comandos/limites, sem retirar testes. Novo HEAD exige repetir os oito workflows antes da matriz final em #32/#33.
+
 ### Runtime e redundâncias justificadas
 
 A Folha conserva dez processos explícitos da política. **Front Door natural/tiny com sete intenções: NOT INTEGRATED**; não existe mapa 7→10 aprovado nesta convergência. A seleção explícita é o protótipo autorizado; não foi inventado router novo.
@@ -53,9 +57,9 @@ Instalador completo/bundle cerca de 70 GiB é opcional e dependente da aceitaç�
 
 ### Bloqueios e continuação
 
-PDF pelos peers no novo Host tem causa de fixture localizada e correção mínima em validação; LibreOffice 26.2.6 instalado excede 45 s dentro da fronteira existente, embora Writer fora dela passe. Stdout/stderr Writer vazios em 7fe89c3, sem PDF/proposta promovida. IPC Win32 incompatível com AppContainer é hipótese; a observação legacy/LOCAL deve ser confrontada com binário/fontes da mesma versão antes de atribuir causa.
+PDF pelos peers no novo Host passou a repetição completa em a2d76ff após corrigir a fixture; LibreOffice 26.2.6 instalado excede 45 s dentro da fronteira existente, embora Writer fora dela passe. Stdout/stderr Writer vazios em 7fe89c3, sem PDF/proposta promovida. IPC Win32 incompatível com AppContainer é hipótese; a observação legacy/LOCAL deve ser confrontada com binário/fontes da mesma versão antes de atribuir causa.
 
-Próximo ciclo: verificar a correção nativa dos peers, manter Writer a falhar enquanto não existir solução equivalente dentro da fronteira aprovada; repetir auditoria, sintaxe, unitários, integração/stress, segurança, crash/recovery, bootstrap/launcher e E2E no mesmo HEAD. Registar matriz e bloqueios reais em #32 e #33. Nenhum prazo/permissão aumentado para fabricar PASS.
+Próximo ciclo: fechar a regressão repartida e toda a matriz no mesmo HEAD, manter Writer a falhar enquanto não existir solução equivalente dentro da fronteira aprovada; repetir auditoria, sintaxe, unitários, integração/stress, segurança, crash/recovery, bootstrap/launcher e E2E no mesmo HEAD. Registar matriz e bloqueios reais em #32 e #33. Nenhum prazo/permissão aumentado para fabricar PASS.
 
 ## Atualização documental e capacidades — 06-10-2026
 
