@@ -11,7 +11,7 @@ import json
 import re
 
 from nexus.contracts import Blocked
-from nexus.frontdoor import ParsedInput, parse, parse_with_languagetool
+from nexus.frontdoor import ParsedInput, parse, parse_with_languagetool, requires_clarification
 from nexus.adapters.notebook import prepare_source
 from nexus.tiny_classifier import TinyLocalSpec, classify as classify_tiny
 
@@ -117,12 +117,14 @@ def resolve_natural(text: str, *, languagetool_raw=None, tiny_hints=None) -> Par
     if first.status != "UNRESOLVED" or first.explicit:
         return first
 
-    if languagetool_raw is not None:
+    needs_human = requires_clarification(text)
+    if languagetool_raw is not None and not needs_human:
         second = parse_with_languagetool(text, languagetool_raw)
         if second.status == "RESOLVED":
             return second
+        needs_human = second.shadow is not None and requires_clarification(second.shadow)
 
-    if tiny_hints is not None:
+    if tiny_hints is not None and not needs_human:
         if not isinstance(tiny_hints, (list, tuple)):
             raise TypeError("tiny_hints must be a list or tuple")
         valid = [item for item in tiny_hints if isinstance(item, str) and item in INTENTS]
@@ -157,6 +159,12 @@ def resolve_natural_with_tiny(
     deterministic = resolve_natural(text, languagetool_raw=languagetool_raw)
     if deterministic.status != "ASK_HUMAN":
         return deterministic
+    if requires_clarification(text):
+        return deterministic
+    if languagetool_raw is not None:
+        shadow = parse_with_languagetool(text, languagetool_raw).shadow
+        if shadow is not None and requires_clarification(shadow):
+            return deterministic
     try:
         hints = classify_tiny(text, tiny_spec)
     except Blocked:

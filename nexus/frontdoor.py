@@ -12,6 +12,7 @@ from nexus.adapters.languagetool import correction_shadow
 _RULES = validate("frontdoor_rules", strict_json((ROOT / "frontdoor_rules.json").read_bytes()))
 PREFIXES = tuple((item[0], item[1]) for item in _RULES["prefixes"])
 NATURAL_RULES = _RULES["natural_rules"]
+CLARIFICATION_PATTERNS = _RULES["clarification_patterns"]
 MAX_TEXT_CHARS = _RULES["max_text_chars"]
 
 
@@ -43,6 +44,14 @@ def _normalise(text: str) -> str:
     return re.sub(r"\s+", " ", unicodedata.normalize("NFKC", text).casefold()).strip()
 
 
+def requires_clarification(text: str) -> bool:
+    """Keep refusals, quoted instructions and conflicting intents with humans."""
+    normal = _normalise(text)
+    return (any(re.search(pattern, normal) for pattern in CLARIFICATION_PATTERNS)
+            or sum(any(re.search(pattern, normal) for pattern in patterns)
+                   for patterns in NATURAL_RULES.values()) > 1)
+
+
 def _natural(text: str, *, original: str | None = None, parser="eliza-rules-v1",
              shadow: str | None = None) -> ParsedInput:
     normal = _normalise(text)
@@ -51,7 +60,7 @@ def _natural(text: str, *, original: str | None = None, parser="eliza-rules-v1",
         if any(re.search(pattern, normal) for pattern in patterns)
     ]
     source = text if original is None else original
-    if len(matches) != 1:
+    if len(matches) != 1 or requires_clarification(source) or requires_clarification(text):
         return ParsedInput("UNRESOLVED", None, source, source, parser, False, shadow)
     return ParsedInput("RESOLVED", matches[0], source, source, parser, False, shadow)
 
@@ -88,7 +97,7 @@ def parse(text: str) -> ParsedInput:
 
 def parse_with_languagetool(text: str, raw) -> ParsedInput:
     first = parse(text)
-    if first.status != "UNRESOLVED" or first.explicit:
+    if first.status != "UNRESOLVED" or first.explicit or requires_clarification(text):
         return first
     try:
         shadow = correction_shadow(text, raw)

@@ -2,11 +2,16 @@
 
 These are parser/bridge contracts, not an integrated Folha acceptance gate.
 """
+import json
+from pathlib import Path
+import subprocess
+import sys
+
 import pytest
 
 from nexus.contracts import Blocked
 from nexus.frontdoor import parse, parse_with_languagetool
-from nexus.natural_bridge import resolve_natural, to_markdown
+from nexus.natural_bridge import resolve_natural, resolve_natural_with_tiny, to_markdown
 from nexus.tests.test_frontdoor_languagetool_shadow import lt_response
 
 
@@ -55,6 +60,52 @@ def test_language_correction_cannot_remove_a_human_refusal():
     assert parsed.shadow is None
     assert resolve_natural(original, languagetool_raw=raw,
                            tiny_hints=["arquivo"]).status == "ASK_HUMAN"
+
+
+def test_refusal_does_not_call_the_optional_local_model(monkeypatch):
+    def unexpected_call(*_):
+        pytest.fail("A refused operation was sent to the model")
+    monkeypatch.setattr("nexus.natural_bridge.classify_tiny", unexpected_call)
+    parsed = resolve_natural_with_tiny("Não guarda esta nota.", None)
+    assert parsed.status == "ASK_HUMAN"
+    assert parsed.intent is None
+
+
+@pytest.mark.parametrize("text", [
+    "Guarda esta nota e corrige este texto.",
+    "Calcula estes valores e pesquisa na web o resultado.",
+])
+def test_mixed_deterministic_intents_cannot_be_selected_by_a_model_hint(text):
+    parsed = resolve_natural(text, tiny_hints=["arquivo"])
+    assert parsed.status == "ASK_HUMAN"
+    assert parsed.intent is None
+
+
+def test_correction_shadow_with_conflicting_intents_still_needs_human():
+    original = "garda esta nota e corige este texto."
+    assert parse(original).status == "UNRESOLVED"
+    raw = json.loads(lt_response(original, 0, 5, ["guarda"]))
+    raw["matches"].append({"message": "Gralha", "offset": original.index("corige"),
+                           "length": 6, "context": {"text": original},
+                           "replacements": [{"value": "corrige"}]})
+    parsed = resolve_natural(original, languagetool_raw=raw,
+                             tiny_hints=["arquivo"])
+    assert parsed.status == "ASK_HUMAN"
+    assert parsed.intent is None
+    assert parsed.original == original
+
+
+def test_maximum_length_unclosed_quotes_do_not_stall_clarification():
+    # A separate process bounds a potential regex stall without hanging pytest.
+    code = (
+        "from nexus.natural_bridge import resolve_natural\n"
+        "for quote in (chr(171), chr(8220), chr(34)):\n"
+        " for text in ('nota '+quote*99995, 'nota '+quote+'a'*99994):\n"
+        "  value=resolve_natural(text)\n"
+        "  assert value.status=='ASK_HUMAN' and value.original==text\n"
+    )
+    subprocess.run([sys.executable, "-c", code],
+                   cwd=Path(__file__).resolve().parents[2], check=True, timeout=5)
 
 
 @pytest.mark.parametrize("text,intent", [
