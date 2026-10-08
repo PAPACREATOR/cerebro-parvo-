@@ -48,10 +48,19 @@ continua **NOT INTEGRATED**: estas mudanças corrigem interpretação testada, s
 transformar num novo caminho de execução. O HTTP sem process continua a devolver
 403, uma recusa segura que comprova o bloqueio de integração.
 
-Gates seguintes: repetir os oito workflows no HEAD final, conferir checkout real,
-regressões, confinamento, crash/recovery e E2E existentes. Não transferir os sete
-SUCCESS do b4d50ab para outro SHA. Writer real conserva o FAIL independente;
-o diagnóstico permanece no laboratório Codex, sem sobreposição de alterações.
+Gates seguintes: repetir os oito workflows principais e o Front Door Lab, aplicável
+à alteração do parser, no HEAD final. Conferir checkout real, regressões,
+confinamento, crash/recovery e E2E existentes. Não transferir resultados de outro
+SHA. Writer real conserva o FAIL independente; o diagnóstico permanece no
+laboratório Codex, sem sobreposição de alterações.
+
+FAIL de auditoria reproduzível: o run Front Door Lab `37827787132`, associado a
+`78b52f7675cbab41b28e6739ea6ec819f120dfdc`, marcou SUCCESS mas o log do job
+`113484985250` mostrou checkout do merge sintético
+`234020318bfb94ec49844a87ac4fe00b7ebd3d58`. Esse resultado não valida o candidato.
+Correção mínima no workflow existente: fixar `pull_request.head.sha`/`github.sha`,
+como nos outros oito gates, sem mudar comandos, limites ou cobertura. A repetição
+dos nove workflows deve verificar o SHA nos logs, além do estado da API.
 
 Bloqueio contratual da Folha: não existe correspondência aprovada entre intenções
 e operações, nem integração da confirmação pré-execução exigida pelo seu contrato.
