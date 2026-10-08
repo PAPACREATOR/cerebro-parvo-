@@ -2,7 +2,7 @@
 
 ## Estado
 
-A arquitetura conceptual está fechada. O runtime candidato atual é Kernel/Host/Store Python com MCP determinístico e ferramentas externas delimitadas. A PR #23 contém a implementação e evidência corrente.
+A arquitetura conceptual está fechada. O runtime candidato atual é Kernel/Host/Store Python com MCP determinístico e ferramentas externas delimitadas. Em 07-10-2026, a linha de produto mais completa está na PR #32; a PR #31 contém auditoria transacional num núcleo anterior. Os dois ramos estão divergentes e só podem ser tratados como um candidato depois de convergirem num único SHA com regressão conjunta.
 
 ## Diagrama
 

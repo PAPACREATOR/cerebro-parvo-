@@ -18,7 +18,7 @@ Python só pode fazer cola determinística mínima:
 
 - prefixos: dados declarativos;
 - regras de intenção: dados declarativos;
-- processos: YAML;
+- processos/capabilities: política e contratos declarativos Nexus, não workflows YAML ativos;
 - execução: JSON;
 - conhecimento/pedido humano: Markdown;
 - LanguageTool: adaptador existente;
@@ -28,7 +28,7 @@ Python só pode fazer cola determinística mínima:
 ## Proibido
 
 - regras de negócio extensas hardcoded em Python;
-- listas de intents duplicadas por vários módulos;
+- listas de intents duplicadas por vários módulos sem teste automático de consistência;
 - lógica de autorização no parser;
 - escolha de IA/backend no parser;
 - reconstrução de estado por parser;
