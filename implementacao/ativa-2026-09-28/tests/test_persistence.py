@@ -53,3 +53,208 @@ def test_canonical_same_writer_separate_domain(tmp_path):
 def test_escape_rejected(tmp_path,path):
     w=W(tmp_path)
     with pytest.raises(PersistenceError): w.write("op","CREATIVE",path,"x")
+
+import subprocess, sys
+from pathlib import Path
+
+def _run_hard_crash(tmp_path, point):
+    script = f"""
+from pathlib import Path
+from cerebro.persistence import RecoverableMarkdownWriter
+root=Path({str(tmp_path)!r})
+w=RecoverableMarkdownWriter(root/'state'/'cerebro.sqlite3', root/'vault')
+w.write('op-hard','CREATIVE','a.md','payload',hard_crashpoint={point!r})
+"""
+    return subprocess.run([sys.executable, '-c', script], cwd=str(Path(__file__).parents[1]))
+
+def test_real_process_crash_after_prepared_is_recoverable(tmp_path):
+    r=_run_hard_crash(tmp_path, 'after_prepared')
+    assert r.returncode == 97
+    w=W(tmp_path)
+    assert w.reconcile('op-hard') == 'NOT_COMMITTED'
+    assert w.resume('op-hard').state == 'COMMITTED'
+
+def test_real_process_crash_after_replace_reconciles(tmp_path):
+    r=_run_hard_crash(tmp_path, 'after_replace')
+    assert r.returncode == 98
+    w=W(tmp_path)
+    assert w.reconcile('op-hard') == 'COMMITTED'
+
+
+def test_symlink_escape_is_blocked_without_writing_outside(tmp_path):
+    outside=tmp_path/"outside"
+    outside.mkdir()
+    link=tmp_path/"vault"/"creative"/"link"
+    link.parent.mkdir(parents=True,exist_ok=True)
+    try:
+        link.symlink_to(outside,target_is_directory=True)
+    except OSError as error:
+        pytest.skip(f"symlink unavailable in this environment: {error}")
+    w=W(tmp_path)
+    with pytest.raises(PersistenceError,match="path escapes domain root"):
+        w.write("op-symlink","CREATIVE","link/escape.md","payload")
+    assert list(outside.iterdir()) == []
+
+
+def test_same_operation_concurrent_processes_remain_idempotent(tmp_path):
+    worker = """
+from pathlib import Path
+import sys
+from cerebro.persistence import RecoverableMarkdownWriter
+root=Path(sys.argv[1])
+w=RecoverableMarkdownWriter(root/'state'/'cerebro.sqlite3',root/'vault')
+receipt=w.write('op-concurrent','CREATIVE','same.md','payload')
+assert receipt.state == 'COMMITTED'
+"""
+    processes=[
+        subprocess.Popen(
+            [sys.executable,"-c",worker,str(tmp_path)],
+            cwd=str(Path(__file__).parents[1]),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+        for _ in range(8)
+    ]
+    results=[process.communicate(timeout=30) + (process.returncode,) for process in processes]
+    failures=[result for result in results if result[2] != 0]
+    assert failures == []
+    w=W(tmp_path)
+    assert w.reconcile("op-concurrent") == "COMMITTED"
+    assert (tmp_path/"vault"/"creative"/"same.md").read_text() == "payload"
+
+
+def test_after_replace_crash_leaves_prepared_until_reconcile(tmp_path):
+    r=_run_hard_crash(tmp_path,"after_replace")
+    assert r.returncode == 98
+    import sqlite3
+    con=sqlite3.connect(tmp_path/"state"/"cerebro.sqlite3")
+    try:
+        row=con.execute(
+            "SELECT state FROM materializations WHERE operation_id=?",
+            ("op-hard",),
+        ).fetchone()
+    finally:
+        con.close()
+    assert row == ("PREPARED",)
+    assert (tmp_path/"vault"/"creative"/"a.md").read_bytes() == b"payload"
+    w=W(tmp_path)
+    assert w.reconcile("op-hard") == "COMMITTED"
+
+
+def test_committed_tamper_requires_recovery(tmp_path):
+    w=W(tmp_path)
+    w.write("op-tamper","CREATIVE","a.md","original")
+    target=tmp_path/"vault"/"creative"/"a.md"
+    target.write_text("alterado",encoding="utf-8")
+    assert w.reconcile("op-tamper") == "RECOVERY_REQUIRED"
+    with pytest.raises(RecoveryRequired):
+        w.resume("op-tamper")
+
+
+def test_real_permission_denial_does_not_commit(tmp_path):
+    import os
+    if os.name == "nt":
+        pytest.skip("POSIX chmod test; Windows ACL proof is a separate physical gate")
+    w=W(tmp_path)
+    parent=tmp_path/"vault"/"creative"
+    parent.mkdir(parents=True,exist_ok=True)
+    parent.chmod(0o500)
+    try:
+        with pytest.raises(PermissionError):
+            w.write("op-denied","CREATIVE","denied.md","payload")
+    finally:
+        parent.chmod(0o700)
+    assert w.reconcile("op-denied") == "NOT_COMMITTED"
+    assert not (parent/"denied.md").exists()
+
+
+def test_windows_replace_is_write_through_and_persists_target(tmp_path):
+    import os
+    if os.name != "nt":
+        pytest.skip("Windows-only durable replace gate")
+    source=tmp_path/"source.partial"
+    target=tmp_path/"target.md"
+    source.write_bytes(b"payload")
+    assert RecoverableMarkdownWriter._replace_and_sync(source,target) is True
+    assert not source.exists()
+    assert target.read_bytes() == b"payload"
+
+
+def test_real_process_crash_after_temp_fsync_resumes_safely(tmp_path):
+    r=_run_hard_crash(tmp_path,"after_temp_fsync")
+    assert r.returncode == 99
+    parent=tmp_path/"vault"/"creative"
+    partials=[
+        path for path in parent.iterdir()
+        if path.name.startswith(".") and path.name.endswith(".partial")
+    ] if parent.exists() else []
+    assert len(partials) == 1
+    assert partials[0].read_bytes() == b"payload"
+    assert all(path.read_bytes() == b"payload" for path in partials)
+    w=W(tmp_path)
+    assert w.reconcile("op-hard") == "NOT_COMMITTED"
+    assert w.resume("op-hard").state == "COMMITTED"
+    assert (parent/"a.md").read_bytes() == b"payload"
+    assert w.reconcile("op-hard") == "COMMITTED"
+
+
+def test_windows_acl_write_denial_does_not_commit(tmp_path):
+    import os
+    if os.name != "nt":
+        pytest.skip("Windows ACL gate")
+    parent=tmp_path/"vault"/"creative"
+    parent.mkdir(parents=True,exist_ok=True)
+    who=subprocess.run(
+        ["whoami"],
+        capture_output=True,
+        text=True,
+        timeout=10,
+        check=True,
+    ).stdout.strip()
+    deny=subprocess.run(
+        ["icacls",str(parent),"/deny",f"{who}:(W)"],
+        capture_output=True,
+        text=True,
+        timeout=15,
+    )
+    assert deny.returncode == 0, deny.stdout + deny.stderr
+    script=f"""
+import faulthandler
+from pathlib import Path
+from cerebro.persistence import RecoverableMarkdownWriter
+faulthandler.dump_traceback_later(5,repeat=False)
+root=Path({str(tmp_path)!r})
+w=RecoverableMarkdownWriter(root/'state'/'cerebro.sqlite3',root/'vault')
+try:
+    w.write('op-denied-win','CREATIVE','denied.md','payload')
+except OSError:
+    faulthandler.cancel_dump_traceback_later()
+    raise SystemExit(0)
+raise SystemExit(3)
+"""
+    try:
+        try:
+            denied=subprocess.run(
+                [sys.executable,"-c",script],
+                cwd=str(Path(__file__).parents[1]),
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+        except subprocess.TimeoutExpired as error:
+            stderr=error.stderr or ""
+            stdout=error.stdout or ""
+            pytest.fail("Windows ACL subprocess timed out. stdout=" + str(stdout) + " stderr=" + str(stderr))
+        assert denied.returncode == 0, denied.stdout + denied.stderr
+    finally:
+        cleanup=subprocess.run(
+            ["icacls",str(parent),"/remove:d",who],
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+        assert cleanup.returncode == 0, cleanup.stdout + cleanup.stderr
+    w=W(tmp_path)
+    assert w.reconcile("op-denied-win") == "NOT_COMMITTED"
+    assert not (parent/"denied.md").exists()

@@ -2,7 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
-import hashlib, os, sqlite3, tempfile, time
+import hashlib, os, sqlite3, tempfile, time, uuid
 
 class PersistenceError(RuntimeError): pass
 class RecoveryRequired(PersistenceError): pass
@@ -24,9 +24,19 @@ class RecoverableMarkdownWriter:
         self._init_db()
 
     def _connect(self):
-        con=sqlite3.connect(self.db_path)
+        con=sqlite3.connect(self.db_path,timeout=30)
         con.row_factory=sqlite3.Row
-        con.execute("PRAGMA journal_mode=WAL")
+        con.execute("PRAGMA busy_timeout=30000")
+        deadline=time.monotonic()+30
+        while True:
+            try:
+                con.execute("PRAGMA journal_mode=WAL")
+                break
+            except sqlite3.OperationalError as error:
+                if "locked" not in str(error).lower() or time.monotonic() >= deadline:
+                    con.close()
+                    raise
+                time.sleep(0.01)
         con.execute("PRAGMA synchronous=FULL")
         return con
 
@@ -47,10 +57,17 @@ class RecoverableMarkdownWriter:
 
     @staticmethod
     def _hash_file(path:Path)->str:
-        h=hashlib.sha256()
-        with path.open("rb") as f:
-            for chunk in iter(lambda:f.read(1024*1024),b""): h.update(chunk)
-        return h.hexdigest()
+        deadline=time.monotonic()+0.5 if os.name=="nt" else None
+        while True:
+            try:
+                h=hashlib.sha256()
+                with path.open("rb") as f:
+                    for chunk in iter(lambda:f.read(1024*1024),b""): h.update(chunk)
+                return h.hexdigest()
+            except PermissionError:
+                if deadline is None or time.monotonic() >= deadline:
+                    raise
+                time.sleep(0.01)
 
     def _resolve_target(self,domain,relative_path):
         if domain not in self.DOMAINS: raise PersistenceError("invalid domain")
@@ -58,6 +75,23 @@ class RecoverableMarkdownWriter:
         if rel.is_absolute() or ".." in rel.parts or not rel.parts: raise PersistenceError("invalid relative path")
         root=(self.vault_root/domain.lower()).resolve()
         target=(root/rel).resolve()
+        if os.name=="nt":
+            def plain(value):
+                text=str(value)
+                if text.startswith("\\\\?\\UNC\\"):
+                    return "\\\\"+text[8:]
+                if text.startswith("\\\\?\\"):
+                    return text[4:]
+                return text
+            root_text=plain(root)
+            target_text=plain(target)
+            try:
+                inside=os.path.commonpath([os.path.normcase(root_text),os.path.normcase(target_text)])
+            except ValueError as e:
+                raise PersistenceError("path escapes domain root") from e
+            if inside!=os.path.normcase(root_text):
+                raise PersistenceError("path escapes domain root")
+            return Path(target_text)
         try: target.relative_to(root)
         except ValueError as e: raise PersistenceError("path escapes domain root") from e
         return target
@@ -74,35 +108,54 @@ class RecoverableMarkdownWriter:
         if not operation_id or not isinstance(content,str): raise PersistenceError("invalid operation/content")
         target=self._resolve_target(domain,relative_path)
         expected=self._hash_bytes(content.encode("utf-8"))
-        existing=self._row(operation_id)
-        if existing:
-            if (existing["domain"],existing["relative_path"],existing["expected_hash"],existing["content"]) != (domain,relative_path,expected,content):
-                raise RecoveryRequired("operation_id reused with different materialization")
-            return self._receipt(existing)
-        if target.exists() and self._hash_file(target)!=expected:
-            raise RecoveryRequired("target already exists with different bytes")
         with self._connect() as con:
             con.execute("BEGIN IMMEDIATE")
+            existing=con.execute(
+                "SELECT * FROM materializations WHERE operation_id=?",
+                (operation_id,),
+            ).fetchone()
+            if existing:
+                if (existing["domain"],existing["relative_path"],existing["expected_hash"],existing["content"]) != (domain,relative_path,expected,content):
+                    raise RecoveryRequired("operation_id reused with different materialization")
+                return self._receipt(existing)
+            if target.exists() and self._hash_file(target)!=expected:
+                raise RecoveryRequired("target already exists with different bytes")
             con.execute("""INSERT INTO materializations
             (operation_id,domain,relative_path,content,expected_hash,state,prepared_at,committed_at)
             VALUES (?,?,?,?,?,'PREPARED',?,NULL)""",(operation_id,domain,relative_path,content,expected,time.time()))
         return MaterializationReceipt(operation_id,domain,relative_path,expected,"PREPARED")
 
-    def write(self,operation_id,domain,relative_path,content,failpoint:Optional[str]=None):
+    def write(self,operation_id,domain,relative_path,content,failpoint:Optional[str]=None,hard_crashpoint:Optional[str]=None):
+        if hard_crashpoint not in (None,"after_prepared","after_temp_fsync","after_replace"):
+            raise PersistenceError("invalid hard crashpoint")
         receipt=self.prepare(operation_id,domain,relative_path,content)
+        if hard_crashpoint=="after_prepared": os._exit(97)
         if failpoint=="after_prepared": raise RuntimeError("SIMULATED_CRASH_AFTER_PREPARED")
         row=self._row(operation_id)
         if row["state"]=="COMMITTED":
             return self._verify_committed(row)
         target=self._resolve_target(domain,relative_path)
         target.parent.mkdir(parents=True,exist_ok=True)
-        fd,tmp_name=tempfile.mkstemp(prefix=f".{operation_id}.",suffix=".partial",dir=target.parent)
-        tmp=Path(tmp_name)
+        if os.name=="nt":
+            safe_operation=hashlib.sha256(operation_id.encode("utf-8")).hexdigest()[:16]
+            tmp=target.parent/f".{safe_operation}.{uuid.uuid4().hex}.partial"
+            flags=os.O_RDWR|os.O_CREAT|os.O_EXCL|getattr(os,"O_BINARY",0)
+            fd=os.open(tmp,flags,0o600)
+            tmp_name=str(tmp)
+        else:
+            fd,tmp_name=tempfile.mkstemp(prefix=f".{operation_id}.",suffix=".partial",dir=target.parent)
+            tmp=Path(tmp_name)
         try:
             with os.fdopen(fd,"wb") as f:
                 f.write(content.encode("utf-8")); f.flush(); os.fsync(f.fileno())
+            if hard_crashpoint=="after_temp_fsync": os._exit(99)
             if self._hash_file(tmp)!=receipt.expected_hash: raise RecoveryRequired("temporary file hash mismatch")
-            os.replace(tmp,target); self._fsync_dir(target.parent)
+            try:
+                self._replace_and_sync(tmp,target)
+            except PermissionError:
+                if not target.exists() or self._hash_file(target)!=receipt.expected_hash:
+                    raise
+            if hard_crashpoint=="after_replace": os._exit(98)
             if failpoint=="after_replace": raise RuntimeError("SIMULATED_CRASH_AFTER_REPLACE")
             return self._mark_committed(operation_id,target,receipt.expected_hash)
         finally:
@@ -142,8 +195,29 @@ class RecoverableMarkdownWriter:
         return self._receipt(self._row(operation_id))
 
     @staticmethod
+    def _replace_and_sync(source,target):
+        source,target=Path(source),Path(target)
+        if os.name=="nt":
+            import ctypes
+            move=ctypes.WinDLL("kernel32",use_last_error=True).MoveFileExW
+            move.argtypes=[ctypes.c_wchar_p,ctypes.c_wchar_p,ctypes.c_uint32]
+            move.restype=ctypes.c_int
+            MOVEFILE_REPLACE_EXISTING=0x1
+            MOVEFILE_WRITE_THROUGH=0x8
+            if not move(str(source),str(target),MOVEFILE_REPLACE_EXISTING|MOVEFILE_WRITE_THROUGH):
+                raise ctypes.WinError(ctypes.get_last_error())
+            return True
+        os.replace(source,target)
+        RecoverableMarkdownWriter._fsync_dir(target.parent)
+        return True
+
+    @staticmethod
     def _fsync_dir(path):
-        if os.name=="nt": return
+        if os.name=="nt":
+            raise PersistenceError("directory fsync is not the Windows durability primitive")
         fd=os.open(path,os.O_RDONLY)
-        try: os.fsync(fd)
-        finally: os.close(fd)
+        try:
+            os.fsync(fd)
+            return True
+        finally:
+            os.close(fd)

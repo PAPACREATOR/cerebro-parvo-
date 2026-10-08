@@ -10,7 +10,7 @@ O protótipo Windows está em [nexus/](nexus/README.md). Consultar o [estado tes
 
 **Nexus Minimal = Folha em linguagem natural + Conductor como condutor candidato + memória soberana Nexus/Windows + Open Notebook apenas como bancada cognitiva descartável.**
 
-A arquitetura conceptual está estável. A implementação física continua sujeita a testes: nenhuma integração é declarada resolvida antes de PASS real.
+A arquitetura conceptual está estável. As responsabilidades M1–M14 continuam a ser invariantes de arquitetura e não implicam 14 serviços. A implementação física continua sujeita a testes: nenhuma integração é declarada resolvida antes de PASS real.
 
 ## Modelo mental
 

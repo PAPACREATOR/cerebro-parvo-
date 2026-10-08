@@ -106,7 +106,7 @@ def detect_format(path):
                 n=set(z.namelist())
                 if "[Content_Types].xml" in n and any(x.startswith("word/") for x in n): return "docx",{"container":"zip"}
                 if "mimetype" in n and z.read("mimetype")==b"application/epub+zip": return "epub",{"container":"zip"}
-        except Exception:
+        except (OSError, RuntimeError, zipfile.BadZipFile):
             return "unknown",{"signature":"PK","container_valid":False}
         return "zip",{"signature":"PK","container_valid":True}
     return "unknown",{"extension_mime":mimetypes.guess_type(str(path))[0]}
