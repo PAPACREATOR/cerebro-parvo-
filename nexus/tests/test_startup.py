@@ -23,12 +23,13 @@ REPO = Path(__file__).resolve().parents[2]
 
 def test_launch_reference_never_exposes_truncated_url(tmp_path, monkeypatch):
     import nexus.app as app
+    import nexus.store as storage
     target = tmp_path / "launch-url.txt"
     previous = "http://127.0.0.1:1234/#session=previous"
     expected = "http://127.0.0.1:4321/#session=synthetic"
     target.write_text(previous, encoding="utf-8")
     observed = []
-    real_open, real_replace = Path.open, os.replace
+    real_open, real_replace = Path.open, storage._replace_durable
 
     def observe_open(path, mode="r", *args, **kwargs):
         stream = real_open(path, mode, *args, **kwargs)
@@ -40,7 +41,10 @@ def test_launch_reference_never_exposes_truncated_url(tmp_path, monkeypatch):
         if Path(destination) == target:
             observed.append(target.read_text("utf-8"))
             assert Path(source).read_text("utf-8") == expected
-        return real_replace(source, destination)
+        result = real_replace(source, destination)
+        if Path(destination) == target:
+            observed.append(target.read_text("utf-8"))
+        return result
 
     @contextmanager
     def fake_application(*_):
@@ -48,17 +52,19 @@ def test_launch_reference_never_exposes_truncated_url(tmp_path, monkeypatch):
             server_port=4321, serve_forever=lambda: None)
 
     monkeypatch.setattr(Path, "open", observe_open)
-    monkeypatch.setattr(os, "replace", observe_replace)
+    monkeypatch.setattr(storage, "_replace_durable", observe_replace)
     monkeypatch.setattr(app, "application", fake_application)
     monkeypatch.setattr(sys, "argv", ["nexus", "--no-browser"])
     assert app.main() == 0
     assert observed and all(value in (previous, expected) for value in observed)
+    assert observed == [previous, expected]
     assert target.read_text("utf-8") == expected
     assert not list(tmp_path.glob(".pending-*"))
 
 
 def test_launch_publication_failure_preserves_previous_reference(tmp_path, monkeypatch):
     import nexus.app as app
+    import nexus.store as storage
     target = tmp_path / "launch-url.txt"
     target.write_bytes(b"previous-complete-reference")
     served = []
@@ -68,11 +74,14 @@ def test_launch_publication_failure_preserves_previous_reference(tmp_path, monke
         yield SimpleNamespace(store=SimpleNamespace(root=tmp_path), session="synthetic"), SimpleNamespace(
             server_port=4321, serve_forever=lambda: served.append(True))
 
-    def fail_replace(*_):
+    def fail_replace(source, destination):
+        assert Path(destination) == target
+        assert target.read_bytes() == b"previous-complete-reference"
+        assert Path(source).read_bytes() == b"http://127.0.0.1:4321/#session=synthetic"
         raise PermissionError("synthetic publication failure")
 
     monkeypatch.setattr(app, "application", fake_application)
-    monkeypatch.setattr(os, "replace", fail_replace)
+    monkeypatch.setattr(storage, "_replace_durable", fail_replace)
     monkeypatch.setattr(sys, "argv", ["nexus", "--no-browser"])
     with pytest.raises(PermissionError, match="synthetic publication"):
         app.main()

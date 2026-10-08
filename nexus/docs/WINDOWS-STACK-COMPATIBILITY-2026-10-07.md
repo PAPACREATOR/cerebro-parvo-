@@ -5,13 +5,13 @@
 Este documento regista a revisão feita após dois FAIL físicos no PC Windows:
 
 1. `winget`/Node devolveu MSI `1603`, apesar de `node.exe` e `npm.cmd` estarem funcionais.
-2. O instalador exigia `ollama.exe`, contrariando a decisão de manter o modelo local desacoplado e subordinado ao Kernel Python.
+2. O instalador exigia um runtime local legado específico, contrariando a decisão de manter o modelo local desacoplado e subordinado ao Kernel Python.
 
 A correção não altera M1–M14, T1–T6, Creative/Canonical, Human Gate, MCP nem a Folha Única.
 
 ## Runtime local de modelos
 
-Ollama deixa de ser dependência do percurso ativo.
+O runtime local legado deixa de ser dependência do percurso ativo.
 
 `llama.cpp` é tratado como ferramenta externa local e substituível, da mesma forma que FFmpeg ou LibreOffice. O Kernel continua Python-first e mantém toda a autoridade.
 
@@ -60,7 +60,7 @@ Separar credentials evita misturar modalidades e permite testar cada fronteira i
 
 ## MoneyPrinterTurbo
 
-MoneyPrinterTurbo deixa de apontar para Ollama.
+MoneyPrinterTurbo passa a apontar exclusivamente para a fronteira local OpenAI-compatible de llama.cpp.
 
 O LLM configurado passa a ser o endpoint OpenAI-compatible local de linguagem:
 - provider: `openai`;

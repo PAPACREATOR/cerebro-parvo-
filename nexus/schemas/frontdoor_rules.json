@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "type": "object",
   "additionalProperties": false,
-  "required": ["version", "max_text_chars", "prefixes", "natural_rules"],
+  "required": ["version", "max_text_chars", "prefixes", "natural_rules", "clarification_patterns"],
   "properties": {
     "version": {"const": "1.0"},
     "max_text_chars": {"const": 100000},
@@ -21,6 +21,7 @@
         "maxItems": 2
       }
     },
+    "clarification_patterns": {"$ref": "#/$defs/patterns"},
     "natural_rules": {
       "type": "object",
       "additionalProperties": false,

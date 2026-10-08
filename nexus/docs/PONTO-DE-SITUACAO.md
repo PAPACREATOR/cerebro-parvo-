@@ -1,5 +1,168 @@
 # Nexus — ponto de situação atual
 
+## Convergência técnica Work — 08-10-2026
+
+Pedido corrente: convergir a PR #32 num único produto Windows, seguindo #31, #32, #34 e #33. Work altera código/testes e regista operação; a PR #34 conserva arquitetura/documentação/auditoria. Os relatórios datados abaixo continuam como história; não validam o HEAD corrente.
+
+Candidato único: [PR #32](https://github.com/PAPACREATOR/cerebro-parvo-/pull/32), branch `cleanup/llamacpp-only-20261007`, base `lab/windows-full-install-20261006` (`90683cd3744db074c4ea3b3c170aad6218f2b8ed`). Esta retoma parte do HEAD `a13d316117024ffc7923bcfc49d5517e8184828e`, que fixou o checkout do Front Door Lab. A correção anterior de interpretação foi `dfbd7c9b7d3b48ef5af82f0979e3c896939ee22b`, depois do baseline `b4d50ab8469cf60dfa3228c7c34ef9a1285ac827`. O HEAD exato e a matriz concluída de workflows devem ser conferidos no comentário de continuação da PR: um novo commit exige repetir todos os gates aplicáveis. **Sem PASS global enquanto existir um FAIL ou gate por executar. Sem merge em main.**
+
+`main` observado: `aeeb6f662a8282b3793708aa3e6782ef20d2d0ca` (mudança documental externa; não houve merge do candidato). PR #31: `628359cb4dfc363734894e0724eba25fb164acd8`; PR #34: `2c91ad036f94c03777183d60b4c977a4ee9dc68e`. Nenhuma PR sucessora encontrada na recuperação de 08-10. #31 fornece genealogia dos contratos transacionais; não foi transplantado outro Kernel. Os apontamentos CodeQL dessa PR sobre `Path`/`tmp_name` não usados permanecem documentados como dívida estática histórica, sem FAIL funcional que justifique tocar nessa implementação.
+
+### Ciclo Work — interpretação conservadora antes da integração
+
+Pedro confirmou a divisão por repositórios: Work mantém a PR #32; Codex mantém
+`nexus-writer-lab`; a Folha funcional mantém `nexus-folha-lab`. Clonar, comparar e
+testar numa cópia Work é autorizado; editar os laboratórios dos outros ou copiar
+automaticamente os seus patches não é. O checkout local antigo, incluindo dois
+testes não rastreados, foi preservado; alterações preparadas numa worktree isolada.
+
+Fontes recuperadas: Front Door E2E histórica `7006184d1148faeefae2ba5b27a41a0d0e4dec60`
+e Folha `116b2dcea97e7bc8b5ace414e3f53243ff770bd6`. Parser, regras e schema do
+baseline b4d50ab são idênticos aos da branch E2E histórica; não era necessário
+transplantá-los. A Folha forneceu a proteção inicial de negações/citações, adaptada
+e testada no Work, sem copiar o seu servidor, UI, IA ou backend.
+
+FAIL-first: commit `184954f29722b2c0e9fe832aaee6b7f86fa2cb3f` acrescentou 28 casos; execução contra o parser anterior
+produziu **22 FAIL / 6 PASS**. «Não guarda esta nota» e instruções citadas tornavam-se
+RESOLVED. A primeira adaptação isolada passou esses casos, mas a revisão encontrou
+outros FAILs: uma hint tiny escolhia arbitrariamente entre intenções determinísticas
+conflituosas; uma sombra corrigida conflituosa também podia ser sobreposta; citações
+incompletas com 100.000 caracteres excediam o orçamento de teste de 5 s.
+
+Correção mínima: regras de clarificação declarativas no JSON/schema existentes;
+negações/citações e conflitos ficam UNRESOLVED/ASK_HUMAN; LanguageTool/tiny não
+apagam essa recusa nem escolhem uma das ações incompatíveis. A expressão de citação
+não atravessa outro marcador de abertura, evitando o custo quadrático observado.
+Prefixos explícitos, original UTF-8 e funcionamento sem IA mantidos.
+
+Primeira regressão local Python 3.12/Linux: **213 PASS**, incluindo os 33 novos casos,
+100K de ambiguidade, round trips de linguagem, contratos/sintaxe, Store, startup e
+morte real em criação/Canonical. **4 PASS** adicionais no HTTP/Host real comprovam
+recusa de propostas naturais sem correspondência autorizada, zero runs/ferramentas
+e zero Creative/Canonical. Essas contagens não provam 217 inputs distintos nem
+Windows/PC; as matrizes internas e repetições não são somáveis.
+
+Host/Store/Kernel/M1–M14, sandbox, Writer, runner, manifesto ativo, instalação e UI
+ficaram byte-a-byte iguais ao baseline. O selo ativo continua válido. Front Door
+continua **NOT INTEGRATED**: estas mudanças corrigem interpretação testada, sem a
+transformar num novo caminho de execução. O HTTP sem process continua a devolver
+403, uma recusa segura que comprova o bloqueio de integração.
+
+Gates seguintes: repetir os oito workflows principais e o Front Door Lab, aplicável
+à alteração do parser, no HEAD final. Conferir checkout real, regressões,
+confinamento, crash/recovery e E2E existentes. Não transferir resultados de outro
+SHA. Writer real conserva o FAIL independente; o diagnóstico permanece no
+laboratório Codex, sem sobreposição de alterações.
+
+FAIL de auditoria reproduzível: o run Front Door Lab `37827787132`, associado a
+`78b52f7675cbab41b28e6739ea6ec819f120dfdc`, marcou SUCCESS mas o log do job
+`113484985250` mostrou checkout do merge sintético
+`234020318bfb94ec49844a87ac4fe00b7ebd3d58`. Esse resultado não valida o candidato.
+Correção mínima no workflow existente: fixar `pull_request.head.sha`/`github.sha`,
+como nos outros oito gates, sem mudar comandos, limites ou cobertura. A repetição
+dos nove workflows deve verificar o SHA nos logs, além do estado da API.
+
+Bloqueio contratual da Folha: não existe correspondência aprovada entre intenções
+e operações, nem integração da confirmação pré-execução exigida pelo seu contrato.
+Próximo passo para arquitetura/auditoria: rever uma correspondência mínima para a
+operação verify já existente, com anexo explícito e confirmação da operação e dos
+bytes apresentados; nenhuma tradução automática das sete intenções para dez
+processos. Só depois provar frase natural → Host → Creative → Human Gate → Canonical
+e restart. O fallback técnico não satisfaz a aceitação normal definida em #33.
+PC físico, serviços/modelos instalados e power-loss continuam NOT RUN.
+
+### Retoma Work — citações sem fecho, 08-10-2026
+
+Retomada a segunda revisão da interpretação conservadora, preparada no checkout
+anterior. A retoma preservou os checkouts anteriores e os laboratórios
+Codex/Folha, trabalhando numa cópia isolada de a13d316.
+
+FAIL-first preservado em `e9b2489471e5513f70c25641b071f4b598094e5d`: três
+citações abertas com «, “ e aspas ASCII tornavam-se comandos positivos. Os mesmos
+casos foram testados no parser e contra uma hint tiny: **6 FAIL / 33 PASS** em
+0,66 s. A árvore desse commit foi conferida contra a árvore local reproduzida.
+
+Correção mínima: uma expressão declarativa em `frontdoor_rules.json` aceita o
+fim do texto como limite da citação. A expressão continua sem atravessar outro
+marcador de abertura. Nenhum motor, mapeamento de processo ou autoridade foi criado.
+Após a correção: **39 PASS** focais em 0,56 s; **189 PASS** na regressão local em
+28,71 s, incluindo os quatro testes HTTP/Host de recusa, prefixos, LanguageTool,
+ambiguidade 100K, round trips 20K, contratos/sintaxe, Store, startup e morte real;
+**17 PASS** adicionais no contrato tiny loopback em 1,78 s. O gate focal é parte
+da regressão e não deve ser somado. O servidor loopback é uma fixture, não um
+modelo instalado. Comandos e contagens XML ficam registados no comentário de continuação.
+
+O selo ativo foi verificado. Host/Store/Kernel, runner, sandbox, UI, Writer,
+manifesto e instalação continuam idênticos ao baseline. Apenas a regra, os três
+casos no teste existente e este ponto operacional mudam. A Front Door continua
+**NOT INTEGRATED**; recusa HTTP não prova aceitação natural no produto.
+
+Matriz anterior em a13d316: **7 SUCCESS / 2 FAIL**, em nove workflows. Confinement
+Server 2022 teve timeout de 15 s numa invocação PowerShell de recusa de instalação
+(19 outros testes desse passo passaram); Server 2025 passou. Writer Windows teve
+**2 FAIL / 5 PASS**, por timeout de 45 s em book/convert_pdf dentro de LPAC. Os
+logs confirmam o checkout de a13d316. Estes resultados não são transferidos para
+o novo HEAD: repetir os nove gates e verificar o SHA nos logs. Não aumentar
+prazos/permissões, nem incorporar trabalho dos laboratórios alheios para fabricar
+PASS. A matriz final e qualquer bloqueio real ficam nos comentários #32/#33.
+
+### Ciclos e provas por SHA
+
+| Alteração | FAIL preservado e correção mínima | Evidência |
+|---|---|---|
+| Startup, `5a0559c` | Dois testes interceptavam os.replace embora Windows publique por _replace_durable/MoveFileExW. Passaram a observar e falhar na fronteira durável real; bytes antigos/novos completos e ausência de temporários mantidos. Runtime intacto. | Seis workflows então aplicáveis SUCCESS no mesmo SHA: auditoria, compatibilidade, crash, confinement, Windows, Integration. [Windows 37770378941](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37770378941); [Integration 37770378926](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37770378926). |
+| Contratos, `4b89dd0` / `6d96a96` | A/B das dez capacidades, morte real antes/depois da publicação Canonical, consistência e bootstrap funcional. Peer CLI inicial exigia leitura de uma pasta Windows protegida; substituído por PE C nativo, sem essa concessão. | FAILs e relatórios nos comentários #32. Peers não provam instalações reais de Java/Writer/modelos. |
+| Binding, `2c928f7` | Bootstrap: 3 FAIL/5 PASS antes; launcher com Git real: 8 FAIL/8 PASS antes. Autorização explícita, SHA/origin/checkout limpo, binding externo expected_head, BOM PowerShell e renovação explícita. | Launcher 16 PASS após; bootstrap 8 PASS em cada Windows. Mantidos helpers/entrada existentes; bundle completo opcional. |
+| Stdio LPAC, `5ae70d2` | A/B expôs PermissionError: nul em Java/Writer. Pipe/EOF vazio substituiu DEVNULL, conservando prazo, erro e kill da árvore. | Mesmos resultados/bytes passam; selo atualizado só para adapters afetados. Nenhuma concessão ao NUL global. |
+| A/B, `80976b5` | Redução medida sem presumir um único processo adicional: A/B 4/2 nas rotas Python, 6/4 nos peers CLI. | [Confinement 37777486939](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37777486939): 31 PASS por Windows. [Writer 37777486997](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37777486997): timeout real no Host/LPAC; PASS global recusado. |
+| Via direta, `7fe89c3` | Três contratos FAIL-first: importação MCP obrigatória, segunda sandbox no runner e dependências core. Após A/B verde, B passou a ser o runner selado. | Local 94 PASS/20 gates Windows NOT RUN. A/B 10/10; novo Host completo 8/10, dois FAILs PDF; [Confinement 37780160271](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37780160271). |
+| Diagnóstico, `a7bc403` | Binding estrutural residual procurava pin MCP no core; corrigido mantendo o critério em requirements-mcp. Diagnóstico limitado dos FAILs Host e probe nativa IPC Writer. | Contratos locais afetados 10 PASS. Novo SHA exige nova prova. XML Writer preservado também em FAIL. |
+
+Contagens de funções, operações e inputs não são somáveis: suites sobrepõem-se e repetições por OS/SHA não acrescentam inputs distintos. Morte de processo não equivale a corte de energia/disco físico.
+
+Correção seguinte dos peers: o diagnóstico em a7bc403 mostrou WinError 5 ao consultar soffice.com. A fixture colocou o executável diretamente numa pasta pytest privada, pelo que a raiz de leitura calculada era o diretório pai de pytest. O peer passa ao layout LibreOffice/program, com a raiz própria esperada pelo adapter. Apenas teste alterado; ACL/token/Host/Store conservados. Repetição nativa PENDENTE neste commit.
+
+Auditoria do SHA efetivamente testado: os logs de checkout mostravam refs/pull/32/merge e um SHA de merge sintético, mesmo com os runs associados ao HEAD candidato. Os oito workflows passam a fixar ref no pull_request.head.sha (ou github.sha fora de PR). A repetição seguinte verifica o próprio commit candidato; os resultados anteriores ficam associados aos seus runs/árvores, sem serem transferidos ao novo SHA.
+
+Atualização de provas em a2d76ff: confinement concluiu nos dois Windows, incluindo 41 PASS por job (A/B + dez capacidades Host/Human Gate/Canonical/restart) e bootstrap 8 PASS. Windows 2022 precisou de repetição por timeout de vswhere antes dos peers; log original conservado, limites intactos. Writer instalado repetiu 2 FAIL/5 PASS. Legacy pipe foi recusado com WinError 5, LOCAL funcionou; a fonte 26.2.6.2 usa legacy. O ponto interno preciso do timeout continua inferência, não rastreio completo.
+
+Regressão Windows: Core 140, Blocks 1079 e Practical 79 PASS; suite completa interrompida pelo limite do job de 15 min após 1525 PASS/12 SKIP. CANCELLED não é PASS. As suites passam a jobs separados com os mesmos comandos/limites, sem retirar testes. Novo HEAD exige repetir os oito workflows antes da matriz final em #32/#33.
+
+Continuação em `d7798a4`: auditoria, CodeQL, crash/recovery, compatibilidade, confinement nos dois Windows e os seis jobs de integração concluíram SUCCESS. Confinement repetiu os 41 testes nativos por OS. Writer repetiu 2 FAIL/5 PASS; limites/fronteira intactos. A regressão standard isolada também foi CANCELLED aos 15 min, após 1530 PASS/12 SKIP (interrupção observada em ssl.py, sem prova de FAIL funcional). [Run e XML preservados](https://github.com/PAPACREATOR/cerebro-parvo-/actions/runs/37785435070).
+
+Correção apenas da distribuição CI: os mesmos 64 módulos standard são enumerados e repartidos por índice par/ímpar em dois jobs Windows. União = 64, interseção = 0; as seis exclusões de volume existentes mantêm os gates dedicados. Não se reduz cobertura nem se aumenta prazo. Log por teste, vinte durações e XML por partição permitem localizar uma eventual demora individual. Novo HEAD deve repetir os oito workflows; o PASS de uma partição não valida a outra nem o Writer.
+
+### Runtime e redundâncias justificadas
+
+A Folha conserva dez processos explícitos da política. **Front Door natural/tiny com sete intenções: NOT INTEGRATED**; não existe mapa 7→10 aprovado nesta convergência. A seleção explícita é o protótipo autorizado; não foi inventado router novo.
+
+Host é o único dono de launch/LPAC/AppContainer SID/Job/deny roots/timeout. O runner faz dispatch fixo para adapters existentes, recusa execução Windows fora dessa fronteira, valida JSON/schema/bytes e devolve `nexus/python-direct`. Não há modelo, rede ou segredo no filho; o broker confiado entrega snapshots delimitados. Fingerprint continua fixado antes da execução e verificado pelo Store. Alterar runner muda o fingerprint; pedidos pendentes antigos exigem reconciliação explícita. Canonical comprometido é verificado sem repetir ferramentas.
+
+Retirados da via interna: relay cliente/servidor MCP, importação obrigatória do SDK e segundo dono de sandbox execute_confined. MCP externo, ferramentas e testes reais de protocolo permanecem; baseline A só em `tests/_mcp_baseline.py`. `requirements.txt` contém jsonschema; `requirements-mcp.txt` fixa MCP/trio; requirements-test inclui ambos. Preparar o core instala dependências de teste para executar gates; MCP não é importação necessária ao runtime.
+
+Mantidos: SHA-256 Windows CNG + Python/hashlib independentes; selo Host e binding externo ao Git; validações independentes runner/Store/UI/policy/schema; bytes originais e proveniência inversa; Creative/Canonical separados; HumanDecision ligada ao hash; atomicidade Windows WRITE_THROUGH e crash/restart/idempotência. PS/.NET é diagnóstico externo, sem substituir CNG. **Host/Store, M1–M14 e lógica do Kernel não foram alterados.**
+
+Ficheiros centrais: adapters/runner.py, languagetool.py, office.py, integrity.json e requirements; windows/bootstrap-nexus-local.ps1, sync-nexus-code.ps1, nexus-launcher.py e binding no instalador completo; testes startup/A-B/consistência/crash/dependências/bootstrap/launcher/Writer e workflows. História de FAILs e candidato A/B preservada no Git/GitHub.
+
+### Entrada humana e limites
+
+Na raiz de checkout oficial, depois de conferir o SHA candidato:
+
+```powershell
+$accepted = git rev-parse HEAD
+powershell.exe -NoProfile -File nexus/windows/bootstrap-nexus-local.ps1 -RepoRoot (Get-Location).Path -ExpectedHead $accepted -AuthorizePrepare
+```
+
+Bootstrap core existente: confere origin, Git limpo e HEAD esperado, reutiliza preparação/inventário/plano e copia launcher para fora do repositório com expected_head. Nexus.lnk usa esse binding; HEAD diferente ou ficheiros alterados recusam arranque. Aceitar atualização exige repetir bootstrap com novo SHA explícito. Não executar preparação como se os FAILs atuais fossem release aprovada.
+
+Instalador completo/bundle cerca de 70 GiB é opcional e dependente da aceitação física; não foi executado. Provisioning protegido, modelos/GPU, contas/serviços/perfis Windows e PC de Pedro: **NOT RUN**. CI usa runners descartáveis e dados sintéticos.
+
+### Bloqueios e continuação
+
+PDF pelos peers no novo Host passou a repetição completa em a2d76ff após corrigir a fixture; LibreOffice 26.2.6 instalado excede 45 s dentro da fronteira existente, embora Writer fora dela passe. Stdout/stderr Writer vazios em 7fe89c3, sem PDF/proposta promovida. IPC Win32 incompatível com AppContainer é hipótese; a observação legacy/LOCAL deve ser confrontada com binário/fontes da mesma versão antes de atribuir causa.
+
+Próximo ciclo: fechar a regressão repartida e toda a matriz no mesmo HEAD, manter Writer a falhar enquanto não existir solução equivalente dentro da fronteira aprovada; repetir auditoria, sintaxe, unitários, integração/stress, segurança, crash/recovery, bootstrap/launcher e E2E no mesmo HEAD. Registar matriz e bloqueios reais em #32 e #33. Nenhum prazo/permissão aumentado para fabricar PASS.
+
 ## Atualização documental e capacidades — 06-10-2026
 
 - Constituição e arquitetura ativa reconciliadas com Kernel/Host/Store + MCP;

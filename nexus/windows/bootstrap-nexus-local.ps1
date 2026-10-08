@@ -2,11 +2,16 @@
 param(
     [string]$RepoRoot = '',
     [string]$ToolsRoot = 'C:\Nexus-Tools',
-    [string]$Branch = 'lab-open-notebook-avatar-20261004'
+    [string]$Branch = '',
+    [string]$ExpectedHead = '',
+    [switch]$AuthorizePrepare
 )
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
+
+if (-not $AuthorizePrepare) { throw 'NEXUS_PREPARE_AUTHORIZATION_REQUIRED' }
+if ($ExpectedHead -cnotmatch '^[0-9a-f]{40}$') { throw 'NEXUS_EXPECTED_HEAD_REQUIRED' }
 
 function Invoke-PowerShellChecked {
     param(
@@ -25,7 +30,8 @@ function Invoke-PowerShellChecked {
 $repoFromScript = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $sync = Join-Path $PSScriptRoot 'sync-nexus-code.ps1'
 
-$syncArgs = @('-Branch',$Branch)
+$syncArgs = @('-ExpectedHead',$ExpectedHead)
+if ($Branch) { $syncArgs += @('-Branch',$Branch) }
 if ($RepoRoot) {
     $syncArgs += @('-RepoRoot',$RepoRoot)
 }
@@ -67,9 +73,40 @@ if (-not (Test-Path -LiteralPath $coreReport)) {
     throw 'NEXUS_CORE_REPORT_MISSING'
 }
 $core = Get-Content -LiteralPath $coreReport -Raw | ConvertFrom-Json
-if ($core.status -ne 'PASS' -or $core.head -ne $head) {
+if ($core.status -ne 'PASS' -or $core.head -ne $head -or $head -ne $ExpectedHead) {
     throw 'NEXUS_CORE_REPORT_MISMATCH'
 }
+$dirty = & $git -C $RepoRoot status --porcelain --untracked-files=all
+if ($LASTEXITCODE -ne 0 -or $dirty) { throw 'NEXUS_DIRTY_TREE' }
+
+# Reuse the existing thin launcher. The accepted HEAD is outside the checkout;
+# a legitimate update renews it only through another authorized bootstrap.
+$bin = Join-Path $ToolsRoot 'bin'
+$null = New-Item -ItemType Directory -Force -Path $bin
+$launcher = Join-Path $bin 'nexus-launcher.py'
+Copy-Item -LiteralPath (Join-Path $RepoRoot 'nexus\windows\nexus-launcher.py') -Destination $launcher -Force
+$python = Join-Path $RepoRoot '.venv\Scripts\python.exe'
+$pythonw = Join-Path $RepoRoot '.venv\Scripts\pythonw.exe'
+if (-not (Test-Path -LiteralPath $python) -or -not (Test-Path -LiteralPath $pythonw)) {
+    throw 'NEXUS_PREPARED_PYTHON_MISSING'
+}
+$launcherConfig = [ordered]@{
+    repo_root = $RepoRoot
+    python = $python
+    git = $git
+    data_root = (Join-Path $RepoRoot 'nexus\runtime')
+    expected_origin = 'https://github.com/PAPACREATOR/cerebro-parvo-.git'
+    expected_head = $ExpectedHead
+}
+$configPath = Join-Path $bin 'nexus-launcher.json'
+$launcherConfig | ConvertTo-Json | Set-Content -LiteralPath $configPath -Encoding UTF8
+$shortcutPath = Join-Path $ToolsRoot 'Nexus.lnk'
+$shell = New-Object -ComObject WScript.Shell
+$shortcut = $shell.CreateShortcut($shortcutPath)
+$shortcut.TargetPath = $pythonw
+$shortcut.Arguments = '"' + $launcher + '"'
+$shortcut.WorkingDirectory = $bin
+$shortcut.Save()
 
 $report = [ordered]@{
     schema = 'nexus.local-bootstrap.v1'
@@ -82,6 +119,8 @@ $report = [ordered]@{
     external_inventory = $inventoryReport
     external_plan = $planReport
     external_provisioning = 'BLOCKED_BY_POLICY'
+    launcher = $shortcutPath
+    launcher_binding = $configPath
     note = 'Code synchronized and Nexus core prepared/tested. Protected external provisioning was not bypassed.'
 }
 $reportPath = Join-Path $ToolsRoot 'local-bootstrap-report.json'

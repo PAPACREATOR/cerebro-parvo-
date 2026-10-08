@@ -13,7 +13,8 @@ from pathlib import Path
 
 import pytest
 
-from nexus.adapters.runner import PROCESS_TO_TOOL, execute
+from nexus.adapters.runner import PROCESS_TO_TOOL
+from nexus.tests._mcp_baseline import execute
 from nexus.contracts import validate
 
 

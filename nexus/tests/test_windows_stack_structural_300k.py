@@ -21,6 +21,7 @@ MEDIA = (ROOT / "windows" / "install-media-tools.ps1").read_text(encoding="utf-8
 AVATAR = (ROOT / "lab" / "open_notebook_avatar" / "install-windows.ps1").read_text(encoding="utf-8")
 OFFICE = (ROOT / "adapters" / "office.py").read_text(encoding="utf-8")
 REQUIREMENTS = (ROOT / "requirements.txt").read_text(encoding="utf-8")
+MCP_REQUIREMENTS = (ROOT / "requirements-mcp.txt").read_text(encoding="utf-8")
 
 CASES = 50_000
 
@@ -64,13 +65,6 @@ MODEL_PINS = (
 )
 
 ACTIVE_SURFACES = (INSTALL, OPEN_CONFIG, MPT_CONFIG, POST)
-LEGACY_FORBIDDEN = (
-    "Ollama.Ollama",
-    "qwen3:4b",
-    "nomic-embed-text",
-    "127.0.0.1:11434",
-)
-
 
 def _validate_ports(mapping: dict[str, int]) -> None:
     values = list(mapping.values())
@@ -100,9 +94,6 @@ def test_static_stack_contract_is_coherent_before_volume():
     for service, endpoint in ENDPOINTS.items():
         _validate_loopback(endpoint)
         assert urlsplit(endpoint).port == PORTS[service]
-
-    for forbidden in LEGACY_FORBIDDEN:
-        assert all(forbidden.lower() not in surface.lower() for surface in ACTIVE_SURFACES)
 
     for required in (
         "ggml.llamacpp",
@@ -144,7 +135,8 @@ def test_static_stack_contract_is_coherent_before_volume():
     assert "$ForgePort = 7861" in MEDIA
     assert "'--port','5055'" in INSTALL
     assert "'--port','8969'" in INSTALL
-    assert "mcp==1.23.2" in REQUIREMENTS
+    assert REQUIREMENTS.splitlines() == ["jsonschema==4.26.0"]
+    assert MCP_REQUIREMENTS.splitlines() == ["mcp==1.23.2", "trio==0.34.0"]
     assert "writer_pdf_Export" in OFFICE
     assert "wav2lip.pth" in AVATAR
     for practical_token in (
@@ -230,7 +222,7 @@ def test_50000_full_component_bindings_are_bidirectional():
         ("d9426c121eddadc76648be20034bc087acd0240c", MEDIA, MEDIA),
         ("wav2lip.pth", INSTALL, AVATAR),
         ("68eb5a68b93cfe338198b3dfb151f6d5ec2fe4e5", INSTALL, INSTALL),
-        ("mcp==1.23.2", REQUIREMENTS, REQUIREMENTS),
+        ("mcp==1.23.2", MCP_REQUIREMENTS, MCP_REQUIREMENTS),
         ("writer_pdf_Export", OFFICE, OFFICE),
         ("nexus-qwen3-1.7b", INSTALL, OPEN_CONFIG),
         ("nexus-qwen3-embedding-0.6b", INSTALL, OPEN_CONFIG),

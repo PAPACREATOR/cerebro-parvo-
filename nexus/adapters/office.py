@@ -84,7 +84,8 @@ def run(input_path):
         '<item oor:path="/org.openoffice.Office.Common/Security/Scripting"><prop oor:name="MacroSecurityLevel" oor:op="fuse"><value>3</value></prop></item></oor:items>', encoding="utf-8")
     command = [str(executable), "-env:UserInstallation=" + profile.as_uri(), "--headless", "--norestore", "--convert-to", "pdf:writer_pdf_Export", "--outdir", str(source.parent), str(document)]
     with (working / "stdout.txt").open("wb") as stdout, (working / "stderr.txt").open("wb") as stderr:
-        proc = subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=stdout, stderr=stderr, creationflags=subprocess.CREATE_NO_WINDOW)
+        proc = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=stdout, stderr=stderr, creationflags=subprocess.CREATE_NO_WINDOW)
+        proc.stdin.close()  # Explicit EOF; LPAC cannot open the global NUL device.
         try:
             code = proc.wait(timeout=45)
         except subprocess.TimeoutExpired:

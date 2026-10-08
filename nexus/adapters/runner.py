@@ -1,14 +1,11 @@
-"""Minimal deterministic Nexus executor through local MCP.
+"""Fixed adapter dispatch inside the native boundary owned by Host.
 
-The Kernel selects one Host-authorized process from the fixed policy. MCP is transport only:
-no model, agent, reasoning or authority is present in this executor.
+No model, agent, reasoning, persistence or approval authority lives here.
+External MCP remains an optional protocol, not this internal dispatch path.
 """
 import hashlib
 import json
 import os
-import subprocess
-import tempfile
-import uuid
 import sys
 from pathlib import Path
 
@@ -25,7 +22,6 @@ if __package__ in (None, ""):
     package_spec.loader.exec_module(package)
 
 from nexus.contracts import Blocked, ROOT, strict_json, validate
-from nexus.mcp_client import MCPServerSpec, call_tool
 
 
 PROCESS_TO_TOOL = {
@@ -43,43 +39,43 @@ PROCESS_TO_TOOL = {
 
 PROCESS_FILES = {
     "verify": (
-        "adapters/runner.py", "mcp_client.py", "mcp_tools_server.py",
+        "adapters/runner.py",
         "adapters/verify_direct.py", "adapters/tools.py",
     ),
     "interpret": (
-        "adapters/runner.py", "mcp_client.py", "mcp_tools_server.py",
+        "adapters/runner.py",
         "adapters/notebook.py",
     ),
     "proofread": (
-        "adapters/runner.py", "mcp_client.py", "mcp_tools_server.py",
+        "adapters/runner.py",
         "adapters/languagetool.py",
     ),
     "convert_pdf": (
-        "adapters/runner.py", "mcp_client.py", "mcp_tools_server.py",
+        "adapters/runner.py",
         "adapters/office.py",
     ),
     "video": (
-        "adapters/runner.py", "mcp_client.py", "mcp_tools_server.py",
+        "adapters/runner.py",
         "adapters/product_routes.py",
     ),
     "podcast": (
-        "adapters/runner.py", "mcp_client.py", "mcp_tools_server.py",
+        "adapters/runner.py",
         "adapters/product_routes.py",
     ),
     "visual_podcast": (
-        "adapters/runner.py", "mcp_client.py", "mcp_tools_server.py",
+        "adapters/runner.py",
         "adapters/product_routes.py",
     ),
     "book": (
-        "adapters/runner.py", "mcp_client.py", "mcp_tools_server.py",
+        "adapters/runner.py",
         "adapters/office.py",
     ),
     "music": (
-        "adapters/runner.py", "mcp_client.py", "mcp_tools_server.py",
+        "adapters/runner.py",
         "adapters/product_routes.py",
     ),
     "web": (
-        "adapters/runner.py", "mcp_client.py", "mcp_tools_server.py",
+        "adapters/runner.py",
         "adapters/product_routes.py",
     ),
 }
@@ -92,7 +88,7 @@ def process_fingerprint(process):
     h = hashlib.sha256()
     h.update(process.encode("utf-8"))
     h.update(b"\0")
-    for relative in (*files, "windows_sandbox.py", "native_mcp.py"):
+    for relative in (*files, "windows_sandbox.py", "contracts.py", "schemas/result.json"):
         path = ROOT / relative
         h.update(relative.encode("utf-8"))
         h.update(b"\0")
@@ -103,14 +99,14 @@ def process_fingerprint(process):
 
 def _trace(process, tool):
     return {
-        "engine": "nexus/python-mcp",
+        "engine": "nexus/python-direct",
         "version": "1.0.0",
         "process": process,
         "summary": {
             "usage": {"total_tokens": 0},
             "agents_executed": [tool],
         },
-        "events": [{"type": "mcp.tool.completed", "step": tool}],
+        "events": [{"type": "adapter.completed", "step": tool}],
     }
 
 
@@ -188,47 +184,64 @@ def collect_artifact(envelope, work, destination):
         atomic(Path(destination) / "resultado.pdf", data)
 
 
-def execute_confined(process, input_path):
-    """Safe direct CLI entry; the Host uses the same preparation and native launch."""
-    from nexus.windows_sandbox import launch_confined, task_environment
-    path = Path(input_path).resolve()
-    with tempfile.TemporaryDirectory(prefix=".nexus-task-", dir=path.parent.parent.parent.parent) as temporary:
-        work = Path(temporary) / "runs" / uuid.uuid4().hex
-        work.mkdir(parents=True)
-        roots = prepare_task(process, path, work)
-        command = [sys.executable, "-I", str(ROOT / "adapters/runner.py"), process, str(work / "input.bin")]
-        with launch_confined(command, cwd=work, env=task_environment(work), read_roots=roots,
-                             deny_roots=(path.parent.parent.parent,)) as proc:
-            stdout, stderr = proc.communicate(timeout=150 if process in ("interpret", "video", "podcast", "visual_podcast") else 75)
-            code = proc.returncode
-        if code:
-            raise Blocked("A execução protegida falhou.")
-        envelope = strict_json(stdout)
-        if not isinstance(envelope, dict) or set(envelope) != {"result", "trace"}:
-            raise Blocked("Resposta de execução inválida.")
-        collect_artifact(envelope, work, path.parent)
-        return envelope
+def _input(value):
+    if os.name == "nt":
+        from nexus.windows_sandbox import require_native_boundary
+        require_native_boundary()
+    path = Path(value)
+    if (not path.is_absolute() or path.name != "input.bin" or not path.is_file()
+            or path.is_symlink() or path.is_junction() or path.parent.is_junction()
+            or path.parent.parent.name != "runs"
+            or path.resolve().parent != path.parent.resolve()
+            or (os.name == "nt" and path.parent.resolve() != Path.cwd().resolve())):
+        raise Blocked("Input fora da área atribuída.")
+    return path.resolve()
+
+
+def _dispatch(process, path):
+    if process == "verify":
+        from nexus.adapters.verify_direct import execute
+        return execute(path)["result"]
+    if process == "interpret":
+        from nexus.adapters.notebook import run
+        return run(path)
+    if process == "proofread":
+        from nexus.adapters.languagetool import run
+        return run(path)
+    if process in ("convert_pdf", "book"):
+        from nexus.adapters.office import run
+        return run(path)
+    if process in ("video", "podcast", "visual_podcast"):
+        from nexus.adapters.product_routes import run_open_notebook
+        return run_open_notebook(path, process)
+    if process == "music":
+        from nexus.adapters.product_routes import run_music
+        return run_music(path)
+    if process == "web":
+        from nexus.adapters.product_routes import run_web
+        return run_web(path)
+    raise Blocked("Processo indisponível.")
+
+
+def _direct_result(process, input_path):
+    if process not in PROCESS_TO_TOOL:
+        raise Blocked("Processo indisponível.")
+    try:
+        value = _dispatch(process, _input(input_path))
+        raw = json.dumps(value, ensure_ascii=False, sort_keys=True,
+                         separators=(",", ":"), allow_nan=False).encode("utf-8")
+        if len(raw) > 1_000_000:
+            raise Blocked("Resposta excede o limite Nexus.")
+        return validate("result", strict_json(raw))
+    except Blocked:
+        raise
+    except Exception as error:
+        raise Blocked("Adapter falhou de forma controlada.") from error
+
 
 def execute(process, input_path):
-    if os.name == "nt":
-        from nexus.windows_sandbox import inside_native_boundary
-        if not inside_native_boundary():
-            return execute_confined(process, input_path)
-    tool = PROCESS_TO_TOOL.get(process)
-    if tool is None:
-        raise Blocked("Processo indisponível.")
-    path = Path(input_path).resolve()
-    server = MCPServerSpec(
-        command=sys.executable,
-        args=("-I", str(ROOT / "mcp_tools_server.py")),
-    )
-    result = call_tool(
-        server,
-        tool,
-        {"input_path": str(path)},
-        allowed_tools={tool},
-    )
-    return {"result": result, "trace": _trace(process, tool)}
+    result = _direct_result(process, input_path)
+    return {"result": result, "trace": _trace(process, PROCESS_TO_TOOL[process])}
 
 
 if __name__ == "__main__":
@@ -240,5 +253,5 @@ if __name__ == "__main__":
         sys.stderr.reconfigure(encoding="utf-8")
         import traceback
         traceback.print_exc(limit=8)
-        print("Execução MCP determinística indisponível ou resposta rejeitada.", file=sys.stderr)
+        print("Execução direta indisponível ou resposta rejeitada.", file=sys.stderr)
         raise SystemExit(1)

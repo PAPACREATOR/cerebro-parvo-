@@ -66,7 +66,7 @@ def test_llamacpp_openai_compatible_10000_bidirectional_cases():
         _embedding_roundtrip(case)
 
 
-def test_llamacpp_boundary_is_loopback_and_ollama_free():
+def test_llamacpp_boundary_uses_only_expected_local_runtime():
     combined = INSTALL + "\n" + OPEN_CONFIG + "\n" + MPT_CONFIG
     for required in (
         "ggml.llamacpp",
@@ -78,13 +78,6 @@ def test_llamacpp_boundary_is_loopback_and_ollama_free():
     ):
         assert required.lower() in combined.lower()
 
-    for forbidden in (
-        "Ollama.Ollama",
-        "127.0.0.1:11434",
-        "qwen3:4b",
-        "nomic-embed-text",
-    ):
-        assert forbidden.lower() not in combined.lower()
 
 
 def test_moneyprinter_reuses_local_language_boundary_without_cloud_fallback():

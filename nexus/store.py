@@ -33,6 +33,32 @@ def digest(data):
     return hashlib.sha256(data).hexdigest()
 
 
+def _fsync_parent(path):
+    parent = Path(path).parent
+    fd = os.open(parent, os.O_RDONLY)
+    try:
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+
+
+def _replace_durable(source, target):
+    source = str(source)
+    target = str(target)
+    if os.name == "nt":
+        import ctypes
+        move = ctypes.WinDLL("kernel32", use_last_error=True).MoveFileExW
+        move.argtypes = [ctypes.c_wchar_p, ctypes.c_wchar_p, ctypes.c_uint32]
+        move.restype = ctypes.c_int
+        MOVEFILE_REPLACE_EXISTING = 0x1
+        MOVEFILE_WRITE_THROUGH = 0x8
+        if not move(source, target, MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH):
+            raise ctypes.WinError(ctypes.get_last_error())
+        return
+    os.replace(source, target)
+    _fsync_parent(target)
+
+
 def atomic(path, data):
     path = Path(path)
     raw = data if isinstance(data, bytes) else json.dumps(data, ensure_ascii=False, indent=2).encode("utf-8")
@@ -42,7 +68,7 @@ def atomic(path, data):
             stream.write(raw)
             stream.flush()
             os.fsync(stream.fileno())
-        os.replace(name, path)
+        _replace_durable(name, path)
     finally:
         if os.path.exists(name):
             os.unlink(name)
@@ -58,7 +84,36 @@ class Store:
             if target.is_symlink() or target.is_junction():
                 raise Blocked("Diretório de dados redirecionado.")
             target.mkdir(parents=True, exist_ok=True)
-        for item in (self.root / "runs").glob("*/state.json"):
+        runs_root = self.root / "runs"
+        for directory in runs_root.iterdir():
+            if not directory.is_dir() or not re.fullmatch(r"[0-9a-f]{32}", directory.name):
+                continue
+            if directory.is_symlink() or directory.is_junction():
+                raise Blocked("Pedido interrompido redirecionado.")
+            state_path = directory / "state.json"
+            if state_path.is_symlink() or state_path.is_junction():
+                raise Blocked("Estado autoritativo redirecionado.")
+            if state_path.exists():
+                continue
+            input_path = directory / "input.bin"
+            input_sha256 = None
+            if not input_path.is_symlink() and not input_path.is_junction() and input_path.is_file():
+                input_sha256 = digest(input_path.read_bytes())
+            created_at = datetime.fromtimestamp(directory.stat().st_mtime, timezone.utc).isoformat()
+            recovered = {
+                "run_id": directory.name,
+                "status": "BLOCKED",
+                "commit_status": "RECOVERY_REQUIRED",
+                "execution_phase": "PREPARED",
+                "created_at": created_at,
+                "updated_at": now(),
+                "title": "Pedido interrompido",
+                "message": "A receção foi interrompida antes do estado autoritativo. Conteúdo conservado para reconciliação.",
+            }
+            if input_sha256 is not None:
+                recovered["input_sha256"] = input_sha256
+            atomic(state_path, recovered)
+        for item in runs_root.glob("*/state.json"):
             if item.is_symlink() or item.is_junction():
                 raise Blocked("Estado autoritativo redirecionado.")
             state = strict_json(item.read_bytes())

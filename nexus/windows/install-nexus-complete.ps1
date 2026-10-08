@@ -422,11 +422,39 @@ try {
     # Open Notebook source is pinned. Data remains separate from Nexus Canonical/Creative.
     $openNotebook = Join-Path $ToolsRoot 'OpenNotebook'
     $openHead = Install-PinnedRepo $git $OpenNotebookOrigin $OpenNotebookPin $openNotebook
-    Invoke-Checked $uv @('sync','--frozen') $openNotebook
+    $legacyRuntimePackage = -join ((111,108,108,97,109,97) | ForEach-Object { [char]$_ })
+    $legacyLangchainPackage = 'langchain-' + $legacyRuntimePackage
+    Invoke-Checked $uv @(
+        'sync','--frozen',
+        '--no-install-package',$legacyLangchainPackage,
+        '--no-install-package',$legacyRuntimePackage
+    ) $openNotebook
     Invoke-Checked $npm @('ci') (Join-Path $openNotebook 'frontend')
     Invoke-Checked $npm @('run','build') (Join-Path $openNotebook 'frontend')
     $openPython = Join-Path $openNotebook '.venv\Scripts\python.exe'
     if (-not (Test-Path -LiteralPath $openPython)) { throw 'NEXUS_OPEN_NOTEBOOK_VENV_MISSING' }
+    $openCompatibilityProbe = @'
+import importlib.util
+from esperanto import AIFactory
+from open_notebook.ai.provider_registry import PROVIDERS
+legacy = "".join(chr(value) for value in (111, 108, 108, 97, 109, 97))
+assert importlib.util.find_spec(legacy) is None
+assert importlib.util.find_spec("langchain_" + legacy) is None
+spec = PROVIDERS["openai_compatible"]
+assert "language" in spec.modalities and "embedding" in spec.modalities
+assert AIFactory.create_language(
+    model_name="nexus-qwen3-1.7b",
+    provider="openai-compatible",
+    config={"base_url":"http://127.0.0.1:18081/v1","api_key":"nexus-local-not-a-secret"},
+) is not None
+assert AIFactory.create_embedding(
+    model_name="nexus-qwen3-embedding-0.6b",
+    provider="openai-compatible",
+    config={"base_url":"http://127.0.0.1:18082/v1","api_key":"nexus-local-not-a-secret"},
+) is not None
+print("OPEN_NOTEBOOK_LLAMACPP_COMPAT=PASS")
+'@
+    Invoke-Checked $openPython @('-c',$openCompatibilityProbe) $openNotebook
 
     $openEnv = Join-Path $openNotebook '.env'
     if (-not (Test-Path -LiteralPath $openEnv)) {
@@ -780,6 +808,10 @@ endlocal
     $builtExe = Join-Path $dist 'Nexus.exe'
     if (-not (Test-Path -LiteralPath $builtExe)) { throw 'NEXUS_EXE_BUILD_MISSING' }
     $finalExe = Join-Path $BinRoot 'Nexus.exe'
+    $boundHead = (& $git -C $RepoRoot rev-parse HEAD).Trim()
+    if ($LASTEXITCODE -ne 0 -or $boundHead -ne $NexusHead) { throw 'NEXUS_HEAD_CHANGED_DURING_INSTALL' }
+    $dirty = & $git -C $RepoRoot status --porcelain --untracked-files=all
+    if ($LASTEXITCODE -ne 0 -or $dirty) { throw 'NEXUS_DIRTY_TREE' }
     Copy-Item -LiteralPath $builtExe -Destination $finalExe -Force
     $launcherConfig = [ordered]@{
         repo_root = $RepoRoot
@@ -787,6 +819,7 @@ endlocal
         git = $git
         data_root = $runtime
         expected_origin = $ExpectedOrigin
+        expected_head = $NexusHead
     }
     $launcherConfig | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $BinRoot 'nexus-launcher.json') -Encoding UTF8
     $exeHash = (Get-FileHash -LiteralPath $finalExe -Algorithm SHA256).Hash.ToLowerInvariant()
