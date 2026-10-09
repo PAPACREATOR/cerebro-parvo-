@@ -31,6 +31,19 @@ def assert_empty(root):
         assert not list((root / name).iterdir())
 
 
+def test_product_server_rejects_direct_run_even_with_valid_session(tmp_path):
+    """A valid local session must not bypass the pre-execution human gate."""
+    host = Host(tmp_path)
+    value = {"process": "verify", **payload()}
+    with http(host) as call:
+        with pytest.raises(HTTPError) as error:
+            call("/api/run", value)
+        assert error.value.code == 403
+        assert call("/api/runs") == []
+    assert_empty(tmp_path)
+    assert not host.busy.locked()
+
+
 def test_natural_verify_is_only_proposed_then_explicitly_confirmed(tmp_path, monkeypatch):
     host = Host(tmp_path)
     calls = []
