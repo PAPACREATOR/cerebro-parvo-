@@ -20,8 +20,8 @@ from nexus.tests.test_store import candidate, request
 
 
 @contextmanager
-def http(host):
-    server = make_server(host)
+def http(host, *, allow_direct_run=False):
+    server = make_server(host, allow_direct_run=allow_direct_run)
     worker = threading.Thread(target=server.serve_forever, daemon=True)
     worker.start()
     base = "http://127.0.0.1:" + str(server.server_port)
@@ -250,7 +250,7 @@ def test_real_windows_result_back_to_original_and_folha_after_restart(tmp_path, 
                "filename": "" if mode == "text" else "ação & $ ' ensaio.bin"}
     expected_hash = hashlib.sha256(raw).hexdigest()
     host = Host(tmp_path)
-    with http(host) as call:
+    with http(host, allow_direct_run=True) as call:
         run = call("/api/run", payload)["run_id"]
         deadline = time.monotonic() + 65
         state = call("/api/runs/" + run)

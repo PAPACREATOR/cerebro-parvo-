@@ -6,7 +6,7 @@ if (fragment.has("session")) {
   history.replaceState(null, "", "/");
 }
 const session = sessionStorage.getItem("nexus-session") || "";
-let current = null, ticket = null, poll = null, currentContent = "";
+let current = null, ticket = null, poll = null, currentContent = "", executionTicket = null;
 const labels = {RUNNING:"A executar",HUMAN_REQUIRED:"Em Creative · por rever",PASS:"Aprovado",FAIL:"Não concluído",UNKNOWN:"Por esclarecer",BLOCKED:"Precisa de atenção"};
 async function api(path, data) {
   const response = await fetch(path, {method:data === undefined ? "GET":"POST",
@@ -45,25 +45,53 @@ async function show(id) {
   if(item.status==="RUNNING") poll=setTimeout(()=>show(id).catch(e=>notice(e.message)),900);
   else await list();
 }
+async function requestPayload() {
+  const file=el("file").files[0];
+  if(file && file.size>2097152) throw new Error("Escolhe um ficheiro até 2 MB.");
+  let attachment="";
+  if(file) {
+    const bytes=new Uint8Array(await file.arrayBuffer());
+    let binary="";
+    for(let i=0;i<bytes.length;i+=8192) binary+=String.fromCharCode(...bytes.subarray(i,i+8192));
+    attachment=btoa(binary);
+  }
+  return {text:el("text").value,filename:file ? file.name:"",attachment};
+}
 el("form").onsubmit=async event=>{
   event.preventDefault(); notice(""); el("submit").disabled=true;
   try {
-    const file=el("file").files[0];
-    if(file && file.size>2097152) throw new Error("Escolhe um ficheiro até 2 MB.");
-    let attachment="";
-    if(file) {
-      const bytes=new Uint8Array(await file.arrayBuffer());
-      let binary=""; for(let i=0;i<bytes.length;i+=8192) binary+=String.fromCharCode(...bytes.subarray(i,i+8192));
-      attachment=btoa(binary);
-    }
-    const response=await api("/api/run",{process:document.querySelector('input[name="process"]:checked').value,
-      text:el("text").value,filename:file ? file.name:"",attachment});
-    await list(); await show(response.run_id);
+    const payload=await requestPayload();
+    const prepared=await api("/api/prepare-run",payload);
+    executionTicket=prepared.ticket;
+    el("execution-summary").textContent=prepared.summary;
+    el("execution-review").textContent="Ficheiro: "+prepared.filename+"\nBytes: "+prepared.attachment_bytes+"\nSHA-256: "+prepared.attachment_sha256;
+    el("execution-confirm").checked=false;
+    el("execution-approve").disabled=true;
+    el("execution-confirmation").showModal();
   } catch(error) {notice(error.message);el("submit").disabled=false;}
+};
+el("execution-confirm").onchange=()=>{el("execution-approve").disabled=!el("execution-confirm").checked;};
+el("execution-cancel").onclick=async()=>{
+  const stale=executionTicket; executionTicket=null;
+  try {
+    if(stale) await api("/api/confirm-run",{ticket:stale,confirmed:false,...await requestPayload()});
+  } catch(_error) {}
+  el("execution-confirmation").close(); el("submit").disabled=false;
+};
+el("execution-approve").onclick=async()=>{
+  el("execution-approve").disabled=true;
+  const active=executionTicket; executionTicket=null;
+  try {
+    const response=await api("/api/confirm-run",{ticket:active,confirmed:true,...await requestPayload()});
+    el("execution-confirmation").close();
+    await list(); await show(response.run_id);
+  } catch(error) {
+    el("execution-confirmation").close(); notice(error.message); el("submit").disabled=false;
+  }
 };
 el("file").onchange=()=>{el("file-label").textContent=el("file").files[0]?.name || "Até 2 MB · um ficheiro de cada vez";};
 el("new").onclick=()=>{
-  clearTimeout(poll); current=null; el("form").reset(); el("file-label").textContent="Até 2 MB · um ficheiro de cada vez";
+  clearTimeout(poll); current=null; executionTicket=null; el("form").reset(); el("file-label").textContent="Até 2 MB · um ficheiro de cada vez";
   el("empty").hidden=false;el("result").hidden=true;el("submit").disabled=false;notice("");el("text").focus();
 };
 el("prepare").onclick=async()=>{

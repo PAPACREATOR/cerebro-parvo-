@@ -260,7 +260,8 @@ def test_direct_product_capability_is_pinned_then_human_approved_without_restart
         return original_launch(command, **kwargs)
     monkeypatch.setattr(host_module, "launch_confined", launch)
     host = Host(data)
-    with http(host) as call:
+    # Diagnostic A/B only; product default remains fail-closed.
+    with http(host, allow_direct_run=True) as call:
         run = call("/api/run", {"process": process, "text": "", "filename": "source.bin",
                                "attachment": base64.b64encode(raw).decode("ascii")})["run_id"]
         pinned = host.store.state(run)["process_sha256"]

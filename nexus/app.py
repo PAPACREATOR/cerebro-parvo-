@@ -1,19 +1,72 @@
 """Loopback-only Folha Nexus server using the Python standard library."""
 import argparse
+import base64
+import hashlib
 import json
 import os
+import secrets
 import socket
 import sys
+import threading
+import time
 import webbrowser
 from contextlib import contextmanager
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlsplit
 
-from nexus.contracts import ROOT, Blocked, strict_json
+from nexus.contracts import ROOT, Blocked, strict_json, validate
+from nexus.frontdoor import parse, propose_operation
 from nexus.host import Host
 from nexus.instance import data_directory_lock
 from nexus.store import atomic
+
+
+_PREEXECUTION_TTL_SECONDS = 180
+_MAX_PREEXECUTION_TICKETS = 64
+
+
+def _request_digest(request):
+    raw = json.dumps(
+        request, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+    ).encode("utf-8")
+    return hashlib.sha256(raw).hexdigest()
+
+
+def _natural_request(data, host):
+    """Build one bounded request proposal. This function never executes it."""
+    if not isinstance(data, dict) or set(data) != {"text", "filename", "attachment"}:
+        raise Blocked("Pedido natural inválido.")
+    if not all(isinstance(data[key], str) for key in data):
+        raise Blocked("Pedido natural inválido.")
+
+    parsed = parse(data["text"])
+    process = propose_operation(
+        parsed, filename=data["filename"], attachment=data["attachment"]
+    )
+    if process != "verify":
+        raise Blocked("Não consigo determinar com segurança essa operação. Reformula o pedido.")
+
+    request = {"process": process, **data}
+    validate("request", request)
+    try:
+        attachment = base64.b64decode(request["attachment"], validate=True)
+    except (ValueError, TypeError) as error:
+        raise Blocked("Anexo inválido.") from error
+    if not attachment or len(attachment) > host.store.policy["max_input_bytes"]:
+        raise Blocked("Junta um ficheiro até 2 MB para verificar.")
+    name = request["filename"]
+    if not name or any(ord(char) < 32 for char in name) or "/" in name or "\\" in name:
+        raise Blocked("Nome de anexo inválido.")
+
+    return request, {
+        "process": process,
+        "filename": name,
+        "attachment_bytes": len(attachment),
+        "attachment_sha256": hashlib.sha256(attachment).hexdigest(),
+        "summary": "Verificar a integridade de " + name + ".",
+        "parser": parsed.parser,
+    }
 
 
 class NexusHTTPServer(ThreadingHTTPServer):
@@ -26,7 +79,10 @@ class NexusHTTPServer(ThreadingHTTPServer):
         super().server_bind()
 
 
-def make_server(host, port=0):
+def make_server(host, port=0, *, allow_direct_run=False):
+    preexecution_tickets = {}
+    preexecution_lock = threading.Lock()
+
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *_):
             pass
@@ -82,7 +138,53 @@ def make_server(host, port=0):
                 if not isinstance(data, dict):
                     raise Blocked("Pedido inválido.")
                 path = urlsplit(self.path).path
+                if path == "/api/prepare-run":
+                    request, preview = _natural_request(data, host)
+                    now = time.monotonic()
+                    with preexecution_lock:
+                        expired = [
+                            key for key, value in preexecution_tickets.items()
+                            if value["expires"] <= now
+                        ]
+                        for key in expired:
+                            preexecution_tickets.pop(key, None)
+                        if len(preexecution_tickets) >= _MAX_PREEXECUTION_TICKETS:
+                            raise Blocked("Há demasiados pedidos pendentes de confirmação.")
+                        ticket = secrets.token_urlsafe(32)
+                        preexecution_tickets[ticket] = {
+                            "request_sha256": _request_digest(request),
+                            "expires": now + _PREEXECUTION_TTL_SECONDS,
+                        }
+                    return self.reply(200, {"ticket": ticket, **preview})
+                if path == "/api/confirm-run":
+                    if set(data) != {"ticket", "confirmed", "text", "filename", "attachment"}:
+                        raise Blocked("Confirmação de execução inválida.")
+                    ticket = data["ticket"]
+                    if not isinstance(ticket, str):
+                        raise Blocked("Confirmação de execução inválida.")
+                    with preexecution_lock:
+                        binding = preexecution_tickets.pop(ticket, None)
+                    if not binding or binding["expires"] <= time.monotonic():
+                        raise Blocked("A confirmação expirou ou já foi usada.")
+                    if data["confirmed"] is False:
+                        return self.reply(200, {"status": "CANCELLED"})
+                    if data["confirmed"] is not True:
+                        raise Blocked("É necessária confirmação humana explícita.")
+                    current = {
+                        "text": data["text"],
+                        "filename": data["filename"],
+                        "attachment": data["attachment"],
+                    }
+                    request, _preview = _natural_request(current, host)
+                    if not secrets.compare_digest(
+                        binding["request_sha256"], _request_digest(request)
+                    ):
+                        raise Blocked("O pedido mudou depois da revisão. Confirma novamente.")
+                    return self.reply(202, host.start(request, session))
                 if path == "/api/run":
+                    # Diagnostic/test route only. The product server never enables it.
+                    if not allow_direct_run:
+                        raise Blocked("A execução direta requer modo de diagnóstico explícito.")
                     return self.reply(202, host.start(data, session))
                 if path == "/api/prepare" and set(data) == {"run_id"}:
                     return self.reply(200, host.prepare_approval(data["run_id"], session))
