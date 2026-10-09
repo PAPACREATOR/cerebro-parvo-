@@ -87,11 +87,22 @@ function Save-Report {
 function Invoke-Logged {
     param([string]$Name, [string]$Executable, [string[]]$Arguments)
     $log = Join-Path $reportPath ($Name + '.log')
-    & $Executable @Arguments *> $log
-    if ($LASTEXITCODE -ne 0) {
+    # Windows PowerShell 5.1 exposes a native command's stderr as an ErrorRecord.
+    # Git fetch writes harmless provenance to stderr even when its exit code is 0.
+    # Capture both streams, then judge only the actual native process exit code.
+    $previousPreference = $ErrorActionPreference
+    $code = 1
+    try {
+        $ErrorActionPreference = 'Continue'
+        & $Executable @Arguments *> $log
+        $code = $LASTEXITCODE
+    } finally {
+        $ErrorActionPreference = $previousPreference
+    }
+    if ($code -ne 0) {
         $report.checks[$Name] = 'FAIL'
         Save-Report
-        throw ('NEXUS_TEST_STEP_FAILED: ' + $Name + ' exit=' + $LASTEXITCODE + ' log=' + $log)
+        throw ('NEXUS_TEST_STEP_FAILED: ' + $Name + ' exit=' + $code + ' log=' + $log)
     }
     $report.checks[$Name] = 'PASS'
     Save-Report
