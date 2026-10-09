@@ -65,7 +65,8 @@ def test_real_windows_exact_2mib_attachment_roundtrip_and_restart(tmp_path, monk
     }
 
     host = Host(tmp_path)
-    with http(host) as call:
+    # Technical boundary test: direct execution is explicitly diagnostic-only.
+    with http(host, allow_direct_run=True) as call:
         run_id = call("/api/run", payload)["run_id"]
         deadline = time.monotonic() + 90
         state = call("/api/runs/" + run_id)
