@@ -79,7 +79,7 @@ class NexusHTTPServer(ThreadingHTTPServer):
         super().server_bind()
 
 
-def make_server(host, port=0):
+def make_server(host, port=0, *, allow_direct_run=False):
     preexecution_tickets = {}
     preexecution_lock = threading.Lock()
 
@@ -182,7 +182,9 @@ def make_server(host, port=0):
                         raise Blocked("O pedido mudou depois da revisão. Confirma novamente.")
                     return self.reply(202, host.start(request, session))
                 if path == "/api/run":
-                    # Technical/manual route retained for diagnostics and existing tests.
+                    # Diagnostic/test route only. The product server never enables it.
+                    if not allow_direct_run:
+                        raise Blocked("A execução direta requer modo de diagnóstico explícito.")
                     return self.reply(202, host.start(data, session))
                 if path == "/api/prepare" and set(data) == {"run_id"}:
                     return self.reply(200, host.prepare_approval(data["run_id"], session))

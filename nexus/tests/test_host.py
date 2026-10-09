@@ -49,7 +49,7 @@ def test_expired_ticket(tmp_path):
 
 def test_full_http_flow_and_bypasses(tmp_path):
     host = Host(tmp_path)
-    server = make_server(host)
+    server = make_server(host, allow_direct_run=True)
     worker = threading.Thread(target=server.serve_forever, daemon=True)
     worker.start()
     base = "http://127.0.0.1:" + str(server.server_port)
