@@ -1,5 +1,7 @@
 """Pre-execution human gate for the single approved natural verify route."""
 import base64
+import os
+import time
 from urllib.error import HTTPError
 
 import pytest
@@ -126,3 +128,47 @@ def test_normal_folha_does_not_expose_process_radio_buttons():
     assert "input[name=\"process\"]" not in javascript
     assert "/api/prepare-run" in javascript
     assert "/api/confirm-run" in javascript
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Real protected verify execution requires Windows")
+def test_natural_verify_real_windows_reaches_canonical_and_restart_without_replay(tmp_path, monkeypatch):
+    host = Host(tmp_path)
+    value = payload(raw=b"Nexus natural verify acceptance bytes")
+    with http(host) as call:
+        prepared = call("/api/prepare-run", value)
+        assert call("/api/runs") == []
+        started = call("/api/confirm-run", confirm(prepared, value))
+        run_id = started["run_id"]
+
+        deadline = time.monotonic() + 65
+        state = {}
+        while time.monotonic() < deadline:
+            state = call("/api/runs/" + run_id)
+            if state["status"] != "RUNNING":
+                break
+            time.sleep(.2)
+
+        assert state["status"] == "HUMAN_REQUIRED", state
+        assert state["result"]["ai_calls"] == 0
+        assert (tmp_path / "creative" / run_id / "content.md").is_file()
+        assert not (tmp_path / "canonical" / run_id).exists()
+
+        approval = call("/api/prepare", {"run_id": run_id})
+        final = call("/api/approve", {
+            "run_id": run_id,
+            "ticket": approval["ticket"],
+            "confirmed": True,
+        })
+        assert final["status"] == "PASS"
+        expected_content = call("/api/runs/" + run_id)["content"]
+
+    def forbidden(*_args, **_kwargs):
+        pytest.fail("Restart must not reexecute the verified capability")
+
+    monkeypatch.setattr("nexus.host.launch_confined", forbidden)
+    restarted = Host(tmp_path)
+    with http(restarted) as call:
+        restored = call("/api/runs/" + run_id)
+        assert restored["status"] == "PASS"
+        assert restored["content"] == expected_content
+        assert restarted.tickets == {}
