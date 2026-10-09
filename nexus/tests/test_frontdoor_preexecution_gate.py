@@ -118,6 +118,23 @@ def test_reject_consumes_ticket_without_execution(tmp_path, monkeypatch):
     assert_empty(tmp_path)
 
 
+def test_expired_pre_execution_ticket_never_executes(tmp_path, monkeypatch):
+    import nexus.app as app
+
+    host = Host(tmp_path)
+    monkeypatch.setattr(app, "_PREEXECUTION_TTL_SECONDS", 0)
+    monkeypatch.setattr(host, "start", lambda *_: pytest.fail("expired ticket must not execute"))
+    value = payload()
+    with http(host) as call:
+        prepared = call("/api/prepare-run", value)
+        with pytest.raises(HTTPError) as error:
+            call("/api/confirm-run", confirm(prepared, value))
+        assert error.value.code == 403
+        assert call("/api/runs") == []
+    assert_empty(tmp_path)
+    assert not host.busy.locked()
+
+
 def test_pre_execution_ticket_does_not_survive_server_restart(tmp_path, monkeypatch):
     first = Host(tmp_path)
     value = payload()
