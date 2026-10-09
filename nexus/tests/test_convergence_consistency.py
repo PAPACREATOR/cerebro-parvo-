@@ -21,14 +21,21 @@ class ProcessChoices(HTMLParser):
             self.values.append(fields["value"])
 
 
-def test_policy_schema_dispatch_fingerprints_and_ui_have_the_same_processes():
+def test_internal_process_contracts_match_while_normal_ui_hides_technical_selector():
     policy = load_policy()["processes"]
     schema = strict_json((ROOT / "schemas/request.json").read_bytes())
+    frontdoor_rules = strict_json((ROOT / "frontdoor_rules.json").read_bytes())
     choices = ProcessChoices()
     choices.feed((ROOT / "ui/index.html").read_text("utf-8"))
-    assert len(choices.values) == len(set(choices.values))
+
+    # The normal Folha no longer asks the person to choose an internal process.
+    # Internal diagnostic/API process contracts still have to agree exactly.
+    assert choices.values == []
     assert set(policy) == set(schema["properties"]["process"]["enum"])
-    assert set(policy) == set(PROCESS_TO_TOOL) == set(PROCESS_FILES) == set(choices.values)
+    assert set(policy) == set(PROCESS_TO_TOOL) == set(PROCESS_FILES)
+    mapped = {rule["process"] for rule in frontdoor_rules["operation_rules"]}
+    assert mapped == {"verify"}
+    assert mapped <= set(policy)
     assert len(set(PROCESS_TO_TOOL.values())) == len(policy)
     assert AI_PROCESSES.isdisjoint(NO_AI_PROCESSES)
     assert AI_PROCESSES | NO_AI_PROCESSES == set(policy)
