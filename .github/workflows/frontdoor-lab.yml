@@ -2,7 +2,7 @@ name: Nexus Front Door Lab
 
 on:
   push:
-    branches: ['lab-e2e-frontdoor-*']
+    branches: ['lab-e2e-frontdoor-*', 'integration/nexus-unified-candidate-*']
     paths:
       - 'nexus/frontdoor.py'
       - 'nexus/adapters/languagetool.py'
@@ -13,6 +13,7 @@ on:
       - 'nexus/tests/test_frontdoor_languagetool_shadow.py'
       - 'nexus/tests/test_frontdoor_adversarial.py'
       - 'nexus/tests/test_frontdoor_boundaries.py'
+      - 'nexus/tests/test_final_candidate_guards.py'
       - 'nexus/tests/test_frontdoor_host_boundary.py'
       - 'nexus/tests/test_frontdoor_preexecution_gate.py'
       - 'nexus/app.py'
@@ -66,5 +67,7 @@ jobs:
         run: python -m pytest nexus/tests/test_frontdoor_adversarial.py -q -o pythonpath=.
       - name: L4 boundaries and malformed
         run: python -m pytest nexus/tests/test_frontdoor_boundaries.py -q -o pythonpath=.
+      - name: Candidate convergence refusal and C1 boundary gates
+        run: python -m pytest nexus/tests/test_final_candidate_guards.py -q -o pythonpath=.
       - name: Host boundary and pre-execution human gate
         run: python -m pytest nexus/tests/test_frontdoor_host_boundary.py nexus/tests/test_frontdoor_preexecution_gate.py -q -o pythonpath=.
