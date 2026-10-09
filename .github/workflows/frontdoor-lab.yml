@@ -13,12 +13,24 @@ on:
       - 'nexus/tests/test_frontdoor_languagetool_shadow.py'
       - 'nexus/tests/test_frontdoor_adversarial.py'
       - 'nexus/tests/test_frontdoor_boundaries.py'
+      - 'nexus/tests/test_frontdoor_host_boundary.py'
+      - 'nexus/tests/test_frontdoor_preexecution_gate.py'
+      - 'nexus/app.py'
+      - 'nexus/ui/app.js'
+      - 'nexus/ui/index.html'
       - 'nexus/docs/PLANO-TESTES-FRONTDOOR-10000-2026-10-04.md'
       - '.github/workflows/frontdoor-lab.yml'
   pull_request:
     paths:
       - 'nexus/frontdoor.py'
+      - 'nexus/frontdoor_rules.json'
+      - 'nexus/schemas/frontdoor_rules.json'
+      - 'nexus/app.py'
+      - 'nexus/ui/app.js'
+      - 'nexus/ui/index.html'
       - 'nexus/tests/test_frontdoor_prefixes.py'
+      - 'nexus/tests/test_frontdoor_host_boundary.py'
+      - 'nexus/tests/test_frontdoor_preexecution_gate.py'
       - '.github/workflows/frontdoor-lab.yml'
   workflow_dispatch:
 
@@ -49,3 +61,5 @@ jobs:
         run: python -m pytest nexus/tests/test_frontdoor_adversarial.py -q -o pythonpath=.
       - name: L4 boundaries and malformed
         run: python -m pytest nexus/tests/test_frontdoor_boundaries.py -q -o pythonpath=.
+      - name: Host boundary and pre-execution human gate
+        run: python -m pytest nexus/tests/test_frontdoor_host_boundary.py nexus/tests/test_frontdoor_preexecution_gate.py -q -o pythonpath=.
