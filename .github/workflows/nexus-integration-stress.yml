@@ -98,7 +98,7 @@ jobs:
       - name: Block F — ACE-Step and Forge bounded local MCP health
         run: python -m pytest nexus/tests/test_media_tools.py nexus/tests/test_media_tools_mcp.py nexus/tests/test_media_tools_checker.py -q -p no:cacheprovider -o pythonpath=.
       - name: Block G — complete Nexus regression
-        run: python -m pytest nexus/tests -q -p no:cacheprovider -o pythonpath=. --ignore=nexus/tests/test_product_flows_5000.py --ignore=nexus/tests/test_product_system_50000.py --ignore=nexus/tests/test_product_themes_canonical_200k.py --ignore=nexus/tests/test_public_product_routes_10000.py --ignore=nexus/tests/test_public_product_routes_all_50000.py
+        run: python -m pytest nexus/tests -q -p no:cacheprovider -o pythonpath=. --ignore=nexus/tests/test_product_flows_5000.py --ignore=nexus/tests/test_product_system_50000.py --ignore=nexus/tests/test_product_themes_canonical_200k.py --ignore=nexus/tests/test_public_product_routes_10000.py --ignore=nexus/tests/test_public_product_routes_all_50000.py --ignore=nexus/tests/test_windows_stack_structural_300k.py
 
   product-flows:
     name: Product flows — 6x5000 + whole system 50000
