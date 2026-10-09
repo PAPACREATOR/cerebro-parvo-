@@ -1,108 +1,103 @@
-# Cérebro Independente / Nexus
+# Nexus / Cérebro Local
 
-Sistema local-first de criação, conhecimento e execução governada para uma pessoa. A pessoa usa linguagem natural; o sistema compõe processos e ferramentas nos bastidores; a pessoa continua autoridade final.
+Sistema Windows local-first de criação, conhecimento e execução governada. A pessoa escreve numa Folha simples; o Kernel valida regras, estado e limites; MCP/adaptadores chamam ferramentas; a pessoa continua autoridade final.
 
-## Código desta versão
+> **Novo no projeto?** Comece em [docs/00-start-here/](docs/00-start-here/README.md).
 
-O protótipo Windows está em [nexus/](nexus/README.md). Consultar o [estado testado e pendências](nexus/docs/PONTO-DE-SITUACAO.md). As pastas `implementacao/` e `historico/` conservam versões anteriores; não são necessárias para executar Nexus.
+## Estado atual
 
-## Estado atual em uma frase
+O candidato ativo está na **PR #32 — Convergir Nexus Windows: execução direta, binding e gates nativos**. A issue #33 fixa a direção de convergência: unificar o produto sem acrescentar novas funcionalidades por antecipação.
 
-**Protótipo candidato: Folha em linguagem natural + Kernel/Host/Store Python + MCP determinístico + ferramentas externas + Creative/Human Gate/Canonical.**
+O estado operacional detalhado, incluindo PASS/FAIL/BLOCKED e limites de cada capability, está em [nexus/docs/PONTO-DE-SITUACAO.md](nexus/docs/PONTO-DE-SITUACAO.md).
 
-A continuação está na [PR #23](https://github.com/PAPACREATOR/cerebro-parvo-/pull/23), branch `lab-open-notebook-avatar-20261004`; ainda não é a versão integrada em `main`. PASS de uma suite não significa release. O [ponto de situação](nexus/docs/PONTO-DE-SITUACAO.md) distingue a última referência verde, os testes do SHA analisado e os gates pendentes.
+PASS histórico não significa release. Um gate atual em FAIL continua FAIL até prova reproduzível.
 
-A arquitetura conceptual está estável. A implementação física continua sujeita a testes: nenhuma integração é declarada resolvida antes de PASS real.
+## O produto em uma linha
 
-## Modelo mental
-
-Nexus é um **launcher metódico, com memória, leis e templates executáveis**, que usa as ferramentas disponíveis para atingir um fim. Não tenta reprogramar capacidades maduras.
-
-A pessoa escreve na Folha. Kernel/Host/Store validam e executam o processo; MCP transporta chamadas às ferramentas. Os resultados são verificados e guardados em Creative. Só decisão humana permite promoção para Canonical. O percurso completo de cada capacidade exige prova própria.
-
-
-## Separação de responsabilidades
-
-As responsabilidades M1–M14 continuam aplicáveis. Os contratos, testes e a evidência datada da implementação estão em `nexus/docs/`.
-
-### Folha Nexus
-Interface inicial mínima. Texto natural, anexos, resultados e decisões humanas. YAML, JSON, Markdown, IDs e infraestrutura ficam escondidos na utilização normal.
-
-### Kernel e MCP
-O runtime candidato usa Kernel/Host/Store Python. MCP é transporte determinístico, sem IA nem autoridade de aprovação. Conductor/Spiff foram retirados do runtime ativo; as comparações e decisões anteriores permanecem como genealogia, incluindo a [PR #21](https://github.com/PAPACREATOR/cerebro-parvo-/pull/21).
-
-### Open Notebook
-**Bancada de trabalho, ponto.** Não é memória soberana, Canonical, Creative, arquivo, Wiki, autoridade nem interface principal. Recebe um pacote de trabalho limitado, permite trabalho cognitivo com tiny local e devolve resultado estruturado. Deve poder ser destruído/substituído sem perda de conhecimento Nexus.
-
-### Nexus / Windows
-É dono da memória e da continuidade: Raw/entrada, Creative, Canonical, arquivo, proveniência, eventos, regras, processos/templates, schemas e histórico. Formatos preferidos: Markdown + JSON + YAML + fontes originais/hashes; SQLite/FTS5 pode ser usado como índice/estado quando justificar, sem tornar a memória dependente de uma aplicação externa.
-
-### Capabilities
-LibreOffice, Zotero, LanguageTool, web, imagem, áudio, Whisper/TTS e outras ferramentas entram apenas quando um processo precisa delas. `LIGAR > CONFIGURAR > ADAPTAR > CRIAR` continua a regra.
-
-## O que é nosso
-
-- autoridade humana invariável;
-- Creative e Canonical separados;
-- promoção para Canonical apenas por Human Gate;
-- IA/provider com autoridade zero;
-- PASS / FAIL / UNKNOWN;
-- proveniência direta e inversa;
-- contradições preservadas;
-- eliminação automática apenas para duplicação absolutamente exata;
-- agentes como microprocessos reconstruíveis: tiny + prompt + contexto + regras + ferramentas permitidas + schema + objetivo;
-- experiência validada pode tornar-se processo/template reutilizável;
-- ferramentas e bancadas substituíveis;
-- desmontar deve ser tão fácil como montar.
-
-## Contratos e processos
-
-O runtime candidato executa processos Python validados. O esquema abaixo conserva a proposta histórica de templates; `process.yaml` não é uma dependência do executor atual:
+**Folha + parser determinístico + Kernel/Host/Store + regras/schemas + MCP Python/adaptadores + ferramentas externas + Creative/Human Gate/Canonical.**
 
 ```text
-process.yaml
-input.schema.json
-output.schema.json
-prompts/
-rules.yaml
-tests/
+Humano
+  ↓
+Folha / parser
+  ↓
+Kernel / Host / Store
+  ↓
+regras + schemas + allowlists
+  ↓
+MCP Python ou adaptador autorizado
+  ↓
+ferramenta externa delimitada
+  ↓
+resultado + trace + proveniência
+  ↓
+Creative
+  ↓
+Human Gate
+  ↓
+Canonical
 ```
 
-Se o processo é conhecido, executa-se com o mínimo de IA. Se não é conhecido, a bancada ajuda a descobrir/decompor; o resultado só se torna template reutilizável depois de testes e aprovação humana.
+## O Nexus não é
 
-## Prova mínima
+- um orquestrador autónomo de agentes;
+- uma camada onde um LLM manda no computador;
+- um wrapper de Activepieces;
+- um produto dependente de Conductor;
+- um sistema em que memória ou modelo têm autoridade.
 
-1. linguagem natural na Folha;
-2. routing pelo Kernel;
-3. tarefa cognitiva enviada à bancada Open Notebook/tiny;
-4. resultado JSON válido;
-5. gravação em Creative;
-6. tentativa de escrita direta em Canonical bloqueada;
-7. Human Gate permite promoção explícita;
-8. destruir/reconstruir bancada sem perder memória Nexus;
-9. recuperar proveniência do resultado até ao pedido/fontes;
-10. repetir tarefa semelhante e medir reutilização do processo.
+IA pode existir dentro de uma capability delimitada. Não decide autoridade, promoção para Canonical, política global ou recovery.
 
-Esta lista é um critério de aceitação, não uma declaração de que todos os percursos estão comprovados. Consultar a evidência por capacidade no ponto de situação.
+## Núcleo mínimo
 
-## Benchmark externo único
+A hipótese candidata é que **Kernel + parser + regras + MCP Python** chegam para o produto mínimo, acrescentando apenas adaptadores diretos quando forem mais simples/seguros.
 
-Para evitar dispersão, o projeto externo de comparação escolhido em 30-09-2026 é **Negentropy-Laby/OpenDoge**. Não é dependência do Nexus nem modelo a copiar. Serve apenas para aprender e falsificar decisões: local-first/single-operator, workflow templates, contracts, approvals, evidence/replay e slots/capabilities substituíveis. O Nexus mantém a sua redução própria: Folha única, memória soberana exterior à IA, Open Notebook apenas como bancada descartável e aprendizagem processual sem crescimento de autoridade.
+Activepieces fica como referência de estudo.
 
-## Regra permanente
+Conductor foi estudado e não é dependência candidata.
 
-- **LIGAR > CONFIGURAR > ADAPTAR > CRIAR.**
-- **NENHUM COMPONENTE ENTRA SEM UM FAIL QUE O JUSTIFIQUE.**
-- **SE NÃO PODE SER DESLIGADO SEM DESTRUIR O RESTO, ESTÁ MAL INTEGRADO.**
-- **MEMÓRIA NÃO É AUTORIDADE.**
-- **IA NÃO É AUTORIDADE.**
-- **PROMOTE_TO_CANONICAL só acontece após decisão humana.**
-- **Similaridade nunca autoriza eliminação; apenas duplicação exata.**
+SpiffWorkflow fica apenas como hipótese de laboratório para processos determinísticos realmente complexos; só entra se um fluxo real demonstrar que branches/joins/multi-instance/waits seriam piores de manter diretamente. Ver [estudo Spiff/Conductor/MCP](docs/90-research/SPIFF-CONDUCTOR-MCP.md).
 
-## Licença do projeto
+## Mapa do repositório
 
-Código/documentação próprios: PolyForm Noncommercial 1.0.0. Dependências mantêm as suas próprias licenças; antes de redistribuição devem ser fixadas versões e `THIRD_PARTY_NOTICES`.
+| Caminho | Função |
+|---|---|
+| [docs/00-start-here/](docs/00-start-here/README.md) | Entrada para leitores externos |
+| [docs/10-current/](docs/10-current/README.md) | Navegação do estado atual |
+| [docs/20-architecture/](docs/20-architecture/MINIMUM-CORE.md) | Arquitetura mínima da implementação |
+| [docs/30-help/](docs/30-help/README.md) | Onde e como ajudar |
+| [docs/90-research/](docs/90-research/SPIFF-CONDUCTOR-MCP.md) | Estudos comparativos, sem autoridade sobre o runtime |
+| [docs/99-history/](docs/99-history/README.md) | Como ler genealogia e experiências antigas |
+| [nexus/](nexus/README.md) | Código do protótipo Windows candidato |
+| [nexus/docs/](nexus/docs/) | Contratos, relatórios e evidência técnica |
+| [auditoria/](auditoria/) | Matrizes e evidência de auditoria |
+| [historico/](historico/) | Genealogia; não é runtime atual |
+| [implementacao/](implementacao/) | Implementações anteriores/candidatas históricas |
 
-[Estado operacional](nexus/docs/PONTO-DE-SITUACAO.md) · [Arranque](nexus/README.md) · [Constituição](CEREBRO_CONSTITUTION.md) · [Arquitetura e genealogia](CEREBRO_ARCHITECTURE.md) · [Decisões](DECISIONS.md)
+## Garantias que não se negociam
 
-Os documentos conceptuais e planos datados preservam etapas anteriores (incluindo Activepieces/Conductor); a composição executável atual deve ser conferida no código, na PR #23 e na evidência por SHA. A organização documental não altera as invariantes M1–M14.
+- humano é a autoridade máxima;
+- Creative e Canonical permanecem separados;
+- promoção para Canonical exige decisão humana;
+- IA/provider/ferramenta têm autoridade zero;
+- proveniência e hashes são verificados;
+- crash ambíguo não autoriza repetição silenciosa de side effects;
+- eliminação automática só para duplicação absolutamente exata;
+- Windows confinement não é enfraquecido para obter PASS;
+- nenhuma dependência entra sem lacuna real demonstrada.
+
+## Ajudar
+
+As contribuições externas devem começar por [docs/30-help/README.md](docs/30-help/README.md) e pelas issues #35–#39.
+
+Preferimos reprodução independente, testes adversariais, diagnóstico e patches pequenos. Não redesenhar a arquitetura M1–M14 nem trabalhar por cima do runtime principal para experimentar uma hipótese.
+
+## Regra de engenharia
+
+**LIGAR > CONFIGURAR > ADAPTAR > CRIAR.**
+
+**Se um componente não pode ser retirado sem destruir o resto, está mal integrado.**
+
+## Licença
+
+Código e documentação próprios: PolyForm Noncommercial 1.0.0. Dependências mantêm as suas licenças. Consulte [LICENSE](LICENSE), [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) e [CONTRIBUTING.md](CONTRIBUTING.md).

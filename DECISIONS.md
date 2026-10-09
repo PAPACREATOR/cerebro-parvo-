@@ -1,5 +1,21 @@
 # Decisões vigentes e genealogia
 
+## 09-10-2026 — núcleo mínimo e motores de processo
+
+A implementação candidata continua reduzida a **Folha/parser + Kernel/Host/Store + regras/schemas + MCP Python/adaptadores + ferramentas externas + Creative/Human Gate/Canonical**.
+
+Decisão após estudo de código:
+
+- **Activepieces:** referência de estudo; não entra no produto final.
+- **Microsoft Conductor:** não restaurar como dependência. O 0.1.41 é um motor completo, incluindo checkpoints, routing, scripts, parallel/foreach, providers e MCP próprio. Duplica responsabilidades já Kernel-owned e a sua recuperação MCP aceita uma fronteira at-least-once que não substitui o bloqueio conservador do Nexus perante side effects ambíguos.
+- **SpiffWorkflow:** manter apenas como candidato opcional de laboratório. Pode ser útil como máquina de estados/BPMN para joins, gateways, loops, multi-instance e waits humanos, mas só deve entrar perante um fluxo real que demonstre necessidade.
+- **MCP Python:** manter como transporte delimitado para ferramentas. MCP não recebe Store, Canonical, aprovação nem política global.
+
+Se Spiff for testado, `Execute`, `Transform`, ScriptTask e execução direta de ServiceTask ficam fora da superfície permitida. Toda capability externa regressa ao Kernel e daí a MCP/adaptador autorizado.
+
+Documento técnico: [docs/90-research/SPIFF-CONDUCTOR-MCP.md](docs/90-research/SPIFF-CONDUCTOR-MCP.md).
+
+
 ## 06-10-2026 — reconciliação documental e Writer editorial
 
 A documentação ativa foi alinhada com o runtime candidato realmente testado: Kernel/Host/Store Python + MCP determinístico + ferramentas externas. Activepieces, Memory Provider, Spiff e Conductor permanecem preservados como genealogia em decisões, histórico e relatórios, mas deixam de aparecer como dependências vigentes.
