@@ -7,6 +7,15 @@ if (fragment.has("session")) {
 }
 const session = sessionStorage.getItem("nexus-session") || "";
 let current = null, ticket = null, poll = null, currentContent = "", executionTicket = null;
+let editRevision = 0;
+function invalidateExecutionProposal() {
+  editRevision++;
+  executionTicket = null;
+  const modal = el("execution-confirmation");
+  if (modal.open) modal.close();
+  el("execution-approve").disabled = true;
+  el("submit").disabled = false;
+}
 const labels = {RUNNING:"A executar",HUMAN_REQUIRED:"Em Creative · por rever",PASS:"Aprovado",FAIL:"Não concluído",UNKNOWN:"Por esclarecer",BLOCKED:"Precisa de atenção"};
 async function api(path, data) {
   const response = await fetch(path, {method:data === undefined ? "GET":"POST",
@@ -60,8 +69,14 @@ async function requestPayload() {
 el("form").onsubmit=async event=>{
   event.preventDefault(); notice(""); el("submit").disabled=true;
   try {
+    const revision=editRevision;
     const payload=await requestPayload();
+    if (revision!==editRevision) throw new Error("O texto ou anexo mudou durante a preparação. Revê o pedido.");
     const prepared=await api("/api/prepare-run",payload);
+    if (revision!==editRevision) {
+      notice("O texto ou anexo mudou durante a preparação. Revê o pedido.");
+      return;
+    }
     executionTicket=prepared.ticket;
     el("execution-summary").textContent=prepared.summary;
     el("execution-review").textContent="Ficheiro: "+prepared.filename+"\nBytes: "+prepared.attachment_bytes+"\nSHA-256: "+prepared.attachment_sha256;
@@ -89,9 +104,10 @@ el("execution-approve").onclick=async()=>{
     el("execution-confirmation").close(); notice(error.message); el("submit").disabled=false;
   }
 };
-el("file").onchange=()=>{el("file-label").textContent=el("file").files[0]?.name || "Até 2 MB · um ficheiro de cada vez";};
+el("text").addEventListener("input", invalidateExecutionProposal);
+el("file").onchange=()=>{invalidateExecutionProposal();el("file-label").textContent=el("file").files[0]?.name || "Até 2 MB · um ficheiro de cada vez";};
 el("new").onclick=()=>{
-  clearTimeout(poll); current=null; executionTicket=null; el("form").reset(); el("file-label").textContent="Até 2 MB · um ficheiro de cada vez";
+  clearTimeout(poll); current=null; invalidateExecutionProposal(); el("form").reset(); el("file-label").textContent="Até 2 MB · um ficheiro de cada vez";
   el("empty").hidden=false;el("result").hidden=true;el("submit").disabled=false;notice("");el("text").focus();
 };
 el("prepare").onclick=async()=>{
