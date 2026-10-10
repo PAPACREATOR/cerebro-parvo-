@@ -17,7 +17,7 @@ def digest(raw):
 def check_packet(packet):
     if not isinstance(packet, dict) or set(packet) != {'version', 'objective', 'trust', 'sources'}:
         raise ValueError('packet fields')
-    if packet['version'] != 1 or packet['trust'] != 'UNTRUSTED_CONTEXT':
+    if type(packet['version']) is not int or packet['version'] != 1 or packet['trust'] != 'UNTRUSTED_CONTEXT':
         raise ValueError('packet authority')
     if not isinstance(packet['objective'], str) or not packet['objective'].strip() or len(packet['objective']) > 500:
         raise ValueError('objective limit')
