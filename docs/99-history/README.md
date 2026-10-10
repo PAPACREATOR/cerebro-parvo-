@@ -2,6 +2,11 @@
 
 O Nexus preserva decisões anteriores porque FAILs, experiências e componentes rejeitados são evidência técnica. Esta revisão organiza épocas e motivos **sem deslocar documentos originais**. Preservar histórico não significa que continue ativo.
 
+## Por mês
+
+- [Setembro de 2026](2026-09/README.md) — estudos, baselines e redução das dependências.
+- [Outubro de 2026](2026-10/README.md) — runtime Windows, convergência, gates e divisão de trabalho.
+
 ## História por fases
 
 - [Cronologia 22/09–10/10](LINHA-DO-TEMPO-2026-09-22-A-2026-10-10.md).
