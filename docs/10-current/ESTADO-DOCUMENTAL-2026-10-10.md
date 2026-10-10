@@ -13,6 +13,7 @@
 - **PR #41:** navegação/documentação; base desta revisão e não integrada em main no exame.
 - **PR #46:** inventário, auditoria de links, divergências documentais e privacidade; incompleto e isolado em auditoria/.
 - **PR #48:** clones e inventário Linux; não é espelho validado dos ficheiros físicos do PC, nem limpeza local Windows.
+- **PR #49:** revisão documental, índices históricos e matriz por leitura estática do código da PR #45. Não altera código nem transfere provas de um SHA para outro.
 
 Links e estatutos pontuais: [matriz de evidência](../60-evidence/MATRIZ-PRS-2026-10-10.md) e [verificação estática do código da PR #45](COMPATIBILIDADE-CODIGO-2026-10-10.md).
 
@@ -23,6 +24,8 @@ A entrada é Folha/parser; Kernel/Host/Store mantêm as decisões e os limites. 
 Activepieces e Conductor não integram a dependência candidata; Spiff só laboratório perante necessidade demonstrada. OpenNotebook é ferramenta especializada valorizada, **não percurso obrigatório** nem executor soberano. Ollama não é requisito. Sandy permanece suspenso por decisão humana, sem apagar o reconhecimento histórico.
 
 ## Estado de aceitação
+
+**Observação do código da PR #45:** o dispatcher define dez processos, mas a Folha pública só constrói a rota natural `verify` com anexo e ticket de confirmação; `/api/run` é diagnóstico desativado no arranque normal. Ver [matriz técnica](COMPATIBILIDADE-CODIGO-2026-10-10.md).
 
 **Não comprovado**: release integrada num único HEAD com todos os gates PASS; Writer/LPAC real completo; OpenNotebook com SurrealDB/modelo locais reais em E2E; inventário/hash SHA-256 de todo o PC; validação física de todas as capacidades; proteção integral de segredos/histórico Git; ligações externas/âncoras de toda a documentação. Não interpretar NOT RUN/BLOCKED/FAIL como PASS.
 
