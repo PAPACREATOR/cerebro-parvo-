@@ -1,4 +1,7 @@
-# Plano de execução vigente — provar antes de escolher
+# Plano de execução histórico — Activepieces + Memory Provider
+
+> **Vigência:** a composição deste documento foi superada pela decisão Nexus Minimal de 30-09-2026 em `DECISIONS.md`. É preservada como hipótese histórica e fonte de contratos de teste; não prescreve instalação de Activepieces. Ver `auditoria/CONSOLIDACAO-2026-10-10.md` para o processo de reconciliação e validação.
+
 
 ## Objetivo
 
