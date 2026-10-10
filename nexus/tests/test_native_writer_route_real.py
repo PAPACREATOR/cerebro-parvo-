@@ -99,7 +99,10 @@ def test_installed_writer_is_confined_and_returns_only_a_human_approved_candidat
     assert executable.is_file()
     data = tmp_path / "data"
     data.mkdir()
-    (data / "libreoffice.json").write_text(json.dumps({"executable": str(executable)}), encoding="utf-8")
+    sandy = Path(os.environ["SANDY_EXE"])
+    assert sandy.is_file()
+    (data / "libreoffice.json").write_text(
+        json.dumps({"executable": str(executable), "sandy": str(sandy)}), encoding="utf-8")
     raw = document()
     host = Host(data)
     with http(host) as call:
