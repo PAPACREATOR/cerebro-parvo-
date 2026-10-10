@@ -1,0 +1,47 @@
+{
+  "format_version": 1,
+  "observed_at_utc": "2026-10-10T09:35:30.877038+00:00",
+  "scope": "GITHUB_SOURCE_ONLY",
+  "windows_access": "BLOCKED",
+  "phase_1_windows_inventory": "NOT_RUN",
+  "windows_backup": "NOT_RUN",
+  "windows_to_github_copy": "NOT_RUN",
+  "sir_thaddeus_clone_linux": {
+    "result": "PASS_OF_CLONE_INTEGRITY_ONLY",
+    "sha": "974b5d7d258a687f99062425ef40e54b1eefc034",
+    "tree": "e935afeb228955bc6c43d0290012c98146d4f891",
+    "full_history": true,
+    "commits_all_fetched_refs": 1029,
+    "files_compared_byte_for_byte": 1446,
+    "fsck_exit_code": 0,
+    "worktree_clean": true,
+    "install_build_project_execution": "NOT_RUN_PROHIBITED"
+  },
+  "nexus_clone_linux": {
+    "full_history": true,
+    "fsck_exit_code": 0,
+    "base_sha": "aeeb6f662a8282b3793708aa3e6782ef20d2d0ca",
+    "base_files_unchanged_byte_for_byte": 177,
+    "existing_files_diff_exit_code": 0,
+    "added_scope": "auditoria/work-pc-copy-20261010/",
+    "branch": "work/pc-copy-evidence-20261010"
+  },
+  "commands_executed": [
+    "GIT_TERMINAL_PROMPT=0 GIT_LFS_SKIP_SMUDGE=1 git -c core.hooksPath=/dev/null clone --no-checkout https://github.com/PAPACREATOR/cerebro-parvo-.git nexus-pc-copy-isolated-20261010",
+    "GIT_TERMINAL_PROMPT=0 GIT_LFS_SKIP_SMUDGE=1 git -c core.hooksPath=/dev/null clone --no-checkout https://github.com/raydeStar/sir-thaddeus.git sir-thaddeus-reference-20261010",
+    "git -C nexus-pc-copy-isolated-20261010 fsck --full --strict",
+    "git -C sir-thaddeus-reference-20261010 fsck --full --strict",
+    "GIT_LFS_SKIP_SMUDGE=1 git -C sir-thaddeus-reference-20261010 -c core.hooksPath=/dev/null -c submodule.recurse=false checkout --detach 974b5d7d258a687f99062425ef40e54b1eefc034",
+    "git rev-parse --is-shallow-repository",
+    "git ls-tree -rz -l <frozen-commit>",
+    "git cat-file --batch",
+    "git status --porcelain=v1 -z",
+    "git diff --exit-code aeeb6f662a8282b3793708aa3e6782ef20d2d0ca"
+  ],
+  "verification_method": "Compute SHA-256 on raw Git blob bytes; recompute Git blob SHA-1; compare all Sir worktree files and all Nexus baseline files byte for byte. No project code imported/executed.",
+  "secret_triage": "Three heuristic patterns over selected public Git blobs; zero matches; not a publication clearance.",
+  "private_windows_information_published": false,
+  "noninterference": "No existing remote branch updated; new isolated evidence branch only. No merge.",
+  "next_required_capability": "A session with actual Windows filesystem and shell access.",
+  "global_result": "PARTIAL_NO_GLOBAL_PASS"
+}

@@ -1,0 +1,513 @@
+{
+  "scope": "GITHUB_SOURCE_ONLY_NOT_A_WINDOWS_PC_INVENTORY",
+  "created_at_utc": "2026-10-10T09:32:30.202601+00:00",
+  "execution_os": "Linux",
+  "windows_access": "BLOCKED_NO_CONNECTED_PC_FILESYSTEM_OR_SHELL",
+  "windows_paths": {
+    "C:\\Nexus": "NOT_ACCESSED",
+    "C:\\Nexus-Tools": "NOT_ACCESSED",
+    "other_local_windows_roots": "NOT_DISCOVERED"
+  },
+  "main_baseline": "aeeb6f662a8282b3793708aa3e6782ef20d2d0ca",
+  "branch_count_observed": 49,
+  "branches": [
+    {
+      "branch": "audit-consolidation-20261010",
+      "commit": "979a4cbfc374fa02589bb6c8042b962da6b266a3"
+    },
+    {
+      "branch": "audit/nexus-convergence-negative-gates-20261009",
+      "commit": "66027af7f2ea084bc62d85b840d1fc3113e60a97"
+    },
+    {
+      "branch": "audit/nexus-windows-ci-20261001",
+      "commit": "8471ceedcbceeab06e80df36b8ee5310f83a220b"
+    },
+    {
+      "branch": "cleanup/llamacpp-only-20261007",
+      "commit": "da86b6dd181d00fd7a87addaa01a12ec3a14e57b"
+    },
+    {
+      "branch": "consolidacao-2026-09-27",
+      "commit": "83d478a982cfb515e7bd90b86a7d502b0965ca57"
+    },
+    {
+      "branch": "dependabot/github_actions/actions/checkout-7",
+      "commit": "7548f5d4c2df931ef1df04fd0d3ef4c9d373d0e8"
+    },
+    {
+      "branch": "dependabot/github_actions/actions/setup-python-7.0.0",
+      "commit": "ddc45d51f47d1427fe9826b2dd511a9203b225d5"
+    },
+    {
+      "branch": "dependabot/github_actions/github/codeql-action-4",
+      "commit": "59e3026ca5bf1c44142cc95d8b448b40ef695903"
+    },
+    {
+      "branch": "dependabot/pip/pytest-9.1.1",
+      "commit": "58035466f1e6416f494ae5972cbb114ef6f8127b"
+    },
+    {
+      "branch": "docs/convergencia-pr31-pr32-20261007",
+      "commit": "2c91ad036f94c03777183d60b4c977a4ee9dc68e"
+    },
+    {
+      "branch": "docs/external-navigation-20261009",
+      "commit": "46c6b6722028017b5c174986128be4a151588ae7"
+    },
+    {
+      "branch": "docs/reconciliacao-2026-09-27",
+      "commit": "284d1b98b58ff628b08f4872419fb31a69e4279e"
+    },
+    {
+      "branch": "integration-convergence-20261004",
+      "commit": "30ff272794c222203da8157df50d09154ee1bc2a"
+    },
+    {
+      "branch": "integration-lab-20261004",
+      "commit": "6bbf7fed454e747918a73a38db267972239d7aec"
+    },
+    {
+      "branch": "integration-open-notebook-mcp-tiny-20261004",
+      "commit": "7f02d6fca998bf78810a653dcd312ad09d19c34b"
+    },
+    {
+      "branch": "integration-python-mcp-stepwise-20261004",
+      "commit": "0753f573f2dee739a4e43a5e255a4999319cc605"
+    },
+    {
+      "branch": "integration/nexus-unified-candidate-20261009",
+      "commit": "66027af7f2ea084bc62d85b840d1fc3113e60a97"
+    },
+    {
+      "branch": "lab-bootstrap-20261004",
+      "commit": "ef6937949081eea5ac152ecc8cd83c2f7e64d685"
+    },
+    {
+      "branch": "lab-conductor-verify-perf-20261004",
+      "commit": "0067ca349b97299925d6d3f1326bd80c2df9b58d"
+    },
+    {
+      "branch": "lab-consolidated-analysis-20261004",
+      "commit": "829764dee6144d05c29fed92bcf6e48829d70ff2"
+    },
+    {
+      "branch": "lab-e2e-frontdoor-20261004",
+      "commit": "7006184d1148faeefae2ba5b27a41a0d0e4dec60"
+    },
+    {
+      "branch": "lab-frontdoor-minimal-language-20261004",
+      "commit": "4d91d05e3e0f6ddd91ba56bb883fffb2e7c2e30b"
+    },
+    {
+      "branch": "lab-integrated-20261004",
+      "commit": "89c06bee2e5b65135e8f87d1f9a7b499048ca5ef"
+    },
+    {
+      "branch": "lab-minimal-python-mcp-20261004",
+      "commit": "c3245b32fefc8f82f85a926df5c40d79d938321b"
+    },
+    {
+      "branch": "lab-open-notebook-avatar-20261004",
+      "commit": "7762fbfd6a1f32c147602e63d53c936215812675"
+    },
+    {
+      "branch": "lab-python-mcp-minimal-20261004",
+      "commit": "ede5fecff208eab1646b84ebc74c26673ae960cc"
+    },
+    {
+      "branch": "lab-spiff-conductor-20261004",
+      "commit": "829764dee6144d05c29fed92bcf6e48829d70ff2"
+    },
+    {
+      "branch": "lab-spiff-conductor-compare-500-20261004",
+      "commit": "c39e76a8247b36db6115b5c7db7cde7669c2e7ba"
+    },
+    {
+      "branch": "lab-spiff-conductor-roles-20261004",
+      "commit": "9f1c2b9fbb9577f54ee9830ff63efdfa8ddc1df7"
+    },
+    {
+      "branch": "lab-wiki-complemento-20261004",
+      "commit": "57da6d5f72758abee1bc5e50382d336538c93e2a"
+    },
+    {
+      "branch": "lab-wiki-knowledge-20261004",
+      "commit": "b0a82e63eae60fdec66afdee6705246c0d3465ea"
+    },
+    {
+      "branch": "lab/notebook-authority-regression-20261009-2327-chat",
+      "commit": "18eb990b5028bfc6e2d1bb05d24aa8f939a84bea"
+    },
+    {
+      "branch": "lab/notebook-negative-shapes-on-unified-20261010-0526-chat",
+      "commit": "66027af7f2ea084bc62d85b840d1fc3113e60a97"
+    },
+    {
+      "branch": "lab/open-notebook-host-failclosed-20261009-chat",
+      "commit": "66027af7f2ea084bc62d85b840d1fc3113e60a97"
+    },
+    {
+      "branch": "lab/open-notebook-isolation-20261009",
+      "commit": "da86b6dd181d00fd7a87addaa01a12ec3a14e57b"
+    },
+    {
+      "branch": "lab/opennotebook-negative-tests-20261009-chat",
+      "commit": "27cd34c9741763ae4893278d25a371208b47828f"
+    },
+    {
+      "branch": "lab/windows-full-install-20261006",
+      "commit": "90683cd3744db074c4ea3b3c170aad6218f2b8ed"
+    },
+    {
+      "branch": "main",
+      "commit": "aeeb6f662a8282b3793708aa3e6782ef20d2d0ca"
+    },
+    {
+      "branch": "nexus-startup-lock-20261003",
+      "commit": "6bbf7fed454e747918a73a38db267972239d7aec"
+    },
+    {
+      "branch": "pc-full-mirror-20261004",
+      "commit": "1e9e6127564a9247e562029552f73d56a8b9d3a7"
+    },
+    {
+      "branch": "pc-snapshot-tooling-20261004",
+      "commit": "7cc6a05d358d988c1bcd71486aaee51d3741eaf6"
+    },
+    {
+      "branch": "snapshot/nexus-pr32-b4d50ab-20261008",
+      "commit": "b4d50ab8469cf60dfa3228c7c34ef9a1285ac827"
+    },
+    {
+      "branch": "validated-integrated-20261004",
+      "commit": "89c06bee2e5b65135e8f87d1f9a7b499048ca5ef"
+    },
+    {
+      "branch": "windows-real-acceptance-20261006",
+      "commit": "14419f795e55bbf4759c9fc52068233c95a9ca14"
+    },
+    {
+      "branch": "work-core-audit-20261007",
+      "commit": "628359cb4dfc363734894e0724eba25fb164acd8"
+    },
+    {
+      "branch": "work/audit-bidirectional-20261004",
+      "commit": "7921fac7d4901dff7e729879fe637a475289be11"
+    },
+    {
+      "branch": "work/core-atomicity-20261007",
+      "commit": "fac93ecabc2a9fd823ce91481a2c2eb68913e2f4"
+    },
+    {
+      "branch": "work/core-regression-20261007",
+      "commit": "e99f9e40176e0042d08b62432b70842a3c768d9e"
+    },
+    {
+      "branch": "work/frontdoor-verify-20261009",
+      "commit": "debd41ba7673570d666a0c99d009719d37838d58"
+    }
+  ],
+  "nexus_snapshots": [
+    {
+      "ref": "main",
+      "commit": "aeeb6f662a8282b3793708aa3e6782ef20d2d0ca",
+      "tree": "bf872fbddfb696c649468d0f74f4ac4216a5a29c",
+      "tracked_entries": 177,
+      "bytes": 716279,
+      "classification_counts": {
+        "CONFIGURATION_OR_OTHER_REVIEW_REQUIRED": 26,
+        "DOCUMENTATION": 69,
+        "TEST_OR_EVIDENCE": 25,
+        "SOURCE": 22,
+        "HISTORICAL": 35
+      },
+      "role_hints": {
+        "HOST": [
+          "nexus/host.py"
+        ],
+        "STORE_OR_PERSISTENCE": [
+          "implementacao/ativa-2026-09-28/cerebro/persistence.py",
+          "nexus/store.py"
+        ],
+        "CORE_OR_KERNEL": [
+          "implementacao/ativa-2026-09-28/cerebro/core.py",
+          "implementacao/candidata-2026-09-27/cerebro/core.py"
+        ],
+        "FRONT_DOOR": [],
+        "FOLHA_OR_APP": [
+          "nexus/app.py"
+        ],
+        "ADAPTER": [
+          "nexus/adapters/conductor_runner.py",
+          "nexus/adapters/constitutional.py",
+          "nexus/adapters/languagetool.py",
+          "nexus/adapters/notebook.py",
+          "nexus/adapters/office.py",
+          "nexus/adapters/tools.py"
+        ]
+      }
+    },
+    {
+      "ref": "cleanup/llamacpp-only-20261007",
+      "commit": "da86b6dd181d00fd7a87addaa01a12ec3a14e57b",
+      "tree": "6148b47e8f338e5c691abfbf0180416841586d6b",
+      "tracked_entries": 366,
+      "bytes": 2056532,
+      "classification_counts": {
+        "CONFIGURATION_OR_OTHER_REVIEW_REQUIRED": 33,
+        "DOCUMENTATION": 93,
+        "TEST_OR_EVIDENCE": 126,
+        "SOURCE": 60,
+        "HISTORICAL": 54
+      },
+      "role_hints": {
+        "HOST": [
+          "nexus/host.py"
+        ],
+        "STORE_OR_PERSISTENCE": [
+          "implementacao/ativa-2026-09-28/cerebro/persistence.py",
+          "nexus/store.py"
+        ],
+        "CORE_OR_KERNEL": [
+          "implementacao/ativa-2026-09-28/cerebro/core.py",
+          "implementacao/candidata-2026-09-27/cerebro/core.py"
+        ],
+        "FRONT_DOOR": [
+          ".github/workflows/frontdoor-lab.yml",
+          "nexus/docs/REGRA-PYTHON-MINIMO-FRONTDOOR-2026-10-04.md",
+          "nexus/frontdoor.py",
+          "nexus/frontdoor_rules.json",
+          "nexus/schemas/frontdoor_rules.json",
+          "nexus/tests/test_frontdoor_adversarial.py",
+          "nexus/tests/test_frontdoor_boundaries.py",
+          "nexus/tests/test_frontdoor_host_boundary.py",
+          "nexus/tests/test_frontdoor_languagetool_shadow.py",
+          "nexus/tests/test_frontdoor_natural.py",
+          "nexus/tests/test_frontdoor_prefixes.py",
+          "nexus/tests/test_frontdoor_refusals.py"
+        ],
+        "FOLHA_OR_APP": [
+          "nexus/app.py"
+        ],
+        "ADAPTER": [
+          "nexus/adapters/constitutional.py",
+          "nexus/adapters/languagetool.py",
+          "nexus/adapters/media_tools.py",
+          "nexus/adapters/notebook.py",
+          "nexus/adapters/office.py",
+          "nexus/adapters/product_routes.py",
+          "nexus/adapters/runner.py",
+          "nexus/adapters/tools.py",
+          "nexus/adapters/verify_direct.py"
+        ]
+      }
+    },
+    {
+      "ref": "integration/nexus-unified-candidate-20261009",
+      "commit": "66027af7f2ea084bc62d85b840d1fc3113e60a97",
+      "tree": "00786805d2ef803af493c6a39003aaed9abcde62",
+      "tracked_entries": 372,
+      "bytes": 2094116,
+      "classification_counts": {
+        "CONFIGURATION_OR_OTHER_REVIEW_REQUIRED": 34,
+        "DOCUMENTATION": 94,
+        "TEST_OR_EVIDENCE": 130,
+        "SOURCE": 60,
+        "HISTORICAL": 54
+      },
+      "role_hints": {
+        "HOST": [
+          "nexus/host.py"
+        ],
+        "STORE_OR_PERSISTENCE": [
+          "implementacao/ativa-2026-09-28/cerebro/persistence.py",
+          "nexus/store.py"
+        ],
+        "CORE_OR_KERNEL": [
+          "implementacao/ativa-2026-09-28/cerebro/core.py",
+          "implementacao/candidata-2026-09-27/cerebro/core.py"
+        ],
+        "FRONT_DOOR": [
+          ".github/workflows/frontdoor-lab.yml",
+          "nexus/docs/REGRA-PYTHON-MINIMO-FRONTDOOR-2026-10-04.md",
+          "nexus/frontdoor.py",
+          "nexus/frontdoor_rules.json",
+          "nexus/schemas/frontdoor_rules.json",
+          "nexus/tests/test_frontdoor_adversarial.py",
+          "nexus/tests/test_frontdoor_boundaries.py",
+          "nexus/tests/test_frontdoor_host_boundary.py",
+          "nexus/tests/test_frontdoor_languagetool_shadow.py",
+          "nexus/tests/test_frontdoor_natural.py",
+          "nexus/tests/test_frontdoor_preexecution_gate.py",
+          "nexus/tests/test_frontdoor_prefixes.py",
+          "nexus/tests/test_frontdoor_refusals.py"
+        ],
+        "FOLHA_OR_APP": [
+          "nexus/app.py"
+        ],
+        "ADAPTER": [
+          "nexus/adapters/constitutional.py",
+          "nexus/adapters/languagetool.py",
+          "nexus/adapters/media_tools.py",
+          "nexus/adapters/notebook.py",
+          "nexus/adapters/office.py",
+          "nexus/adapters/product_routes.py",
+          "nexus/adapters/runner.py",
+          "nexus/adapters/tools.py",
+          "nexus/adapters/verify_direct.py"
+        ]
+      }
+    },
+    {
+      "ref": "audit-consolidation-20261010",
+      "commit": "979a4cbfc374fa02589bb6c8042b962da6b266a3",
+      "tree": "509a2790a345891d37fb85eb9016244e8ab4d76e",
+      "tracked_entries": 182,
+      "bytes": 777179,
+      "classification_counts": {
+        "CONFIGURATION_OR_OTHER_REVIEW_REQUIRED": 26,
+        "DOCUMENTATION": 69,
+        "TEST_OR_EVIDENCE": 30,
+        "SOURCE": 22,
+        "HISTORICAL": 35
+      },
+      "role_hints": {
+        "HOST": [
+          "nexus/host.py"
+        ],
+        "STORE_OR_PERSISTENCE": [
+          "implementacao/ativa-2026-09-28/cerebro/persistence.py",
+          "nexus/store.py"
+        ],
+        "CORE_OR_KERNEL": [
+          "implementacao/ativa-2026-09-28/cerebro/core.py",
+          "implementacao/candidata-2026-09-27/cerebro/core.py"
+        ],
+        "FRONT_DOOR": [],
+        "FOLHA_OR_APP": [
+          "nexus/app.py"
+        ],
+        "ADAPTER": [
+          "nexus/adapters/conductor_runner.py",
+          "nexus/adapters/constitutional.py",
+          "nexus/adapters/languagetool.py",
+          "nexus/adapters/notebook.py",
+          "nexus/adapters/office.py",
+          "nexus/adapters/tools.py"
+        ]
+      }
+    },
+    {
+      "ref": "pc-full-mirror-20261004",
+      "commit": "1e9e6127564a9247e562029552f73d56a8b9d3a7",
+      "tree": "e3f9c1e91dc963817c19d9c100353887fe9f64eb",
+      "tracked_entries": 175,
+      "bytes": 714480,
+      "classification_counts": {
+        "CONFIGURATION_OR_OTHER_REVIEW_REQUIRED": 24,
+        "DOCUMENTATION": 69,
+        "TEST_OR_EVIDENCE": 25,
+        "SOURCE": 22,
+        "HISTORICAL": 35
+      },
+      "role_hints": {
+        "HOST": [
+          "nexus/host.py"
+        ],
+        "STORE_OR_PERSISTENCE": [
+          "implementacao/ativa-2026-09-28/cerebro/persistence.py",
+          "nexus/store.py"
+        ],
+        "CORE_OR_KERNEL": [
+          "implementacao/ativa-2026-09-28/cerebro/core.py",
+          "implementacao/candidata-2026-09-27/cerebro/core.py"
+        ],
+        "FRONT_DOOR": [],
+        "FOLHA_OR_APP": [
+          "nexus/app.py"
+        ],
+        "ADAPTER": [
+          "nexus/adapters/conductor_runner.py",
+          "nexus/adapters/constitutional.py",
+          "nexus/adapters/languagetool.py",
+          "nexus/adapters/notebook.py",
+          "nexus/adapters/office.py",
+          "nexus/adapters/tools.py"
+        ]
+      }
+    },
+    {
+      "ref": "pc-snapshot-tooling-20261004",
+      "commit": "7cc6a05d358d988c1bcd71486aaee51d3741eaf6",
+      "tree": "d877569503df1ab4026692552961ca896d6497bb",
+      "tracked_entries": 189,
+      "bytes": 797092,
+      "classification_counts": {
+        "CONFIGURATION_OR_OTHER_REVIEW_REQUIRED": 26,
+        "DOCUMENTATION": 76,
+        "TEST_OR_EVIDENCE": 28,
+        "SOURCE": 24,
+        "HISTORICAL": 35
+      },
+      "role_hints": {
+        "HOST": [
+          "nexus/host.py"
+        ],
+        "STORE_OR_PERSISTENCE": [
+          "implementacao/ativa-2026-09-28/cerebro/persistence.py",
+          "nexus/store.py"
+        ],
+        "CORE_OR_KERNEL": [
+          "implementacao/ativa-2026-09-28/cerebro/core.py",
+          "implementacao/candidata-2026-09-27/cerebro/core.py"
+        ],
+        "FRONT_DOOR": [],
+        "FOLHA_OR_APP": [
+          "nexus/app.py"
+        ],
+        "ADAPTER": [
+          "nexus/adapters/conductor_runner.py",
+          "nexus/adapters/constitutional.py",
+          "nexus/adapters/languagetool.py",
+          "nexus/adapters/notebook.py",
+          "nexus/adapters/office.py",
+          "nexus/adapters/tools.py"
+        ]
+      }
+    }
+  ],
+  "sir_thaddeus": {
+    "commit": "974b5d7d258a687f99062425ef40e54b1eefc034",
+    "tree": "e935afeb228955bc6c43d0290012c98146d4f891",
+    "origin": "https://github.com/raydeStar/sir-thaddeus.git",
+    "shallow": "false",
+    "commits_all_fetched_refs": 1029,
+    "tracked_entries": 1446,
+    "worktree_files_verified_byte_for_byte": 1446,
+    "bytes": 33668703,
+    "license_path": "LICENSE",
+    "license_sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+    "build_install_execution": "NOT_RUN_BY_EXPLICIT_INSTRUCTION",
+    "release_assets_models_dependencies": "NOT_DOWNLOADED_NOT_PART_OF_GIT_CLONE",
+    "windows_clone": "NOT_RUN_NO_WINDOWS_ACCESS",
+    "worktree_clean": true
+  },
+  "exact_duplicate_groups_within_snapshots": 16,
+  "divergent_or_absent_public_paths": 288,
+  "heuristic_secret_scan": {
+    "scope": "selected_public_git_blobs_only",
+    "patterns": [
+      "private_key_marker",
+      "github_token_shape",
+      "aws_access_key_shape"
+    ],
+    "flagged_records": 0,
+    "pc_clearance": "NOT_RUN",
+    "note": "No claim that a file is safe to publish; filenames and contents outside these patterns require review."
+  },
+  "public_inventory_is_not_pc_copy_proof": true,
+  "phase_1_pc_inventory": "BLOCKED_NOT_RUN",
+  "pc_to_github_copy": "BLOCKED_NOT_RUN",
+  "global_result": "PARTIAL_NO_GLOBAL_PASS"
+}
