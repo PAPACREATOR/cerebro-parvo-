@@ -1,0 +1,1436 @@
+{
+  "snapshot_date": "2026-10-10",
+  "source": "PAPACREATOR/cerebro-parvo-:main",
+  "tree_sha": "aeeb6f662a8282b3793708aa3e6782ef20d2d0ca",
+  "tree_truncated": false,
+  "entries_total": 208,
+  "blobs_total": 177,
+  "scope": "GitHub main only; NOT complete PC mirror; git_sha is Git object identifier, not a SHA-256 proof of Windows copies",
+  "entries": [
+    {
+      "path": ".cursorignore",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "08440b56602eccfa20cdae309e40a33270df3d93",
+      "size": 362
+    },
+    {
+      "path": ".github",
+      "type": "tree",
+      "mode": "040000",
+      "git_sha": "48dfb903f3788c7db691aa48d4aff8d7dee21636"
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE",
+      "type": "tree",
+      "mode": "040000",
+      "git_sha": "d72a7dad9e7de2340b627ca6fedd62c77f26ff8a"
+    },
+    {
+      "path": ".github/ISSUE_TEMPLATE/microprocesso.yml",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "b3fc638425f5ceaec20563dc56b96730cf8aacc3",
+      "size": 709
+    },
+    {
+      "path": ".github/PULL_REQUEST_TEMPLATE.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "8d04c7f2af823ce437ec3429de7f8d76e2598d62",
+      "size": 642
+    },
+    {
+      "path": ".github/dependabot.yml",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "8946e9f5460590b6cc1a531a5729e9ba236fdc7b",
+      "size": 463
+    },
+    {
+      "path": ".github/pull_request_template.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "3c1a55dc8374964a3299a755313d05b820deabb4",
+      "size": 1250
+    },
+    {
+      "path": ".github/workflows",
+      "type": "tree",
+      "mode": "040000",
+      "git_sha": "0238c8ad0ffbd7193206c503be40b7d53b8522a6"
+    },
+    {
+      "path": ".github/workflows/auditoria.yml",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "db6bfbc1a7c2671b8829112d3902e50ee02deead",
+      "size": 1345
+    },
+    {
+      "path": ".github/workflows/codeql-analysis.yml",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "5689b9bc406e8028d500da560094b45832ac91d8",
+      "size": 726
+    },
+    {
+      "path": ".gitignore",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "be9cae3c5c824d7b3e3c916e60e3423b3dfaa384",
+      "size": 471
+    },
+    {
+      "path": "AGENTS.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "22b5cdd2983c2d607e947d38d24079c62e8eb2da",
+      "size": 2416
+    },
+    {
+      "path": "CEREBRO_ARCHITECTURE.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "5be47671d6f4a602173067b7cb96e9d93a71eae1",
+      "size": 4073
+    },
+    {
+      "path": "CEREBRO_CONSTITUTION.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "34a14b06b1934a72e71b481b354dbb729632e128",
+      "size": 3333
+    },
+    {
+      "path": "CHANGELOG.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "2d8cfe25edb6fb92320a4501a8d4629138fe7fb9",
+      "size": 647
+    },
+    {
+      "path": "CODE_OF_CONDUCT.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "4538a8385720ae3e3766f02aaff39ea269f5c76f",
+      "size": 514
+    },
+    {
+      "path": "COMMERCIAL-LICENSING.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "e1adde19308ba52e99ed2531a39b10008a29e61c",
+      "size": 1280
+    },
+    {
+      "path": "COMPATIBILITY-MATRIX.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "419aab581274663d9524cc7de858790a218e692f",
+      "size": 5145
+    },
+    {
+      "path": "CONTRIBUTING.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "a1de2b23afd5489b997a2826807c734db2b7b1a7",
+      "size": 1895
+    },
+    {
+      "path": "CONTRIBUTOR_LICENSE_AGREEMENT.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "4a431d09ce68eb75df1ff6f57c8a3937c85d4191",
+      "size": 2378
+    },
+    {
+      "path": "Cerebro.code-workspace",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "78af276bac73c73ef92edb84edb3150aec56324a",
+      "size": 443
+    },
+    {
+      "path": "DECISIONS.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "b9a8189390eb114c25b1940510f7e86b0540ecea",
+      "size": 5189
+    },
+    {
+      "path": "IMPLEMENTATION_PLAN.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "a9218b1cfe21421f79ffb88012649358f6899954",
+      "size": 2452
+    },
+    {
+      "path": "INSTALLATION_PLAN.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "2c2c0a660d82473c05b4a5b9ee18aa83c2cbfb74",
+      "size": 1028
+    },
+    {
+      "path": "LEGO-LOCK.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "f6802a40751eac0f9974cb69a3983fa35af33383",
+      "size": 1710
+    },
+    {
+      "path": "LICENSE",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "6fb58f01f6acbe073b64166549b2380be8252a89",
+      "size": 4559
+    },
+    {
+      "path": "README.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "e0d1cd3ebdff29803bcbcfac15083632687f203c",
+      "size": 5875
+    },
+    {
+      "path": "SECURITY.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "27f0d9ef202b0f0ab45647326c20375826e4bfd4",
+      "size": 897
+    },
+    {
+      "path": "STATUS.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "a904c4d48e6fa2042a41711b86c2d00cc2de66f8",
+      "size": 6223
+    },
+    {
+      "path": "TEAM_WORKFLOW.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "bdb1b7441d84453452831fe24c38a7802ee765b4",
+      "size": 1451
+    },
+    {
+      "path": "THIRD_PARTY_NOTICES.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "8403659418fb28bfce858da49c4d0c8f49ba4bb0",
+      "size": 975
+    },
+    {
+      "path": "auditoria",
+      "type": "tree",
+      "mode": "040000",
+      "git_sha": "9a3faf27cf9a9bf8bee10237f2cdc056318b494c"
+    },
+    {
+      "path": "auditoria/RESULTADOS.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "602bf5346b8be21524610da846da3a5bb5d2c68c",
+      "size": 1802
+    },
+    {
+      "path": "auditoria/estado.json",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "4372bc760fce3956b1367033b98303613cd258b8",
+      "size": 348
+    },
+    {
+      "path": "auditoria/manifesto-preservacao.json",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "438383617468bb6ecc382275943bcf69d82b3c92",
+      "size": 12568
+    },
+    {
+      "path": "auditoria/testes-fornecidos-2026-09-27.txt",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "ac1e11168bd6193f890ec84bc4a9d778dcea8d53",
+      "size": 285
+    },
+    {
+      "path": "docs",
+      "type": "tree",
+      "mode": "040000",
+      "git_sha": "af787e9c72bfd7c7784afc74a2776e7f509662d2"
+    },
+    {
+      "path": "docs/ARQUITETURA-OPERACIONAL-ADAPTATIVA.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "a8f31b02e73c9ae7ec4d89d1f56cecbd443306c5",
+      "size": 8610
+    },
+    {
+      "path": "docs/CONTRATOS-IMP.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "561cb6e3ed35529da3a31b1ec69eb26a5ea3b620",
+      "size": 20182
+    },
+    {
+      "path": "docs/FONTES.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "2f8dbe1ac9289ee84b7219b07008a43432bffd7d",
+      "size": 6016
+    },
+    {
+      "path": "docs/GENEALOGIA.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "97b2e44494b785d838a1f6dede5d460bd2727355",
+      "size": 3097
+    },
+    {
+      "path": "docs/INVENTARIO-HISTORICO.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "90b0353130df57e640761e95ef06098a0d460ca3",
+      "size": 4580
+    },
+    {
+      "path": "docs/LICENCIAMENTO-PENDENTE.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "608a40abf1491777cbad09678f696caf4c1be345",
+      "size": 1243
+    },
+    {
+      "path": "docs/MATRIZ-CONFORMIDADE.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "851a60b54f3ffa866afa8e5001f4147b8084cc1d",
+      "size": 7692
+    },
+    {
+      "path": "docs/PENDENCIAS.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "3dcb3d58b1e8eb6fc810081ec0c48ef3a440390f",
+      "size": 2548
+    },
+    {
+      "path": "docs/PROJETO-FINAL-AUDITADO-2026-09-28.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "8b9435e5a8185b0e5ac06199bd77133f66d061f8",
+      "size": 9048
+    },
+    {
+      "path": "docs/RECONCILIACAO.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "33a56f1bc13b157f621ca59a6dd5edb293bd12fa",
+      "size": 3092
+    },
+    {
+      "path": "docs/VS-CODE.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "52e153a04a1f23ab0c45946b7907ec2ff0e8860d",
+      "size": 1206
+    },
+    {
+      "path": "docs/baseline",
+      "type": "tree",
+      "mode": "040000",
+      "git_sha": "765a4386b17cfff0a3950fb046799d628a8d9ece"
+    },
+    {
+      "path": "docs/baseline/CEREBRO_PROMPT_MESTRE_CURSOR_2026-09-26.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "b0a6296a2a98cb34dae3dc3d8d2247dcf40cdf30",
+      "size": 80918
+    },
+    {
+      "path": "docs/baseline/README-CEREBRO-BASELINE-2026-09-26.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "91be97025a9d2ade285889d4fdb2af8637e59b7f",
+      "size": 32699
+    },
+    {
+      "path": "docs/baseline/README-CEREBRO-IMPLEMENTACAO-2026-09-26.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "08186da767a60cedbfaaeb54a57602da5dd90530",
+      "size": 15809
+    },
+    {
+      "path": "ferramentas",
+      "type": "tree",
+      "mode": "040000",
+      "git_sha": "ff4255656f3d5fd46fe02afdc8204d988c6ee922"
+    },
+    {
+      "path": "ferramentas/verificar_documentacao.py",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "5aa41f678424d66baf8cd7bf79dcab7a04896e87",
+      "size": 1992
+    },
+    {
+      "path": "historico",
+      "type": "tree",
+      "mode": "040000",
+      "git_sha": "d13d149c914d4bf194e7cd66a8b86897953b1d87"
+    },
+    {
+      "path": "historico/repositorio-2026-09-24",
+      "type": "tree",
+      "mode": "040000",
+      "git_sha": "bb3f92c94f943f535b3531747c515a1bee14a6d5"
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/.cursorignore",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "be7a2056f4e245e4f6d96bba233a66118ffe4993",
+      "size": 278
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/.gitignore",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "eb7cbf5c9931cd3c9491c584e49a697b3c582190",
+      "size": 413
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/AGENTS.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "1cccab70771b70db336b0c3bce145bcf04af267e",
+      "size": 2162
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/ARQUITETURA-ATUAL-2026-09-24.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "20df88093e07a8adddea5e493abf0399e054ce0f",
+      "size": 3918
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/ARQUITETURA-CORRIGIDA-2026-09-22.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "8690b40c81125bf5feb5e852202608de3e51d91e",
+      "size": 8833
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/AUDITORIA-ARQUITETURA-LEGO-2026-09-22.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "98627a99b16f132c44fd79a02d85ca9482b6fe86",
+      "size": 11004
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/AUDITORIA-DOCUMENTAL-P4.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "85760d2b8f8ba84595a298a781f262465edfaa27",
+      "size": 4547
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/CEREBRO_ARCHITECTURE.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "43d27dbfd2df891d446ad590292db9067b60fd1b",
+      "size": 2918
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/CEREBRO_CONSTITUTION.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "b6377bf7b3ddae83088216c2f1d602c01e50e0cd",
+      "size": 4306
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/CHANGELOG.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "c5b025723b3b9da48befc852b523dda383bce357",
+      "size": 2617
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/COMPARACAO-ARQUITETURAS-COGNITIVAS-DETERMINISTICAS-2026-09-23.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "e6744605bb12ec3baa641eac2d3b2fc0dacb6334",
+      "size": 15471
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/COMPARACAO-RESEARCHVAULT-WILL-2026-09-22.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "e55b4318827fce381eab08a597d2181a26f90489",
+      "size": 10597
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/COMPARACAO-WILL-E-PROBABILIDADES.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "844c47282aa790d873decd44948211b1a795ecd3",
+      "size": 13189
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/COMPATIBILITY-MATRIX.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "edf6d55b119b53e5e84bc4dd45f742c4f787898e",
+      "size": 2353
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/DECISIONS.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "b85f6cf96e71bdda70a13b2ca67d5079d104b11d",
+      "size": 3106
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/FECHO-FASE-CONCEPTUAL-PROBABILIDADE-VALIDACAO-2026-09-23.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "7c2819c0e42e4d457f378abf63268c46b9442b6b",
+      "size": 3832
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/FERRAMENTAS-GRATUITAS-E-EQUIPA.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "5287c4d8b2a4816c8007487b7dc685b35a60cf84",
+      "size": 8129
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/IMPLEMENTATION_PLAN.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "47ff9ec5bafdaf99f48772cdcd7149644fb4b8dd",
+      "size": 2043
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/INSTALLATION_PLAN.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "e4f58676d960aa3ae0990c5ffb03d250931d24b8",
+      "size": 2567
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/LEGO-LOCK.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "ceca6eea60b329a2067165f6e4ce2b9d973bc146",
+      "size": 3114
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/MAPA-DE-VERSOES-COFRES-ACTIVEPIECES.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "63a12baa44416a909ed7acb481109ab651ab1fbb",
+      "size": 9053
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/MIGRACAO-ARQUITETURAL-2026-09-24.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "4eb780151b3feaf264621c6596ff078293991c08",
+      "size": 2921
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/NOTA-COGNITIVA-MEMORIAS-COMPARADORES-LINGUAGEM-NATURAL-2026-09-23.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "2f4e10396b06e51bf413cf0a4f0d1734e5c98cbc",
+      "size": 4980
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/NOTA-ESCALADA-RESOLUCAO-LLM-WEB-2026-09-23.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "0645a8fe4b4c2dcde95a41d499a7f0380a978426",
+      "size": 7651
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/PESQUISA-SANDBOX-WINDOWS-APPContainer-LPAC-2026-09-23.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "ae7daf40c5c8a15358f11b9d12cc4beabff8789e",
+      "size": 4734
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/PLANO-DE-TAREFAS-POR-FASE.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "a4123922c46678e74dde0165c13634176514c791",
+      "size": 5594
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/PROTOCOLO-GEMINI-CONTEXTO-MINIMO.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "b29b2f7ae0e7fdd7011b8767f3652da4e28538ef",
+      "size": 4458
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/README.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "fbdf3a66d4950c079f87d41afbbad5e065fc9aba",
+      "size": 14523
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/REFERENCIA-OPENVIKING-VIKINGMEM-2026-09-23.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "cc837f69fdc5ef0babd090e22cfcdc0bfad13b0e",
+      "size": 5978
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/STATUS.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "09f5829d21ab379bf4ea5fd03c59d057998cb982",
+      "size": 2225
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/TEAM_WORKFLOW.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "6e09417a0c036a72d5b6b0e916813b1cffc9726e",
+      "size": 2096
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/VALIDACAO-CONCEPTUAL-E-MITIGACAO.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "e49a8d68e563af90703a0e8cfa3045fb9bd35d7c",
+      "size": 11140
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/historico",
+      "type": "tree",
+      "mode": "040000",
+      "git_sha": "9f4c25b2b81539bb99bdd577138598bdf0ca88d5"
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/historico/ARQUITETURA-OPERACIONAL-v0.1-2026-09-22.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "a9d20ac08e96499acef0efe751f1285f681da433",
+      "size": 1049
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/tasks",
+      "type": "tree",
+      "mode": "040000",
+      "git_sha": "ac98f25ae8a352abffb47f7af9ebad25086f300f"
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/tasks/F-1-001-INSTALACAO-E-VERIFICACAO.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "efe6bebff5df6af8fdd27296937d28e8b12a380b",
+      "size": 924
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/tasks/SPEC-F0-001.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "405c772da91391670235284741ccb74d04d9cefb",
+      "size": 1840
+    },
+    {
+      "path": "implementacao",
+      "type": "tree",
+      "mode": "040000",
+      "git_sha": "9fae1c53e3299d23de2eab70a0499f51447e1622"
+    },
+    {
+      "path": "implementacao/README.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "afa14c970db2057ee3a1b0f2dae3be4020ccbd5d",
+      "size": 892
+    },
+    {
+      "path": "implementacao/ativa-2026-09-28",
+      "type": "tree",
+      "mode": "040000",
+      "git_sha": "3910ffc69010e32c3b66236ed1d81e649a1e5598"
+    },
+    {
+      "path": "implementacao/ativa-2026-09-28/README.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "0f3a664eeb4af168ae9961327e33080cf2647adf",
+      "size": 954
+    },
+    {
+      "path": "implementacao/ativa-2026-09-28/cerebro",
+      "type": "tree",
+      "mode": "040000",
+      "git_sha": "d9fe4203f2119926eed59fae4bd0225242ebd600"
+    },
+    {
+      "path": "implementacao/ativa-2026-09-28/cerebro/__init__.py",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "bb67a43fa4e5791ab58e7e40260bc3df8b6bc7cc",
+      "size": 20
+    },
+    {
+      "path": "implementacao/ativa-2026-09-28/cerebro/core.py",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "e8747447b47a187d55f781a7e61a871c090a485a",
+      "size": 10426
+    },
+    {
+      "path": "implementacao/ativa-2026-09-28/cerebro/persistence.py",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "b4144c9658d1b6aaadf114a87e5fa208af4a338b",
+      "size": 7073
+    },
+    {
+      "path": "implementacao/ativa-2026-09-28/pyproject.toml",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "110b63e1878a38dd68117ceeb096313a7824c442",
+      "size": 125
+    },
+    {
+      "path": "implementacao/ativa-2026-09-28/tests",
+      "type": "tree",
+      "mode": "040000",
+      "git_sha": "f6c343375357f3011e3ef2d750053a7b37b5d0e0"
+    },
+    {
+      "path": "implementacao/ativa-2026-09-28/tests/test_persistence.py",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "f759b078bf99c6b53799b076ff78dce1d982a593",
+      "size": 2744
+    },
+    {
+      "path": "implementacao/candidata-2026-09-27",
+      "type": "tree",
+      "mode": "040000",
+      "git_sha": "6ede77302f35beecf3c65f7bd33c77df7fd36338"
+    },
+    {
+      "path": "implementacao/candidata-2026-09-27/DIAGRAMA.mmd",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "d6abc7f368a83670b580fcdd5718068d8ca5c7c5",
+      "size": 135
+    },
+    {
+      "path": "implementacao/candidata-2026-09-27/README.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "d90e4e56e37c5c704853271a9cb857949fa0c05c",
+      "size": 4192
+    },
+    {
+      "path": "implementacao/candidata-2026-09-27/REVISAO_ADVERSARIAL.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "f9ed49330dd86ba62c7718949b14a02a374e6f93",
+      "size": 2717
+    },
+    {
+      "path": "implementacao/candidata-2026-09-27/TEST_RESULTS.txt",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "69f404e82a5481b770178aa12f8227b52deae1cb",
+      "size": 1521
+    },
+    {
+      "path": "implementacao/candidata-2026-09-27/cerebro",
+      "type": "tree",
+      "mode": "040000",
+      "git_sha": "79318b40d5a82c4a21cbc04b6bc71bf1034bcb28"
+    },
+    {
+      "path": "implementacao/candidata-2026-09-27/cerebro/__init__.py",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "bb67a43fa4e5791ab58e7e40260bc3df8b6bc7cc",
+      "size": 20
+    },
+    {
+      "path": "implementacao/candidata-2026-09-27/cerebro/core.py",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "e8747447b47a187d55f781a7e61a871c090a485a",
+      "size": 10426
+    },
+    {
+      "path": "implementacao/candidata-2026-09-27/pyproject.toml",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "331b0ea60535f44bb1930e552f5477eb8fad2bba",
+      "size": 117
+    },
+    {
+      "path": "implementacao/candidata-2026-09-27/tests",
+      "type": "tree",
+      "mode": "040000",
+      "git_sha": "1d36397881599f0f0b6b4a9666a9683456eaac43"
+    },
+    {
+      "path": "implementacao/candidata-2026-09-27/tests/test_adversarial.py",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "3715679aaa47cd0e57392b98c5c25f7df4b0cdeb",
+      "size": 5108
+    },
+    {
+      "path": "implementacao/candidata-2026-09-27/tests/test_core.py",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "f37fca4aeee4c0ca06b8b70aebc336e38c95d1c6",
+      "size": 2194
+    },
+    {
+      "path": "nexus",
+      "type": "tree",
+      "mode": "040000",
+      "git_sha": "6bf0218b5dc080a6db1ab5feabe14616ff4190e3"
+    },
+    {
+      "path": "nexus/.gitattributes",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "fcadb2cf97913f58a2523f535336e725c6b59d1f",
+      "size": 14
+    },
+    {
+      "path": "nexus/.gitignore",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "34462a4b984569f198454aa026eb5109e30728cf",
+      "size": 131
+    },
+    {
+      "path": "nexus/README.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "a59210f6adac373a87343b02d61c92f3949927b6",
+      "size": 4273
+    },
+    {
+      "path": "nexus/__init__.py",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "39edac14c0d9a3967a3a07835d6b3875bef75184",
+      "size": 67
+    },
+    {
+      "path": "nexus/adapters",
+      "type": "tree",
+      "mode": "040000",
+      "git_sha": "0797d315d7c6fb2b7aaf9546b9198ed1f4dd1b88"
+    },
+    {
+      "path": "nexus/adapters/conductor_runner.py",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "5fc0e9958b757a8ffb089f8ef0029dfb257b5533",
+      "size": 1849
+    },
+    {
+      "path": "nexus/adapters/constitutional.py",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "c4a8d400a117b871cc4434ba257afaf0a1c1d972",
+      "size": 1175
+    },
+    {
+      "path": "nexus/adapters/languagetool.py",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "a390c050112f9559dfd8f6326efa781de899b64f",
+      "size": 3630
+    },
+    {
+      "path": "nexus/adapters/notebook.py",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "81a9be4830ba68844e7abdc49a8157396f3fb16a",
+      "size": 3153
+    },
+    {
+      "path": "nexus/adapters/office.py",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "afcee2676edbdcbfb12ba151e7e62e74f9c4262c",
+      "size": 5062
+    },
+    {
+      "path": "nexus/adapters/tools.py",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "6657699a6f60f6cb2bd05288a3bdcec4756adae6",
+      "size": 2605
+    },
+    {
+      "path": "nexus/app.py",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "a5a6a555058152d4e210425c8f2353ebe6dc2530",
+      "size": 5030
+    },
+    {
+      "path": "nexus/approval_binding.py",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "a4b73ae86b3d2697df3ad50323ae7d8ebb38a505",
+      "size": 2572
+    },
+    {
+      "path": "nexus/contracts.py",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "da66ab94b8758497017d040c2cfc91cdd2a2581a",
+      "size": 1744
+    },
+    {
+      "path": "nexus/docs",
+      "type": "tree",
+      "mode": "040000",
+      "git_sha": "5ec0ec7ddf87ae28f5f8cb1b21abdf2c10189b0f"
+    },
+    {
+      "path": "nexus/docs/AUDITORIA-E-PLANO.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "a5d4038dc6218be4ffb36f6a969eb9022862efa1",
+      "size": 3310
+    },
+    {
+      "path": "nexus/docs/AUDITORIA-ESTADO-REAL.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "c2b546dd8e902adc3075ff6d4e1b8f8d60e3576e",
+      "size": 2898
+    },
+    {
+      "path": "nexus/docs/F001.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "1689fe5c1b4f9dcdae7e74094b322b55696b3565",
+      "size": 1049
+    },
+    {
+      "path": "nexus/docs/F002.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "819a86bd9fc4495e22285d4278f5834db93c61c9",
+      "size": 890
+    },
+    {
+      "path": "nexus/docs/F003.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "99cdf8fcd2ad77e7d990df27a8373814b0c0fcc7",
+      "size": 517
+    },
+    {
+      "path": "nexus/docs/F004.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "1f9653e6360b08d7fb542e8e55792a1f81548a01",
+      "size": 621
+    },
+    {
+      "path": "nexus/docs/F005-COGNICAO.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "223a773d809ff72154e93af1528590b310bde6d0",
+      "size": 1982
+    },
+    {
+      "path": "nexus/docs/F006-LANGUAGETOOL.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "1daf591ad23a8fc5767f69b7e934170a8659919f",
+      "size": 2249
+    },
+    {
+      "path": "nexus/docs/F007-LIBREOFFICE.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "694f6d8ca3f806d45509f37e3ae756d4bd2928c4",
+      "size": 2262
+    },
+    {
+      "path": "nexus/docs/F008-ISOLAMENTO-WINDOWS.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "dc583903fd3bcb5197587f64e2ba05ca6d787b5c",
+      "size": 6412
+    },
+    {
+      "path": "nexus/docs/F009-OBJETOS-MARKDOWN.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "f8252b342d6cb7f5f40417a404a57a6941db96b1",
+      "size": 1888
+    },
+    {
+      "path": "nexus/docs/F010-PROMPT-LITERAL.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "f90d772b182d8d91eaadc145aeee46b9a30c46e9",
+      "size": 1446
+    },
+    {
+      "path": "nexus/docs/FUNDACAO-REVISTA-2026-10-01.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "032ab5a76ff35e53c1b362b88059ff748ee9c351",
+      "size": 6951
+    },
+    {
+      "path": "nexus/docs/IA-CAMPOS-EVIDENCE.json",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "88445049d84e9ac3563bea03e30ce397917288fa",
+      "size": 1233
+    },
+    {
+      "path": "nexus/docs/ORGANIZACAO-E-FASES.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "3ac0c90aa527cc8ac081e6a910083bcf2ce5b3eb",
+      "size": 7480
+    },
+    {
+      "path": "nexus/docs/PONTO-DE-SITUACAO.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "e77b411e4824a2e7bed524ae677fc07a10a6dbd4",
+      "size": 3483
+    },
+    {
+      "path": "nexus/docs/PUBLICACAO-2026-10-01.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "966f1b2135378edeb29d4cb5a3fcc6a55a8f8609",
+      "size": 3334
+    },
+    {
+      "path": "nexus/docs/RECUPERACAO-E-MATRIZ.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "98b3630350b7f4ed370969dc7be3e9d04c20596a",
+      "size": 3163
+    },
+    {
+      "path": "nexus/docs/REVISAO-CONTRATOS-WIKI.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "cd38055a2b48b8f0be628cdc3f2f8c8c3b27abf1",
+      "size": 3858
+    },
+    {
+      "path": "nexus/docs/REVISAO-NUCLEO-2026-10-01.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "9e29c76594185069a10f319c9c96e6e70e24eab3",
+      "size": 3723
+    },
+    {
+      "path": "nexus/docs/SCHEMAS-E-WINDOWS.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "04700bc55d2a81fe770acf456f1842245eff0d55",
+      "size": 2738
+    },
+    {
+      "path": "nexus/docs/TESTES-ADVERSARIAIS.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "3e740cdf89b91222847720ba98e9daf40b7ae69a",
+      "size": 1725
+    },
+    {
+      "path": "nexus/docs/WIKI-INSTALACAO.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "df584908eff65607954dac170690ab8194cd495b",
+      "size": 1847
+    },
+    {
+      "path": "nexus/docs/WINDOWS-TWO-FOLDERS-EVIDENCE.json",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "8448b42e8b99c78a94b2759e0fe6be1092dcbec5",
+      "size": 282
+    },
+    {
+      "path": "nexus/families",
+      "type": "tree",
+      "mode": "040000",
+      "git_sha": "19cceae5dfb48459f6f2efeaa238ab3fe85f6e79"
+    },
+    {
+      "path": "nexus/families/multimedia",
+      "type": "tree",
+      "mode": "040000",
+      "git_sha": "6cc9d65fe83648a9d615fdd5220ca4b31bd914f9"
+    },
+    {
+      "path": "nexus/families/multimedia/imagem.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "5a1611a4cc01bd38ca9d732325465aeec676b55e",
+      "size": 598
+    },
+    {
+      "path": "nexus/families/multimedia/som.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "1976d0be4d3f79202b229dc005c99c59daaee825",
+      "size": 589
+    },
+    {
+      "path": "nexus/host.py",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "4a9574d3e7d78d3dabfa00882c9834cbf87186bf",
+      "size": 9494
+    },
+    {
+      "path": "nexus/integrity.json",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "7e8a3462f045ddc2021c8fa95c36cc66a2d3c225",
+      "size": 2798
+    },
+    {
+      "path": "nexus/laws",
+      "type": "tree",
+      "mode": "040000",
+      "git_sha": "a097713d304e9bcb83156f45a44f427fd6b7d741"
+    },
+    {
+      "path": "nexus/laws/CONSTITUTION.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "972e6b7f965260a93a7ac0d70e295b219f0151f2",
+      "size": 834
+    },
+    {
+      "path": "nexus/laws/policy.json",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "163b31c286b6405d7322e9bd66c165f96ed97084",
+      "size": 235
+    },
+    {
+      "path": "nexus/processes",
+      "type": "tree",
+      "mode": "040000",
+      "git_sha": "ff3057af7748a6ff4c46d3e82074d2d5f43df704"
+    },
+    {
+      "path": "nexus/processes/check.yaml",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "dc4ad40b8d1362e48a166ec391a7f59399f4076e",
+      "size": 1325
+    },
+    {
+      "path": "nexus/processes/convert_pdf.yaml",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "871068624f6cf1501f245e6bb9ed51655baa7790",
+      "size": 492
+    },
+    {
+      "path": "nexus/processes/interpret.yaml",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "b8bdbfc3001f62f517be2d8869597b4f655668db",
+      "size": 500
+    },
+    {
+      "path": "nexus/processes/proofread.yaml",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "ce0b543cbb50229806d8773e37b2d604678a8618",
+      "size": 514
+    },
+    {
+      "path": "nexus/processes/register_object.yaml",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "398b0777998a488e58115cd92f146d7122b24ea1",
+      "size": 500
+    },
+    {
+      "path": "nexus/processes/verify.yaml",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "a2318675a2ca9b907b2481a8cb1e13cefb7f2ee7",
+      "size": 2199
+    },
+    {
+      "path": "nexus/prompts",
+      "type": "tree",
+      "mode": "040000",
+      "git_sha": "2e2f5afeb516237bcc627c25a8a1acfbc31c5eef"
+    },
+    {
+      "path": "nexus/prompts/interpret-v2.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "07b0441e608ce9dfe881fd5ea33dd55bc716f5f8",
+      "size": 1533
+    },
+    {
+      "path": "nexus/requirements-test.txt",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "1441c921883cc9bc8fe0ca862000cfccd97db0d0",
+      "size": 34
+    },
+    {
+      "path": "nexus/requirements.txt",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "9ebd5765d707d4d84ab42fea07fb94d4a4c16725",
+      "size": 123
+    },
+    {
+      "path": "nexus/schemas",
+      "type": "tree",
+      "mode": "040000",
+      "git_sha": "4160582e1f026407d352ac914f7a5d14afdf05bc"
+    },
+    {
+      "path": "nexus/schemas/cognitive.json",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "f61d7a79f8465886d4631154abd7a427079e1923",
+      "size": 647
+    },
+    {
+      "path": "nexus/schemas/languagetool.json",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "5c254b152af2cc0bb6735ed2c21c09e28ded9e37",
+      "size": 1919
+    },
+    {
+      "path": "nexus/schemas/multimedia.json",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "a842e7054687a8622eeaec00fb5467b34abc2264",
+      "size": 496
+    },
+    {
+      "path": "nexus/schemas/request.json",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "5fec7cabca149c1767b769e1851423aad87a70c6",
+      "size": 571
+    },
+    {
+      "path": "nexus/schemas/result.json",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "740ffe2ea8e7d7339ac7c72b999910a641aad950",
+      "size": 3159
+    },
+    {
+      "path": "nexus/store.py",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "0ec3be0046dc8126f07740c69e47371c0eab8c91",
+      "size": 12904
+    },
+    {
+      "path": "nexus/tests",
+      "type": "tree",
+      "mode": "040000",
+      "git_sha": "48319cb8e64a3fbcc2d7b7f82efec8825a6cf7bc"
+    },
+    {
+      "path": "nexus/tests/test_adversarial.py",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "0bf186b5ee0c24020855cc150744f5e85eb7f658",
+      "size": 3656
+    },
+    {
+      "path": "nexus/tests/test_conductor.py",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "42801188d6f6198214af54bf55bae60d229cba49",
+      "size": 1242
+    },
+    {
+      "path": "nexus/tests/test_host.py",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "2fcc182fe56a86d4f105a9b4a9cd5f3db4d1e9fe",
+      "size": 5033
+    },
+    {
+      "path": "nexus/tests/test_kernel_review.py",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "996ea2a73e587246eadcab24d84761a806e66b36",
+      "size": 1729
+    },
+    {
+      "path": "nexus/tests/test_languagetool.py",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "a01c91f1b96c528e205e5ed670a011fe78c4b0ce",
+      "size": 2394
+    },
+    {
+      "path": "nexus/tests/test_multimedia.py",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "5770491e3fbfeaad0b104d739b3884217af73084",
+      "size": 3506
+    },
+    {
+      "path": "nexus/tests/test_notebook.py",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "2632469346819e4c54eeecbc63e9987076d02ee5",
+      "size": 1709
+    },
+    {
+      "path": "nexus/tests/test_office.py",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "beb8a56f23ba4106c3fc280e7ff271214f2c5131",
+      "size": 5333
+    },
+    {
+      "path": "nexus/tests/test_schema_consistency.py",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "84df2b4d77ae16f9dd6c9ab7c06b856e91c8e9e0",
+      "size": 1187
+    },
+    {
+      "path": "nexus/tests/test_store.py",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "c482bb7f2ba743a1d76628854078b4b80479b35d",
+      "size": 3405
+    },
+    {
+      "path": "nexus/tests/test_vaults.py",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "531bbafc8cc23dc5fdcfd49768dedc05aace2769",
+      "size": 3508
+    },
+    {
+      "path": "nexus/tests/test_workflows.py",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "7cd8d49010ecedc16aaa4b959f4d9c13a21884af",
+      "size": 3005
+    },
+    {
+      "path": "nexus/ui",
+      "type": "tree",
+      "mode": "040000",
+      "git_sha": "3c69fc284e2c9561b2482f4d1560fe90a4d04554"
+    },
+    {
+      "path": "nexus/ui/app.js",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "933722ae49bed39fa2b1ae40b9f3230bd315170e",
+      "size": 4915
+    },
+    {
+      "path": "nexus/ui/index.html",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "5122060c33f01710c574b6c99d3146094ad28493",
+      "size": 4421
+    },
+    {
+      "path": "nexus/ui/style.css",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "c2b8637fa034ac42c9f86053bc0e5caeed3c4be5",
+      "size": 6533
+    },
+    {
+      "path": "nexus/windows",
+      "type": "tree",
+      "mode": "040000",
+      "git_sha": "0cae74c26d312a1774c87b5811f036ea7bc60829"
+    },
+    {
+      "path": "nexus/windows/setup-isolation.ps1",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "aec078a868a14af9142f1f96717a0a8d152fa9d0",
+      "size": 5735
+    },
+    {
+      "path": "nexus/windows/test-isolation-s4u.ps1",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "aed2b29fc6fdf5de9832f1fa0d01b6553e77ade8",
+      "size": 4792
+    },
+    {
+      "path": "nexus/windows/test-isolation.ps1",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "ba9cc9906a82de53da002b9057d6841144fe4a3c",
+      "size": 4303
+    },
+    {
+      "path": "nexus/windows/test-two-folders.ps1",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "39cdcf88424b48c5e430c5daee46de4c9947da96",
+      "size": 4275
+    },
+    {
+      "path": "requirements-auditoria.txt",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "1f6970890012578c629c65f6a1050a4a890b3023",
+      "size": 61
+    },
+    {
+      "path": "tasks",
+      "type": "tree",
+      "mode": "040000",
+      "git_sha": "682470b6ef02226c784e7473e4863b9e5ca2bdef"
+    },
+    {
+      "path": "tasks/IMP-001.md",
+      "type": "blob",
+      "mode": "100644",
+      "git_sha": "2949dfc06f331f7ddd961354f6bf62e6491f1529",
+      "size": 2014
+    }
+  ]
+}
