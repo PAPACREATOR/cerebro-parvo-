@@ -5,10 +5,10 @@ Estado: EM CURSO. Não declarar fechado sem inventário completo dos artefactos 
 ## Documentos verificados diretamente na branch principal
 | Ficheiro | Constatação |
 | --- | --- |
-| AGENTS.md | Descrevia Activepieces como executor; foi anotado na PR #46 como referência histórica. |
-| CEREBRO_CONSTITUTION.md | Ainda descreve Activepieces como plataforma por defeito no texto preservado; há nota de vigência na PR #46. |
-| CEREBRO_ARCHITECTURE.md | Desenha Activepieces no centro; anotado como desenho histórico. |
-| IMPLEMENTATION_PLAN.md | Chamava Activepieces e Memory Provider de dois blocos nucleares; marcado histórico na PR #46. |
+| AGENTS.md | Descreve Activepieces como executor na `main` antiga; a reconciliação do ficheiro é da PR #41, sem edição direta nesta PR #46. |
+| CEREBRO_CONSTITUTION.md | A `main` antiga descreve Activepieces como plataforma por defeito; manter inalterado nesta PR #46 para evitar conflito com PR #41. |
+| CEREBRO_ARCHITECTURE.md | Desenha Activepieces no centro na `main` antiga; verificar a redação revista na PR #41. |
+| IMPLEMENTATION_PLAN.md | Na `main` antiga prescreve Activepieces e Memory Provider; a PR #41 propõe a atualização, sem sobreposição nesta PR #46. |
 | DECISIONS.md | Regista a decisão posterior Nexus Minimal de 30/09 e considera Activepieces superado como requisito. |
 | STATUS.md | Regista Activepieces fora do Core e que o E2E completo continua pendente. |
 | docs/RECONCILIACAO.md | Reconciliação datada de 27/09, anterior à decisão de 30/09; não pode ser apresentada isoladamente como estado atual. |
@@ -20,7 +20,7 @@ Estado: EM CURSO. Não declarar fechado sem inventário completo dos artefactos 
 - [Índice de vigência documental](INDICE-DE-VIGENCIA-DOCUMENTAL-2026-10-10.md) criado com a classificação de 16 documentos efetivamente lidos. É **parcial** e não certifica o espelho do PC.
 - Inventário técnico da branch `main`: 208 entradas, incluindo 177 ficheiros (identificadores Git por ficheiro); mais 49 branches com os respetivos commit SHA. São fotografias do GitHub, não prova de cópia do Windows.
 - Decisão humana: Sandy fora do trabalho ativo; integração suspensa, crédito histórico mantido.
-- PR #46 continua Draft e isolada, sem alteração de código.
+- PR #46 continua Draft e isolada; depois da reversão preventiva das quatro alterações aos documentos de raiz, contém **apenas ficheiros em `auditoria/`**. Código e documentos operacionais foram preservados.
 
 ## Evidências adicionais de 2026-10-10
 
@@ -32,6 +32,8 @@ Estado: EM CURSO. Não declarar fechado sem inventário completo dos artefactos 
 - [Comparação de branches](COMPARACAO-BRANCHES-2026-10-10.md): `main` tem 177 ficheiros; PR #41 possui 374 e PR #45 possui 372 (snapshots separados). A branch antiga `pc-full-mirror-20261004` tem 175 ficheiros e **não comprova** a cópia atual do Windows.
 - Documentação nova da PR #41: 8 ficheiros de navegação analisados, 14 referências relativas verificadas, zero destinos em falta (método estático); ver [auditoria de links](AUDITORIA-LINKS-DUPLICADOS-2026-10-10.md).
 - Não consolidar as alterações da PR #41 na PR #46, nem declarar os 374 ficheiros parte da `main`.
+
+- [Auditoria completa dos links Markdown da PR #41](PR41-AUDITORIA-LIGACOES-2026-10-10.md): 149/149 documentos, 168 referências relativas, 11 destinos em falta; sem tocar na branch dessa PR.
 
 ## Política documental
 - Documentos constitucionais, decisões, contratos, testes e evidências são conservados; não reescrever o passado como se tivesse sido outra decisão.
