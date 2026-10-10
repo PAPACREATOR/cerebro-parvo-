@@ -31,6 +31,12 @@
 | `auditoria/CONSOLIDACAO-2026-10-10.md` | DOCUMENTO DE AUDITORIA | Regista divergências e crédito a Hrvoje Abraham. Integração Sandy explicitamente suspensa por decisão humana de 10/10. |
 | `auditoria/FASE-1-INVENTARIO-DOCUMENTAL-2026-10-10.md` | CHECKLIST ATIVA FASE 1 | O âmbito desta PR é exclusivamente documental; fecho condicionado a evidência verificável. |
 
+## Atualização: documentação em revisão noutras PRs
+
+Esta classificação lê o `main` original e é **provisória**. A [PR #41](https://github.com/PAPACREATOR/cerebro-parvo-/pull/41), ainda aberta, contém propostas documentais datadas de 05/10–09/10 e um novo `docs/20-architecture/MINIMUM-CORE.md` que já não considera Conductor uma dependência candidata. A formulação nessa PR é **Folha/parser + Kernel/Host/Store + regras/schemas + MCP Python/adaptadores + ferramentas externas**, sem Activepieces e sem Conductor como requisitos. A issue [#33](https://github.com/PAPACREATOR/cerebro-parvo-/issues/33) exige ainda convergência do runtime e testes num único SHA. Não equiparar a proposta aberta à branch principal aprovada; confrontar ambas quando houver HEAD definitivo.
+
+A [auditoria estática das ligações e duplicações](AUDITORIA-LINKS-DUPLICADOS-2026-10-10.md) identificou uma referência histórica para `MEMORIA-DE-TRABALHO.md` ausente da árvore atual, e dois pares de blobs idênticos preservados em versões distintas.
+
 ## Decisões de organização que podem ser tomadas agora
 
 - Não promover títulos como «final», «auditado», «vigente» ou «PASS» para estado atual sem considerar a data e a evidência.
