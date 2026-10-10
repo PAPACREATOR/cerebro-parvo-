@@ -16,6 +16,10 @@ A PR #43 propôs verify natural com confirmação pré-execução; a PR #45 inte
 
 ## 10/10 — auditoria, segurança e colaboração
 
-PR #41 organiza documentação; #46 verifica documentos/links/privacidade; #48 regista clones/inventário de árvores Git em Linux. **Limite:** nada disso certifica os ficheiros Windows do PC. Suspensa a integração Sandy, conservando estudo e crédito. A frente de documentação não altera código nem as branches de implementação.
+PR #41 organiza documentação; #46 verifica documentos/links/privacidade; #48 **comprova clone Git integral de Sir Thaddeus em Linux**, verifica 1.446/1.446 ficheiros e inventaria seis árvores Nexus públicas. **Limite:** nada disso certifica os ficheiros Windows do PC, nem prova execução Sir Thaddeus.
+
+Em paralelo, o laboratório [Writer PR #1](https://github.com/PAPACREATOR/nexus-writer-lab/pull/1) demonstrou a diferença real entre pipe legado (WinError 5) e namespace `LOCAL` sob LPAC. A nova [Writer PR #2](https://github.com/PAPACREATOR/nexus-writer-lab/pull/2) testa a solução pública Sandy de Hrvoje Abraham numa bancada descartável. **A integração de Sandy no Nexus continua suspensa**, mas o ensaio isolado de diagnóstico foi autorizado. Na consulta o job A/B ainda decorria; isto não prova Writer/PDF funcional nem altera o candidato PR #45. [Fontes e SHA](../../60-evidence/CONCILIACAO-WRITER-SIR-THADDEUS-2026-10-10.md).
+
+A frente de documentação não altera código nem as branches de implementação.
 
 Fontes: [matriz por PR](../../60-evidence/MATRIZ-PRS-2026-10-10.md), [situação datada](../../10-current/ESTADO-DOCUMENTAL-2026-10-10.md), [decisões superadas](../DECISOES-SUPERADAS-E-PORQUE.md).
