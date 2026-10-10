@@ -32,7 +32,7 @@
   "native_mcp.py": "c55c0497697f61469b6bde21e0a279847db7cb4bfd84f39a1c94ecbfacc090ac",
   "adapters/product_routes.py": "3df52c97f13bb5f3417c283f7c8cc86e203f1bf255cc4aa6db97d638aba17acd",
   "frontdoor.py": "90f2ce2ef806872b0d067d62096c98cd0553882b34aa6f3b2787f138f0b71ad6",
-  "frontdoor_rules.json": "c3094aae9b1d953b05422bd6739e008a4a2e4f3669e42460a4318fee311fde97",
+  "frontdoor_rules.json": "0e8136af1384cacd965629e895614196c1143088345acd26706c3a1a486a17db",
   "schemas/frontdoor_rules.json": "d05622a2b1cd0ba5612ba40dd02dd6bd65163f965224088cb88ff8e715a5fff9",
   "adapters/writer_sandy.py": "0018d1367348ae404c200fbf1d753446ca4de44be868b16244503609c19ffdc2",
   "adapters/vendor/sandy/libreoffice-demo.py": "01f01109e3672251a2ea4b910d53acf2f6ef1f681ca4354da85ba522a8a43fd6",
