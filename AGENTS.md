@@ -4,7 +4,7 @@ Ler primeiro [STATUS](STATUS.md) e o [ponto de situação operacional](nexus/doc
 
 ## Reconciliação operacional — 05-10-2026
 
-A PR #23 e a branch `lab-open-notebook-avatar-20261004` são a continuação ativa. Kernel/Host/Store Python mantêm estado e política; a pessoa é autoridade máxima. MCP transporta; ferramentas externas devolvem propostas/evidência. Conductor/Spiff/YAML de execução foram retirados do ativo, conforme a PR #21 preservada. As referências a Activepieces abaixo aplicam-se à genealogia ou a integrações que o usem; não impõem uma dependência atual.
+A PR #32 é a baseline candidata Windows; a PR #45 é uma integração posterior Draft, sem release. A PR #23 e os laboratórios são antecedentes, não a continuação única atual. Kernel/Host/Store Python mantêm estado e política; a pessoa é autoridade máxima. MCP transporta; ferramentas externas devolvem propostas/evidência. Conductor/Spiff/YAML de execução foram retirados do ativo, conforme a PR #21 preservada. As referências a Activepieces abaixo aplicam-se à genealogia ou a integrações que o usem; não impõem uma dependência atual.
 
 Manter um único documento de estado: `nexus/docs/PONTO-DE-SITUACAO.md`. Não recriar filas/handoffs removidos. Contratos, comparações, relatórios PASS/FAIL e histórico devem ser preservados. Antes de editar, conferir HEAD e comentários recentes; PASS anterior não cobre automaticamente um novo SHA. Limpeza documental não autoriza alterar arquitetura ou enfraquecer testes.
 
@@ -35,11 +35,15 @@ USE > ADAPT > CREATE.
 - Não duplicar fora do Kernel regras que pertencem ao Core.
 - Não criar adapter próprio quando uma interface estável existente resolve.
 - Todo o processo deve ter explicação equivalente em linguagem natural.
-- Open Notebook usa um único espaço cognitivo por defeito; contexto e sessão são delimitados por tarefa.
+- OpenNotebook é ferramenta especializada selecionada por microprocesso, não obrigatória; contexto e sessão são delimitados por tarefa, sem autoridade sobre o núcleo.
 - A tiny recebe contexto temático, fontes permitidas, budget e schema de saída.
 - SQLite não é um terceiro cofre; coordena eventos/IDs/relações/estado/índices.
 - Markdown/formatos abertos materializam Creative/Canonical.
 - Obsidian/Joplin/Logseq não são dependências obrigatórias.
+
+## Nota de vigência — 10-10-2026
+
+Consultar [decisões e razões](docs/40-decisions/README.md), [reconciliação datada](docs/10-current/ESTADO-DOCUMENTAL-2026-10-10.md) e [issue #42](https://github.com/PAPACREATOR/cerebro-parvo-/issues/42). Esta frente documental nunca altera código, testes, scripts, workflows ou configuração executável; não interfere com Work/Codex.
 
 ## Método de trabalho
 

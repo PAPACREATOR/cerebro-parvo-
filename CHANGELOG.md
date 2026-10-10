@@ -1,5 +1,14 @@
 # Alterações
 
+## 10-10-2026 — proposta documental isolada (sem merge)
+
+- Novos índices de decisões fundamentadas, capacidades, provas por PR/SHA e história cronológica em docs/.
+- Caminhos históricos preservados; nenhum ficheiro original movido, apagado ou reclassificado como runtime atual.
+- Esclarecidos OpenNotebook especializado, confirmações humanas separadas, estado Draft das PRs e suspensão Sandy.
+- Somente Markdown: nenhuma alteração a código, testes, scripts, workflows ou configuração. Não implica PASS global.
+
+[Índice](docs/README.md) · [Decisões](docs/40-decisions/README.md) · [História](docs/99-history/README.md).
+
 ## 27-09-2026 — reconciliação autorizada
 
 - Orientação atual alinhada com Folha Única/M1–M14 e fontes de 26/09.

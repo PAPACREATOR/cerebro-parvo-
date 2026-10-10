@@ -1,5 +1,7 @@
 # Estado atual do Nexus
 
+**Reconciliação documental de 10-10-2026:** ver [fotografia datada](docs/10-current/ESTADO-DOCUMENTAL-2026-10-10.md) e [evidências](docs/60-evidence/MATRIZ-PRS-2026-10-10.md). PR #45 permanece Draft; PR #48 não prova espelho completo do PC. Esta nota não substitui o estado operacional abaixo.
+
 O estado operacional corrente está em [nexus/docs/PONTO-DE-SITUACAO.md](nexus/docs/PONTO-DE-SITUACAO.md).
 
 A implementação candidata ativa está na **PR #32**, branch `cleanup/llamacpp-only-20261007`. A issue #33 fixa a convergência final sem novas funcionalidades por antecipação.

@@ -4,9 +4,11 @@ Sistema Windows local-first de criação, conhecimento e execução governada. A
 
 > **Novo no projeto?** Comece em [docs/00-start-here/](docs/00-start-here/README.md).
 
+[Índice documental](docs/README.md) · [Decisões e motivos](docs/40-decisions/README.md) · [História](docs/99-history/README.md).
+
 ## Estado atual
 
-O candidato ativo está na **PR #32 — Convergir Nexus Windows: execução direta, binding e gates nativos**. A issue #33 fixa a direção de convergência: unificar o produto sem acrescentar novas funcionalidades por antecipação.
+A baseline candidata está na **PR #32 — Convergir Nexus Windows: execução direta, binding e gates nativos**; a **PR #45** é integração posterior em Draft, sem merge, release ou PASS global. A issue #33 fixa a direção de convergência: unificar o produto sem acrescentar novas funcionalidades por antecipação.
 
 O estado operacional detalhado, incluindo PASS/FAIL/BLOCKED e limites de cada capability, está em [nexus/docs/PONTO-DE-SITUACAO.md](nexus/docs/PONTO-DE-SITUACAO.md).
 
