@@ -32,7 +32,7 @@ if (BACKEND_PORT === PORT) throw new Error('Gateway and Python backend must use 
 const UI_PATHS = new Set(['/', '/app.js', '/style.css']);
 const READ_PATHS = new Set(['/api/runs']);
 const WRITE_PATHS = new Set([
-  '/api/interpret', '/api/prepare-run', '/api/confirm-run',
+  '/api/interpret', '/api/search', '/api/prepare-run', '/api/confirm-run',
   '/api/prepare', '/api/approve',
 ]);
 const ID_PATH = /^\/api\/(?:runs|pdf)\/[0-9a-f]{32}$/;
