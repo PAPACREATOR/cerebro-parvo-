@@ -37,7 +37,7 @@ function showInterpretation(preview) {
   el("result-title").textContent=preview.status==="RESOLVED"?
     ("Intenção: "+(intents[preview.intent]||"por esclarecer")):"Interpretação pendente";
   el("message").textContent=preview.status==="RESOLVED"?
-    "A Folha compreendeu a intenção, mas esta capacidade ainda não está ligada a execução. Só a verificação de integridade com ficheiro tem confirmação de execução nesta versão.":
+    "A Folha compreendeu a intenção. Só estão habilitadas, com confirmação humana e anexo, a verificação de integridade e duas exportações Writer expressamente pedidas.":
     "Reformula o pedido. Nenhuma ferramenta foi chamada.";
   el("content").textContent=preview.original;
   currentContent="";
@@ -111,7 +111,7 @@ el("form").onsubmit=async event=>{
     }
     executionTicket=prepared.ticket;
     el("execution-summary").textContent=prepared.summary;
-    el("execution-review").textContent="Ficheiro: "+prepared.filename+"\nBytes: "+prepared.attachment_bytes+"\nSHA-256: "+prepared.attachment_sha256;
+    el("execution-review").textContent="Operação: "+prepared.process+"\nFicheiro: "+prepared.filename+"\nBytes: "+prepared.attachment_bytes+"\nSHA-256: "+prepared.attachment_sha256;
     el("execution-confirm").checked=false;
     el("execution-approve").disabled=true;
     el("execution-confirmation").showModal();
