@@ -10,8 +10,8 @@ O produto mínimo pode ser composto por:
 1. **Folha + parser determinístico** — recebe o pedido e classifica apenas o necessário.
 2. **Kernel / Host / Store** — autoridade, estado, integridade, recovery, proveniência, Creative/Canonical e Human Gate.
 3. **Regras + schemas** — contratos explícitos, allowlists, limites e validação.
-4. **MCP Python** — transporte delimitado para ferramentas quando MCP for a interface adequada.
-5. **Adaptadores diretos mínimos** — apenas quando uma ferramenta não precisa de MCP ou quando a fronteira direta é mais simples e mais segura.
+4. **Runner direto protegido** — despacho interno dos processos na única fronteira Windows governada pelo Host.
+5. **MCP Python opcional** — transporte delimitado para ferramentas quando MCP for a interface adequada; não é obrigatório no percurso interno.
 6. **Ferramentas externas** — LibreOffice, LanguageTool, Zotero, OpenNotebook, ffmpeg e outras, sempre subordinadas ao Kernel.
 
 ## O que não é obrigatório
@@ -23,15 +23,15 @@ O produto mínimo pode ser composto por:
 
 ## Porque isto pode chegar
 
-MCP resolve o contrato uniforme de chamada de ferramentas; o Kernel já resolve autoridade, persistência, hashes, recovery e bloqueio conservador. Para fluxos simples, acrescentar um motor de workflows apenas duplica responsabilidades.
+A PR #45 usa runner direto para a execução interna; MCP continua disponível como transporte de ferramentas externas quando justificado. O Kernel/Host/Store já resolvem autoridade, persistência, hashes, recovery e bloqueio conservador. Para fluxos simples, acrescentar um motor de workflows apenas duplica responsabilidades.
 
 Exemplo:
 
 ```text
-Folha → Kernel → MCP Python → LanguageTool → Kernel → Creative → humano
+Folha → confirmação da operação autorizada → Host/Kernel → runner protegido → ferramenta → Store/Creative → humano → Human Gate de Canonical
 ```
 
-Não é necessário BPMN para uma sequência simples.
+O exemplo é um **padrão de fronteiras**, não prova de que o parser já encaminha LanguageTool naturalmente. No SHA `66027af7...`, só `verify` tem regra natural pública de execução; consultar [matriz de compatibilidade](../10-current/COMPATIBILIDADE-CODIGO-2026-10-10.md). Não é necessário BPMN para uma sequência simples.
 
 ## Quando um motor de processos seria justificado
 
