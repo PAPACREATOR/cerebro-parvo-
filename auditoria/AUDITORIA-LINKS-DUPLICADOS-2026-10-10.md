@@ -28,6 +28,12 @@ Dois pares de blobs têm o mesmo identificador Git (mesmo conteúdo como objeto 
 - A issue [#33](https://github.com/PAPACREATOR/cerebro-parvo-/issues/33) fixa a convergência do runtime `nexus/` com portões transacionais, sem presumir que a PR #31 e a PR #32 tenham as mesmas provas.
 - **A PR #46 não deve editar `README.md`, `STATUS.md`, `DECISIONS.md` ou as secções de navegação da PR #41** para não criar alterações paralelas. Depois da consolidação, atualizar o índice com base num único HEAD e evidência de merge/revisão.
 
+## Verificação adicional — secções de navegação da PR #41
+- Ref analisada: `docs/external-navigation-20261009`, SHA `46c6b6722028017b5c174986128be4a151588ae7` (PR #41 aberta).
+- Oito ficheiros da nova estrutura `docs/00-start-here`, `10-current`, `20-architecture`, `30-help`, `90-research` e `99-history` foram lidos.
+- Catorze referências Markdown relativas analisadas; **zero destinos em falta** na árvore da própria PR #41, segundo o mesmo método estático.
+- Esta amostragem não audita todos os restantes ficheiros adicionais daquela branch, nem âncoras, URLs externos e links noutras sintaxes. Não implica aprovação/merge.
+
 ## Limites de segurança da revisão
 A inspeção de nomes de ficheiros não identificou nomes óbvios de credenciais na árvore `main`; **não** houve varrimento completo de conteúdo por segredos, dados pessoais, licenças ou binários do PC. Não fazer publicação adicional de dados do disco sem controlo prévio.
 
