@@ -1,5 +1,27 @@
 # Nexus — ponto de situação atual
 
+## Estado reconciliado — 10-10-2026
+
+`main` observado nesta revisão: `bfae55239d3803f3580f4ae29b7dfe99fec747a9`. A [PR #51](https://github.com/PAPACREATOR/cerebro-parvo-/pull/51) integrou a convergência; a [PR #53](https://github.com/PAPACREATOR/cerebro-parvo-/pull/53) integrou o roteador de propostas para as dez capacidades atuais. A PR #52 continua uma alternativa Draft não integrada; não é a implementação de `main`.
+
+Prova de código da PR #53: HEAD `e98bc6fa7dc18cdb4b26aa4deb7c68d7992eebfd`, com nove workflows e 19 jobs SUCCESS; checkout do mesmo SHA confirmado nos logs. O merge `bfae552...` conserva exatamente a árvore Git `6c70de51642e4ee7fc36069443646bd5022d1895` daquele HEAD. Os resultados continuam atribuídos a `e98bc6f`, não são renomeados como execuções no commit de merge ou nesta revisão documental.
+
+No HEAD testado: roteador 41 PASS por Windows/Linux; Writer Windows real 8 PASS, incluindo `verify` → Writer/PDF e reinício sem repetir ferramentas; regressão completa 1821 PASS / 17 SKIP. As suites sobrepõem-se; não somar contagens. Windows nativo em CI não equivale ao PC pessoal. A [matriz com runs, interface e limites](FLUXO-GENERICO-FERRAMENTAS-2026-10-10.md) é a referência técnica deste fluxo.
+
+O circuito normal é proposta → confirmação de execução na Folha → Host/Kernel → ferramenta → validação/Creative → confirmação separada → Canonical. O ticket pré-execução é consumido em `app.py`; o ticket de promoção é consumido no Host. `HumanDecision` liga a promoção ao item e ao hash revistos. Os planos de música, web, vídeo e podcast não certificam a geração de produtos finais. OpenNotebook completo, configurações/serviços e aceitação no PC continuam por validar; as ferramentas futuras precisam de contrato e integração próprios.
+
+### Revisão por fases — pedido de 10-10-2026
+
+Fase **1 — documentação do fluxo e pontos de entrada**, revista e verificada localmente, em branch isolada `docs/generic-flow-phase1-20261010`, base imutável `bfae55239d3803f3580f4ae29b7dfe99fec747a9`. Corrige estatuto Draft/merged, referências correntes, local dos tickets, linguagem de hashes e limites da prova. Não altera código, testes, scripts, workflows, manifesto executável, Kernel, Host ou Store. A validação desta fase é documental; não constitui novo PASS funcional do produto. Commit, verificações remotas e resultado de publicação ficam na PR correspondente; sem merge nesta fase.
+
+Verificações locais: `test_documentation_current_state.py` — 5 PASS; `ferramentas/verificar_documentacao.py` — 47 ficheiros preservados e 87 ligações ativas válidas; inspeção das seis alterações — 44 destinos relativos válidos, 381 outros ficheiros byte a byte iguais à base, 40 hashes do manifesto válidos, histórico operacional anterior preservado byte a byte e `git diff --check` limpo. A inspeção dos destinos cobre também o documento do fluxo dentro de `nexus/docs/`, fora do alcance do verificador geral.
+
+Próxima fase preparada: **2 — revisão de sintaxe e contratos**, num contexto separado, partindo do SHA e do contrato aqui registados. Ler `capability_router.py`, `app.py`, `contracts.py`, `approval_binding.py` e os testes diretamente relacionados; começar por leitura/diagnóstico, sem misturar implementação ou regressão total. Um achado deve indicar entrada, comportamento observado, efeito e reprodução antes de propor correção. A fase 3 de testes afetados só avança depois de fechar essa revisão. Estas duas fases ainda não foram executadas neste ciclo.
+
+## Histórico operacional preservado
+
+As secções seguintes conservam as observações e decisões das datas indicadas. Expressões como «candidato único», «não integrado», «continuação ativa» e SHAs antigos descrevem essas etapas; não substituem o estado reconciliado de 10-10 acima. FAILs, correções e razões são mantidos.
+
 ## Convergência técnica Work — 08-10-2026
 
 Pedido corrente: convergir a PR #32 num único produto Windows, seguindo #31, #32, #34 e #33. Work altera código/testes e regista operação; a PR #34 conserva arquitetura/documentação/auditoria. Os relatórios datados abaixo continuam como história; não validam o HEAD corrente.

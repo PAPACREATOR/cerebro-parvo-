@@ -2,9 +2,15 @@
 
 Ler primeiro [STATUS](STATUS.md) e o [ponto de situação operacional](nexus/docs/PONTO-DE-SITUACAO.md), depois CEREBRO_CONSTITUTION.md, CEREBRO_ARCHITECTURE.md, DECISIONS.md e o contrato da tarefa. O [projeto auditado de 28/09](docs/PROJETO-FINAL-AUDITADO-2026-09-28.md) conserva a composição daquela data; não é uma ordem para reintroduzir Activepieces/Conductor no runtime candidato.
 
-## Reconciliação operacional — 05-10-2026
+## Reconciliação operacional — 10-10-2026
 
-A PR #23 e a branch `lab-open-notebook-avatar-20261004` são a continuação ativa. Kernel/Host/Store Python mantêm estado e política; a pessoa é autoridade máxima. MCP transporta; ferramentas externas devolvem propostas/evidência. Conductor/Spiff/YAML de execução foram retirados do ativo, conforme a PR #21 preservada. As referências a Activepieces abaixo aplicam-se à genealogia ou a integrações que o usem; não impõem uma dependência atual.
+`main` observado: `bfae55239d3803f3580f4ae29b7dfe99fec747a9`. A convergência da PR #51 e o roteamento da PR #53 estão integrados. O HEAD testado da PR #53 é `e98bc6fa7dc18cdb4b26aa4deb7c68d7992eebfd`; a árvore do merge é idêntica, mas os resultados devem continuar associados ao SHA em que correram. Ler o [fluxo genérico e a matriz de evidência](nexus/docs/FLUXO-GENERICO-FERRAMENTAS-2026-10-10.md) para distinguir as dez capacidades registadas de ferramentas futuras e planos de artefactos finais.
+
+Trabalhar por fases delimitadas, com validação e registo antes de avançar. O estado único continua em `nexus/docs/PONTO-DE-SITUACAO.md`; a PR da tarefa acompanha as alterações próprias. Conferir primeiro as branches e comentários recentes para não editar a frente de outra sessão. A documentação geral das PRs #41/#49 permanece em branches próprias; não foi incorporada por esta reconciliação.
+
+## Genealogia operacional — 05-10-2026
+
+A PR #23 e a branch `lab-open-notebook-avatar-20261004` foram a continuação ativa naquela data. Kernel/Host/Store Python mantêm estado e política; a pessoa é autoridade máxima. MCP transporta; ferramentas externas devolvem propostas/evidência. Conductor/Spiff/YAML de execução foram retirados do ativo, conforme a PR #21 preservada. As referências a Activepieces abaixo aplicam-se à genealogia ou a integrações que o usem; não impõem uma dependência atual.
 
 Manter um único documento de estado: `nexus/docs/PONTO-DE-SITUACAO.md`. Não recriar filas/handoffs removidos. Contratos, comparações, relatórios PASS/FAIL e histórico devem ser preservados. Antes de editar, conferir HEAD e comentários recentes; PASS anterior não cobre automaticamente um novo SHA. Limpeza documental não autoriza alterar arquitetura ou enfraquecer testes.
 

@@ -8,9 +8,9 @@ O protótipo Windows está em [nexus/](nexus/README.md). Consultar o [estado tes
 
 ## Estado atual em uma frase
 
-**Protótipo candidato: Folha em linguagem natural + Kernel/Host/Store Python + MCP determinístico + ferramentas externas + Creative/Human Gate/Canonical.**
+**Protótipo Windows integrado em `main`: Folha em linguagem natural + Kernel/Host/Store Python + adaptadores delimitados + Creative/Human Gate/Canonical; MCP externo opcional.**
 
-A continuação está na [PR #23](https://github.com/PAPACREATOR/cerebro-parvo-/pull/23), branch `lab-open-notebook-avatar-20261004`; ainda não é a versão integrada em `main`. PASS de uma suite não significa release. O [ponto de situação](nexus/docs/PONTO-DE-SITUACAO.md) distingue a última referência verde, os testes do SHA analisado e os gates pendentes.
+A [PR #51](https://github.com/PAPACREATOR/cerebro-parvo-/pull/51) integrou a convergência em `main`; a [PR #53](https://github.com/PAPACREATOR/cerebro-parvo-/pull/53) integrou a seleção genérica das dez capacidades registadas. `main` observado em 10-10-2026: `bfae55239d3803f3580f4ae29b7dfe99fec747a9`. A [interface e a prova por SHA](nexus/docs/FLUXO-GENERICO-FERRAMENTAS-2026-10-10.md) distinguem seleção, autorização, execução e resultado. O CI não valida a instalação física no PC nem todas as ferramentas futuras; o [ponto de situação](nexus/docs/PONTO-DE-SITUACAO.md) conserva essas pendências e o histórico.
 
 A arquitetura conceptual está estável. A implementação física continua sujeita a testes: nenhuma integração é declarada resolvida antes de PASS real.
 
@@ -18,7 +18,7 @@ A arquitetura conceptual está estável. A implementação física continua suje
 
 Nexus é um **launcher metódico, com memória, leis e templates executáveis**, que usa as ferramentas disponíveis para atingir um fim. Não tenta reprogramar capacidades maduras.
 
-A pessoa escreve na Folha. Kernel/Host/Store validam e executam o processo; MCP transporta chamadas às ferramentas. Os resultados são verificados e guardados em Creative. Só decisão humana permite promoção para Canonical. O percurso completo de cada capacidade exige prova própria.
+A pessoa escreve na Folha. Uma proposta exige confirmação humana antes de entrar no Host. Kernel/Host/Store validam o pedido e delegam a ferramenta pelo adaptador delimitado; o runner interno atual usa execução direta, e MCP externo continua um transporte opcional. Os resultados candidatos válidos são guardados em Creative. Outra decisão humana permite promoção para Canonical. O percurso completo de cada capacidade exige prova própria.
 
 
 ## Separação de responsabilidades
@@ -29,7 +29,7 @@ As responsabilidades M1–M14 continuam aplicáveis. Os contratos, testes e a ev
 Interface inicial mínima. Texto natural, anexos, resultados e decisões humanas. YAML, JSON, Markdown, IDs e infraestrutura ficam escondidos na utilização normal.
 
 ### Kernel e MCP
-O runtime candidato usa Kernel/Host/Store Python. MCP é transporte determinístico, sem IA nem autoridade de aprovação. Conductor/Spiff foram retirados do runtime ativo; as comparações e decisões anteriores permanecem como genealogia, incluindo a [PR #21](https://github.com/PAPACREATOR/cerebro-parvo-/pull/21).
+O runtime integrado usa Kernel/Host/Store Python. MCP é transporte determinístico opcional, sem IA nem autoridade de aprovação; não é o relay interno obrigatório do runner atual. Conductor/Spiff foram retirados do runtime ativo; as comparações e decisões anteriores permanecem como genealogia, incluindo a [PR #21](https://github.com/PAPACREATOR/cerebro-parvo-/pull/21).
 
 ### Open Notebook
 **Bancada de trabalho, ponto.** Não é memória soberana, Canonical, Creative, arquivo, Wiki, autoridade nem interface principal. Recebe um pacote de trabalho limitado, permite trabalho cognitivo com tiny local e devolve resultado estruturado. Deve poder ser destruído/substituído sem perda de conhecimento Nexus.
@@ -105,4 +105,4 @@ Código/documentação próprios: PolyForm Noncommercial 1.0.0. Dependências ma
 
 [Estado operacional](nexus/docs/PONTO-DE-SITUACAO.md) · [Arranque](nexus/README.md) · [Constituição](CEREBRO_CONSTITUTION.md) · [Arquitetura e genealogia](CEREBRO_ARCHITECTURE.md) · [Decisões](DECISIONS.md)
 
-Os documentos conceptuais e planos datados preservam etapas anteriores (incluindo Activepieces/Conductor); a composição executável atual deve ser conferida no código, na PR #23 e na evidência por SHA. A organização documental não altera as invariantes M1–M14.
+Os documentos conceptuais e planos datados preservam etapas anteriores (incluindo Activepieces/Conductor e a PR #23); a composição executável atual deve ser conferida no código de `main`, nas PRs #51/#53 e na evidência por SHA. A organização documental não altera as invariantes M1–M14.

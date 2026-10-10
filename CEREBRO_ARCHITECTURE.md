@@ -2,9 +2,11 @@
 
 ## Estado
 
-A arquitetura conceptual está fechada. O runtime candidato atual é Kernel/Host/Store Python com MCP determinístico e ferramentas externas delimitadas. A PR #23 contém a implementação e evidência corrente.
+A arquitetura conceptual está fechada. O runtime integrado atual é Kernel/Host/Store Python com adaptadores delimitados e MCP externo opcional. As PRs [#51](https://github.com/PAPACREATOR/cerebro-parvo-/pull/51) e [#53](https://github.com/PAPACREATOR/cerebro-parvo-/pull/53) registam a convergência e a seleção das dez capacidades em `main`, observado no SHA `bfae55239d3803f3580f4ae29b7dfe99fec747a9` em 10-10-2026. A PR #23 conserva a genealogia anterior. O [fluxo operacional por SHA](nexus/docs/FLUXO-GENERICO-FERRAMENTAS-2026-10-10.md) identifica o runner direto, a rota Writer e as duas decisões humanas.
 
 ## Diagrama
+
+Este diagrama representa responsabilidades conceptuais; não certifica todas as integrações desenhadas. A execução interna atual usa os adaptadores diretos, com uma rota Writer delimitada. MCP mantém o papel de transporte opcional.
 
 ```mermaid
 flowchart TD
