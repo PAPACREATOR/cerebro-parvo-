@@ -18,6 +18,7 @@ Estado: EM CURSO. Não declarar fechado sem inventário completo dos artefactos 
 ## Resultado confirmado deste ciclo
 
 - [Índice de vigência documental](INDICE-DE-VIGENCIA-DOCUMENTAL-2026-10-10.md) criado com a classificação de 16 documentos efetivamente lidos. É **parcial** e não certifica o espelho do PC.
+- Inventário técnico da branch `main`: 208 entradas, incluindo 177 ficheiros (identificadores Git por ficheiro); mais 49 branches com os respetivos commit SHA. São fotografias do GitHub, não prova de cópia do Windows.
 - Decisão humana: Sandy fora do trabalho ativo; integração suspensa, crédito histórico mantido.
 - PR #46 continua Draft e isolada, sem alteração de código.
 
@@ -29,7 +30,7 @@ Estado: EM CURSO. Não declarar fechado sem inventário completo dos artefactos 
 - Evitar tocar em ficheiros de código ou PRs concorrentes do Codex/Work.
 
 ## Fecho da Fase 1 — verificação obrigatória
-- [ ] Enumerar árvore completa e branches relevantes com SHA.
+- [x] Enumerar a árvore publicada de `main` e as branches com SHA no snapshot de 2026-10-10: 208 entradas (177 ficheiros), 49 branches. Isto não cobre ficheiros locais nem garante que branches isoladas tenham sido integradas. Ver [manifesto da árvore](INVENTARIO-GITHUB-MAIN-2026-10-10.json) e [manifesto das branches](BRANCHES-GITHUB-2026-10-10.json).
 - [ ] Verificar links documentais para documentos ausentes e referências locais não publicadas.
 - [ ] Levantar documentos operacionais duplicados/contraditórios e produzir índice inequívoco de vigência.
 - [ ] Confirmar com o Codex que a cópia local está publicada e depois comparar manifestos/hashes de documentos.
