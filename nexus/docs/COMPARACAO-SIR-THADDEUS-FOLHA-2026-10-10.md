@@ -18,8 +18,8 @@
 | Aprovação de conhecimento | No Thaddeus, ferramentas e wiki têm portões por operação | **Preservado:** outro ticket e decisão humana para Creative→Canonical; confirmação de execução não promove conteúdo |
 | Revisões enquanto HTTP está pendente | Folha Lab PR #4 invalida mesmo se texto alterado e reposto | **Integrado:** revisão monotónica de texto/anexo no `nexus/ui/app.js`; resposta tardia não abre diálogo antigo |
 | HTTP Host/Origin | Folha Lab PR #5 protege serviço loopback | **Já existia:** `nexus/app.py` exige Host e Origin esperados antes da interpretação e de ferramentas; não copiar segundo servidor |
-| Várias intenções | Thaddeus tem capacidades e permissões próprias | **Read-only:** Folha reconhece sete prefixos e expressões com `/api/interpret`; devolve `execution: NOT_AUTHORIZED`, sem criar runs nem escrita |
-| Ferramenta ativa | Thaddeus tem MCP e runtime com modelos | **Sem fusão:** só `verify` com anexo alcança o gate natural nesta versão; modelos/MCP/NET não são requisitos |
+| Várias intenções | Thaddeus tem capacidades e permissões próprias | **Read-only:** Folha reconhece sete prefixos e expressões com `/api/interpret`; devolve `execution: NOT_AUTHORIZED`, sem criar runs nem escrita. **Execução separada, com ticket humano:** `& converter para pdf` e `& exportar manuscrito para pdf`, ambas com DOCX/ODT validado e somente para produzir PDF sem mudar estilos; não criam livros automaticamente |
+| Ferramenta ativa | Thaddeus tem MCP e runtime com modelos | **Sem fusão:** `verify` com anexo e duas exportações Writer por comandos explícitos alcançam o mesmo gate de execução, mantendo o Writer dentro da LPAC e o `Host` como autoridade; modelos/MCP/.NET não são requisitos |
 | Proveniência | Thaddeus apresenta recibos e atividade | **Preservado:** resultados verificados, hashes e origem no Store e no histórico; UI não constrói proveniência |
 | Interrupção/limites | Runtime Thaddeus tem stop/kills | **Preservado:** limites Job/LPAC no Host, sem transferir controlo para UI ou Thaddeus |
 
@@ -36,3 +36,9 @@ Os ficheiros anteriores `nexus/ui/index.html` e `nexus/ui/style.css` foram subst
 5. Writer/LPAC `book` e `convert_pdf` apenas se testes físicos sob o Host da candidata PASS no mesmo SHA; a prova da bancada [Writer Lab #3](https://github.com/PAPACREATOR/nexus-writer-lab/pull/3) não substitui estes gates.
 
 **Estado:** código da UI proposto na PR #50 Draft; CI e integração física são observações por SHA. Sem merge, sem alteração da main, sem eliminação do histórico, sem motor de IA obrigatório e sem autonomia de ferramentas.
+
+## Ligação produtiva da Folha ao Writer — correção pós-A/B
+
+As duas operações restritas foram adicionadas ao `operation_rules` do Front Door, cuja interpretação é só proposta. Apenas a rota `/api/prepare-run` consegue emitir ticket (uso único, tempo limitado, SHA do pedido completo); a rota `/api/confirm-run` exige confirmação humana e repete a validação dos bytes originais. As extensões `.odt` e `.docx` têm de coincidir com o conteúdo ZIP seguro validado antes do ticket. A execução usa a ponte Writer Sandy LPAC e o PDF segue para Creative até **segunda aprovação humana independente**; nunca há promoção automática. O produto continua sem aceitar `/api/run` salvo testes expressamente diagnósticos.
+
+Os comandos são **exportação do documento já preparado**, não geração de texto, paginação editorial nova ou substituição do template. As restantes intenções mantêm-se sem ferramenta. Testes: `test_folha_writer_preexecution.py` e `test_native_writer_route_real.py` (Windows CI, versão oficial e Sandy fixados); nenhum PASS anterior ao novo commit valida esta alteração.
