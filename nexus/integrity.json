@@ -35,7 +35,7 @@
   "frontdoor_rules.json": "6a1aef119f7dce2c35c7d92d90814c447a4366c60eabce96bee0ff5da9192317",
   "schemas/frontdoor_rules.json": "324b403eda05cd84955a693de6ff4c555fee71b68dabbe66c8bb92571dc71070",
   "adapters/writer_sandy.py": "0018d1367348ae404c200fbf1d753446ca4de44be868b16244503609c19ffdc2",
-  "adapters/vendor/sandy/libreoffice-demo.py": "21e45034d8686bcaf1c4cd1e64e4d5fd08dfe89d9f8a696c393a2f61ac3e32e5",
+  "adapters/vendor/sandy/libreoffice-demo.py": "625fabef34b8e7790f0e254f695fca4c0790c1971cec3d778e60f28f1e95c61f",
   "adapters/vendor/sandy/libreoffice.toml": "ba2b6eed03218996e12387899229587914731609b0805bcbbef5f5ca054bb7ec",
   "adapters/vendor/sandy/LICENSE": "71ab2a2ba35053be1bc7370f83080bab7643812351e377c8eb3fdd2ee9f34fce"
 }
