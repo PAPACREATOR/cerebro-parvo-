@@ -90,6 +90,22 @@
       "patterns": [
         "\\bverific(?:a|ar|as|ares)\\b.*\\bintegridade\\b.*\\b(?:ficheiro|documento|arquivo)\\b"
       ]
+    },
+    {
+      "process": "convert_pdf",
+      "intent": "trabalhar",
+      "requires_attachment": true,
+      "patterns": [
+        "^converter para pdf$"
+      ]
+    },
+    {
+      "process": "book",
+      "intent": "trabalhar",
+      "requires_attachment": true,
+      "patterns": [
+        "^exportar manuscrito para pdf$"
+      ]
     }
   ]
 }
