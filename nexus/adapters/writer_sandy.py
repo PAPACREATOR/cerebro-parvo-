@@ -6,9 +6,8 @@ neither policy, decisions nor Store; Host retains all authority and Human Gate.
 Hrvoje Abraham's MIT demo/launcher contract is vendored with its license.
 """
 import ctypes as C
-from ctypes import wintypes as W
+import ctypes.wintypes as W
 import hashlib
-import json
 import os
 from pathlib import Path
 import shutil
@@ -173,7 +172,6 @@ def convert(process, work):
         (stage / name).mkdir()
     document = stage / "work" / ("resultado" + kind)
     document.write_bytes(raw)
-    source_hash = hashlib.sha256(raw).hexdigest()
     # The 4 relevant mutable paths and the runtime copy were measured in the
     # successful Windows A/B laboratory; never restore outside work.
     paths = (work, stage, copied, stage / "profile", stage / "work", stage / "temp")
@@ -190,7 +188,7 @@ def convert(process, work):
         process_handle = subprocess.Popen(cmd, cwd=work, stdin=subprocess.PIPE,
                         stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                         creationflags=subprocess.CREATE_NO_WINDOW | subprocess.CREATE_NEW_PROCESS_GROUP)
-        out, err = process_handle.communicate(timeout=135)
+        process_handle.communicate(timeout=135)
     except subprocess.TimeoutExpired:
         if process_handle is not None:
             subprocess.run([str(Path(os.environ["SystemRoot"]) / "System32/taskkill.exe"),
@@ -205,7 +203,7 @@ def convert(process, work):
         clean = subprocess.run([str(sandy_copy), "--cleanup"], capture_output=True, timeout=15)
         if clean.returncode != 0:
             raise Blocked("Limpeza Sandy falhou; o resultado não pode ser aceite.")
-    restored = _restore_exact_ai_only(before, (work,))
+    _restore_exact_ai_only(before, (work,))
     state_path = stage / "last-run.json"
     # Report only a bounded phase and numeric exit code; never publish paths,
     # document bytes, environment, or unrestricted sandbox logs in the UI.
