@@ -751,7 +751,29 @@ endlocal
     $runtime = Join-Path $RepoRoot 'nexus\runtime'
     $null = New-Item -ItemType Directory -Force -Path $runtime
     @{ java=$java; jar=$ltJar.FullName } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $runtime 'languagetool.json') -Encoding UTF8
-    @{ executable=$soffice } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $runtime 'libreoffice.json') -Encoding UTF8
+    # Sandy is NOT installed or downloaded silently. The human must supply
+    # the approved v0.9994 file in the tools folder before book/PDF can run.
+    # Writing both contract keys keeps missing tooling fail-closed, not bypassed.
+    $writerSandy = Join-Path $ToolsRoot 'Sandy\sandy.exe'
+    $writerSandyStatus = 'NOT_INSTALLED_WRITER_BLOCKED'
+    if (Test-Path -LiteralPath $writerSandy -PathType Leaf) {
+        if ((Get-Item -LiteralPath $writerSandy).Length -ne 1159680 -or
+            (Get-FileHash -LiteralPath $writerSandy -Algorithm SHA256).Hash.ToLowerInvariant() -cne
+                'cbfc30709f80e63b201f1944c34692fc430d8aa42d6cd2823fcc670675307eac') {
+            throw 'NEXUS_WRITER_SANDY_PIN_MISMATCH'
+        }
+        $writerSandyStatus = 'VERIFIED_PINNED_WRITER_LPAC'
+    }
+    @{ executable=$soffice; sandy=$writerSandy } | ConvertTo-Json |
+        Set-Content -LiteralPath (Join-Path $runtime 'libreoffice.json') -Encoding UTF8
+    $report.tools.writer_sandy = [ordered]@{
+        status=$writerSandyStatus
+        path=$writerSandy
+        required_for=@('book','convert_pdf')
+        authority='NONE'
+        automatically_installed=$false
+    }
+    Save-Report
     @{
         base_url='http://127.0.0.1:5055'
         password=$apiPassword
