@@ -13,7 +13,10 @@ Retrato de 10-10-2026. Todas estas PRs encontravam-se abertas/Draft na consulta 
 | [#46](https://github.com/PAPACREATOR/cerebro-parvo-/pull/46) | Auditoria documental | Inventários/ref/links parcialmente verificados | Cópia Windows, scan completo ou todos os links |
 | [#47](https://github.com/PAPACREATOR/cerebro-parvo-/pull/47) | Wiki/Flow Lab | Casos FAIL-first e plano de correção | Integração ou produto final |
 | [#48](https://github.com/PAPACREATOR/cerebro-parvo-/pull/48) | Clones/inventário técnico | Clone Git Linux, inventário árvores publicadas | Ficheiros do PC limpos ou copiados integralmente |
+| [#49](https://github.com/PAPACREATOR/cerebro-parvo-/pull/49) | Documentação e classificação histórica | Navegação + auditoria estática por ficheiro/SHA da PR #45 | Que o código foi testado/alterado, que a PR está em main ou que existe produto aprovado |
 
 **SHA de referência verificados no exame:** main aeeb6f662a8282b3793708aa3e6782ef20d2d0ca; #32 da86b6dd181d00fd7a87addaa01a12ec3a14e57b; #41 46c6b6722028017b5c174986128be4a151588ae7; #45 66027af7f2ea084bc62d85b840d1fc3113e60a97; #46 6ebf4912ee0ce58eece0aa9f4f26842aca177010; #48 37212f2b82d0cd4bcf2118cc4ec549a7c1da7726. São pontos de observação, não verdades para sempre.
+
+Ver também a [matriz de compatibilidade com código](../10-current/COMPATIBILIDADE-CODIGO-2026-10-10.md) e o [protocolo de prova](PROTOCOLO-VERIFICACAO-DOCUMENTAL.md). A PR #49 é **somente documentação**; os seus commits não alteram nem certificam o SHA da PR #45.
 
 Fontes complementares: [auditoria em Draft](https://github.com/PAPACREATOR/cerebro-parvo-/pull/46), [issue de convergência](https://github.com/PAPACREATOR/cerebro-parvo-/issues/33), [gate OpenNotebook](https://github.com/PAPACREATOR/cerebro-parvo-/issues/42).
