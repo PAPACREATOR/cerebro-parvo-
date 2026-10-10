@@ -1,44 +1,70 @@
 <!doctype html>
-<html lang="pt">
+<html lang="pt-PT">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Folha Nexus</title><link rel="stylesheet" href="/style.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Folha — Nexus Local</title>
+  <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-  <aside>
-    <a class="brand" href="/"><span class="symbol">N</span> nexus<span class="dot">.</span></a>
-    <div class="workspace">O TEU ESPAÇO DE TRABALHO</div>
-    <button id="new" class="new">＋ Novo pedido</button>
-    <div class="nav-label">TRABALHO RECENTE</div>
-    <div id="history" aria-label="Pedidos anteriores"></div>
-    <div class="aside-bottom"><span class="online"></span> No teu computador<br><small>Protótipo · Windows</small></div>
-  </aside>
-  <main>
-    <header><span>Folha de trabalho</span><span class="pill">A decisão é tua</span></header>
-    <section class="intro"><div class="eyebrow">DO PEDIDO AO RESULTADO</div>
-      <h1>Um lugar para<br>começar a trabalhar.</h1>
-      <p>Escreve o que queres fazer e junta o ficheiro quando for necessário.<br>O Nexus pede confirmação antes de executar uma operação reconhecida.</p>
-    </section>
-    <div class="body-grid">
-      <section class="paper">
-        <div class="section-top"><h2>O teu pedido</h2><span>01</span></div>
+  <div class="shell">
+    <header class="topbar">
+      <div class="identity"><span class="mark" aria-hidden="true">N</span><span>Nexus <span class="subtle">/ Folha</span></span></div>
+      <div class="top-actions"><span class="local-status">Local · decisão humana</span><button id="new" type="button" class="quiet">Nova folha</button></div>
+    </header>
+    <main>
+      <section class="sheet" aria-labelledby="page-title">
+        <div class="sheet-meta">FOLHA ÚNICA <span aria-hidden="true">·</span> ORIGINAL PRESERVADO</div>
+        <h1 id="page-title">O que queres fazer?</h1>
+        <p class="instruction">Escreve o pedido por palavras tuas. O Nexus interpreta primeiro e só executa operações expressamente confirmadas.</p>
         <form id="form">
-          <label for="text">Em que vamos trabalhar?</label>
-          <textarea id="text" placeholder="Escreve aqui o teu texto ou uma nota sobre o ficheiro…"></textarea>
-          <label class="attachment" for="file"><span>＋ Juntar ficheiro</span><small id="file-label">Até 2 MB · um ficheiro de cada vez</small></label>
-          <input type="file" id="file" hidden>
-          <div class="form-footer"><small>O original é conservado.</small><button id="submit" class="primary" type="submit">Executar pedido <span>↗</span></button></div>
+          <label for="text" class="sr-only">O teu pedido</label>
+          <textarea id="text" spellcheck="true" autofocus placeholder="Escreve, pergunta ou começa por @@ arquivo, @ web, & trabalhar, ?? perguntar…"></textarea>
+          <div class="composer-bottom">
+            <label for="file" class="attachment" tabindex="0">+ Juntar ficheiro <span id="file-label">Até 2 MB; um de cada vez</span></label>
+            <input type="file" id="file" hidden>
+            <button id="submit" type="submit" class="primary">Interpretar pedido</button>
+          </div>
         </form>
+        <p id="notice" class="notice" role="status" aria-live="polite"></p>
+        <div id="empty" class="empty">A interpretação aparece aqui. O Nexus não altera ficheiros nem conhecimento apenas por compreender uma frase.</div>
+        <section id="result" class="result" aria-label="Resultado ou interpretação" hidden>
+          <div class="result-head"><span id="status" class="status"></span><h2 id="result-title"></h2></div>
+          <p id="message"></p>
+          <pre id="content"></pre>
+          <div id="actions" class="result-actions" hidden>
+            <p class="gate-note">Este resultado ainda está em Creative. Só a tua aprovação explícita pode promovê-lo para Canonical.</p>
+            <button id="prepare" type="button" class="primary">Rever antes de aprovar</button>
+            <button id="pdf" type="button" class="secondary" hidden>Descarregar PDF</button>
+            <button id="download" type="button" class="secondary">Descarregar texto</button>
+          </div>
+        </section>
       </section>
-      <section class="result-panel">
-        <div class="section-top"><h2>Resultado</h2><span>02</span></div>
-        <div id="empty"><div class="empty-icon">◎</div><h3>O próximo passo começa aqui.</h3><p>O resultado aparece neste espaço.<br>Podes revê-lo e decidir o que fica.</p></div>
-        <div id="result" hidden><div id="status" class="status"></div><h3 id="result-title"></h3><p id="message"></p><pre id="content"></pre><div id="actions" hidden><p class="gate-note">Este resultado é um candidato. Só a tua confirmação o torna aprovado.</p><button id="prepare" class="primary">Rever e guardar como aprovado</button><button id="pdf" class="secondary" hidden>Descarregar PDF</button><button id="download" class="secondary">Descarregar resultado</button></div></div>
+      <section class="history-panel" aria-labelledby="history-title">
+        <div class="history-heading"><h2 id="history-title">Trabalhos anteriores</h2><span class="subtle">Somente os teus registos locais</span></div>
+        <div id="history" class="history" aria-label="Histórico de pedidos"></div>
       </section>
+    </main>
+    <footer>Entrada simples. Ferramentas delimitadas. <strong>A decisão continua tua.</strong></footer>
+  </div>
+  <dialog id="execution-confirmation" aria-labelledby="execution-title">
+    <div class="dialog-inner">
+      <p class="eyebrow">ANTES DE EXECUTAR</p><h2 id="execution-title">Confirmas este pedido?</h2>
+      <p id="execution-summary"></p><pre id="execution-review"></pre>
+      <label class="confirm"><input id="execution-confirm" type="checkbox"> Confirmo esta operação e o ficheiro indicado.</label>
+      <div class="dialog-actions"><button id="execution-cancel" type="button" class="secondary">Cancelar</button><button id="execution-approve" type="button" class="primary" disabled>Executar</button></div>
     </div>
-    <p id="notice" role="status" aria-live="polite"></p>
-    <footer><span>01 Pedido <i>→</i> 02 Execução <i>→</i> 03 Candidato <i>→</i> <b>04 A tua decisão</b></span><span>NEXUS / MINIMAL</span></footer>
-  </main>
-  <dialog id="execution-confirmation"><div class="eyebrow">ANTES DE EXECUTAR</div><h2>É isto que queres fazer?</h2><p id="execution-summary"></p><pre id="execution-review"></pre><label class="confirm"><input type="checkbox" id="execution-confirm"> Confirmo esta operação e este ficheiro.</label><div class="dialog-actions"><button id="execution-cancel" class="secondary">Voltar</button><button id="execution-approve" class="primary" disabled>Executar pedido</button></div></dialog><dialog id="approval"><div class="eyebrow">DECISÃO HUMANA</div><h2>Guardar este resultado?</h2><p>Confirma a versão abaixo. O original e o candidato são conservados.</p><pre id="review"></pre><label class="confirm"><input type="checkbox" id="confirm"> Li este resultado e aprovo esta versão.</label><div class="dialog-actions"><button id="cancel" class="secondary">Voltar</button><button id="approve" class="primary" disabled>Confirmar aprovação</button></div></dialog>
+  </dialog>
+  <dialog id="approval" aria-labelledby="approval-title">
+    <div class="dialog-inner">
+      <p class="eyebrow">AUTORIDADE HUMANA</p><h2 id="approval-title">Aprovar esta versão?</h2>
+      <p>Revê o conteúdo. A aprovação não apaga o original nem o histórico.</p>
+      <pre id="review"></pre>
+      <label class="confirm"><input id="confirm" type="checkbox"> Li e aprovo exatamente esta versão.</label>
+      <div class="dialog-actions"><button id="cancel" type="button" class="secondary">Não aprovar</button><button id="approve" type="button" class="primary" disabled>Aprovar</button></div>
+    </div>
+  </dialog>
   <script src="/app.js"></script>
-</body></html>
+</body>
+</html>
