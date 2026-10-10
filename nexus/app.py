@@ -156,7 +156,7 @@ def make_server(host, port=0, *, allow_direct_run=False):
             raise Blocked("Consulta de memória inválida.")
         query, creative, limit = data["query"], data["include_creative"], data["limit"]
         if (not isinstance(query, str) or not query.strip() or len(query) > 200 or
-                "\\x00" in query or type(creative) is not bool or type(limit) is not int or
+                "\x00" in query or type(creative) is not bool or type(limit) is not int or
                 not 1 <= limit <= 8):
             raise Blocked("Consulta de memória inválida.")
         # Authorization and visible state come from the authoritative Host.
