@@ -15,12 +15,12 @@
 | Caminho | Estatuto para novas decisões | Justificação / cautela |
 | --- | --- | --- |
 | `README.md` | ENTRADA CONCEPTUAL | Apresenta Nexus Minimal, Folha, Conductor candidato e memória soberana; não prova E2E. |
-| `AGENTS.md` | INSTRUÇÕES COM RESSALVA | Invariantes e metodologia válidos; frases sobre Activepieces como executor são anteriores à decisão de 30/09, assinaladas na PR #46. |
+| `AGENTS.md` | INSTRUÇÕES COM RESSALVA | Invariantes e metodologia válidos; frases sobre Activepieces como executor são anteriores à decisão de 30/09, identificadas apenas na auditoria da PR #46; a redação da raiz foi restaurada e deve ser reconciliada na PR #41. |
 | `DECISIONS.md` | REFERÊNCIA DE PRECEDÊNCIA | Regista Nexus Minimal de 30/09, Activepieces superado como requisito nuclear, Conductor ainda candidato. |
 | `STATUS.md` | RETRATO HISTÓRICO/MISTO | Estado cronológico, com provas e pendências datadas; não confundir PASS localizado com release. |
 | `CEREBRO_CONSTITUTION.md` | INVARIANTES VÁLIDAS; STACK HISTÓRICA | Autoridade humana e demais leis mantidas; secção de implementação Activepieces precisa ser interpretada à luz de 30/09. |
 | `CEREBRO_ARCHITECTURE.md` | IMPLEMENTAÇÃO HISTÓRICA | Diagrama Activepieces+Memory Provider está superado; invariantes e critérios de desacoplamento mantêm valor. |
-| `IMPLEMENTATION_PLAN.md` | PLANO HISTÓRICO | Dois blocos Activepieces+Memory Provider já não são a composição escolhida; preservado e assinalado na PR #46. |
+| `IMPLEMENTATION_PLAN.md` | PLANO HISTÓRICO | Dois blocos Activepieces+Memory Provider já não são a composição escolhida; mantido intacto na PR #46, com estatuto histórico declarado neste índice, sem reescrever a origem. |
 | `SECURITY.md` | POLÍTICA DE SEGURANÇA | Proibições e reporte permanecem; ameaça «via Activepieces/MCP» representa cenário histórico/possível, não obrigação de instalar Activepieces. |
 | `docs/PROJETO-FINAL-AUDITADO-2026-09-28.md` | ARQUITETURA HISTÓRICA | O título «final» diz respeito à proposta de 28/09, substituída pela simplificação de 30/09; preservar, não executar como receita vigente. |
 | `docs/PENDENCIAS.md` | MATRIZ HISTÓRICA DE 28/09 | P01–P04 e P11 pressupõem Activepieces/Memory Provider; portas comportamentais podem continuar úteis, mas requerem reexpressão no Nexus atual. |
@@ -30,6 +30,8 @@
 | `nexus/docs/ORGANIZACAO-E-FASES.md` | RETRATO DE INSTALAÇÃO 01/10 | Inventário de instalações e ensaios daquela data; não valida o Windows em 10/10 sem nova execução. |
 | `auditoria/CONSOLIDACAO-2026-10-10.md` | DOCUMENTO DE AUDITORIA | Regista divergências e crédito a Hrvoje Abraham. Integração Sandy explicitamente suspensa por decisão humana de 10/10. |
 | `auditoria/FASE-1-INVENTARIO-DOCUMENTAL-2026-10-10.md` | CHECKLIST ATIVA FASE 1 | O âmbito desta PR é exclusivamente documental; fecho condicionado a evidência verificável. |
+
+**Isolamento editorial:** a PR #46 restaurou os quatro documentos da raiz (`AGENTS.md`, `CEREBRO_CONSTITUTION.md`, `CEREBRO_ARCHITECTURE.md`, `IMPLEMENTATION_PLAN.md`) à versão exata de `main`. As alterações propostas pela PR #41 continuam exclusivamente na respetiva branch. Esta PR acrescenta apenas ficheiros em `auditoria/`.
 
 ## Atualização: documentação em revisão noutras PRs
 
