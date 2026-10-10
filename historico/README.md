@@ -10,6 +10,7 @@
 | Decisões substituídas | [Mapa de motivos](../docs/99-history/DECISOES-SUPERADAS-E-PORQUE.md) | O que foi abandonado, mantido ou tornado opcional |
 | Localização de fontes | [Mapa de origens](../docs/99-history/MAPA-DE-ORIGENS.md) | Documentos originais, não cópias fictícias |
 | Classificação | [Catálogo documental](../docs/99-history/CLASSIFICACAO-DOCUMENTAL-2026-10-10.md) | Como ler história, contratos, relatórios e índices |
+| Inventário de caminhos | [172 Markdown por blob Git no snapshot](../docs/99-history/INVENTARIO-MARKDOWN-POR-CAMINHO-2026-10-10.md) | Localização exata e comparação sem mover originais |
 
 **Porque não reorganizar fisicamente os originais agora:** relatórios, PRs, scripts e links externos podem referir os caminhos antigos. A criação de índices preserva rastreabilidade e reduz o risco de quebrar a genealogia. Qualquer transferência física futura requer manifesto com hashes, backlinks, destino, revisão e provas.
 
