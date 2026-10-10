@@ -34,7 +34,7 @@
 
 - **Quem chega de fora:** [começar](../00-start-here/README.md) → [estado](../10-current/README.md) → [arquitetura](../20-architecture/MINIMUM-CORE.md) → [contribuição](../30-help/README.md).
 - **Quem quer saber «o que funciona»:** [código ↔ documentação](../10-current/COMPATIBILIDADE-CODIGO-2026-10-10.md) → [matriz de PRs](../60-evidence/MATRIZ-PRS-2026-10-10.md) → logs no SHA.
-- **Quem quer compreender «porque mudámos»:** [ADRs](../40-decisions/README.md) → [decisões superadas](DECISOES-SUPERADAS-E-PORQUE.md) → [cronologia](LINHA-DO-TEMPO-2026-09-22-A-2026-10-10.md) → documento de época.
+- **Quem quer compreender «porque mudámos»:** [ADRs](../40-decisions/README.md) → [decisões superadas](DECISOES-SUPERADAS-E-PORQUE.md) → [cronologia](LINHA-DO-TEMPO-2026-09-22-A-2026-10-10.md) → [inventário de caminhos por Git blob](INVENTARIO-MARKDOWN-POR-CAMINHO-2026-10-10.md) → documento de época.
 - **Quem procura contratos técnicos:** [índice `nexus/docs/`](../../nexus/docs/README.md) → contrato e relatório da capacidade.
 - **Quem verifica a veracidade de PASS:** [protocolo de prova](../60-evidence/PROTOCOLO-VERIFICACAO-DOCUMENTAL.md) → workflow/execução no SHA → alcance e exclusões.
 
