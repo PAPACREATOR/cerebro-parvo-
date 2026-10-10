@@ -8,7 +8,7 @@ Atualização documental: 10-10-2026. Esta árvore assenta na navegação da PR 
 - [10 — Situação corrente](10-current/README.md): fotografia de 10/10 e [auditoria direta do código da PR #45](10-current/COMPATIBILIDADE-CODIGO-2026-10-10.md).
 - [20 — Arquitetura](20-architecture/MINIMUM-CORE.md): núcleo mínimo e [fronteiras de autoridade](20-architecture/FRONTEIRAS-DE-AUTORIDADE.md).
 - [30 — Contribuir](30-help/README.md): colaboração delimitada.
-- [40 — Decisões e razões](40-decisions/README.md): entradas datadas, fontes, alternativas e limites.
+- [40 — Decisões e razões](40-decisions/README.md): entradas datadas, fontes, alternativas, limites e [superfícies de execução](40-decisions/ADR-2026-10-10-SUPERFICIES-DE-EXECUCAO.md).
 - [50 — Ferramentas](50-capabilities/README.md): capacidades externas e gates.
 - [60 — Evidências](60-evidence/README.md): PRs, SHA, significado de PASS/FAIL e [protocolo de verificação documental](60-evidence/PROTOCOLO-VERIFICACAO-DOCUMENTAL.md).
 - [90 — Investigação](90-research/): estudos não normativos por si só.
