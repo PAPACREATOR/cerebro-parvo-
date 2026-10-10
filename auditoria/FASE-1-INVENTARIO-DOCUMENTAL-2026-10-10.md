@@ -30,5 +30,10 @@ Estado: EM CURSO. Não declarar fechado sem inventário completo dos artefactos 
 - [ ] Verificar que não foram incluídos segredos, informação pessoal ou grandes binários inadequados num repositório público.
 - [ ] Rever os resultados antes de qualquer merge.
 
-## Não executado nesta fase
-Espelho integral local, integração Sandy no Host, remoção efetiva de Activepieces, testes Windows E2E. Estas fases são sequenciais e não serão antecipadas.
+## Fora de âmbito nesta fase
+- Cópia local para GitHub: trabalho atribuído ao Codex, dependente de validação de hashes e completude.
+- Activepieces: nenhuma remoção de runtime até análise de dependências e testes.
+- Testes Windows E2E: ainda não executados por esta frente documental.
+- **Sandy: integração suspensa por decisão humana de 2026-10-10.** O crédito histórico ao autor permanece; não reabrir sem nova decisão explícita.
+
+Esta fase limita-se à reconciliação documental e à organização rastreável no GitHub.
