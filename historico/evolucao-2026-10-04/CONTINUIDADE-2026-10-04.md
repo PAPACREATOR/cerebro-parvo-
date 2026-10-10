@@ -1,5 +1,7 @@
 # Continuidade — 04-10-2026
 
+> **Nota editorial de navegação (10/10/2026):** documento histórico; as decisões e números abaixo pertencem à sua época. Os links técnicos foram reparados para a localização publicada em `nexus/docs/`, **sem atualizar os resultados históricos**. Para o candidato atual consultar [compatibilidade por SHA](../../docs/10-current/COMPATIBILIDADE-CODIGO-2026-10-10.md). [Versão original anterior à reparação](https://github.com/PAPACREATOR/cerebro-parvo-/blob/adbbd5408f7646578400ec71b915bb53dd8eae27/historico/evolucao-2026-10-04/CONTINUIDADE-2026-10-04.md).
+
 ## Trabalho retomado
 [PR #7](https://github.com/PAPACREATOR/cerebro-parvo-/pull/7), branch
 `nexus-startup-lock-20261003`. F011 arranque único, F012 hash Windows no
@@ -12,8 +14,8 @@ commit `2870e3366bf9a7baefe392193e375c1ddaabfc11`, Python 3.12.10,
 Contagem inclui variantes parametrizadas; não são 1194 tarefas E2E.
 Esta atualização é documental e não altera o código validado.
 
-[Estado](PONTO-DE-SITUACAO.md) · [F011](F011-ARRANQUE-UNICO.md) ·
-[F012](F012-HASH-WINDOWS-ISOLADO.md) · [F013](F013-PROVENIENCIA-INVERSA.md).
+[Estado](../../nexus/docs/PONTO-DE-SITUACAO.md) · [F011](../../nexus/docs/F011-ARRANQUE-UNICO.md) ·
+[F012](../../nexus/docs/F012-HASH-WINDOWS-ISOLADO.md) · [F013](../../nexus/docs/F013-PROVENIENCIA-INVERSA.md).
 
 ## PowerShell para reproduzir em cópia separada
 Executar na raiz de uma cópia Git deste repositório. Git, Python 3.12 e rede
