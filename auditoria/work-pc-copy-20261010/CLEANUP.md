@@ -1,12 +1,14 @@
 # Limpeza verificada — 10-10-2026
 
+> **Coordenação posterior, 10-10-2026:** o utilizador reservou a documentação ao ChatGPT. A consolidação dos modelos abaixo foi retirada desta PR; os dois ficheiros `.github/*request*template.md` foram restaurados integralmente à base. Esta seção conserva a evidência do ensaio em `d14bfeda006ea68d7e607a58b829b936ba3036cc`, não descreve uma alteração documental pendente. Apenas a limpeza dos cinco intermediários técnicos próprios permanece executada.
+
 Esta continuação parte do commit `bc1935d9707c125509d914fd7eb3e4f35ec584a5` da PR #48. Abrange apenas fontes GitHub e intermediários criados nesta sessão Linux. O Windows de Pedro continua inacessível; não foi feita limpeza no PC nem na instalação.
 
 ## Critérios aplicados
 
 Datas foram cruzadas com conteúdo, finalidade e decisões. Um ficheiro antigo não é dispensável por ser antigo. Código, provas, versões distintas, matrizes e genealogia ficam preservados. A reconciliação geral de documentação permanece nas PRs #34/#41/#46, sem alterações paralelas aos seus ficheiros.
 
-## Limpeza executada
+## Histórico do ensaio retirado e da limpeza técnica
 
 | Item | Data verificada no Git | Ação e motivo |
 |---|---|---|

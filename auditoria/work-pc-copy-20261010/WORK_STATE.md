@@ -6,6 +6,15 @@ O registo de clonagem abaixo corresponde ao commit `bc1935d9707c125509d914fd7eb3
 
 Esta sessão dispõe de um ambiente Linux e acesso ao GitHub. Não dispõe de uma ligação ao filesystem ou shell do computador Windows de Pedro. `C:\Nexus`, `C:\Nexus-Tools` e outras raízes Windows não foram lidas, copiadas ou alteradas. A ausência desses caminhos no Linux não demonstra a sua ausência no PC.
 
+## Divisão de trabalho — instrução humana de 10-10-2026
+
+- ChatGPT: documentação, organização documental e decisões de vigência.
+- Esta frente Work: clones, inventário técnico de ficheiros/Git, hashes, comparação e cópia PC → GitHub quando houver acesso real ao Windows.
+- As alterações aos modelos de pull request propostas no commit `d14bfeda006ea68d7e607a58b829b936ba3036cc` foram retiradas desta PR; ambos os modelos regressam byte a byte à base. O diagnóstico da colisão permanece como evidência para a frente documental.
+- Não editar README, STATUS, AGENTS, arquitetura, Constituição, decisões, templates documentais, nem branches/laboratórios dos outros. Os registos desta pasta documentam apenas as operações desta frente.
+- Windows/cópia física continuam BLOCKED / NOT RUN. Não declarar espelho completo a partir do GitHub.
+- Pedido humano seguinte: limpar versões dispensáveis do PC, com organização e sem danos. Estado: BLOCKED / NOT RUN por falta de acesso ao Windows; nenhum ficheiro do PC foi apagado. Datas só orientam a comparação. Antes de retirar qualquer ficheiro elegível, confirmar conteúdo, utilização e recuperação. Preservar integralmente `C:\Nexus` e não apagar `C:\Nexus-Tools` nem qualquer pasta encontrada.
+
 ## Operações efetivamente executadas
 
 | Operação | Resultado observado | Limite |

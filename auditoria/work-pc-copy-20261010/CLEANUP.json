@@ -991,7 +991,7 @@
       "runtime_tests_workflows_history_modified": 0
     },
     "template_guards": {
-      "status": "PASS",
+      "status": "HISTORICAL_IN_D14BFED_WITHDRAWN_FROM_CURRENT_PATCH",
       "latest_CLA_unchanged": true,
       "unique_older_guards_retained": true
     },
@@ -1003,7 +1003,7 @@
         ]
       ],
       "after": [],
-      "status": "PASS_OF_STATIC_PATH_SCAN_NOT_WINDOWS_EXECUTION"
+      "status": "HISTORICAL_ZERO_AFTER_CLEANUP; CURRENT_TEMPLATES_RESTORED_FOR_DOCUMENTATION_OWNER"
     },
     "markdown_links": {
       "before_references": 99,
@@ -1031,6 +1031,11 @@
       "status": "PASS",
       "sha256": "9baae35ee20f41778b5a2586a7285911d1d310cb96283102abb74cf1d272278a",
       "removed_intermediates_recoverable_byte_for_byte": 5
+    },
+    "current_document_templates": {
+      "status": "RESTORED_BYTE_FOR_BYTE_TO_BASE",
+      "changes_vs_original_base": 0,
+      "collision_resolution": "DEFERRED_TO_CHATGPT_DOCUMENTATION_FRONT"
     }
   },
   "global_product_status": "NOT_APPROVED_NO_GLOBAL_PASS",
@@ -1038,5 +1043,44 @@
     "location": "PR #48 description",
     "binding": "Exact head SHA",
     "note": "This file records checks before publication; the PR records the subsequent remote byte/hash verification."
+  },
+  "coordination_update": {
+    "recorded_at_utc": "2026-10-10T09:54:28.170425+00:00",
+    "human_instruction": "ChatGPT works on documentation; each assistant keeps a separate front and must not collide.",
+    "owners": {
+      "documentation": "ChatGPT",
+      "this_front": "Clones, technical inventories, hashes, source comparison and PC-to-GitHub copy"
+    },
+    "template_cleanup": "WITHDRAWN_FROM_THIS_PR_BOTH_FILES_RESTORED_BYTE_FOR_BYTE_TO_BASE",
+    "historical_cleanup_commit": "d14bfeda006ea68d7e607a58b829b936ba3036cc",
+    "preserved_local_cleanup": "Five own Linux intermediates remain removed and recoverable from public-inventory.zip.",
+    "scope_exclusions": [
+      "README",
+      "STATUS",
+      "AGENTS",
+      "architecture",
+      "constitution",
+      "decisions",
+      "document_templates",
+      "other_branches_and_labs"
+    ],
+    "physical_windows": "NOT_RUN_NO_ACCESS"
+  },
+  "pc_cleanup_request": {
+    "recorded_at_utc": "2026-10-10T09:57:55.252386+00:00",
+    "human_instruction": "Delete unnecessary PC versions, keep work clean and organized without damage.",
+    "status": "BLOCKED_NOT_RUN_NO_WINDOWS_FILESYSTEM_OR_SHELL",
+    "pc_files_removed": 0,
+    "protected_installation": "C:\\Nexus",
+    "directories_not_to_delete": [
+      "C:\\Nexus-Tools",
+      "Any discovered directory"
+    ],
+    "selection_requires": [
+      "Content and hash comparison",
+      "Usage and version context",
+      "Recoverable backup verified before removal"
+    ],
+    "dates_alone_do_not_authorize_deletion": true
   }
 }
