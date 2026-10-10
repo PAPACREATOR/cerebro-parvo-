@@ -35,4 +35,4 @@ Os ficheiros anteriores `nexus/ui/index.html` e `nexus/ui/style.css` foram subst
 4. Verificação real Windows de `verify` pela Folha, confirmação humana, Creative, promoção humana e recuperação; **não** inferir PASS de scripts sintéticos.
 5. Writer/LPAC `book` e `convert_pdf` apenas se testes físicos sob o Host da candidata PASS no mesmo SHA; a prova da bancada [Writer Lab #3](https://github.com/PAPACREATOR/nexus-writer-lab/pull/3) não substitui estes gates.
 
-**Estado:** código da UI proposto na PR #50 Draft; CI e integração física são observações por SHA. Sem merge, sem alteração da main, sem eliminação do histórico, sem Ollama obrigatório e sem autonomia de ferramentas.
+**Estado:** código da UI proposto na PR #50 Draft; CI e integração física são observações por SHA. Sem merge, sem alteração da main, sem eliminação do histórico, sem motor de IA obrigatório e sem autonomia de ferramentas.
