@@ -34,9 +34,9 @@ def test_internal_process_contracts_match_while_normal_ui_hides_technical_select
     assert set(policy) == set(schema["properties"]["process"]["enum"])
     assert set(policy) == set(PROCESS_TO_TOOL) == set(PROCESS_FILES)
     mapped = {rule["process"] for rule in frontdoor_rules["operation_rules"]}
-    # The Folha now proposes exactly one verification and two explicit Writer
-    # PDF exports. No technical process selector or arbitrary tool dispatch.
-    assert mapped == {"verify", "convert_pdf", "book"}
+    # Every process remains policy-pinned. No technical process selector or
+    # freeform dispatch; operations are exact, reviewed and human-gated.
+    assert mapped == set(policy)
     assert mapped <= set(policy)
     by_process = {rule["process"]: rule for rule in frontdoor_rules["operation_rules"]}
     assert len(by_process) == len(frontdoor_rules["operation_rules"])
