@@ -6,6 +6,7 @@ on:
       - 'server.js'
       - 'package.json'
       - 'nexus/tests/gateway_transport.test.cjs'
+      - 'nexus/tests/folha_search_smoke.cjs'
       - 'nexus/tests/test_single_runtime_boundary.py'
       - 'nexus/tests/test_gateway_real_host.py'
       - 'nexus/tests/test_memory_search_http.py'
