@@ -215,9 +215,14 @@ def launch(args):
             def execute(command, phase, output):
                 report(subprocess.list2cmdline([str(p) for p in command]))
                 with output.open('ab') as log:
-                    process = subprocess.Popen(command, cwd=work, env=env, stdout=log, stderr=log,
+                    process = subprocess.Popen(command, cwd=work, env=env,
+                                               stdin=subprocess.PIPE, stdout=log, stderr=log,
                                                startupinfo=startup, close_fds=True,
                                                creationflags=subprocess.CREATE_NEW_PROCESS_GROUP)
+                    # Reproduce the actual Writer Lab warm-up: give LibreOffice
+                    # an inherited, immediately closed pipe, not a console/NUL
+                    # handle. This is synthetic initialization, not user input.
+                    process.stdin.close()
                     try:
                         state.update(phase=phase, pid=process.pid)
                         write_json(state_path, state)
