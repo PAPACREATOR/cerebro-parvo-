@@ -79,7 +79,8 @@ def test_proposal_does_not_touch_host_or_store(tmp_path, monkeypatch):
     assert not list(tmp_path.iterdir())
 
 
-@pytest.mark.parametrize("bad", (None, 123, {}, "", "\x00", "A" * 100_001))
+@pytest.mark.parametrize("bad", (None, 123, {}, "", "\x00", "A" * 100_001),
+                         ids=("none", "integer", "dict", "empty", "control", "over-limit"))
 def test_bad_requests_refused(bad):
     with pytest.raises(Blocked):
         registered_router().propose(intent="trabalhar", text=bad, attachment_present=True)
