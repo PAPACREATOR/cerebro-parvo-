@@ -1,54 +1,87 @@
-// Node standard-library regression: stale HTTP response cannot reopen Folha proposal.
+// Standard Node test harness for the real browser script (no external packages).
+// All HTTP calls are doubles; Windows CI separately tests the live Python Host.
 "use strict";
-const assert = require("node:assert/strict");
-const fs = require("node:fs");
-const vm = require("node:vm");
-const code = fs.readFileSync(require("node:path").join(__dirname, "..", "ui", "app.js"), "utf8");
-
-const flush = async () => { for (let i = 0; i < 8; i++) await Promise.resolve(); };
-
-async function run(mode) {
-  const elements=new Map(), events=new Map();
-  let resolvePrepare, opens=0, confirms=0;
-  const el=id=>{
-    if(!elements.has(id))elements.set(id,{value:"",files:[],hidden:false,disabled:false,open:false,
-      textContent:"",checked:false,replaceChildren(){},append(){},
-      reset(){this.value="";},addEventListener(type,cb){events.set(id+":"+type,cb);},
+const assert=require("node:assert/strict"),fs=require("node:fs"),vm=require("node:vm");
+const code=fs.readFileSync(require("node:path").join(__dirname,"..","ui","app.js"),"utf8");
+const tick=async()=>{for(let i=0;i<12;i++)await Promise.resolve();};
+const fakeFile=()=>({name:"prova.txt",size:1,arrayBuffer:async()=>Uint8Array.from([97]).buffer});
+async function scenario(mode){
+  const els=new Map(),listeners=new Map();let resolveInterpret,resolvePrepare,opens=0,prepares=0,confirms=0;
+  const node=id=>{
+    if(!els.has(id))els.set(id,{value:"",files:[],hidden:false,disabled:false,open:false,checked:false,textContent:"",
+      replaceChildren(){},append(){},focus(){},reset(){this.value="";},
+      addEventListener(type,callback){listeners.set(id+":"+type,callback);},
       showModal(){this.open=true;opens++;},close(){this.open=false;}});
-    return elements.get(id);
+    return els.get(id);
   };
-  const ctx={document:{getElementById:el},location:{hash:""},history:{replaceState(){}},
-    sessionStorage:{getItem(){return "s";},setItem(){}},URLSearchParams,
-    Uint8Array,clearTimeout(){},setTimeout(){return 1;},
+  const resolved={status:"RESOLVED",intent:"trabalhar",original:"Verifica a integridade deste ficheiro.",parser:"eliza-rules-v1",confirmation_required:false,execution:"NOT_AUTHORIZED"};
+  const ctx={
+    document:{getElementById:node},location:{hash:""},history:{replaceState(){}},
+    sessionStorage:{getItem(){return "s";},setItem(){}},URLSearchParams,Uint8Array,
+    btoa:v=>Buffer.from(v,"binary").toString("base64"),
+    clearTimeout(){},setTimeout(){return 1;},
     fetch:async(path)=>{
       if(path==="/api/runs")return {ok:true,json:async()=>[]};
-      if(path==="/api/prepare-run")return new Promise(resolve=>{
-        resolvePrepare=()=>resolve({ok:true,json:async()=>({ticket:"one",summary:"Verificar",
-          filename:"",attachment_bytes:0,attachment_sha256:"0".repeat(64)})});});
-      if(path==="/api/confirm-run"){confirms++;return{ok:true,json:async()=>({status:"CANCELLED"})};}
-      throw Error("unexpected path "+path);
-    }};
+      if(path==="/api/interpret"){
+        const make=()=>({ok:true,json:async()=>mode==="archive"?
+          {...resolved,intent:"arquivo",original:"Guarda esta nota."}:resolved});
+        if(mode==="race-interpret")return new Promise(r=>resolveInterpret=()=>r(make()));
+        return make();
+      }
+      if(path==="/api/prepare-run"){
+        prepares++;
+        const make=()=>({ok:true,json:async()=>({ticket:"one",process:"verify",summary:"Verificar integridade",
+          filename:"prova.txt",attachment_bytes:1,attachment_sha256:"a".repeat(64)})});
+        if(mode==="race-prepare"||mode==="file-changed")
+          return new Promise(r=>resolvePrepare=()=>r(make()));
+        return make();
+      }
+      if(path==="/api/confirm-run"){confirms++;return {ok:true,json:async()=>({status:"CANCELLED"})};}
+      throw Error("Unexpected path: "+path);
+    }
+  };
   vm.runInNewContext(code,ctx,{filename:"nexus/ui/app.js"});
-  const input=el("text");input.value="Verifica este ficheiro";
-  const submitting=el("form").onsubmit({preventDefault(){}});
-  for(let i=0;i<20&&!resolvePrepare;i++)await flush();
-  assert.ok(resolvePrepare,"request was sent");
-  if(mode==="edit-return"){
-    const before=input.value;
-    input.value="Alterado";events.get("text:input")();
-    input.value=before;events.get("text:input")();
-  }else if(mode==="file"){
-    el("file").files=[{name:"outro.txt"}];el("file").onchange();
+  node("text").value=mode==="archive"?"Guarda esta nota.":resolved.original;
+  if(mode!=="archive")node("file").files=[fakeFile()];
+  const request=node("form").onsubmit({preventDefault(){}});
+  for(let i=0;i<20 && !(resolveInterpret||resolvePrepare);i++)await tick();
+  if(mode==="race-interpret"){
+    assert.ok(resolveInterpret);
+    const first=node("text").value;
+    node("text").value="alterado";listeners.get("text:input")();
+    node("text").value=first;listeners.get("text:input")();
+    resolveInterpret();
   }
-  resolvePrepare();await submitting;await flush();
-  assert.equal(opens,mode==="unchanged"?1:0,"stale response reopened confirmation");
-  assert.equal(confirms,0,"unexpected execution request");
-  if(mode!=="unchanged"){
-    assert.equal(el("execution-confirmation").open,false);
-    assert.equal(el("submit").disabled,false);
+  if(mode==="race-prepare"||mode==="file-changed"){
+    assert.ok(resolvePrepare);
+    if(mode==="race-prepare"){
+      const first=node("text").value;
+      node("text").value="alterado";listeners.get("text:input")();
+      node("text").value=first;listeners.get("text:input")();
+    }else{
+      node("file").files=[fakeFile()];node("file").onchange();
+    }
+    resolvePrepare();
+  }
+  await request;await tick();
+  assert.equal(confirms,0,"must never execute while interpreting");
+  assert.equal(opens,mode==="unchanged"?1:0,"stale or non-executable response opened an approval");
+  assert.equal(prepares,mode==="archive"||mode==="race-interpret"?0:1);
+  if(mode==="unchanged"){
+    assert.equal(node("execution-confirmation").open,true);
+    assert.equal(node("execution-approve").disabled,true);
   }else{
-    assert.equal(el("execution-confirmation").open,true);
-    assert.equal(el("execution-approve").disabled,true);
+    assert.equal(node("execution-confirmation").open,false);
+    assert.equal(node("submit").disabled,false);
+  }
+  if(mode==="archive"){
+    assert.equal(node("result").hidden,false);
+    assert.match(node("result-title").textContent,/Arquivo/);
+    assert.equal(node("actions").hidden,true);
   }
 }
-(async()=>{await run("edit-return");await run("file");await run("unchanged");console.log("PASS Folha stale-response, restored input, file revision and unchanged positive");})().catch(e=>{console.error(e);process.exitCode=1;});
+(async()=>{
+  for(const mode of ["race-interpret","race-prepare","file-changed","unchanged","archive"])
+    await scenario(mode);
+  console.log("PASS Folha: stale edit-return, file changed, valid verify, unexecutable archive preview");
+})().catch(e=>{console.error(e);process.exitCode=1;});
