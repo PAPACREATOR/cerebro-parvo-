@@ -44,7 +44,7 @@ A confirmação **antes de executar** uma operação é diferente da aprovação
 
 **Exemplo concreto da diferença:** pedir na Folha a verificação de integridade de um ficheiro é o percurso natural público identificado no código analisado; a execução exige confirmação. O facto de o runner conhecer também `book`, `music` ou `podcast` **não** demonstra que a Folha já consegue entregar um livro, música ou podcast completo.
 
-Ver [matriz código ↔ documentação](../10-current/COMPATIBILIDADE-CODIGO-2026-10-10.md), [fotografia do estado](../10-current/ESTADO-DOCUMENTAL-2026-10-10.md) e [evidências PASS/FAIL por PR](../60-evidence/MATRIZ-PRS-2026-10-10.md). Números históricos só valem para o commit e o ambiente em que foram obtidos.
+Ver [matriz código ↔ documentação](../10-current/COMPATIBILIDADE-CODIGO-2026-10-10.md), [fotografia do estado](../10-current/ESTADO-DOCUMENTAL-2026-10-10.md), [evidências PASS/FAIL por PR](../60-evidence/MATRIZ-PRS-2026-10-10.md) e [provas de 10/10: Sir Thaddeus e Writer/Sandy](../60-evidence/CONCILIACAO-WRITER-SIR-THADDEUS-2026-10-10.md). Números históricos só valem para o commit e o ambiente em que foram obtidos.
 
 ## 3. Quero contribuir. Por onde começo?
 
