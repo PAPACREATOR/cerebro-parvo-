@@ -92,6 +92,22 @@
       ]
     },
     {
+      "process": "interpret",
+      "intent": "trabalhar",
+      "requires_attachment": true,
+      "patterns": [
+        "^interpretar texto$"
+      ]
+    },
+    {
+      "process": "proofread",
+      "intent": "trabalhar",
+      "requires_attachment": true,
+      "patterns": [
+        "^rever texto$"
+      ]
+    },
+    {
       "process": "convert_pdf",
       "intent": "trabalhar",
       "requires_attachment": true,
@@ -100,11 +116,51 @@
       ]
     },
     {
+      "process": "video",
+      "intent": "trabalhar",
+      "requires_attachment": true,
+      "patterns": [
+        "^preparar plano de video$"
+      ]
+    },
+    {
+      "process": "podcast",
+      "intent": "trabalhar",
+      "requires_attachment": true,
+      "patterns": [
+        "^preparar plano de podcast$"
+      ]
+    },
+    {
+      "process": "visual_podcast",
+      "intent": "trabalhar",
+      "requires_attachment": true,
+      "patterns": [
+        "^preparar plano de podcast visual$"
+      ]
+    },
+    {
       "process": "book",
       "intent": "trabalhar",
       "requires_attachment": true,
       "patterns": [
         "^exportar manuscrito para pdf$"
+      ]
+    },
+    {
+      "process": "music",
+      "intent": "trabalhar",
+      "requires_attachment": true,
+      "patterns": [
+        "^preparar especificacao musical$"
+      ]
+    },
+    {
+      "process": "web",
+      "intent": "web",
+      "requires_attachment": true,
+      "patterns": [
+        "^preparar consulta web$"
       ]
     }
   ]
