@@ -94,3 +94,33 @@ def test_wiki_flow_candidate_is_deterministic_and_source_bound():
     ).hexdigest()
     with pytest.raises(Blocked):
         validate_proposal(changed, first)
+
+
+# Fail-first regression: untrusted context/flow JSON must never exploit Python's
+# bool == 1 or float == 1.0 coercion or leak TypeError into the caller.
+@pytest.mark.parametrize("wrong", [True, 1.0, "1", None])
+def test_context_protocol_version_is_exact_integer(wrong):
+    from nexus.lab.wiki.context_packet import check_packet
+
+    value = packet()
+    value["version"] = wrong
+    with pytest.raises(ValueError):
+        check_packet(value)
+
+
+@pytest.mark.parametrize("wrong", [True, 1.0])
+def test_resigned_flow_protocol_version_cannot_alias_integer_v1(wrong):
+    candidate = propose(packet(), ["verify"])
+    candidate["version"] = wrong
+    resign(candidate)
+    with pytest.raises(Blocked):
+        validate_proposal(packet(), candidate)
+
+
+@pytest.mark.parametrize("wrong", [None, True, False, 7, 1.5])
+def test_resigned_flow_with_non_list_steps_is_blocked_not_crashed(wrong):
+    candidate = propose(packet(), ["verify"])
+    candidate["steps"] = wrong
+    resign(candidate)
+    with pytest.raises(Blocked):
+        validate_proposal(packet(), candidate)
