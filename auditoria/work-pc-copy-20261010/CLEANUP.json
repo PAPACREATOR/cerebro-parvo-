@@ -1,0 +1,1086 @@
+{
+  "format_version": 1,
+  "scope": "GITHUB_SOURCE_AND_OWN_LINUX_INTERMEDIATES_ONLY",
+  "created_at_utc": "2026-10-10T09:47:55.870351+00:00",
+  "base_commit": "bc1935d9707c125509d914fd7eb3e4f35ec584a5",
+  "target_branch": "work/pc-copy-evidence-20261010",
+  "pc_access": "NOT_AVAILABLE_WINDOWS_NOT_RUN",
+  "decision": "Age alone never causes deletion; preserve code, evidence, genealogy and distinct snapshots.",
+  "backup": {
+    "base": "bc1935d9707c125509d914fd7eb3e4f35ec584a5",
+    "backup_sha256": "fcb5065d573f69346faf20925160b8f066743e3534ad1be10c61f6b9a41cde85",
+    "files_restored_verified": 182,
+    "restore_os": "Linux",
+    "windows_restore": "NOT_RUN",
+    "immutable_remote_recovery_commit": "https://github.com/PAPACREATOR/cerebro-parvo-/commit/bc1935d9707c125509d914fd7eb3e4f35ec584a5"
+  },
+  "changes": {
+    "old_template": {
+      "path": ".github/PULL_REQUEST_TEMPLATE.md",
+      "sha256": "bb8b1ae26a842f0eccdd035fb56157eefeae6772d2adb6ce9684ac449fcc9088",
+      "recovery_commit": "bc1935d9707c125509d914fd7eb3e4f35ec584a5"
+    },
+    "consolidated_template": ".github/pull_request_template.md",
+    "local_intermediates_removed": [
+      {
+        "path": "auditoria/work-pc-copy-20261010/nexus-public-files.csv",
+        "bytes": 483900,
+        "sha256": "e13b9a63f0c0f9508fd81efe9b62c558446f225cbb9b0098e7118f9324c37600",
+        "recovery": "public-inventory.zip/nexus-public-files.csv",
+        "scope": "OWN_UNTRACKED_LINUX_INTERMEDIATE_ONLY"
+      },
+      {
+        "path": "auditoria/work-pc-copy-20261010/sir-thaddeus-files.csv",
+        "bytes": 458074,
+        "sha256": "56ea09aa96fecec9de98d728264482c8cf1afd767a2667d4ad232a2aad9605f7",
+        "recovery": "public-inventory.zip/sir-thaddeus-files.csv",
+        "scope": "OWN_UNTRACKED_LINUX_INTERMEDIATE_ONLY"
+      },
+      {
+        "path": "auditoria/work-pc-copy-20261010/exact-public-duplicates.json",
+        "bytes": 6263,
+        "sha256": "0bc8f0ce7b9ee05d87c7145f28865b20172e10639d1338de0fc67cad8e2a0119",
+        "recovery": "public-inventory.zip/exact-public-duplicates.json",
+        "scope": "OWN_UNTRACKED_LINUX_INTERMEDIATE_ONLY"
+      },
+      {
+        "path": "auditoria/work-pc-copy-20261010/public-branch-divergences.json",
+        "bytes": 291640,
+        "sha256": "45373c4c6c1d7754751456f961ac8e1d65c2eac6f4f9dc09909b0a8d3545bd92",
+        "recovery": "public-inventory.zip/public-branch-divergences.json",
+        "scope": "OWN_UNTRACKED_LINUX_INTERMEDIATE_ONLY"
+      },
+      {
+        "path": "auditoria/work-pc-copy-20261010/public-secret-triage.json",
+        "bytes": 3,
+        "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+        "recovery": "public-inventory.zip/public-secret-triage.json",
+        "scope": "OWN_UNTRACKED_LINUX_INTERMEDIATE_ONLY"
+      }
+    ],
+    "local_bytes_freed": 1239880
+  },
+  "chronology": [
+    {
+      "path": "CHANGELOG.md",
+      "git_last_change_commit": "284d1b98b58ff628b08f4872419fb31a69e4279e",
+      "git_last_change_date": "2026-09-27T10:56:05+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "INSTALLATION_PLAN.md",
+      "git_last_change_commit": "284d1b98b58ff628b08f4872419fb31a69e4279e",
+      "git_last_change_date": "2026-09-27T10:56:05+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "LEGO-LOCK.md",
+      "git_last_change_commit": "284d1b98b58ff628b08f4872419fb31a69e4279e",
+      "git_last_change_date": "2026-09-27T10:56:05+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "TEAM_WORKFLOW.md",
+      "git_last_change_commit": "284d1b98b58ff628b08f4872419fb31a69e4279e",
+      "git_last_change_date": "2026-09-27T10:56:05+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "auditoria/RESULTADOS.md",
+      "git_last_change_commit": "284d1b98b58ff628b08f4872419fb31a69e4279e",
+      "git_last_change_date": "2026-09-27T10:56:05+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "docs/CONTRATOS-IMP.md",
+      "git_last_change_commit": "284d1b98b58ff628b08f4872419fb31a69e4279e",
+      "git_last_change_date": "2026-09-27T10:56:05+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "docs/FONTES.md",
+      "git_last_change_commit": "284d1b98b58ff628b08f4872419fb31a69e4279e",
+      "git_last_change_date": "2026-09-27T10:56:05+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "docs/GENEALOGIA.md",
+      "git_last_change_commit": "284d1b98b58ff628b08f4872419fb31a69e4279e",
+      "git_last_change_date": "2026-09-27T10:56:05+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "docs/INVENTARIO-HISTORICO.md",
+      "git_last_change_commit": "284d1b98b58ff628b08f4872419fb31a69e4279e",
+      "git_last_change_date": "2026-09-27T10:56:05+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "docs/MATRIZ-CONFORMIDADE.md",
+      "git_last_change_commit": "284d1b98b58ff628b08f4872419fb31a69e4279e",
+      "git_last_change_date": "2026-09-27T10:56:05+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "docs/RECONCILIACAO.md",
+      "git_last_change_commit": "284d1b98b58ff628b08f4872419fb31a69e4279e",
+      "git_last_change_date": "2026-09-27T10:56:05+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "docs/VS-CODE.md",
+      "git_last_change_commit": "284d1b98b58ff628b08f4872419fb31a69e4279e",
+      "git_last_change_date": "2026-09-27T10:56:05+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "docs/baseline/CEREBRO_PROMPT_MESTRE_CURSOR_2026-09-26.md",
+      "git_last_change_commit": "284d1b98b58ff628b08f4872419fb31a69e4279e",
+      "git_last_change_date": "2026-09-27T10:56:05+01:00",
+      "dates_in_filename": [
+        "2026-09-26"
+      ],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "docs/baseline/README-CEREBRO-BASELINE-2026-09-26.md",
+      "git_last_change_commit": "284d1b98b58ff628b08f4872419fb31a69e4279e",
+      "git_last_change_date": "2026-09-27T10:56:05+01:00",
+      "dates_in_filename": [
+        "2026-09-26"
+      ],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "docs/baseline/README-CEREBRO-IMPLEMENTACAO-2026-09-26.md",
+      "git_last_change_commit": "284d1b98b58ff628b08f4872419fb31a69e4279e",
+      "git_last_change_date": "2026-09-27T10:56:05+01:00",
+      "dates_in_filename": [
+        "2026-09-26"
+      ],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/AGENTS.md",
+      "git_last_change_commit": "284d1b98b58ff628b08f4872419fb31a69e4279e",
+      "git_last_change_date": "2026-09-27T10:56:05+01:00",
+      "dates_in_filename": [
+        "2026-09-24"
+      ],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/ARQUITETURA-ATUAL-2026-09-24.md",
+      "git_last_change_commit": "284d1b98b58ff628b08f4872419fb31a69e4279e",
+      "git_last_change_date": "2026-09-27T10:56:05+01:00",
+      "dates_in_filename": [
+        "2026-09-24",
+        "2026-09-24"
+      ],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/ARQUITETURA-CORRIGIDA-2026-09-22.md",
+      "git_last_change_commit": "284d1b98b58ff628b08f4872419fb31a69e4279e",
+      "git_last_change_date": "2026-09-27T10:56:05+01:00",
+      "dates_in_filename": [
+        "2026-09-24",
+        "2026-09-22"
+      ],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/AUDITORIA-ARQUITETURA-LEGO-2026-09-22.md",
+      "git_last_change_commit": "284d1b98b58ff628b08f4872419fb31a69e4279e",
+      "git_last_change_date": "2026-09-27T10:56:05+01:00",
+      "dates_in_filename": [
+        "2026-09-24",
+        "2026-09-22"
+      ],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/AUDITORIA-DOCUMENTAL-P4.md",
+      "git_last_change_commit": "284d1b98b58ff628b08f4872419fb31a69e4279e",
+      "git_last_change_date": "2026-09-27T10:56:05+01:00",
+      "dates_in_filename": [
+        "2026-09-24"
+      ],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/CEREBRO_ARCHITECTURE.md",
+      "git_last_change_commit": "284d1b98b58ff628b08f4872419fb31a69e4279e",
+      "git_last_change_date": "2026-09-27T10:56:05+01:00",
+      "dates_in_filename": [
+        "2026-09-24"
+      ],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/CEREBRO_CONSTITUTION.md",
+      "git_last_change_commit": "284d1b98b58ff628b08f4872419fb31a69e4279e",
+      "git_last_change_date": "2026-09-27T10:56:05+01:00",
+      "dates_in_filename": [
+        "2026-09-24"
+      ],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/CHANGELOG.md",
+      "git_last_change_commit": "284d1b98b58ff628b08f4872419fb31a69e4279e",
+      "git_last_change_date": "2026-09-27T10:56:05+01:00",
+      "dates_in_filename": [
+        "2026-09-24"
+      ],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/COMPARACAO-ARQUITETURAS-COGNITIVAS-DETERMINISTICAS-2026-09-23.md",
+      "git_last_change_commit": "284d1b98b58ff628b08f4872419fb31a69e4279e",
+      "git_last_change_date": "2026-09-27T10:56:05+01:00",
+      "dates_in_filename": [
+        "2026-09-24",
+        "2026-09-23"
+      ],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/COMPARACAO-RESEARCHVAULT-WILL-2026-09-22.md",
+      "git_last_change_commit": "284d1b98b58ff628b08f4872419fb31a69e4279e",
+      "git_last_change_date": "2026-09-27T10:56:05+01:00",
+      "dates_in_filename": [
+        "2026-09-24",
+        "2026-09-22"
+      ],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/COMPARACAO-WILL-E-PROBABILIDADES.md",
+      "git_last_change_commit": "284d1b98b58ff628b08f4872419fb31a69e4279e",
+      "git_last_change_date": "2026-09-27T10:56:05+01:00",
+      "dates_in_filename": [
+        "2026-09-24"
+      ],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/COMPATIBILITY-MATRIX.md",
+      "git_last_change_commit": "284d1b98b58ff628b08f4872419fb31a69e4279e",
+      "git_last_change_date": "2026-09-27T10:56:05+01:00",
+      "dates_in_filename": [
+        "2026-09-24"
+      ],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/DECISIONS.md",
+      "git_last_change_commit": "284d1b98b58ff628b08f4872419fb31a69e4279e",
+      "git_last_change_date": "2026-09-27T10:56:05+01:00",
+      "dates_in_filename": [
+        "2026-09-24"
+      ],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/FECHO-FASE-CONCEPTUAL-PROBABILIDADE-VALIDACAO-2026-09-23.md",
+      "git_last_change_commit": "284d1b98b58ff628b08f4872419fb31a69e4279e",
+      "git_last_change_date": "2026-09-27T10:56:05+01:00",
+      "dates_in_filename": [
+        "2026-09-24",
+        "2026-09-23"
+      ],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/FERRAMENTAS-GRATUITAS-E-EQUIPA.md",
+      "git_last_change_commit": "284d1b98b58ff628b08f4872419fb31a69e4279e",
+      "git_last_change_date": "2026-09-27T10:56:05+01:00",
+      "dates_in_filename": [
+        "2026-09-24"
+      ],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/IMPLEMENTATION_PLAN.md",
+      "git_last_change_commit": "284d1b98b58ff628b08f4872419fb31a69e4279e",
+      "git_last_change_date": "2026-09-27T10:56:05+01:00",
+      "dates_in_filename": [
+        "2026-09-24"
+      ],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/INSTALLATION_PLAN.md",
+      "git_last_change_commit": "284d1b98b58ff628b08f4872419fb31a69e4279e",
+      "git_last_change_date": "2026-09-27T10:56:05+01:00",
+      "dates_in_filename": [
+        "2026-09-24"
+      ],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/LEGO-LOCK.md",
+      "git_last_change_commit": "284d1b98b58ff628b08f4872419fb31a69e4279e",
+      "git_last_change_date": "2026-09-27T10:56:05+01:00",
+      "dates_in_filename": [
+        "2026-09-24"
+      ],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/MAPA-DE-VERSOES-COFRES-ACTIVEPIECES.md",
+      "git_last_change_commit": "284d1b98b58ff628b08f4872419fb31a69e4279e",
+      "git_last_change_date": "2026-09-27T10:56:05+01:00",
+      "dates_in_filename": [
+        "2026-09-24"
+      ],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/MIGRACAO-ARQUITETURAL-2026-09-24.md",
+      "git_last_change_commit": "284d1b98b58ff628b08f4872419fb31a69e4279e",
+      "git_last_change_date": "2026-09-27T10:56:05+01:00",
+      "dates_in_filename": [
+        "2026-09-24",
+        "2026-09-24"
+      ],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/NOTA-COGNITIVA-MEMORIAS-COMPARADORES-LINGUAGEM-NATURAL-2026-09-23.md",
+      "git_last_change_commit": "284d1b98b58ff628b08f4872419fb31a69e4279e",
+      "git_last_change_date": "2026-09-27T10:56:05+01:00",
+      "dates_in_filename": [
+        "2026-09-24",
+        "2026-09-23"
+      ],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/NOTA-ESCALADA-RESOLUCAO-LLM-WEB-2026-09-23.md",
+      "git_last_change_commit": "284d1b98b58ff628b08f4872419fb31a69e4279e",
+      "git_last_change_date": "2026-09-27T10:56:05+01:00",
+      "dates_in_filename": [
+        "2026-09-24",
+        "2026-09-23"
+      ],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/PESQUISA-SANDBOX-WINDOWS-APPContainer-LPAC-2026-09-23.md",
+      "git_last_change_commit": "284d1b98b58ff628b08f4872419fb31a69e4279e",
+      "git_last_change_date": "2026-09-27T10:56:05+01:00",
+      "dates_in_filename": [
+        "2026-09-24",
+        "2026-09-23"
+      ],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/PLANO-DE-TAREFAS-POR-FASE.md",
+      "git_last_change_commit": "284d1b98b58ff628b08f4872419fb31a69e4279e",
+      "git_last_change_date": "2026-09-27T10:56:05+01:00",
+      "dates_in_filename": [
+        "2026-09-24"
+      ],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/PROTOCOLO-GEMINI-CONTEXTO-MINIMO.md",
+      "git_last_change_commit": "284d1b98b58ff628b08f4872419fb31a69e4279e",
+      "git_last_change_date": "2026-09-27T10:56:05+01:00",
+      "dates_in_filename": [
+        "2026-09-24"
+      ],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/README.md",
+      "git_last_change_commit": "284d1b98b58ff628b08f4872419fb31a69e4279e",
+      "git_last_change_date": "2026-09-27T10:56:05+01:00",
+      "dates_in_filename": [
+        "2026-09-24"
+      ],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/REFERENCIA-OPENVIKING-VIKINGMEM-2026-09-23.md",
+      "git_last_change_commit": "284d1b98b58ff628b08f4872419fb31a69e4279e",
+      "git_last_change_date": "2026-09-27T10:56:05+01:00",
+      "dates_in_filename": [
+        "2026-09-24",
+        "2026-09-23"
+      ],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/STATUS.md",
+      "git_last_change_commit": "284d1b98b58ff628b08f4872419fb31a69e4279e",
+      "git_last_change_date": "2026-09-27T10:56:05+01:00",
+      "dates_in_filename": [
+        "2026-09-24"
+      ],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/TEAM_WORKFLOW.md",
+      "git_last_change_commit": "284d1b98b58ff628b08f4872419fb31a69e4279e",
+      "git_last_change_date": "2026-09-27T10:56:05+01:00",
+      "dates_in_filename": [
+        "2026-09-24"
+      ],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/VALIDACAO-CONCEPTUAL-E-MITIGACAO.md",
+      "git_last_change_commit": "284d1b98b58ff628b08f4872419fb31a69e4279e",
+      "git_last_change_date": "2026-09-27T10:56:05+01:00",
+      "dates_in_filename": [
+        "2026-09-24"
+      ],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/historico/ARQUITETURA-OPERACIONAL-v0.1-2026-09-22.md",
+      "git_last_change_commit": "284d1b98b58ff628b08f4872419fb31a69e4279e",
+      "git_last_change_date": "2026-09-27T10:56:05+01:00",
+      "dates_in_filename": [
+        "2026-09-24",
+        "2026-09-22"
+      ],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/tasks/F-1-001-INSTALACAO-E-VERIFICACAO.md",
+      "git_last_change_commit": "284d1b98b58ff628b08f4872419fb31a69e4279e",
+      "git_last_change_date": "2026-09-27T10:56:05+01:00",
+      "dates_in_filename": [
+        "2026-09-24"
+      ],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "historico/repositorio-2026-09-24/tasks/SPEC-F0-001.md",
+      "git_last_change_commit": "284d1b98b58ff628b08f4872419fb31a69e4279e",
+      "git_last_change_date": "2026-09-27T10:56:05+01:00",
+      "dates_in_filename": [
+        "2026-09-24"
+      ],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "implementacao/README.md",
+      "git_last_change_commit": "284d1b98b58ff628b08f4872419fb31a69e4279e",
+      "git_last_change_date": "2026-09-27T10:56:05+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "implementacao/candidata-2026-09-27/README.md",
+      "git_last_change_commit": "284d1b98b58ff628b08f4872419fb31a69e4279e",
+      "git_last_change_date": "2026-09-27T10:56:05+01:00",
+      "dates_in_filename": [
+        "2026-09-27"
+      ],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "implementacao/candidata-2026-09-27/REVISAO_ADVERSARIAL.md",
+      "git_last_change_commit": "284d1b98b58ff628b08f4872419fb31a69e4279e",
+      "git_last_change_date": "2026-09-27T10:56:05+01:00",
+      "dates_in_filename": [
+        "2026-09-27"
+      ],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "tasks/IMP-001.md",
+      "git_last_change_commit": "284d1b98b58ff628b08f4872419fb31a69e4279e",
+      "git_last_change_date": "2026-09-27T10:56:05+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "docs/ARQUITETURA-OPERACIONAL-ADAPTATIVA.md",
+      "git_last_change_commit": "ce8f1eebb802b4a282942834328c3a06d915ef39",
+      "git_last_change_date": "2026-09-28T12:12:41+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "AGENTS.md",
+      "git_last_change_commit": "f0adab86cf6d2558e9af676f2e3bc331a7c4c028",
+      "git_last_change_date": "2026-09-28T13:11:23+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "docs/LICENCIAMENTO-PENDENTE.md",
+      "git_last_change_commit": "f0adab86cf6d2558e9af676f2e3bc331a7c4c028",
+      "git_last_change_date": "2026-09-28T13:11:23+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": ".github/PULL_REQUEST_TEMPLATE.md",
+      "git_last_change_commit": "f48382f396e3b4af18e62a15c3ecb6104dfd52c9",
+      "git_last_change_date": "2026-09-28T13:29:13+01:00",
+      "dates_in_filename": [],
+      "action": "REMOVE_REDUNDANT_TEMPLATE_AFTER_MERGING_UNIQUE_GUARDS",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "CODE_OF_CONDUCT.md",
+      "git_last_change_commit": "f48382f396e3b4af18e62a15c3ecb6104dfd52c9",
+      "git_last_change_date": "2026-09-28T13:29:13+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "COMMERCIAL-LICENSING.md",
+      "git_last_change_commit": "f48382f396e3b4af18e62a15c3ecb6104dfd52c9",
+      "git_last_change_date": "2026-09-28T13:29:13+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "CONTRIBUTING.md",
+      "git_last_change_commit": "f48382f396e3b4af18e62a15c3ecb6104dfd52c9",
+      "git_last_change_date": "2026-09-28T13:29:13+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "CONTRIBUTOR_LICENSE_AGREEMENT.md",
+      "git_last_change_commit": "f48382f396e3b4af18e62a15c3ecb6104dfd52c9",
+      "git_last_change_date": "2026-09-28T13:29:13+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "SECURITY.md",
+      "git_last_change_commit": "f48382f396e3b4af18e62a15c3ecb6104dfd52c9",
+      "git_last_change_date": "2026-09-28T13:29:13+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "THIRD_PARTY_NOTICES.md",
+      "git_last_change_commit": "f48382f396e3b4af18e62a15c3ecb6104dfd52c9",
+      "git_last_change_date": "2026-09-28T13:29:13+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "implementacao/ativa-2026-09-28/README.md",
+      "git_last_change_commit": "f48382f396e3b4af18e62a15c3ecb6104dfd52c9",
+      "git_last_change_date": "2026-09-28T13:29:13+01:00",
+      "dates_in_filename": [
+        "2026-09-28"
+      ],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "CEREBRO_CONSTITUTION.md",
+      "git_last_change_commit": "703287638cd39936ec6eaf23f302537267188f4d",
+      "git_last_change_date": "2026-09-28T15:03:01+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "COMPATIBILITY-MATRIX.md",
+      "git_last_change_commit": "d7054f9421d53cd8e1513561f921e1772a6ca7e8",
+      "git_last_change_date": "2026-09-28T15:04:18+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "docs/PROJETO-FINAL-AUDITADO-2026-09-28.md",
+      "git_last_change_commit": "75f118b583696a50e904b1a1d13ebca1e4fae33c",
+      "git_last_change_date": "2026-09-28T15:05:21+01:00",
+      "dates_in_filename": [
+        "2026-09-28"
+      ],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "CEREBRO_ARCHITECTURE.md",
+      "git_last_change_commit": "7d032a57987f90b1bcc6b52464a2e7309e812ef8",
+      "git_last_change_date": "2026-09-28T19:02:14+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "IMPLEMENTATION_PLAN.md",
+      "git_last_change_commit": "d4d55c4b4540eb86ad6ae0ba273cbce298feec46",
+      "git_last_change_date": "2026-09-28T19:02:21+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "docs/PENDENCIAS.md",
+      "git_last_change_commit": "31aae671d1eb59788514bacad1fbe964ced9ea55",
+      "git_last_change_date": "2026-09-28T19:02:24+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "DECISIONS.md",
+      "git_last_change_commit": "1a9e7f7abea4f32c1d298e580ce19f73b16747ad",
+      "git_last_change_date": "2026-09-30T17:08:41+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "README.md",
+      "git_last_change_commit": "e65f40badb04582467b550d456cba688cc0c21d3",
+      "git_last_change_date": "2026-10-01T13:12:39+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "nexus/docs/AUDITORIA-E-PLANO.md",
+      "git_last_change_commit": "e65f40badb04582467b550d456cba688cc0c21d3",
+      "git_last_change_date": "2026-10-01T13:12:39+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "nexus/docs/AUDITORIA-ESTADO-REAL.md",
+      "git_last_change_commit": "e65f40badb04582467b550d456cba688cc0c21d3",
+      "git_last_change_date": "2026-10-01T13:12:39+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "nexus/docs/F001.md",
+      "git_last_change_commit": "e65f40badb04582467b550d456cba688cc0c21d3",
+      "git_last_change_date": "2026-10-01T13:12:39+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "nexus/docs/F002.md",
+      "git_last_change_commit": "e65f40badb04582467b550d456cba688cc0c21d3",
+      "git_last_change_date": "2026-10-01T13:12:39+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "nexus/docs/F003.md",
+      "git_last_change_commit": "e65f40badb04582467b550d456cba688cc0c21d3",
+      "git_last_change_date": "2026-10-01T13:12:39+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "nexus/docs/F004.md",
+      "git_last_change_commit": "e65f40badb04582467b550d456cba688cc0c21d3",
+      "git_last_change_date": "2026-10-01T13:12:39+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "nexus/docs/F005-COGNICAO.md",
+      "git_last_change_commit": "e65f40badb04582467b550d456cba688cc0c21d3",
+      "git_last_change_date": "2026-10-01T13:12:39+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "nexus/docs/FUNDACAO-REVISTA-2026-10-01.md",
+      "git_last_change_commit": "e65f40badb04582467b550d456cba688cc0c21d3",
+      "git_last_change_date": "2026-10-01T13:12:39+01:00",
+      "dates_in_filename": [
+        "2026-10-01"
+      ],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "nexus/docs/PUBLICACAO-2026-10-01.md",
+      "git_last_change_commit": "e65f40badb04582467b550d456cba688cc0c21d3",
+      "git_last_change_date": "2026-10-01T13:12:39+01:00",
+      "dates_in_filename": [
+        "2026-10-01"
+      ],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "nexus/docs/RECUPERACAO-E-MATRIZ.md",
+      "git_last_change_commit": "e65f40badb04582467b550d456cba688cc0c21d3",
+      "git_last_change_date": "2026-10-01T13:12:39+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "nexus/docs/REVISAO-CONTRATOS-WIKI.md",
+      "git_last_change_commit": "e65f40badb04582467b550d456cba688cc0c21d3",
+      "git_last_change_date": "2026-10-01T13:12:39+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "nexus/docs/SCHEMAS-E-WINDOWS.md",
+      "git_last_change_commit": "e65f40badb04582467b550d456cba688cc0c21d3",
+      "git_last_change_date": "2026-10-01T13:12:39+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "nexus/docs/TESTES-ADVERSARIAIS.md",
+      "git_last_change_commit": "e65f40badb04582467b550d456cba688cc0c21d3",
+      "git_last_change_date": "2026-10-01T13:12:39+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "nexus/laws/CONSTITUTION.md",
+      "git_last_change_commit": "e65f40badb04582467b550d456cba688cc0c21d3",
+      "git_last_change_date": "2026-10-01T13:12:39+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "nexus/docs/F006-LANGUAGETOOL.md",
+      "git_last_change_commit": "4f713936f21f7fb3df936f956b2259c8480ea5b2",
+      "git_last_change_date": "2026-10-01T13:21:22+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "nexus/docs/ORGANIZACAO-E-FASES.md",
+      "git_last_change_commit": "968348433a8793390500f19e623de6899dd6f79a",
+      "git_last_change_date": "2026-10-01T13:47:38+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "nexus/README.md",
+      "git_last_change_commit": "6065066aec9275baf20f29f4214a2ae7e8cb0c0c",
+      "git_last_change_date": "2026-10-01T18:12:13+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "nexus/docs/F007-LIBREOFFICE.md",
+      "git_last_change_commit": "6065066aec9275baf20f29f4214a2ae7e8cb0c0c",
+      "git_last_change_date": "2026-10-01T18:12:13+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "nexus/docs/REVISAO-NUCLEO-2026-10-01.md",
+      "git_last_change_commit": "98bb1443116b1f48769140271023befcdb94913d",
+      "git_last_change_date": "2026-10-01T18:19:09+01:00",
+      "dates_in_filename": [
+        "2026-10-01"
+      ],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "nexus/docs/F008-ISOLAMENTO-WINDOWS.md",
+      "git_last_change_commit": "19525cb355ac168a91860a54a754cf3ff889a3d9",
+      "git_last_change_date": "2026-10-01T18:37:19+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "nexus/docs/F009-OBJETOS-MARKDOWN.md",
+      "git_last_change_commit": "19ed15e6fbae4add0d7e592fc848054b496968c5",
+      "git_last_change_date": "2026-10-01T23:35:26+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "nexus/docs/F010-PROMPT-LITERAL.md",
+      "git_last_change_commit": "19ed15e6fbae4add0d7e592fc848054b496968c5",
+      "git_last_change_date": "2026-10-01T23:35:26+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "nexus/families/multimedia/imagem.md",
+      "git_last_change_commit": "19ed15e6fbae4add0d7e592fc848054b496968c5",
+      "git_last_change_date": "2026-10-01T23:35:26+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "nexus/families/multimedia/som.md",
+      "git_last_change_commit": "19ed15e6fbae4add0d7e592fc848054b496968c5",
+      "git_last_change_date": "2026-10-01T23:35:26+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "nexus/prompts/interpret-v2.md",
+      "git_last_change_commit": "19ed15e6fbae4add0d7e592fc848054b496968c5",
+      "git_last_change_date": "2026-10-01T23:35:26+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "STATUS.md",
+      "git_last_change_commit": "1e9e6127564a9247e562029552f73d56a8b9d3a7",
+      "git_last_change_date": "2026-10-02T07:51:15+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "nexus/docs/PONTO-DE-SITUACAO.md",
+      "git_last_change_commit": "1e9e6127564a9247e562029552f73d56a8b9d3a7",
+      "git_last_change_date": "2026-10-02T07:51:15+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "nexus/docs/WIKI-INSTALACAO.md",
+      "git_last_change_commit": "1e9e6127564a9247e562029552f73d56a8b9d3a7",
+      "git_last_change_date": "2026-10-02T07:51:15+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": ".github/pull_request_template.md",
+      "git_last_change_commit": "aeeb6f662a8282b3793708aa3e6782ef20d2d0ca",
+      "git_last_change_date": "2026-10-08T18:24:34+01:00",
+      "dates_in_filename": [],
+      "action": "KEEP_NEWER_TEMPLATE_AND_PRESERVE_OLDER_GUARDS",
+      "authority_note": "A date does not grant authority or justify deletion."
+    },
+    {
+      "path": "auditoria/work-pc-copy-20261010/WORK_STATE.md",
+      "git_last_change_commit": "bc1935d9707c125509d914fd7eb3e4f35ec584a5",
+      "git_last_change_date": "2026-10-10T10:38:08+01:00",
+      "dates_in_filename": [],
+      "action": "PRESERVE",
+      "authority_note": "A date does not grant authority or justify deletion."
+    }
+  ],
+  "concurrent_scopes_preserved": {
+    "PR34": "Historical document convergence; no edits to its branch",
+    "PR41": "README/STATUS/DECISIONS/navigation; no edits to its branch or conflicting files",
+    "PR46": "Architecture/constitution/AGENTS/plan/reconciliation; no edits to its branch or conflicting files",
+    "PR32_PR45_and_labs": "Runtime and product candidates untouched"
+  },
+  "known_baseline_issues": {
+    "document_checker_exit_code": 1,
+    "document_checker_output": "Missing architecture reference: README.md",
+    "historical_missing_target": "historico/repositorio-2026-09-24/MEMORIA-DE-TRABALHO.md",
+    "remediation": "Preserve historical source; do not invent missing contents. README reconciliation belongs to PR41."
+  },
+  "verification": {
+    "backup_restore": {
+      "status": "PASS_IN_LINUX",
+      "files": 182
+    },
+    "protected_files_byte_identity": {
+      "status": "PASS",
+      "unchanged_base_files": 178,
+      "runtime_tests_workflows_history_modified": 0
+    },
+    "template_guards": {
+      "status": "HISTORICAL_IN_D14BFED_WITHDRAWN_FROM_CURRENT_PATCH",
+      "latest_CLA_unchanged": true,
+      "unique_older_guards_retained": true
+    },
+    "case_collisions": {
+      "before": [
+        [
+          ".github/PULL_REQUEST_TEMPLATE.md",
+          ".github/pull_request_template.md"
+        ]
+      ],
+      "after": [],
+      "status": "HISTORICAL_ZERO_AFTER_CLEANUP; CURRENT_TEMPLATES_RESTORED_FOR_DOCUMENTATION_OWNER"
+    },
+    "markdown_links": {
+      "before_references": 99,
+      "after_references": 99,
+      "before_missing": [
+        [
+          "historico/repositorio-2026-09-24/README.md",
+          "MEMORIA-DE-TRABALHO.md"
+        ]
+      ],
+      "after_missing": [
+        [
+          "historico/repositorio-2026-09-24/README.md",
+          "MEMORIA-DE-TRABALHO.md"
+        ]
+      ],
+      "new_missing": 0
+    },
+    "existing_document_checker": {
+      "exit_code": 1,
+      "output": "Missing architecture reference: README.md",
+      "classification": "PREEXISTING_FAIL_UNCHANGED_README_COORDINATED_IN_PR41"
+    },
+    "inventory_zip": {
+      "status": "PASS",
+      "sha256": "9baae35ee20f41778b5a2586a7285911d1d310cb96283102abb74cf1d272278a",
+      "removed_intermediates_recoverable_byte_for_byte": 5
+    },
+    "current_document_templates": {
+      "status": "RESTORED_BYTE_FOR_BYTE_TO_BASE",
+      "changes_vs_original_base": 0,
+      "collision_resolution": "DEFERRED_TO_CHATGPT_DOCUMENTATION_FRONT"
+    }
+  },
+  "global_product_status": "NOT_APPROVED_NO_GLOBAL_PASS",
+  "remote_verification_record": {
+    "location": "PR #48 description",
+    "binding": "Exact head SHA",
+    "note": "This file records checks before publication; the PR records the subsequent remote byte/hash verification."
+  },
+  "coordination_update": {
+    "recorded_at_utc": "2026-10-10T09:54:28.170425+00:00",
+    "human_instruction": "ChatGPT works on documentation; each assistant keeps a separate front and must not collide.",
+    "owners": {
+      "documentation": "ChatGPT",
+      "this_front": "Clones, technical inventories, hashes, source comparison and PC-to-GitHub copy"
+    },
+    "template_cleanup": "WITHDRAWN_FROM_THIS_PR_BOTH_FILES_RESTORED_BYTE_FOR_BYTE_TO_BASE",
+    "historical_cleanup_commit": "d14bfeda006ea68d7e607a58b829b936ba3036cc",
+    "preserved_local_cleanup": "Five own Linux intermediates remain removed and recoverable from public-inventory.zip.",
+    "scope_exclusions": [
+      "README",
+      "STATUS",
+      "AGENTS",
+      "architecture",
+      "constitution",
+      "decisions",
+      "document_templates",
+      "other_branches_and_labs"
+    ],
+    "physical_windows": "NOT_RUN_NO_ACCESS"
+  },
+  "pc_cleanup_request": {
+    "recorded_at_utc": "2026-10-10T09:57:55.252386+00:00",
+    "human_instruction": "Delete unnecessary PC versions, keep work clean and organized without damage.",
+    "status": "BLOCKED_NOT_RUN_NO_WINDOWS_FILESYSTEM_OR_SHELL",
+    "pc_files_removed": 0,
+    "protected_installation": "C:\\Nexus",
+    "directories_not_to_delete": [
+      "C:\\Nexus-Tools",
+      "Any discovered directory"
+    ],
+    "selection_requires": [
+      "Content and hash comparison",
+      "Usage and version context",
+      "Recoverable backup verified before removal"
+    ],
+    "dates_alone_do_not_authorize_deletion": true
+  }
+}
