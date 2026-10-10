@@ -12,6 +12,7 @@ O Nexus preserva decisões anteriores porque FAILs, experiências e componentes 
 - [Cronologia 22/09–10/10](LINHA-DO-TEMPO-2026-09-22-A-2026-10-10.md).
 - [Decisões superadas e respetivos motivos](DECISOES-SUPERADAS-E-PORQUE.md).
 - [Mapa de origens](MAPA-DE-ORIGENS.md).
+- [Classificação documental por família e estatuto](CLASSIFICACAO-DOCUMENTAL-2026-10-10.md).
 - [Decisões vigentes fundamentadas](../40-decisions/README.md).
 
 ## Onde está o histórico
@@ -35,4 +36,4 @@ Não os use como instruções para reinstalar dependências sem um FAIL atual qu
 
 ## Regra
 
-História é evidência. O estado operacional atual está em `nexus/docs/PONTO-DE-SITUACAO.md` e no candidato ativo da PR #32.
+História é evidência. O [ponto de situação técnico](../../nexus/docs/PONTO-DE-SITUACAO.md) conserva relatos por ciclo; a PR #32 é **baseline Windows** e a PR #45 é **integração posterior em Draft**, não release. Ver [compatibilidade por SHA](../10-current/COMPATIBILIDADE-CODIGO-2026-10-10.md).
