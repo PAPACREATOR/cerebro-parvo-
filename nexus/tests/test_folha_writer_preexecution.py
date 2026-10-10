@@ -5,6 +5,7 @@ test_native_writer_route_real.py. These cases prove product HTTP authority.
 """
 import base64
 import io
+import struct
 import zipfile
 from urllib.error import HTTPError
 
@@ -27,6 +28,17 @@ def proposal(text="& converter para pdf", *, filename="original.odt", raw=None):
     content = doc() if raw is None else raw
     return {"text": text, "filename": filename,
             "attachment": base64.b64encode(content).decode("ascii")}
+
+
+def unsupported_zip_compression():
+    raw = bytearray(doc())
+    # Change the same member's method in local and central directory headers.
+    # zipfile.ZipFile can enumerate it but .read() raises NotImplementedError.
+    local = raw.index(b"PK\\x03\\x04")
+    central = raw.index(b"PK\\x01\\x02")
+    struct.pack_into("<H", raw, local + 8, 99)
+    struct.pack_into("<H", raw, central + 10, 99)
+    return bytes(raw)
 
 
 @pytest.mark.parametrize(("text", "expected"), (
@@ -70,6 +82,7 @@ def test_writer_requires_preexecution_human_ticket(tmp_path, monkeypatch, text, 
     proposal("& exportar manuscrito para pdf e pesquisar na web"),
     proposal("& converter para pdf", filename="original.docx"),
     proposal("& converter para pdf", raw=b"not a document"),
+    proposal("& converter para pdf", raw=unsupported_zip_compression()),
     proposal("& exportar manuscrito para pdf", filename="malicioso.txt"),
     {"text": "& converter para pdf", "filename": "", "attachment": ""},
     proposal("converter para pdf"),
