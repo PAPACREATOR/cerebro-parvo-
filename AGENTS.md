@@ -1,8 +1,5 @@
 # Instruções correntes — Cérebro
 
-> **Nota de vigência (2026-10-10):** As menções abaixo a Activepieces como executor ou componente por defeito documentam uma proposta anterior. A decisão posterior de 30-09-2026 em [DECISIONS.md](DECISIONS.md) e [STATUS.md](STATUS.md) retira Activepieces do núcleo obrigatório; o Conductor é candidato sujeito a testes. Preservamos o texto histórico para auditoria. Nenhuma ferramenta passa a ter autoridade sobre o Kernel ou o Human Gate.
-
-
 Ler, por esta ordem, [Projeto final auditado](docs/PROJETO-FINAL-AUDITADO-2026-09-28.md), CEREBRO_CONSTITUTION.md, CEREBRO_ARCHITECTURE.md, DECISIONS.md, STATUS.md e o contrato da tarefa.
 
 ## Regra principal
