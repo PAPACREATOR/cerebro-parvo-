@@ -114,6 +114,11 @@ def route_request(data: object, *, max_input_bytes: int) -> tuple[dict, dict]:
         raise Blocked("Nome de anexo inválido.")
     if (filename and not data["attachment"]) or (data["attachment"] and not filename):
         raise Blocked("Anexo e nome devem estar presentes em conjunto.")
+    if not data["attachment"]:
+        # Current policy allows only an explicitly delimited web QUERY plan
+        # without a file. This does not perform a network search.
+        if process != "web" or not parsed.content.casefold().strip().startswith("preparar consulta web: "):
+            raise Blocked("Junta um ficheiro à ferramenta selecionada.")
     request = {"process": process, **data}
     validate("request", request)
     if data["attachment"]:
