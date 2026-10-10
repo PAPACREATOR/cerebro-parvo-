@@ -44,7 +44,7 @@ def _natural_request(data, host):
     process = propose_operation(
         parsed, filename=data["filename"], attachment=data["attachment"]
     )
-    if process != "verify":
+    if process not in ("verify", "convert_pdf", "book"):
         raise Blocked("Não consigo determinar com segurança essa operação. Reformula o pedido.")
 
     request = {"process": process, **data}
@@ -59,12 +59,24 @@ def _natural_request(data, host):
     if not name or any(ord(char) < 32 for char in name) or "/" in name or "\\" in name:
         raise Blocked("Nome de anexo inválido.")
 
+    if process in ("convert_pdf", "book"):
+        # A conversion proposal may never interpret arbitrary file bytes,
+        # scripts, macros, external objects, or an extension/MIME mismatch.
+        from nexus.adapters.office import document_kind
+        ext = Path(name).suffix.lower()
+        if ext not in (".odt", ".docx") or document_kind(attachment) != ext:
+            raise Blocked("A exportação requer um documento DOCX ou ODT válido e com extensão correspondente.")
+    descriptions = {
+        "verify": "Verificar a integridade de " + name + ".",
+        "convert_pdf": "Converter " + name + " para PDF; original conservado. Não altera os estilos.",
+        "book": "Exportar o manuscrito " + name + " para PDF; não cria nem redesenha o livro.",
+    }
     return request, {
         "process": process,
         "filename": name,
         "attachment_bytes": len(attachment),
         "attachment_sha256": hashlib.sha256(attachment).hexdigest(),
-        "summary": "Verificar a integridade de " + name + ".",
+        "summary": descriptions[process],
         "parser": parsed.parser,
     }
 
