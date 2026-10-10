@@ -111,7 +111,11 @@ el("form").onsubmit=async event=>{
     }
     executionTicket=prepared.ticket;
     el("execution-summary").textContent=prepared.summary;
-    el("execution-review").textContent="Operação: "+prepared.process+"\nFicheiro: "+prepared.filename+"\nBytes: "+prepared.attachment_bytes+"\nSHA-256: "+prepared.attachment_sha256;
+    const actions={verify:"Verificar integridade",convert_pdf:"Converter para PDF",
+      book:"Exportar manuscrito para PDF"};
+    if(!Object.prototype.hasOwnProperty.call(actions,prepared.process))
+      throw new Error("A operação proposta não está autorizada.");
+    el("execution-review").textContent="Ação: "+actions[prepared.process]+"\nFicheiro: "+prepared.filename+"\nBytes: "+prepared.attachment_bytes+"\nSHA-256: "+prepared.attachment_sha256;
     el("execution-confirm").checked=false;
     el("execution-approve").disabled=true;
     el("execution-confirmation").showModal();
