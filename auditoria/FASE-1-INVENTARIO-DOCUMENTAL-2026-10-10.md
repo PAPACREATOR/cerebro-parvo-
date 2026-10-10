@@ -51,6 +51,12 @@ Estado: EM CURSO. Não declarar fechado sem inventário completo dos artefactos 
 - Work: PR #43 (Front Door/confirmação) e PR #45 (candidato integrado) são Draft; há evidência de FAIL anterior, correção e testes parciais, sem PASS geral. Codex: espelho PC/clone Sir Thaddeus. PR #41: navegação documental. PR #46: apenas `auditoria/`, com comentário de coordenação publicado.
 - A revisão do espelho local após trabalho do Codex exige SHA-256, exclusões e evidência de conteúdo de cada pacote, não apenas um nome de branch.
 
+## Melhoria da documentação histórica
+
+- [História comentada 22/09–10/10](HISTORIA-COMENTADA-NEXUS-2026-10-10.md) publicada com cronologia, fontes de época, decisões superadas, princípios preservados, estatuto de PRs e limites do PASS.
+- Os snapshots do arquivo de 24/09, a genealogia de 27/09 e a documentação/navegação sob responsabilidade da PR #41 mantêm-se intactos; **este índice novo existe apenas nesta branch de auditoria**.
+- A verificação estática inicial encontrou 36 links internos relativos na história comentada, todos com destinos existentes no HEAD examinado. Isto não valida URLs externos nem âncoras.
+
 ## Política documental
 - Documentos constitucionais, decisões, contratos, testes e evidências são conservados; não reescrever o passado como se tivesse sido outra decisão.
 - Separar explicitamente «vigente», «histórico», «experimental» e «pendente de validação».
