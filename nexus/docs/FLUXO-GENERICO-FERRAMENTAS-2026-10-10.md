@@ -1,6 +1,6 @@
 # Nexus — Fluxo multi-ferramenta (estudo e primeira implementação isolada)
 
-**Estado:** bancada/laboratório, não exposto na Folha oficial. Nenhuma ferramenta nova é executável por esta PR. **Não fazer merge** antes dos gates reais.
+**Estado:** PR #53, Draft. A Folha desta branch passou a propor os dez processos já registados, mas a alteração NÃO foi integrada na main. Propostas não significam execução real: toda execução requer Host + autorização humana, configuração válida e resultado verificado. **Não fazer merge** antes de todos os gates reais PASS no mesmo SHA.
 
 ## 1. Circuito existente, lido no código
 
@@ -28,7 +28,7 @@ A classe `HumanDecision` em `approval_binding.py` liga item, versão SHA-256, at
 
 - Entrada: `{text, filename, attachment}` + intenção resolvida do parser existente.
 - Registo declarativo e estrito: `Capability(process, intent, command, tool, requires_attachment)`, associado a `PROCESS_TO_TOOL`, `PROCESS_FILES` e `laws/policy.json`.
-- `CapabilityRouter.propose` devolve **um** candidato ou `Blocked`. Não importa o Host para o executar; zero IO e zero autorização. Suporta N entradas; duplicados, conflitos, texto desconhecido ou composto → bloqueio.
+- `CapabilityRouter.propose` devolve **um** candidato ou `Blocked`. Não importa o Host para o executar; zero IO e zero autorização. Suporta N entradas; duplicados, conflitos, texto desconhecido ou composto → bloqueio. A Folha só ativa o fallback genérico com prefixo explícito e anexo, depois aplica o ticket de execução já existente.
 - Adaptador de execução: por enquanto permanece o código real existente de `adapters/runner.py` (dez rotas) e a exceção delimitada de Writer/LPAC em `host.py`. Não criar adaptadores que escapem ao sandbox.
 - Autoridade: a implementação futura tem de aceitar a seleção apenas depois de `frontdoor.parse`, validação de anexo adequada à capability e *ticket* humano consumido no Host. O processo precisa estar na política fixa e passar `verify_integrity`.
 - Saída: `{result,trace}` validado no Host; Creative; promoção Canonical **só** após segunda confirmação humana vinculada ao hash.
@@ -48,6 +48,6 @@ A classe `HumanDecision` em `approval_binding.py` liga item, versão SHA-256, at
 
 O runner interno implementa dez processos: verify, interpret (OpenNotebook), proofread (LanguageTool), convert_pdf e book (Writer), video/podcast/visual_podcast (plano OpenNotebook), music e web. Alguns devolvem **planos**, não produtos finais; uma proposta de plano nunca deve ser anunciada como vídeo/podcast/pesquisa concluída.
 
-Este primeiro módulo **não** ativa os sete processos atualmente inacessíveis na Folha e não demonstra um fluxo real multi-ferramenta. Pendente: separar validações por capability sem enfraquecer ZIP, unificar frontdoor sob revisão, registar e vincular novos ficheiros ao manifesto, ensaiar autorização negada/aceite via HTTP e testar dois executores confinados de ponta a ponta em Windows. Não modificar Kernel nem Store para conseguir isso.
+Implementado nesta branch: `CapabilityRouter` de propostas fechadas, fallback de seleção apenas com prefixo explícito, dez nomes de capability no UI, importação do router em `app.py`, assinatura SHA-256 do novo módulo e ficheiros editados via `host.py`/`integrity.json`, testes HTTP de autorização/negação por capability e teste nativo sequencial `verify` → Writer. O runner mantém os dez adaptadores existentes; não existe lançamento arbitrário. Pendente até prova CI: teste físico Windows em dois executores, regressão completa e stress no mesmo SHA. O OpenNotebook e os produtos media/web podem produzir apenas planos. Não modificar Kernel nem Store.
 
 **Critério de fecho:** todos os workflows exigidos PASS no mesmo SHA, incluindo Windows nativo, LPAC, Writer real, outros adapters reais, stress, reinício, recusa e dois passos autorizados separadamente. Caso contrário: LAB/NOT RUN; não merge.
