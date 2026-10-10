@@ -7,5 +7,6 @@ Este índice interpreta decisões humanas e propostas técnicas em sequência cr
 - [09/10 — OpenNotebook especializado](ADR-2026-10-09-OPENNOTEBOOK.md): quando usar, quando não usar, e o que ainda falta provar.
 - [09–10/10 — Confirmação e segurança](ADR-2026-10-09-CONFIRMACAO.md): por que confirmar ação e promover conhecimento são dois atos.
 - [10/10 — Documentação, histórico e frentes](ADR-2026-10-10-PRESERVACAO.md): por que isolar documentação, manter históricos e não interferir no trabalho alheio.
+- [10/10 — Três superfícies da execução](ADR-2026-10-10-SUPERFICIES-DE-EXECUCAO.md): por que sete intenções, dez processos internos e uma rota natural pública não são a mesma coisa.
 
 Classificar sempre: **vigente como regra**, **candidato de implementação**, **experimental**, **histórico/superado** ou **pendente de validação**. Uma data isolada não determina que uma decisão está ativa.
