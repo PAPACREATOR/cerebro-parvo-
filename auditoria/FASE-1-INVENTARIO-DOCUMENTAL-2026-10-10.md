@@ -43,6 +43,14 @@ Estado: EM CURSO. Não declarar fechado sem inventário completo dos artefactos 
 - A PR #46 altera exclusivamente `auditoria/`; os quatro documentos de raiz antes modificados nesta branch foram restaurados à `main` sem alterar a PR #41.
 - **Pendente:** auditoria de fontes locais, comparação de hashes após entrega do Codex, links externos/âncoras, dados pessoais/segredos e escolha do HEAD definitivo. Não aprovar a consolidação antes dessas verificações.
 
+## Verificação de segurança, ligações externas e coordenação Work/Codex
+
+- [Relatório de triagem de dados, ligações externas e responsabilidades](SEGURANCA-LINKS-EQUIPA-2026-10-10.md). Foram analisados 149 ficheiros Markdown da PR #41 com padrões de segredos (zero correspondências nesses padrões), 16 ficheiros de workflow/configuração da PR #45 (zero correspondências) e dois XML de testes de laboratório; **não** é um scan completo de segredos, de dados pessoais ou do histórico Git.
+- O `.gitignore` exclui `MEMORIA-DE-TRABALHO.md`, `.env`, bases de dados e materiais reservados. **A referência histórica em falta não autoriza publicar a memória local.**
+- Oito referências externas consultadas como amostra: seis referências com destino confirmado através da web ou ligação GitHub, duas sem resposta verificável e classificadas `UNKNOWN`; restantes URLs ainda não auditadas.
+- Work: PR #43 (Front Door/confirmação) e PR #45 (candidato integrado) são Draft; há evidência de FAIL anterior, correção e testes parciais, sem PASS geral. Codex: espelho PC/clone Sir Thaddeus. PR #41: navegação documental. PR #46: apenas `auditoria/`, com comentário de coordenação publicado.
+- A revisão do espelho local após trabalho do Codex exige SHA-256, exclusões e evidência de conteúdo de cada pacote, não apenas um nome de branch.
+
 ## Política documental
 - Documentos constitucionais, decisões, contratos, testes e evidências são conservados; não reescrever o passado como se tivesse sido outra decisão.
 - Separar explicitamente «vigente», «histórico», «experimental» e «pendente de validação».
