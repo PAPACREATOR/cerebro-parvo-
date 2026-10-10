@@ -42,4 +42,4 @@ Atualizar apenas:
 3. relatórios específicos quando houver evidência técnica nova;
 4. `docs/00-start-here/` e os índices de navegação apenas quando mudar a organização documental.
 
-O histórico anterior permanece no Git, em `historico/`, em relatórios datados e nos PRs fechados.
+O histórico anterior permanece no Git, em `historico/`, em relatórios datados e nos PRs fechados. As [11 referências históricas sem destino da PR #46](docs/99-history/RECONCILIACAO-11-REFERENCIAS-2026-10-10.md) foram tratadas **como navegação** na branch documental: dez ligações reparadas para `nexus/docs/` e uma nota de fonte reservada não materializada. Isto não altera o estado de execução do Nexus nem certifica a recuperação do documento privado.
