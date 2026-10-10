@@ -15,9 +15,13 @@ def result():
             "evidence": [{"capability": "test", "status": "PASS", "value": "abc"}], "ai_calls": 0}
 
 
+def execution_trace(store, run, **extra):
+    return {"process_sha256": store.state(run)["process_sha256"], **extra}
+
+
 def candidate(store):
     run = store.create(request())
-    store.accept(run, result(), {"test": True})
+    store.accept(run, result(), execution_trace(store, run, test=True))
     return run
 
 
@@ -78,7 +82,7 @@ def test_unknown_is_preserved(tmp_path):
     run = store.create(request())
     output = result()
     output.update(status="UNKNOWN", outcome="conflict")
-    assert store.accept(run, output, {})["result_status"] == "UNKNOWN"
+    assert store.accept(run, output, execution_trace(store, run))["result_status"] == "UNKNOWN"
 
 
 def test_interrupted_run_and_ai_capability(tmp_path):
@@ -87,7 +91,7 @@ def test_interrupted_run_and_ai_capability(tmp_path):
     output = result()
     output["ai_calls"] = 1
     with pytest.raises(Blocked):
-        store.accept(run, output, {})
+        store.accept(run, output, execution_trace(store, run))
     assert Store(tmp_path).state(run)["status"] == "FAIL"
 
 
@@ -97,3 +101,13 @@ def test_unregistered_process_and_path(tmp_path):
         store.create(dict(process="shell", text="hello", filename="", attachment=""))
     with pytest.raises(Blocked):
         store.state("../canonical")
+
+
+def test_accept_rejects_trace_from_different_workflow_version(tmp_path):
+    """A result cannot be accepted if its execution trace is not bound to the pinned workflow."""
+    store = Store(tmp_path)
+    run = store.create(request())
+    with pytest.raises(Blocked):
+        store.accept(run, result(), {"process_sha256": "0" * 64})
+    assert not store.path("creative", run).exists()
+    assert store.state(run)["status"] == "RUNNING"

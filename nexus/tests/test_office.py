@@ -7,7 +7,7 @@ import pytest
 from nexus.adapters.office import document_kind, pdf_bytes, run as convert
 from nexus.contracts import Blocked
 from nexus.store import Store, HumanDecision, digest
-from nexus.tests.test_store import request, result
+from nexus.tests.test_store import request, result, execution_trace
 
 
 def odt(extra=None):
@@ -42,7 +42,7 @@ def candidate_pdf(store):
     raw = b"%PDF-1.4\nsynthetic gate fixture\n%%EOF\n"
     (store.path("runs", run) / "resultado.pdf").write_bytes(raw)
     value = result(); value.update(status="UNKNOWN", outcome="candidate", artifact={"name": "resultado.pdf", "sha256": digest(raw)})
-    store.accept(run, value, {"test": True})
+    store.accept(run, value, execution_trace(store, run, test=True))
     return run, raw
 
 
@@ -69,7 +69,7 @@ def test_changed_pdf_blocks_approval(tmp_path):
 def test_missing_pdf_blocks_acceptance(tmp_path):
     store = Store(tmp_path); req = request(); req["process"] = "convert_pdf"
     run = store.create(req)
-    with pytest.raises(Blocked): store.accept(run, result(), {})
+    with pytest.raises(Blocked): store.accept(run, result(), execution_trace(store, run))
 
 
 def configure(tmp_path):
@@ -85,20 +85,33 @@ def test_missing_office(tmp_path):
 
 
 def test_office_failure(tmp_path, monkeypatch):
+    # Process/timeout unit double only; real native security is tested separately.
+    monkeypatch.setattr("nexus.adapters.office.require_native_boundary", lambda: None)
+    monkeypatch.setattr(subprocess, "CREATE_NO_WINDOW", getattr(subprocess, "CREATE_NO_WINDOW", 0), raising=False)
     source, exe = configure(tmp_path); exe.touch()
     original = source.read_bytes()
     class Failed:
+        stdin = io.BytesIO()
         def wait(self, **kw): return 1
-    monkeypatch.setattr(subprocess, "Popen", lambda *a, **kw: Failed())
+    def failed(*args, **kwargs):
+        assert kwargs["stdin"] == subprocess.PIPE
+        return Failed()
+    monkeypatch.setattr(subprocess, "Popen", failed)
     with pytest.raises(Blocked): convert(source)
     assert source.read_bytes() == original
+    assert Failed.stdin.closed
 
 
 def test_office_timeout_kills_tree(tmp_path, monkeypatch):
+    # Process/timeout unit double only; real native security is tested separately.
+    monkeypatch.setattr("nexus.adapters.office.require_native_boundary", lambda: None)
+    monkeypatch.setattr(subprocess, "CREATE_NO_WINDOW", getattr(subprocess, "CREATE_NO_WINDOW", 0), raising=False)
+    monkeypatch.setenv("SystemRoot", str(tmp_path / "Windows"))
     source, exe = configure(tmp_path); exe.touch()
     events = []
     class TimedOut:
         pid = 123
+        stdin = io.BytesIO()
         def wait(self, **kw):
             if kw: raise subprocess.TimeoutExpired("soffice", 45)
             return 1
@@ -108,6 +121,7 @@ def test_office_timeout_kills_tree(tmp_path, monkeypatch):
     with pytest.raises(Blocked): convert(source)
     assert events[0][-4:] == ["/PID", "123", "/T", "/F"]
     assert events[-1] == "kill"
+    assert TimedOut.stdin.closed
 
 
 def test_http_pdf_requires_session_and_unchanged_bytes(tmp_path):
@@ -131,3 +145,38 @@ def test_http_pdf_requires_session_and_unchanged_bytes(tmp_path):
         with pytest.raises(Blocked): host.prepare_approval(run, host.session)
     finally:
         server.shutdown(); server.server_close(); worker.join()
+
+
+@pytest.mark.parametrize("extra", [
+    ("Object 1/content.xml", "<office:document/>"),
+    ("ObjectReplacements/Object 1", "binary"),
+    ("word/embeddings/oleObject1.bin", "binary"),
+    ("content.xml", '<draw:object xlink:href="./Object 1"/>'),
+])
+def test_embedded_writer_objects_are_blocked(extra):
+    with pytest.raises(Blocked):
+        document_kind(odt(extra))
+
+
+@pytest.mark.parametrize("extra", [
+    ("../outside.xml", "x"),
+    ("/absolute.xml", "x"),
+    ("C:/drive.xml", "x"),
+    ("links.xml", '<a xlink:href="ftp://example.invalid/file"/>'),
+    ("links.xml", '<a xlink:href="//server/share"/>'),
+    ("links.xml", '<a xlink:href="smb://server/share"/>'),
+])
+def test_writer_internal_path_traversal_and_external_uri_are_blocked(extra):
+    with pytest.raises(Blocked):
+        document_kind(odt(extra))
+
+
+def test_writer_raw_backslash_member_is_blocked():
+    safe = b"folder/windows-path.xml"
+    hostile = b"folder\\windows-path.xml"
+    raw = odt(("folder/windows-path.xml", "x"))
+    assert raw.count(safe) >= 2
+    raw = raw.replace(safe, hostile)
+    assert hostile in raw
+    with pytest.raises(Blocked):
+        document_kind(raw)

@@ -1,6 +1,13 @@
 # Revisão — formatos, redundância, ferramentas e wiki
 
+> Nota de estado (04-10-2026): este documento conserva a análise histórica. O runtime ativo já não usa Microsoft Conductor, Spiff nem YAML como motor. A execução atual é Kernel/Python; MCP é a fronteira de ferramentas. As conclusões sobre autoridade, proveniência e wiki continuam válidas.\n\n
 01/10/2026. Análise de conformidade; sem alteração normativa.
+
+Revisão de leitura, 04-10: conservar este relato histórico. A lacuna de schema
+abaixo foi corrigida em [Schemas e Windows](SCHEMAS-E-WINDOWS.md), com
+`test_schema_consistency.py`. A recuperação e ligação inversa atuais são
+documentadas em [F013](F013-PROVENIENCIA-INVERSA.md). O requisito de wiki de
+ligação mantém-se; a navegação pela proveniência ainda não está na Folha.
 
 ## Um contrato, três representações
 Markdown descreve leis, conhecimento e decisões em linguagem humana. YAML define o processo executável, ferramentas permitidas, limites, ramificações e comparação. JSON transporta inputs, resultados, estados e evidência, validados por schema. Não são três cópias de segurança. A correspondência entre representações deve ser testada.
@@ -32,4 +39,6 @@ Relações devem preservar identidade ao mover/renomear ficheiros. Uma ligação
 Estado: existe proveniência mínima no protótipo; a wiki relacional completa e a resistência das ligações a renomeações não estão demonstradas. Não chamar aos hashes atuais um comparador semântico ou relacional.
 
 ## Continuação conforme as leis
+Orientação daquela revisão, anterior às correções ligadas acima:
+
 Primeiro resolver o FAIL de recuperação já registado e a lacuna de coerência schema/processo. Depois isolamento Windows, restauro e integração das capabilities. Manter separados: requisito, código existente, teste executado e resultado. Os 51 PASS anteriores não cobrem as lacunas novas.

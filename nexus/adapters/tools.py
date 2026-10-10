@@ -1,4 +1,4 @@
-"""Deterministic capabilities, called only by the Conductor YAML."""
+"""Deterministic verification helpers used by the current Nexus Python/MCP runtime."""
 import hashlib
 import json
 import sys

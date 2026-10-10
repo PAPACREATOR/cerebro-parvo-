@@ -12,10 +12,13 @@ from nexus.tests.test_store import request, candidate
 
 
 def test_no_secrets_in_child_environment(tmp_path, monkeypatch):
+    monkeypatch.setenv("SystemRoot", str(tmp_path / "synthetic-windows"))
     monkeypatch.setenv("OPENAI_API_KEY", "should-never-be-inherited")
     monkeypatch.setenv("NEXUS_SESSION", "should-never-be-inherited")
+    monkeypatch.setenv("PSModuleAnalysisCachePath", "untrusted-inherited-cache")
     assert "OPENAI_API_KEY" not in process_environment(tmp_path)
     assert "NEXUS_SESSION" not in process_environment(tmp_path)
+    assert "PSModuleAnalysisCachePath" not in process_environment(tmp_path)
 
 
 def test_gate_requires_session_ticket_and_explicit_action(tmp_path):
@@ -46,7 +49,7 @@ def test_expired_ticket(tmp_path):
 
 def test_full_http_flow_and_bypasses(tmp_path):
     host = Host(tmp_path)
-    server = make_server(host)
+    server = make_server(host, allow_direct_run=True)
     worker = threading.Thread(target=server.serve_forever, daemon=True)
     worker.start()
     base = "http://127.0.0.1:" + str(server.server_port)
@@ -71,7 +74,16 @@ def test_full_http_flow_and_bypasses(tmp_path):
             if state["status"] != "RUNNING":
                 break
             time.sleep(.2)
-        assert state["status"] == "HUMAN_REQUIRED", state
+        if state["status"] != "HUMAN_REQUIRED":
+            # This test uses a synthetic verify request and no credentials.
+            # Retain bounded runner diagnostics instead of hiding the tool error.
+            directory = host.store.path("runs", run)
+            diagnostics = {"state": state}
+            for name in ("failure.json", "execution.stderr.txt", "execution.stdout.json"):
+                path = directory / name
+                if path.is_file():
+                    diagnostics[name] = path.read_text("utf-8", errors="replace")[-8000:]
+            pytest.fail(json.dumps(diagnostics, ensure_ascii=False, indent=2))
         assert state["result"]["ai_calls"] == 0
         with pytest.raises(HTTPError):
             call("/api/approve", {"run_id": run, "ticket": "ai-invented", "confirmed": True})
@@ -102,9 +114,11 @@ def test_refresh_review_revokes_previous_ticket(tmp_path):
 def test_invalid_tool_output_never_promotes(tmp_path, monkeypatch, output):
     class BrokenTool:
         returncode = 0
+        def __enter__(self): return self
+        def __exit__(self, *args): pass
         def communicate(self, **kwargs):
             return output, b""
-    monkeypatch.setattr("nexus.host.subprocess.Popen", lambda *args, **kwargs: BrokenTool())
+    monkeypatch.setattr("nexus.host.launch_confined", lambda *args, **kwargs: BrokenTool())
     host = Host(tmp_path)
     run = host.store.create(request())
     host.busy.acquire()
@@ -119,3 +133,44 @@ def test_invalid_reference_is_blocked(tmp_path, reference):
     host = Host(tmp_path)
     with pytest.raises(Blocked):
         host.prepare_approval(reference, host.session)
+
+
+def test_wrong_session_cannot_consume_valid_ticket(tmp_path):
+    host = Host(tmp_path)
+    run = candidate(host.store)
+    ticket = host.prepare_approval(run, host.session)["ticket"]
+
+    with pytest.raises(Blocked):
+        host.approve(run, ticket, True, "wrong-session")
+
+    assert ticket in host.tickets
+    assert not host.store.path("canonical", run).exists()
+    assert host.approve(run, ticket, True, host.session)["status"] == "PASS"
+
+
+def test_ticket_is_bound_to_one_run_and_cannot_approve_another(tmp_path):
+    host = Host(tmp_path)
+    first = candidate(host.store)
+    second = candidate(host.store)
+    ticket = host.prepare_approval(first, host.session)["ticket"]
+
+    with pytest.raises(Blocked):
+        host.approve(second, ticket, True, host.session)
+
+    assert not host.store.path("canonical", first).exists()
+    assert not host.store.path("canonical", second).exists()
+
+
+def test_pending_approval_ticket_does_not_survive_host_restart(tmp_path):
+    first_host = Host(tmp_path)
+    run = candidate(first_host.store)
+    stale_ticket = first_host.prepare_approval(run, first_host.session)["ticket"]
+
+    restarted = Host(tmp_path)
+    assert restarted.tickets == {}
+    with pytest.raises(Blocked):
+        restarted.approve(run, stale_ticket, True, restarted.session)
+    assert not restarted.store.path("canonical", run).exists()
+
+    fresh_ticket = restarted.prepare_approval(run, restarted.session)["ticket"]
+    assert restarted.approve(run, fresh_ticket, True, restarted.session)["status"] == "PASS"

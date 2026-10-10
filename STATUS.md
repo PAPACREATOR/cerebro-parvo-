@@ -1,145 +1,25 @@
-## Ponto de situação revisto
+# Estado atual do Nexus
 
-[Resumo atual e ordem dos próximos microprocessos](nexus/docs/PONTO-DE-SITUACAO.md). Protótipo parcial; 1136 testes, 16 controlos da instalação e 6 ensaios cognitivos passaram. Isolamento Conductor/conta Nexus ainda sem prova.
+O estado operacional corrente está em [nexus/docs/PONTO-DE-SITUACAO.md](nexus/docs/PONTO-DE-SITUACAO.md) e na PR #23, marcada como **CURRENT BASELINE**.
 
-## Primeira família Multimédia
+## Regras que continuam vigentes
 
-Contratos Som/Imagem e leitura nativa pelo Conductor testados. [Wiki atual](nexus/docs/WIKI-INSTALACAO.md) e [evidência F009](nexus/docs/F009-OBJETOS-MARKDOWN.md). Geração e integração na Folha pendentes. C:\Nexos e atalho criados; 16 controlos da instalação passaram, Canonical vazio.
+- Humano é a autoridade máxima.
+- Kernel/Host/Store mantêm estado, política, Creative, Human Gate e Canonical.
+- MCP é transporte, não autoridade.
+- OpenNotebook, LibreOffice, LanguageTool, Zotero, ACE-Step, Forge e outras integrações são ferramentas externas.
+- Tiny/IA é opcional, delimitada e sem autoridade.
+- Arquitetura conceptual M1–M14 permanece congelada; implementação e testes não autorizam redesenho implícito.
+- Conhecimento Canonical não é eliminado automaticamente salvo duplicação absolutamente exata.
+- FAIL, BLOCKED e NOT RUN não contam como PASS.
 
-## Windows nativo — PASS de duas pastas
+## Fonte de verdade
 
-Conta Nexus executou comando curto (610 caracteres): escrita permitida na área de trabalho e leitura/escrita negadas por NTFS na pasta protegida; original intacto. [Prova e limites](nexus/docs/F008-ISOLAMENTO-WINDOWS.md). Integração desta identidade no Host/Conductor ainda pendente.
+Não criar novos ficheiros de “estado”, “continuidade”, “fila” ou “handoff” por sessão.
+Atualizar apenas:
 
-## Revisão do núcleo — 115 testes
+1. `nexus/docs/PONTO-DE-SITUACAO.md` para o estado operacional;
+2. PR #23 para commits, testes, FAIL→correção→PASS e próximos gates;
+3. relatórios específicos quando houver evidência técnica nova.
 
-[Seis falhas reproduzidas/corrigidas e pendências restantes](nexus/docs/REVISAO-NUCLEO-2026-10-01.md). Teste Windows nativo preparado; PASS de ACL e ligação ao Host ainda por confirmar.
-
-## Portão Windows — FAIL reproduzido
-
-O circuito cognitivo atual voltou a passar (10.57 s). O isolamento de OS falhou num ensaio sintético de leitura/escrita por processo filho com a mesma identidade. [Evidência e próximo contrato](nexus/docs/F008-ISOLAMENTO-WINDOWS.md). Novas capacidades aguardam correção desta fronteira.
-
-## LibreOffice — 01-10-2026
-
-ODT→PDF em Creative passou num ensaio real, com inspeção de texto e visual. **109 testes passaram**. [F007](nexus/docs/F007-LIBREOFFICE.md). Próxima prioridade humana: isolamento Windows. `interpret.yaml` já existe e tem prova cognitiva real em [F005](nexus/docs/F005-COGNICAO.md).
-
-## Inventário e organização — 01-10-2026
-
-[Mapa de pastas, instalações confirmadas e plano por fases](nexus/docs/ORGANIZACAO-E-FASES.md). Publisher presente; Gmail/Facebook, imagens e música ainda sem integração. Conta Windows e restauro continuam pendentes.
-
-## LanguageTool integrado — 01-10-2026
-
-Revisão local por CLI ligada ao Conductor e Creative: ensaio real PASS; original intacto, IA zero, bypass BLOCK. Regressão: **94 testes passaram**. [Contrato e limites](nexus/docs/F006-LANGUAGETOOL.md).
-
-# Atualização — 01-10-2026
-
-Código Nexus publicado em [nexus/](nexus/README.md). [Revisão desta versão](nexus/docs/PUBLICACAO-2026-10-01.md): 83 testes passaram em Windows; integração completa e isolamento por conta continuam pendentes. As responsabilidades M1–M14 não são declaradas concluídas.
-
-O retrato abaixo conserva o estado anterior.
-
----
-
-# Estado operacional — 30-09-2026
-
-## Estado
-
-**ARQUITETURA CONCEPTUAL REDUZIDA AO NEXUS MINIMAL; IMPLEMENTAÇÃO E2E AINDA NÃO PROVADA.**
-
-Não declarar o sistema funcional até o circuito mínimo passar em máquina real.
-
-## Núcleo atual
-
-```text
-Humano
-  ↕
-Folha Nexus — linguagem natural
-  ↓
-Conductor — condutor/runtime candidato
-  ├─ Windows / capabilities / web
-  └─ Open Notebook — bancada cognitiva descartável
-                       └─ tiny local
-  ↓
-resultado estruturado
-  ↓
-Nexus/Windows — memória soberana
-Raw / Creative / Canonical / arquivo / proveniência / eventos / templates
-```
-
-## Princípio de redução
-
-Nexus não tenta ser um superagente. É um launcher organizado e metódico que:
-- recebe intenção humana;
-- procura processo/template conhecido;
-- compõe as ferramentas disponíveis;
-- usa cognição apenas quando regras/processos não chegam;
-- verifica o resultado;
-- preserva experiência e proveniência;
-- mantém a autoridade no humano.
-
-## O que está preservado
-
-- Folha Única em linguagem natural;
-- Creative/Canonical;
-- Human Gate;
-- IA sem autoridade;
-- PASS/FAIL/UNKNOWN;
-- proveniência direta ↔ inversa;
-- contradições preservadas;
-- eliminação automática só de duplicação absolutamente exata;
-- agentes em microprocessos reconstruíveis;
-- templates/processos reutilizáveis;
-- capabilities substituíveis;
-- memória independente da bancada/modelo;
-- possibilidade de reduzir uso de IA à medida que processos estabilizam.
-
-## O que saiu do Core
-
-- Activepieces como requisito nuclear;
-- Memory Provider externo obrigatório;
-- PiecesOS obrigatório;
-- K-DLC runtime;
-- vector DB separado;
-- framework multi-agent permanente;
-- RAG próprio;
-- ELIZA obrigatória;
-- LibreOffice/Zotero/LanguageTool/imagem/áudio como dependências de boot.
-
-Estas ferramentas podem regressar apenas como capabilities ou alternativas perante necessidade/teste.
-
-## Open Notebook
-
-Regra atual: **bancada de trabalho, ponto.** Pode receber contexto/fontes/prompts/schemas para uma tarefa e devolver resultado. Não possui a memória soberana. Deve ser possível apagar/substituir a bancada e continuar a partir da memória Nexus.
-
-## Benchmark externo
-
-Nesta fase comparar com **um único projeto: Negentropy-Laby/OpenDoge**. Razão: oferece material concreto sobre local-first single-operator, workflow templates, contracts, approvals, evidence/replay e slots/capabilities. Não copiar a sua dimensão/complexidade; extrair apenas padrões que reduzam engenharia e respeitem as leis Nexus.
-
-## Próximo portão — Nexus Minimal E2E
-
-1. abrir Folha;
-2. escrever pedido em linguagem natural;
-3. routing pelo condutor;
-4. enviar tarefa cognitiva limitada à bancada;
-5. tiny local devolve JSON conforme schema;
-6. guardar resultado em Creative;
-7. mostrar resultado na Folha;
-8. bloquear escrita direta em Canonical;
-9. Human Gate explícito promove quando autorizado;
-10. reconstruir bancada sem perda de memória;
-11. demonstrar proveniência inversa;
-12. repetir tarefa semelhante e medir reutilização do processo.
-
-Resultado permitido: PASS, FAIL ou UNKNOWN. Sem PASS real não avançar para o catálogo grande de capabilities.
-
-## Evidência histórica preservada
-
-No commit `f48382f396e3b4af18e62a15c3ecb6104dfd52c9`:
-- GitHub Actions SUCCESS;
-- 34 testes históricos PASS;
-- 11 writer tests PASS;
-- total 45 PASS.
-
-Isto continua a ser evidência histórica e não prova o Nexus Minimal E2E.
-
-## Regra operacional
-
-**LIGAR > CONFIGURAR > ADAPTAR > CRIAR.**
+O histórico anterior permanece no Git e nos PRs fechados, sem ser duplicado na árvore ativa.

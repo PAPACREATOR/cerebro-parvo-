@@ -1,3 +1,5 @@
+> **Estado atual (06-10-2026):** capability ativa limitada e provada para Writer **DOCX/ODT → PDF** com original conservado, hash do artefacto e Human Gate. A implementação ativa usa runner/MCP + adapter LibreOffice, não Conductor. Isto **não prova Writer completo**: criação/edição estruturada, estilos, paginação, gutter, viúvas/órfãos, templates de livro, índices, imagens/legendas e round-trip continuam pendentes. O contrato detalhado está em [CAPABILITY-WRITER-EDITORIAL.md](CAPABILITY-WRITER-EDITORIAL.md).
+
 # F007 — documento para PDF local
 
 INPUT: anexo DOCX ou ODT até 2 MB e LibreOffice instalado.

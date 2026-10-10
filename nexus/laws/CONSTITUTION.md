@@ -8,7 +8,7 @@ Origem: especificação expressa de Pedro de 2026-09-30.
 4. UNKNOWN, conflito e falha não se transformam artificialmente em PASS.
 5. Não eliminar conhecimento por similaridade, paráfrase ou decisão de IA.
 6. A IA recebe apenas o contexto necessário e devolve candidatos sem capacidades de ação.
-7. Markdown representa conhecimento; YAML determina processos; JSON transfere execução.
+7. Markdown representa conhecimento; contratos/processos Nexus determinam execução; JSON transfere dados de execução.
 8. Cada resultado conserva processo/versionamento, input, ferramenta, output, data e estado.
 
 O protótipo não disponibiliza eliminação, nem mesmo por duplicação exata.
