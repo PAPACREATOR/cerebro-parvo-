@@ -22,6 +22,11 @@ Estado: EM CURSO. Não declarar fechado sem inventário completo dos artefactos 
 - Decisão humana: Sandy fora do trabalho ativo; integração suspensa, crédito histórico mantido.
 - PR #46 continua Draft e isolada, sem alteração de código.
 
+## Evidências adicionais de 2026-10-10
+
+- [Auditoria de ligações/duplicações](AUDITORIA-LINKS-DUPLICADOS-2026-10-10.md): 100 ficheiros Markdown lidos, 1 referência histórica não materializada, 2 pares de blobs Git idênticos em versões distintas — nada eliminado.
+- PR #41 é a frente de navegação e atualizações de README/STATUS/DECISIONS; a PR #46 mantém-se isolada e não edita essas superfícies.
+
 ## Política documental
 - Documentos constitucionais, decisões, contratos, testes e evidências são conservados; não reescrever o passado como se tivesse sido outra decisão.
 - Separar explicitamente «vigente», «histórico», «experimental» e «pendente de validação».
@@ -31,8 +36,8 @@ Estado: EM CURSO. Não declarar fechado sem inventário completo dos artefactos 
 
 ## Fecho da Fase 1 — verificação obrigatória
 - [x] Enumerar a árvore publicada de `main` e as branches com SHA no snapshot de 2026-10-10: 208 entradas (177 ficheiros), 49 branches. Isto não cobre ficheiros locais nem garante que branches isoladas tenham sido integradas. Ver [manifesto da árvore](INVENTARIO-GITHUB-MAIN-2026-10-10.json) e [manifesto das branches](BRANCHES-GITHUB-2026-10-10.json).
-- [ ] Verificar links documentais para documentos ausentes e referências locais não publicadas.
-- [ ] Levantar documentos operacionais duplicados/contraditórios e produzir índice inequívoco de vigência.
+- [x] Verificar estaticamente os links Markdown locais nos **100 documentos** da branch `main`: 99 referências internas encontradas; uma referência histórica não materializada em `historico/repositorio-2026-09-24/README.md` para `MEMORIA-DE-TRABALHO.md`. Links externos/âncoras e outras sintaxes ainda por validar. Ver [auditoria](AUDITORIA-LINKS-DUPLICADOS-2026-10-10.md).
+- [ ] Levantar documentos operacionais duplicados/contraditórios e produzir índice inequívoco de vigência. Existe [índice parcial](INDICE-DE-VIGENCIA-DOCUMENTAL-2026-10-10.md). A PR #41 apresenta decisões mais recentes sobre Conductor/MCP do que a `main`, sem merge confirmado; não sobrepor edições.
 - [ ] Confirmar com o Codex que a cópia local está publicada e depois comparar manifestos/hashes de documentos.
 - [ ] Verificar que não foram incluídos segredos, informação pessoal ou grandes binários inadequados num repositório público.
 - [ ] Rever os resultados antes de qualquer merge.
