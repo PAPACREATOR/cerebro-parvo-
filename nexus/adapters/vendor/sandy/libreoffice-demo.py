@@ -106,8 +106,12 @@ def finish_profile_setup(profile):
     tree = ET.parse(path)
     root = tree.getroot()
     root.set('xmlns:xs', 'http://www.w3.org/2001/XMLSchema')
-    for location, name in (('/org.openoffice.Setup/Product', 'WhatsNew'),
-                           ('/org.openoffice.Office.Common/Misc', 'ShowTipOfTheDay')):
+    # Match the verified Writer Lab's most restrictive macro level even
+    # though the input ZIP validator separately rejects macros and OLE.
+    for location, name, value in (
+            ('/org.openoffice.Setup/Product', 'WhatsNew', 'false'),
+            ('/org.openoffice.Office.Common/Misc', 'ShowTipOfTheDay', 'false'),
+            ('/org.openoffice.Office.Common/Security/Scripting', 'MacroSecurityLevel', '3')):
         matches = [prop for item in root.findall('item')
                    if item.get('{' + oor + '}path') == location
                    for prop in item.findall('prop') if prop.get('{' + oor + '}name') == name]
@@ -119,7 +123,7 @@ def finish_profile_setup(profile):
             prop.clear()
             prop.set('{' + oor + '}name', name)
             prop.set('{' + oor + '}op', 'fuse')
-            ET.SubElement(prop, 'value').text = 'false'
+            ET.SubElement(prop, 'value').text = value
     tree.write(path, encoding='utf-8', xml_declaration=True)
 
 
@@ -239,13 +243,19 @@ def launch(args):
                                 process.wait(timeout=2)
                             raise RuntimeError("Writer phase exceeded the 45-second native budget")
                     except BaseException:
-                        # Never remove temp while our child is still using it,
-                        # including when publishing run metadata fails.
-                        try:
-                            if process.poll() is None:
+                        # No unbounded wait on any exception path: terminate
+                        # the child tree before cleanup/restoration. Sandy's
+                        # own Job Object still owns the sandboxed descendants.
+                        if process.poll() is None:
+                            try:
                                 process.send_signal(signal.CTRL_BREAK_EVENT)
-                        finally:
-                            process.wait()
+                            except OSError:
+                                pass
+                            try:
+                                process.wait(timeout=2)
+                            except subprocess.TimeoutExpired:
+                                process.kill()
+                                process.wait(timeout=2)
                         raise
 
             report(f'Scratch: {scratch}\nWorking folder: {work}\nConfig: {config_path}\nLogs: {run}')
