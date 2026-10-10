@@ -93,11 +93,11 @@ el("form").onsubmit=async event=>{
     // buttons, parser authority, execution ticket or Canonical promotion.
     // ?? pesquisar termo                 -> Canonical only
     // ?? pesquisar rascunhos termo       -> explicit Creative inclusion
-    const searchCommand=/^\\?\\?\\s+(?:pesquisar|procurar)\\s+(.+)$/iu.exec(payload.text.trim());
+    const searchCommand=/^\?\?\s+(?:pesquisar|procurar)\s+(.+)$/iu.exec(payload.text.trim());
     if (searchCommand && !payload.attachment && !payload.filename) {
       let term=searchCommand[1].trim();
-      const drafts=/^rascunhos\\s+/iu.test(term);
-      if (drafts) term=term.replace(/^rascunhos\\s+/iu,"").trim();
+      const drafts=/^rascunhos\s+/iu.test(term);
+      if (drafts) term=term.replace(/^rascunhos\s+/iu,"").trim();
       if (!term || term.length>200) throw new Error("Escreve um termo de pesquisa até 200 caracteres.");
       const answer=await api("/api/search",{query:term,include_creative:drafts,limit:8});
       if(revision!==editRevision) throw new Error("O pedido mudou durante a pesquisa.");
@@ -108,7 +108,7 @@ el("form").onsubmit=async event=>{
       el("message").textContent=answer.results.length+" resultado(s). Fontes verificadas pelo Nexus; nenhum processo executado.";
       el("content").textContent=answer.results.map((entry,i)=>
         (i+1)+". "+entry.authority+" · "+entry.process_id+" · "+entry.run_id+
-        "\\n"+entry.snippet).join("\\n\\n") || "Não foram encontrados resultados aprovados neste âmbito.";
+        "\n"+entry.snippet).join("\n\n") || "Não foram encontrados resultados aprovados neste âmbito.";
       el("actions").hidden=true;el("pdf").hidden=true;
       return;
     }
