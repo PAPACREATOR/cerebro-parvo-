@@ -1,0 +1,216 @@
+"""Trusted, bounded Writer bridge using the pinned Sandy LPAC launcher.
+
+Only a synthetic profile initialization executes outside LPAC. The user's DOCX
+or ODT is opened exclusively by soffice.bin in Sandy LPAC. This module owns
+neither policy, decisions nor Store; Host retains all authority and Human Gate.
+Hrvoje Abraham's MIT demo/launcher contract is vendored with its license.
+"""
+import ctypes as C
+from ctypes import wintypes as W
+import hashlib
+import json
+import os
+from pathlib import Path
+import shutil
+import subprocess
+import sys
+
+from nexus.contracts import Blocked, strict_json
+from nexus.adapters.office import document_kind, pdf_bytes
+from nexus.adapters.runner import PROCESS_TO_TOOL, _trace
+
+SANDY_SHA256 = "cbfc30709f80e63b201f1944c34692fc430d8aa42d6cd2823fcc670675307eac"
+SANDY_SIZE = 1159680
+VENDOR = Path(__file__).resolve().parent / "vendor" / "sandy"
+
+
+def digest_file(path):
+    h = hashlib.sha256()
+    with Path(path).open("rb") as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            h.update(block)
+    return h.hexdigest()
+
+
+def _native_dacl(path):
+    a, k = C.WinDLL("advapi32", use_last_error=True), C.WinDLL("kernel32", use_last_error=True)
+    a.GetNamedSecurityInfoW.argtypes = [W.LPCWSTR, W.DWORD, W.DWORD, C.c_void_p,
+        C.c_void_p, C.c_void_p, C.c_void_p, C.POINTER(C.c_void_p)]
+    a.GetNamedSecurityInfoW.restype = W.DWORD
+    a.ConvertSecurityDescriptorToStringSecurityDescriptorW.argtypes = [
+        C.c_void_p, W.DWORD, W.DWORD, C.POINTER(C.c_void_p), C.c_void_p]
+    a.ConvertSecurityDescriptorToStringSecurityDescriptorW.restype = W.BOOL
+    k.LocalFree.argtypes = [C.c_void_p]
+    desc, value = C.c_void_p(), C.c_void_p()
+    err = a.GetNamedSecurityInfoW(str(path), 1, 4, None, None, None, None, C.byref(desc))
+    if err:
+        raise Blocked("Não foi possível verificar a DACL do ensaio Writer.")
+    try:
+        if not a.ConvertSecurityDescriptorToStringSecurityDescriptorW(desc, 1, 4, C.byref(value), None):
+            raise Blocked("DACL Writer ilegível.")
+        return C.wstring_at(value)
+    finally:
+        if value: k.LocalFree(value)
+        if desc: k.LocalFree(desc)
+
+
+def _restore_exact_ai_only(before, roots):
+    """Restore only AI control-bit bookkeeping after child and Sandy cleanup.
+
+    Reject any changed ACE/control flag, wrong path or incomplete restore.
+    No general permission grant, no silent normalization and no host tree ACL.
+    """
+    a, k = C.WinDLL("advapi32", use_last_error=True), C.WinDLL("kernel32", use_last_error=True)
+    a.ConvertStringSecurityDescriptorToSecurityDescriptorW.argtypes = [
+        W.LPCWSTR, W.DWORD, C.POINTER(C.c_void_p), C.c_void_p]
+    a.ConvertStringSecurityDescriptorToSecurityDescriptorW.restype = W.BOOL
+    a.SetFileSecurityW.argtypes = [W.LPCWSTR, W.DWORD, C.c_void_p]
+    a.SetFileSecurityW.restype = W.BOOL
+    k.LocalFree.argtypes = [C.c_void_p]
+    changes = []
+    checked_roots = tuple(Path(x).resolve() for x in roots)
+    for path, old in before.items():
+        real = Path(path).resolve()
+        if not any(real == root or root in real.parents for root in checked_roots):
+            raise Blocked("Restauro Writer fora da área temporária proibido.")
+        if real != Path(path).absolute() or real.is_junction() or real.is_symlink():
+            raise Blocked("Diretório Writer redirecionado.")
+        after = _native_dacl(real)
+        if after == old:
+            continue
+        if not old.startswith("D:(") or after != "D:AI" + old[2:]:
+            raise Blocked("DACL Writer inesperada: revisão humana necessária.")
+        changes.append((real, old))
+    restored = []
+    for path, original in changes:
+        descriptor = C.c_void_p()
+        if not a.ConvertStringSecurityDescriptorToSecurityDescriptorW(original, 1, C.byref(descriptor), None):
+            raise Blocked("Não foi possível construir a DACL original Writer.")
+        try:
+            if not a.SetFileSecurityW(str(path), 4, descriptor):
+                raise Blocked("Restauro estrito da DACL Writer falhou.")
+        finally:
+            if descriptor: k.LocalFree(descriptor)
+        if _native_dacl(path) != original:
+            raise Blocked("A DACL Writer mudou após o restauro.")
+        restored.append(str(path))
+    if any(_native_dacl(path) != value for path, value in before.items()):
+        raise Blocked("Ficaram direitos Writer por reconciliar.")
+    return restored
+
+
+def _tree_identity(root):
+    """Exact read-only file identity; fails on junctions/symlinks."""
+    h, count = hashlib.sha256(), 0
+    for path in sorted(root.rglob("*")):
+        if path.is_symlink() or path.is_junction():
+            raise Blocked("Árvore LibreOffice contém redirecionamento não autorizado.")
+        if path.is_file():
+            relative = str(path.relative_to(root)).replace("\\", "/")
+            h.update(relative.encode("utf-8"))
+            h.update(b"\0")
+            h.update(bytes.fromhex(digest_file(path)))
+            count += 1
+    return count, h.hexdigest()
+
+
+def convert(process, work):
+    """Return the same runner envelope as before, for existing Host/Store gates."""
+    if os.name != "nt" or process not in ("book", "convert_pdf"):
+        raise Blocked("Writer requer o Windows e uma operação autorizada.")
+    work = Path(work).resolve()
+    if work.is_symlink() or work.is_junction() or work.name == "":
+        raise Blocked("Área temporária inválida.")
+    original = work / "input.bin"
+    raw = original.read_bytes()
+    kind = document_kind(raw)
+    cfg = strict_json((work / "libreoffice.json").read_bytes())
+    if not isinstance(cfg, dict) or set(cfg) != {"executable", "sandy"}:
+        raise Blocked("Writer LPAC requer instalação e Sandy fixados na configuração.")
+    if any(not isinstance(x, str) for x in cfg.values()):
+        raise Blocked("Configuração Writer inválida.")
+    executable, sandy = (Path(cfg[key]) for key in ("executable", "sandy"))
+    if (not executable.is_absolute() or executable.name.lower() != "soffice.com"
+            or not executable.is_file() or not sandy.is_absolute()
+            or sandy.name.lower() != "sandy.exe" or not sandy.is_file()):
+        raise Blocked("Writer/Sandy instalado não corresponde ao contrato.")
+    if sandy.stat().st_size != SANDY_SIZE or digest_file(sandy) != SANDY_SHA256:
+        raise Blocked("Sandy não corresponde ao binário v0.9994 aprovado.")
+    install = executable.parent.parent
+    if (install.is_junction() or install.is_symlink() or
+            install.resolve() != install.absolute()):
+        raise Blocked("Instalação Writer redirecionada.")
+    stage, copied = work / "writer-lpac", work / "writer-runtime-copy"
+    # Do not operate on the user-installed Writer tree. Sandy may change ACL
+    # metadata, so its entire runtime is copied to this disposable task.
+    copied.mkdir()
+    for source in install.iterdir():
+        target = copied / source.name
+        if source.is_symlink() or source.is_junction():
+            raise Blocked("Instalação Writer contém redirecionamento.")
+        if source.is_dir():
+            shutil.copytree(source, target)
+        elif source.is_file():
+            shutil.copy2(source, target)
+    identity = _tree_identity(copied)
+    stage.mkdir()
+    for name in ("profile", "work", "temp"):
+        (stage / name).mkdir()
+    document = stage / "work" / ("resultado" + kind)
+    document.write_bytes(raw)
+    source_hash = hashlib.sha256(raw).hexdigest()
+    # The 4 relevant mutable paths and the runtime copy were measured in the
+    # successful Windows A/B laboratory; never restore outside work.
+    paths = (copied, stage / "profile", stage / "work", stage / "temp")
+    before = {str(p): _native_dacl(p) for p in paths}
+    script = VENDOR / "libreoffice-demo.py"
+    cmd = [sys.executable, "-I", str(script), "--scratch", str(stage),
+           "--libreoffice", str(copied), "--sandy", str(sandy), "--",
+           "--headless", "--convert-to", "pdf:writer_pdf_Export",
+           "--outdir", str(stage / "work"), str(document)]
+    # The trusted subprocess only warms up a synthetic fixture. The real
+    # user-supplied document is read only after Sandy's LPAC setup.
+    process_handle = None
+    try:
+        process_handle = subprocess.Popen(cmd, cwd=work, stdin=subprocess.PIPE,
+                        stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                        creationflags=subprocess.CREATE_NO_WINDOW | subprocess.CREATE_NEW_PROCESS_GROUP)
+        out, err = process_handle.communicate(timeout=135)
+    except subprocess.TimeoutExpired:
+        if process_handle is not None:
+            subprocess.run([str(Path(os.environ["SystemRoot"]) / "System32/taskkill.exe"),
+                            "/PID", str(process_handle.pid), "/T", "/F"],
+                           capture_output=True, timeout=10)
+            process_handle.kill()
+            process_handle.wait()
+        raise Blocked("Execução Writer excedeu o prazo global do ensaio.") from None
+    finally:
+        # The original Sandy proof established the job closes on launcher
+        # termination. Cleanup is also required before assessing the DACL.
+        clean = subprocess.run([str(sandy), "--cleanup"], capture_output=True, timeout=15)
+        if clean.returncode != 0:
+            raise Blocked("Limpeza Sandy falhou; o resultado não pode ser aceite.")
+    restored = _restore_exact_ai_only(before, (work,))
+    if process_handle is None or process_handle.returncode != 0:
+        raise Blocked("O Writer em LPAC não concluiu a conversão.")
+    state_path = stage / "last-run.json"
+    state = strict_json(state_path.read_bytes())
+    if state.get("phase") != "finished" or state.get("exit_code") != 0:
+        raise Blocked("Sandy não confirmou o encerramento da operação.")
+    if original.read_bytes() != raw or document.read_bytes() != raw:
+        raise Blocked("Os bytes originais mudaram durante a conversão.")
+    if _tree_identity(copied) != identity:
+        raise Blocked("O runtime Writer foi alterado.")
+    generated = stage / "work" / "resultado.pdf"
+    pdf = pdf_bytes(generated)
+    if (work / "resultado.pdf").exists():
+        raise Blocked("O resultado PDF já existe.")
+    (work / "resultado.pdf").write_bytes(pdf)
+    evidence_hash = hashlib.sha256(pdf).hexdigest()
+    result = {
+        "status": "UNKNOWN", "outcome": "candidate", "title": "PDF convertido",
+        "markdown": "# PDF convertido\n\nO original foi conservado. Revê o PDF antes de aprovar; a conversão não prova a fidelidade do conteúdo.",
+        "ai_calls": 0, "artifact": {"name": "resultado.pdf", "sha256": evidence_hash},
+        "evidence": [{"capability": "libreoffice.writer-pdf", "status": "PASS", "value": evidence_hash}],
+    }
+    return {"result": result, "trace": _trace(process, PROCESS_TO_TOOL[process])}
