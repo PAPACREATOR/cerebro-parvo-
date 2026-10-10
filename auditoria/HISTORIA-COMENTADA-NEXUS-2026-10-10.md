@@ -76,6 +76,21 @@ A evolução das bibliotecas e runtimes **não revogou** estes princípios: fina
 | Ordens de Work, Codex e PRs em concorrência | [issue #33](https://github.com/PAPACREATOR/cerebro-parvo-/issues/33), [PR #43](https://github.com/PAPACREATOR/cerebro-parvo-/pull/43), [PR #45](https://github.com/PAPACREATOR/cerebro-parvo-/pull/45) |
 | Política de documentação e divergências abertas | [índice de vigência](INDICE-DE-VIGENCIA-DOCUMENTAL-2026-10-10.md) + [audit links/branches](PR41-AUDITORIA-LIGACOES-2026-10-10.md) |
 
+## Proveniência dos originais preservados em 27/09
+
+O [manifesto de preservação](manifesto-preservacao.json) existente em `main` contém **47 entradas** com caminho, origem declarada e campo SHA-256 de 64 algarismos hexadecimais:
+
+| Grupo original | Entradas do manifesto | Proveniência declarada |
+| --- | ---: | --- |
+| `historico/repositorio-2026-09-24/` | **35** | GitHub `main@83d478a982cfb515e7bd90b86a7d502b0965ca57` |
+| `docs/baseline/` | **3** | Ficheiros Markdown recuperados da Library em 26/09 |
+| `implementacao/candidata-2026-09-27/` | **9** | ZIP revisto de 27/09, preservado como candidato, não release |
+| **Total** | **47** | Três origens diferentes; não são 47 versões do mesmo documento |
+
+Nesta auditoria verifiquei a **estrutura JSON do manifesto, a existência dos 47 caminhos na árvore publicada de `main` e o formato dos campos SHA-256**. **Não recomputei os SHA-256 dos 47 conteúdos a partir dos bytes originais**, nem comparei a Library ou o disco `C:\Nexus`. Logo, é uma validação de inventário, **não** uma nova prova criptográfica de equivalência byte-a-byte.
+
+Os 35 ficheiros do arquivo antigo permanecem em paths estáveis. O documento `MEMORIA-DE-TRABALHO.md` não consta desse conjunto e é excluído pelo `.gitignore`; não é um «36.º ficheiro» comprovadamente perdido.
+
 ## Lacunas identificadas (não reconstruir por imaginação)
 
 - `historico/repositorio-2026-09-24/README.md` aponta para `MEMORIA-DE-TRABALHO.md`; esse documento **não** existe na árvore publicada. O `.gitignore` atual exclui-o expressamente. **Não copiar nem publicar** conteúdo reservado só para reparar um link histórico.
