@@ -18,6 +18,10 @@ on:
       - 'nexus/tests/test_frontdoor_preexecution_gate.py'
       - 'nexus/app.py'
       - 'nexus/ui/app.js'
+      - 'nexus/ui/style.css'
+      - 'nexus/tests/test_folha_interpret.py'
+      - 'nexus/tests/test_folha_writer_preexecution.py'
+      - 'nexus/tests/folha_revision_smoke.cjs'
       - 'nexus/ui/index.html'
       - 'nexus/docs/PLANO-TESTES-FRONTDOOR-10000-2026-10-04.md'
       - '.github/workflows/frontdoor-lab.yml'
@@ -28,6 +32,10 @@ on:
       - 'nexus/schemas/frontdoor_rules.json'
       - 'nexus/app.py'
       - 'nexus/ui/app.js'
+      - 'nexus/ui/style.css'
+      - 'nexus/tests/test_folha_interpret.py'
+      - 'nexus/tests/test_folha_writer_preexecution.py'
+      - 'nexus/tests/folha_revision_smoke.cjs'
       - 'nexus/ui/index.html'
       - 'nexus/tests/test_frontdoor_prefixes.py'
       - 'nexus/tests/test_frontdoor_host_boundary.py'
@@ -57,6 +65,12 @@ jobs:
           python -c "import hashlib,json,pathlib;
           p=['nexus/app.py','nexus/host.py','nexus/frontdoor.py','nexus/frontdoor_rules.json','nexus/schemas/frontdoor_rules.json','nexus/ui/index.html','nexus/ui/app.js'];
           print('FRONTDOOR_SHA256='+json.dumps({x.split('nexus/',1)[1]:hashlib.sha256(pathlib.Path(x).read_bytes()).hexdigest() for x in p},sort_keys=True))"
+      - name: Folha JavaScript parse + edit revision guards
+        run: |
+          node --check nexus/ui/app.js
+          node nexus/tests/folha_revision_smoke.cjs
+      - name: Folha read-only seven-intent API gates
+        run: python -m pytest nexus/tests/test_folha_interpret.py nexus/tests/test_folha_writer_preexecution.py -q -o pythonpath=.
       - name: L0 prefix parser
         run: python -m pytest nexus/tests/test_frontdoor_prefixes.py -q -o pythonpath=.
       - name: L1 L2 natural and ambiguity

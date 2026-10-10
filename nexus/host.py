@@ -22,7 +22,9 @@ def verify_integrity():
     required = {
         "__init__.py", "app.py", "host.py", "store.py", "contracts.py", "approval_binding.py", "instance.py",
         "windows_sandbox.py", "native_mcp.py", "frontdoor.py", "frontdoor_rules.json", "schemas/frontdoor_rules.json", "adapters/runner.py", "mcp_client.py", "mcp_tools_server.py", "adapters/verify_direct.py", "adapters/tools.py", "adapters/notebook.py",
-        "adapters/languagetool.py", "adapters/office.py", "adapters/media_tools.py", "adapters/product_routes.py",
+        "adapters/languagetool.py", "adapters/office.py", "adapters/writer_sandy.py",
+        "adapters/vendor/sandy/libreoffice-demo.py", "adapters/vendor/sandy/libreoffice.toml",
+        "adapters/vendor/sandy/LICENSE", "adapters/media_tools.py", "adapters/product_routes.py",
         "laws/CONSTITUTION.md", "laws/policy.json",
         "schemas/request.json", "schemas/result.json", "schemas/cognitive.json", "schemas/languagetool.json",
         "ui/index.html", "ui/app.js", "ui/style.css",
@@ -84,24 +86,33 @@ class Host:
                 work = Path(temporary) / "runs" / run_id
                 work.mkdir(parents=True)
                 roots = prepare_task(process, directory / "input.bin", work, config_root=self.store.root)
-                command = [sys.executable, "-I", str(ROOT / "adapters/runner.py"), process, str(work / "input.bin")]
-                with launch_confined(command, cwd=work, env=process_environment(work),
-                                     read_roots=roots, deny_roots=(self.store.root,)) as proc:
-                    try:
-                        stdout, stderr = proc.communicate(
-                            timeout=150 if process in ("interpret", "video", "podcast", "visual_podcast") else 75
-                        )
-                    except subprocess.TimeoutExpired:
-                        raise Blocked("A ferramenta excedeu o tempo permitido.") from None
-                    code = proc.returncode
-                # Tool process AND descendants are dead before Host reads artefacts.
+                if process in ("book", "convert_pdf"):
+                    # Necessary exception: Office's named pipe cannot be created
+                    # in the original LPAC runner. A pinned Sandy launcher owns
+                    # the Writer-only LPAC/Job; the Host remains the sole authority.
+                    from nexus.adapters.writer_sandy import convert as writer_convert
+                    envelope = writer_convert(process, work)
+                    stdout = json.dumps(envelope, ensure_ascii=False).encode("utf-8")
+                    stderr = b""
+                else:
+                    command = [sys.executable, "-I", str(ROOT / "adapters/runner.py"), process, str(work / "input.bin")]
+                    with launch_confined(command, cwd=work, env=process_environment(work),
+                                         read_roots=roots, deny_roots=(self.store.root,)) as proc:
+                        try:
+                            stdout, stderr = proc.communicate(
+                                timeout=150 if process in ("interpret", "video", "podcast", "visual_podcast") else 75
+                            )
+                        except subprocess.TimeoutExpired:
+                            raise Blocked("A ferramenta excedeu o tempo permitido.") from None
+                        code = proc.returncode
+                    if code:
+                        raise Blocked("A execução da ferramenta falhou. O pedido foi conservado.")
+                    if not stdout.strip():
+                        raise Blocked("A ferramenta não devolveu um resultado.")
+                    envelope = strict_json(stdout)
+                # All tool descendants must be dead before Host reads artefacts.
                 atomic(directory / "execution.stderr.txt", stderr)
                 atomic(directory / "execution.stdout.json", stdout)
-                if code:
-                    raise Blocked("A execução da ferramenta falhou. O pedido foi conservado.")
-                if not stdout.strip():
-                    raise Blocked("A ferramenta não devolveu um resultado.")
-                envelope = strict_json(stdout)
                 if (not isinstance(envelope, dict) or set(envelope) != {"result", "trace"}
                         or not isinstance(envelope["trace"], dict)):
                     raise Blocked("Resposta de execução inválida.")
