@@ -138,6 +138,20 @@ def make_server(host, port=0, *, allow_direct_run=False):
                 if not isinstance(data, dict):
                     raise Blocked("Pedido inválido.")
                 path = urlsplit(self.path).path
+                if path == "/api/interpret":
+                    # Read-only Folha interpretation. Parsing never executes,
+                    # creates Store records, or grants any tool permission.
+                    if set(data) != {"text"} or not isinstance(data["text"], str):
+                        raise Blocked("Pedido de interpretação inválido.")
+                    parsed = parse(data["text"])
+                    return self.reply(200, {
+                        "status": parsed.status,
+                        "intent": parsed.intent,
+                        "original": parsed.original,
+                        "parser": parsed.parser,
+                        "confirmation_required": False,
+                        "execution": "NOT_AUTHORIZED",
+                    })
                 if path == "/api/prepare-run":
                     request, preview = _natural_request(data, host)
                     now = time.monotonic()
