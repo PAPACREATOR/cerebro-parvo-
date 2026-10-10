@@ -74,13 +74,14 @@ def _restore_exact_ai_only(before, roots):
     checked_roots = tuple(Path(x).resolve() for x in roots)
     for path, old in before.items():
         real = Path(path).resolve()
-        if not any(real == root or root in real.parents for root in checked_roots):
-            raise Blocked("Restauro Writer fora da área temporária proibido.")
         if real != Path(path).absolute() or real.is_junction() or real.is_symlink():
             raise Blocked("Diretório Writer redirecionado.")
         after = _native_dacl(real)
         if after == old:
+            # Host task is a read-only security canary; never mutate it.
             continue
+        if not any(real == root or root in real.parents for root in checked_roots):
+            raise Blocked("Permissões fora da área Writer mudaram; recusa de restauro.")
         if not old.startswith("D:(") or after != "D:AI" + old[2:]:
             raise Blocked("DACL Writer inesperada: revisão humana necessária.")
         changes.append((real, old))
