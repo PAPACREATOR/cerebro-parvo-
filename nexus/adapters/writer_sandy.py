@@ -21,12 +21,9 @@ from nexus.adapters.runner import PROCESS_TO_TOOL, _trace
 
 SANDY_SHA256 = "cbfc30709f80e63b201f1944c34692fc430d8aa42d6cd2823fcc670675307eac"
 SANDY_SIZE = 1159680
-# Official LibreOffice 26.2.6.2 archive: verified in Writer Lab PR #3.
-OFFICE_PINS = {
-    "soffice.bin": "c0d5fabc7717c1a32a281f44798f964c458f406c90fb508ba03b98b53fa0c86c",
-    "soffice.com": "e3e06a68c05b94b9f333ead258f0df6f288e22002287896f21e9bad2821ff122",
-    "version.ini": "6a4f4cb71b73aecaa57f1fe09928944d4b1ab802464cf39e03fb205ef640817b",
-}
+# CI authenticates the official 26.2.6.2 MSI by its published SHA-256.
+# Never invent per-binary hashes: the installed tree is verified byte-for-byte
+# against an isolated disposable copy before any user document is opened.
 VENDOR = Path(__file__).resolve().parent / "vendor" / "sandy"
 
 
@@ -147,10 +144,10 @@ def convert(process, work):
     if (install.is_junction() or install.is_symlink() or
             install.resolve() != install.absolute()):
         raise Blocked("Instalação Writer redirecionada.")
-    for name, expected in OFFICE_PINS.items():
+    for name in ("soffice.bin", "soffice.com", "version.ini"):
         item = install / "program" / name
-        if not item.is_file() or digest_file(item) != expected:
-            raise Blocked("É necessária a versão oficial auditada do Writer 26.2.6.2.")
+        if not item.is_file() or item.is_symlink() or item.is_junction():
+            raise Blocked("A instalação Writer está incompleta ou foi redirecionada.")
     source_identity = _tree_identity(install)
     stage, copied = work / "writer-lpac", work / "writer-runtime-copy"
     # Do not operate on the user-installed Writer tree. Sandy may change ACL
