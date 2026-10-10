@@ -99,12 +99,29 @@ def test_installed_writer_is_confined_and_returns_only_a_human_approved_candidat
     assert executable.is_file()
     data = tmp_path / "data"
     data.mkdir()
-    (data / "libreoffice.json").write_text(json.dumps({"executable": str(executable)}), encoding="utf-8")
+    sandy = Path(os.environ["SANDY_EXE"])
+    assert sandy.is_file()
+    (data / "libreoffice.json").write_text(
+        json.dumps({"executable": str(executable), "sandy": str(sandy)}), encoding="utf-8")
     raw = document()
     host = Host(data)
+    # Real product entry: the Folha requests interpretation and a one-use
+    # ticket. No direct execution route or delegated authority is enabled.
+    text = "& converter para pdf" if process == "convert_pdf" else "& exportar manuscrito para pdf"
+    proposal = {"text": text, "filename": "original.odt",
+                "attachment": base64.b64encode(raw).decode("ascii")}
     with http(host) as call:
-        run = call("/api/run", {"process": process, "text": "", "filename": "original.odt",
-                               "attachment": base64.b64encode(raw).decode("ascii")})["run_id"]
+        from urllib.error import HTTPError
+        with pytest.raises(HTTPError) as forbidden:
+            call("/api/run", {"process": process, **proposal})
+        assert forbidden.value.code == 403
+        prepared = call("/api/prepare-run", proposal)
+        assert prepared["process"] == process
+        assert prepared["filename"] == proposal["filename"]
+        assert prepared["attachment_bytes"] == len(raw)
+        assert call("/api/runs") == []
+        run = call("/api/confirm-run", {"ticket": prepared["ticket"],
+                                      "confirmed": True, **proposal})["run_id"]
         deadline = time.monotonic() + 90
         state = call("/api/runs/" + run)
         while state["status"] == "RUNNING" and time.monotonic() < deadline:

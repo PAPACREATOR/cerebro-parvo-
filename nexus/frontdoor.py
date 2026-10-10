@@ -13,6 +13,7 @@ _RULES = validate("frontdoor_rules", strict_json((ROOT / "frontdoor_rules.json")
 PREFIXES = tuple((item[0], item[1]) for item in _RULES["prefixes"])
 NATURAL_RULES = _RULES["natural_rules"]
 CLARIFICATION_PATTERNS = _RULES["clarification_patterns"]
+OPERATION_RULES = _RULES["operation_rules"]
 MAX_TEXT_CHARS = _RULES["max_text_chars"]
 
 
@@ -65,10 +66,28 @@ def _natural(text: str, *, original: str | None = None, parser="eliza-rules-v1",
     return ParsedInput("RESOLVED", matches[0], source, source, parser, False, shadow)
 
 
+
+def propose_operation(parsed: ParsedInput, *, filename: str, attachment: str) -> str | None:
+    """Return one explicitly configured process proposal; never execute it."""
+    if type(parsed) is not ParsedInput or parsed.status != "RESOLVED":
+        return None
+    if not isinstance(filename, str) or not isinstance(attachment, str):
+        return None
+    normal = _normalise(parsed.content)
+    matches = []
+    for rule in OPERATION_RULES:
+        if rule["intent"] != parsed.intent:
+            continue
+        if rule["requires_attachment"] and (not filename or not attachment):
+            continue
+        if any(re.search(pattern, normal) for pattern in rule["patterns"]):
+            matches.append(rule["process"])
+    return matches[0] if len(matches) == 1 else None
+
 def parse_explicit(text: str) -> ParsedInput:
     if not isinstance(text, str):
         raise TypeError("text must be str")
-    if len(text) > MAX_TEXT_CHARS or any(ord(c) < 32 and c not in "\t\n\r" for c in text):
+    if len(text) > MAX_TEXT_CHARS or any((ord(c) < 32 and c not in "\t\n\r") or 127 <= ord(c) < 160 for c in text):
         return ParsedInput("BLOCKED", None, text, "", "prefix-v1", False)
     if not text.strip():
         return ParsedInput("UNRESOLVED", None, text, "", "prefix-v1", False)
