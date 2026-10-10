@@ -21,6 +21,12 @@ from nexus.adapters.runner import PROCESS_TO_TOOL, _trace
 
 SANDY_SHA256 = "cbfc30709f80e63b201f1944c34692fc430d8aa42d6cd2823fcc670675307eac"
 SANDY_SIZE = 1159680
+# Official LibreOffice 26.2.6.2 archive: verified in Writer Lab PR #3.
+OFFICE_PINS = {
+    "soffice.bin": "c0d5fabc7717c1a32a281f44798f964c458f406c90fb508ba03b98b53fa0c86c",
+    "soffice.com": "e3e06a68c05b94b9f333ead258f0df6f288e22002287896f21e9bad2821ff122",
+    "version.ini": "6a4f4cb71b73aecaa57f1fe09928944d4b1ab802464cf39e03fb205ef640817b",
+}
 VENDOR = Path(__file__).resolve().parent / "vendor" / "sandy"
 
 
@@ -134,12 +140,18 @@ def convert(process, work):
             or not executable.is_file() or not sandy.is_absolute()
             or sandy.name.lower() != "sandy.exe" or not sandy.is_file()):
         raise Blocked("Writer/Sandy instalado não corresponde ao contrato.")
-    if sandy.stat().st_size != SANDY_SIZE or digest_file(sandy) != SANDY_SHA256:
+    if (sandy.is_symlink() or sandy.is_junction() or sandy.resolve() != sandy.absolute()
+            or sandy.stat().st_size != SANDY_SIZE or digest_file(sandy) != SANDY_SHA256):
         raise Blocked("Sandy não corresponde ao binário v0.9994 aprovado.")
     install = executable.parent.parent
     if (install.is_junction() or install.is_symlink() or
             install.resolve() != install.absolute()):
         raise Blocked("Instalação Writer redirecionada.")
+    for name, expected in OFFICE_PINS.items():
+        item = install / "program" / name
+        if not item.is_file() or digest_file(item) != expected:
+            raise Blocked("É necessária a versão oficial auditada do Writer 26.2.6.2.")
+    source_identity = _tree_identity(install)
     stage, copied = work / "writer-lpac", work / "writer-runtime-copy"
     # Do not operate on the user-installed Writer tree. Sandy may change ACL
     # metadata, so its entire runtime is copied to this disposable task.
@@ -153,6 +165,12 @@ def convert(process, work):
         elif source.is_file():
             shutil.copy2(source, target)
     identity = _tree_identity(copied)
+    if identity != source_identity:
+        raise Blocked("Cópia Writer diferente da instalação de origem.")
+    sandy_copy = work / "sandy.exe"
+    shutil.copy2(sandy, sandy_copy)
+    if sandy_copy.stat().st_size != SANDY_SIZE or digest_file(sandy_copy) != SANDY_SHA256:
+        raise Blocked("Cópia do Sandy diferente da fonte autenticada.")
     stage.mkdir()
     for name in ("profile", "work", "temp"):
         (stage / name).mkdir()
@@ -161,11 +179,11 @@ def convert(process, work):
     source_hash = hashlib.sha256(raw).hexdigest()
     # The 4 relevant mutable paths and the runtime copy were measured in the
     # successful Windows A/B laboratory; never restore outside work.
-    paths = (copied, stage / "profile", stage / "work", stage / "temp")
+    paths = (work, stage, copied, stage / "profile", stage / "work", stage / "temp")
     before = {str(p): _native_dacl(p) for p in paths}
     script = VENDOR / "libreoffice-demo.py"
     cmd = [sys.executable, "-I", str(script), "--scratch", str(stage),
-           "--libreoffice", str(copied), "--sandy", str(sandy), "--",
+           "--libreoffice", str(copied), "--sandy", str(sandy_copy), "--",
            "--headless", "--convert-to", "pdf:writer_pdf_Export",
            "--outdir", str(stage / "work"), str(document)]
     # The trusted subprocess only warms up a synthetic fixture. The real
@@ -187,7 +205,7 @@ def convert(process, work):
     finally:
         # The original Sandy proof established the job closes on launcher
         # termination. Cleanup is also required before assessing the DACL.
-        clean = subprocess.run([str(sandy), "--cleanup"], capture_output=True, timeout=15)
+        clean = subprocess.run([str(sandy_copy), "--cleanup"], capture_output=True, timeout=15)
         if clean.returncode != 0:
             raise Blocked("Limpeza Sandy falhou; o resultado não pode ser aceite.")
     restored = _restore_exact_ai_only(before, (work,))
@@ -201,6 +219,8 @@ def convert(process, work):
         raise Blocked("Os bytes originais mudaram durante a conversão.")
     if _tree_identity(copied) != identity:
         raise Blocked("O runtime Writer foi alterado.")
+    if digest_file(sandy_copy) != SANDY_SHA256:
+        raise Blocked("O executável Sandy mudou durante a tarefa.")
     generated = stage / "work" / "resultado.pdf"
     pdf = pdf_bytes(generated)
     if (work / "resultado.pdf").exists():
