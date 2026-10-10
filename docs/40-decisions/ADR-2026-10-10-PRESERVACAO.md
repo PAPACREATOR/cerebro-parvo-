@@ -6,7 +6,7 @@ Data: 10-10-2026. Estado: **regra de trabalho desta frente documental**.
 
 **Porquê:** há frentes simultâneas. A PR #41 é de navegação e documentos operacionais; a #46 é auditoria e privacidade; a #48 é inventário/clones; a #43/#45 são implementação candidata; outros laboratórios conservam âmbitos próprios. Editar por cima de outra frente cria conflitos e compromete comparações por SHA.
 
-**Histórico:** conservar versões anteriores, inclusive decisões erradas, hipóteses abandonadas, logs FAIL e créditos externos. Em vez de renomear/mover originais indiscriminadamente, usar índices por época e decisão, com links estáveis. Uma limpeza física exige manifesto, verificação de referências e backup/restauro testado.
+**Histórico:** conservar versões anteriores, inclusive decisões erradas, hipóteses abandonadas, logs FAIL e créditos externos. Em vez de renomear/mover originais indiscriminadamente, usar índices por época e decisão, com links estáveis. A [reconciliação das 11 ligações da PR #46](../99-history/RECONCILIACAO-11-REFERENCIAS-2026-10-10.md) reparou somente a navegação de quatro páginas antigas; guarda os blobs originais por SHA, evita a criação de uma memória reservada fictícia e não atualiza retroativamente provas técnicas. Uma limpeza física exige manifesto, verificação de referências e backup/restauro testado.
 
 **Exceções não presumidas:** documentação aqui não prova segurança integral, cópia total do PC nem conclusão de fases. A integração Sandy está suspensa por decisão humana; os estudos e o crédito de Hrvoje Abraham não são eliminados. Clonar Sir Thaddeus em Linux não prova execução/instalação no Windows.
 
