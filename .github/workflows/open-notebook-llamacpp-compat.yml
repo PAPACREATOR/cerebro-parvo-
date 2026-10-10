@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'nexus/windows/install-nexus-complete.ps1'
+      - 'nexus/adapters/tool_router.py'
       - 'nexus/windows/configure-open-notebook-local.py'
       - '.github/workflows/open-notebook-llamacpp-compat.yml'
   workflow_dispatch:

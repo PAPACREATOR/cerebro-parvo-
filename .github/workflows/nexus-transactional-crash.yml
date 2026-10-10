@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'nexus/store.py'
+      - 'nexus/adapters/tool_router.py'
       - 'nexus/tests/test_store_create_crash_real.py'
       - 'nexus/tests/test_canonical_crash_real.py'
       - '.github/workflows/nexus-transactional-crash.yml'
