@@ -250,6 +250,9 @@ def launch(args):
                             try:
                                 process.send_signal(signal.CTRL_BREAK_EVENT)
                             except OSError:
+                                # Ctrl+Break can race an already-exited child;
+                                # the bounded wait/kill immediately below still
+                                # enforces process termination before cleanup.
                                 pass
                             try:
                                 process.wait(timeout=2)
