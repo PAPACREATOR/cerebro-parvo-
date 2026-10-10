@@ -14,4 +14,4 @@
 
 Índices agora disponíveis sem deslocar originais: [raiz do histórico](../../historico/README.md), [contratos Nexus](../../nexus/docs/README.md), [classificação por papel](CLASSIFICACAO-DOCUMENTAL-2026-10-10.md), [auditoria do código](../10-current/COMPATIBILIDADE-CODIGO-2026-10-10.md).
 
-**Importante:** os caminhos originais e os blobs históricos mantêm-se intactos nesta revisão. Para uma migração física posterior será obrigatório inventário de cada caminho antigo, destino, backlinks, hash e testes de recuperação. Até esse gate, índice novo é mais seguro do que mover documentos.
+**Importante:** os caminhos originais mantêm-se. Quatro páginas de época tiveram reparações limitadas a hiperligações e avisos editoriais; os **blobs originais anteriores à correção continuam recuperáveis por SHA** e estão documentados na [reconciliação das 11 referências](RECONCILIACAO-11-REFERENCIAS-2026-10-10.md). Para uma migração física posterior será obrigatório inventário de cada caminho antigo, destino, backlinks, hash e testes de recuperação. Até esse gate, índice novo é mais seguro do que mover documentos.
