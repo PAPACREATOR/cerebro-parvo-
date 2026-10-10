@@ -67,12 +67,14 @@ def validate_proposal(packet: dict, plan: dict) -> dict:
     if expected_hash != _digest(unsigned):
         raise Blocked("Proposta de flow adulterada.")
 
-    if plan["version"] != 1 or plan["kind"] != "LAB_FLOW_CANDIDATE" or plan["authority"] != "NONE":
+    if type(plan["version"]) is not int or plan["version"] != 1 or plan["kind"] != "LAB_FLOW_CANDIDATE" or plan["authority"] != "NONE":
         raise Blocked("Autoridade de flow inválida.")
     if plan["objective"] != packet["objective"] or plan["context_sha256"] != _digest(packet):
         raise Blocked("Contexto do flow mudou.")
 
-    rebuilt = propose(packet, list(plan["steps"]))
+    if type(plan["steps"]) is not list:
+        raise Blocked("Sequência de flow inválida.")
+    rebuilt = propose(packet, plan["steps"])
     if rebuilt != plan:
         raise Blocked("Proposta de flow não corresponde às fontes verificadas.")
     return plan
