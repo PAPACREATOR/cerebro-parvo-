@@ -12,6 +12,19 @@
 
 As contagens comparam **caminhos**, não diferenças de conteúdo dos caminhos partilhados. As árvores destas quatro refs indicaram `truncated=false`. O «full mirror» datado de 04/10 é mais antigo do que `main` e não prova a cópia atual do PC.
 
+## Comparação documental precisa — PR #41 e PR #45
+
+Os documentos Markdown foram comparados por caminhos e hashes de blob Git:
+- PR #41: 149 ficheiros Markdown; PR #45: 142 ficheiros Markdown.
+- **137 caminhos apresentam bytes idênticos** em ambas as branches, comprovados pelo mesmo blob SHA Git.
+- Quatro caminhos diferem em conteúdo: `CONTRIBUTING.md`, `DECISIONS.md`, `README.md`, `STATUS.md`.
+- PR #45 acrescenta `nexus/docs/WINDOWS-ACCEPTANCE-ISOLATED.md`, ausente na PR #41.
+- Os oito documentos de navegação `docs/00-start-here`, `10-current`, `20-architecture`, `30-help`, `90-research`, `99-history` pertencem à PR #41 e não surgem na árvore da PR #45.
+- Os **cinco documentos exclusivos/alterados da PR #45** foram lidos, com **11 referências relativas Markdown e 0 destinos ausentes**, excluindo blocos de código e código inline.
+- Não declarar validação completa dos 142 documentos da PR #45: os 137 partilhados não foram todos testados contra as diferenças de caminhos entre as branches. As 11 falhas históricas identificadas na PR #41 requerem conferência na PR #45.
+
+Consultar [manifesto por caminho/blob](MANIFESTO-DOCUMENTOS-BRANCHES-2026-10-10.json) para reprodução. Estas conclusões não integram nem aprovam código.
+
 ## Riscos documentais concretos
 - **Main incompleta face ao candidato:** a PR #41 e a PR #45 contêm centenas de caminhos adicionais, incluindo testes, contratos, relatórios e documentação de continuidade. Não migrar nem apagar por comparação apenas com `main`.
 - **Conflito de estado arquitetural:** `main` ainda expõe Conductor como candidato; a documentação de 09/10 na PR #41 considera Kernel/Host/Store + MCP Python sem Activepieces ou Conductor como requisitos de runtime. A issue #33 exige verificação no mesmo SHA antes de declarar produto único.
