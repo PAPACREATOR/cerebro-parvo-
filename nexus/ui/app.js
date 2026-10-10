@@ -91,7 +91,7 @@ el("form").onsubmit=async event=>{
     if (revision!==editRevision) throw new Error("O texto ou anexo mudou durante a preparação. Revê o pedido.");
     const preview=await api("/api/interpret",{text:payload.text});
     if(revision!==editRevision) throw new Error("O texto ou anexo mudou durante a interpretação.");
-    if(preview.status!=="RESOLVED") {
+    if(preview.status!=="RESOLVED"||!["trabalhar","web"].includes(preview.intent)) {
       showInterpretation(preview);
       return;
     }
