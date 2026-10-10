@@ -115,3 +115,16 @@ def test_limits_cannot_be_relaxed_by_input():
 def test_music_validator_needs_structured_source():
     with pytest.raises(Blocked):
         route_request(payload("music", data=b"Som sem tema nem letra"), max_input_bytes=2097152)
+
+
+def test_explicit_web_query_without_file_is_only_a_nonexecuting_spec():
+    request, preview = route_request(
+        {"text": "@ preparar consulta web: fontes de astronomia",
+         "filename": "", "attachment": ""}, max_input_bytes=2097152)
+    assert request["process"] == preview["process"] == "web"
+    assert preview["filename"] == "Texto escrito"
+    assert preview["attachment_bytes"] == len(request["text"].encode("utf-8"))
+    assert "não pesquisa" in preview["summary"].lower()
+    with pytest.raises(Blocked):
+        route_request({"text": "@ preparar consulta web", "filename": "", "attachment": ""},
+                      max_input_bytes=2097152)
