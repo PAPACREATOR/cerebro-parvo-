@@ -16,10 +16,13 @@ Casos FAIL / NOT RUN / POR DEFINIR:
 
 - [ ] Alterações dentro do âmbito e sem novas decisões normativas
 - [ ] Originais/genealogia/proveniência preservados
-- [ ] Nenhum teste omitido/ignorado apresentado como PASS
+- [ ] Nenhum FAIL, SKIP, NOT RUN ou teste omitido/ignorado apresentado como PASS
 - [ ] Cobertura necessária ao IMP demonstrada, ou portão explicitamente não fechado
 - [ ] Matrizes e STATUS atualizados
 - [ ] Dependências e material de terceiros identificados com origem e licença
+- [ ] Testes relevantes adicionados/atualizados quando aplicável e executados, ou marcados NOT RUN
+- [ ] Não inclui segredos nem dados pessoais
+- [ ] A alteração preserva autoridade humana e não dá escrita direta a IA/ferramentas
 
 ## Licença da contribuição
 
@@ -28,3 +31,7 @@ Casos FAIL / NOT RUN / POR DEFINIR:
 O contribuidor mantém o copyright da sua contribuição. O CLA concede ao mantenedor os direitos necessários para distribuir e relicenciar a contribuição, incluindo em ofertas comerciais. Contribuir não cria automaticamente emprego, participação societária, royalties ou direito a receitas; qualquer relação comercial exige acordo escrito separado.
 
 Um check verde da suite fornecida não declara o sistema completo nem o IMP aprovado.
+
+## Explicação humana
+
+Explica o comportamento da alteração em linguagem natural.

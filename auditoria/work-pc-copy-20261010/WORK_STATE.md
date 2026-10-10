@@ -2,6 +2,8 @@
 
 **Resultado da missão: PARCIAL. Fase 1 no PC e cópia PC → GitHub: BLOCKED / NOT RUN.**
 
+O registo de clonagem abaixo corresponde ao commit `bc1935d9707c125509d914fd7eb3e4f35ec584a5`. A continuação de limpeza está em [CLEANUP.md](CLEANUP.md), com datas e verificações em `CLEANUP.json`.
+
 Esta sessão dispõe de um ambiente Linux e acesso ao GitHub. Não dispõe de uma ligação ao filesystem ou shell do computador Windows de Pedro. `C:\Nexus`, `C:\Nexus-Tools` e outras raízes Windows não foram lidas, copiadas ou alteradas. A ausência desses caminhos no Linux não demonstra a sua ausência no PC.
 
 ## Operações efetivamente executadas
