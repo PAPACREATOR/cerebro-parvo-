@@ -27,6 +27,12 @@ Estado: EM CURSO. Não declarar fechado sem inventário completo dos artefactos 
 - [Auditoria de ligações/duplicações](AUDITORIA-LINKS-DUPLICADOS-2026-10-10.md): 100 ficheiros Markdown lidos, 1 referência histórica não materializada, 2 pares de blobs Git idênticos em versões distintas — nada eliminado.
 - PR #41 é a frente de navegação e atualizações de README/STATUS/DECISIONS; a PR #46 mantém-se isolada e não edita essas superfícies.
 
+## Reconciliação entre branches e navegação
+
+- [Comparação de branches](COMPARACAO-BRANCHES-2026-10-10.md): `main` tem 177 ficheiros; PR #41 possui 374 e PR #45 possui 372 (snapshots separados). A branch antiga `pc-full-mirror-20261004` tem 175 ficheiros e **não comprova** a cópia atual do Windows.
+- Documentação nova da PR #41: 8 ficheiros de navegação analisados, 14 referências relativas verificadas, zero destinos em falta (método estático); ver [auditoria de links](AUDITORIA-LINKS-DUPLICADOS-2026-10-10.md).
+- Não consolidar as alterações da PR #41 na PR #46, nem declarar os 374 ficheiros parte da `main`.
+
 ## Política documental
 - Documentos constitucionais, decisões, contratos, testes e evidências são conservados; não reescrever o passado como se tivesse sido outra decisão.
 - Separar explicitamente «vigente», «histórico», «experimental» e «pendente de validação».
