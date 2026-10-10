@@ -2,6 +2,23 @@
 
 **Natureza:** inventário documental de provas externas consultadas, **não** teste executado pela frente documental e **não** certificação do Windows pessoal. Fotografias de commits e execuções; voltar às fontes antes de alterar o estado. **Código, Kernel, Host, Store, sandbox e workflows não foram modificados nesta PR.**
 
+## Resultado mais recente — Writer/PDF PASS no laboratório, PR #3
+
+**PASS confirmado no runner Windows descartável, não no PC pessoal nem no Nexus integrado.** A [Writer Lab PR #3](https://github.com/PAPACREATOR/nexus-writer-lab/pull/3) é uma proposta Draft sobre a PR #2, isolada, no SHA `73be29f01b6928a0058bf2e1b78f607d14329001`. [GitHub Actions Windows 38049519797](https://github.com/PAPACREATOR/nexus-writer-lab/actions/runs/38049519797) **SUCCESS**, com [artefacto 11669370635](https://github.com/PAPACREATOR/nexus-writer-lab/actions/runs/38049519797/artifacts/11669370635). No **mesmo commit**, [auditoria e suites 38049519801](https://github.com/PAPACREATOR/nexus-writer-lab/actions/runs/38049519801) **SUCCESS** e [CodeQL 38049520178](https://github.com/PAPACREATOR/nexus-writer-lab/actions/runs/38049520178) **SUCCESS**.
+
+| Prova A/B | Resultado observado |
+| --- | --- |
+| **A, sem mapeamento** | FAIL de conversão por timeout aos **43,016 s**, sem PDF; Writer terminou (WaitForSingleObject=0), AppContainer+LPAC reais, capability set correto |
+| **B, mapeamento para `\\.\pipe\LOCAL\`** | **PASS de conversão** em **7,218 s**, PDF real **13.902 bytes**, texto extraído **«Lisboa recebeu 12 caixas.»**, SHA-256 do PDF `4e6021bebb6345c91b30c102ad0213ec88da74f410de2a135bb80e6192e99f6f` |
+| **Isolamento** | Writer sem elevação, LPAC+AppContainer e capabilities esperadas, pipe nativo `LOCAL` observado, hook injetado e removido, container desregistado, Writer terminado |
+| **Integridade** | Sandy deixou em quatro diretórios apenas o marcador administrativo `D:AI` após cleanup, mantendo ACEs idênticas; **recuperação explícita DACL-only** na cópia experimental, com SDDL final **idêntico ao original** em A e B |
+| **Controlo A/B** | `only_mapping_differs=true`, `same_initial_security=true`, `originals_unchanged=true`, `causal_comparison="A failed / B passed"` |
+| **Negativos** | **8 testes unitários fail-closed PASS** para diferenças de ACE, DACL protegida, raízes externas e erros de recuperação; a preparação antecipada que tinha alterado `D:PAI` foi rejeitada e abandonada |
+
+**Histórico de FAIL preservado:** [run PR #2 38048136938](https://github.com/PAPACREATOR/nexus-writer-lab/actions/runs/38048136938) identificou a modificação `D:AI`; [primeira tentativa PR #3 38048996425](https://github.com/PAPACREATOR/nexus-writer-lab/actions/runs/38048996425) recusou uma abordagem de pré-materialização que alterava também o controlo `P` e flags das ACEs; [outra tentativa 38049452641](https://github.com/PAPACREATOR/nexus-writer-lab/actions/runs/38049452641) encontrou SyntaxError em teste de CI e foi corrigida. Nenhum destes FAIL é reclassificado como PASS.
+
+**O que este PASS não cobre:** integração da solução na [PR #45 Nexus](https://github.com/PAPACREATOR/cerebro-parvo-/pull/45), rotas reais `book` e `convert_pdf` com Host/Human Gate, segurança comportamental de rede/clipboard/filhos, 100+100 regressões, aceitação física no PC ou release. **Sandy permanece suspenso como dependência do produto**; o sucesso demonstrou apenas o procedimento isolado de bancada e recuperação da DACL das cópias experimentais.
+
 ## O que realmente avançou
 
 | Frente isolada | Fonte e SHA | Prova observada | Não demonstrado |
@@ -54,4 +71,4 @@ Para dizer «Writer integrado no Nexus»: integrar por outra equipa autorizada; 
 
 [Estado atual Nexus](../10-current/ESTADO-DOCUMENTAL-2026-10-10.md) · [Compatibilidade por SHA](../10-current/COMPATIBILIDADE-CODIGO-2026-10-10.md) · [Matriz de PRs](MATRIZ-PRS-2026-10-10.md) · [Índice histórico outubro](../99-history/2026-10/README.md).
 
-**Esta nota contém duas fotografias documentais de 10/10/2026:** o estado inicial `IN PROGRESS` do SHA `fa8d65c4` e o subsequente **FAIL real**, com correção laboratorial em novo SHA `40d29078` ainda em ensaio no momento da última consulta. A leitura posterior deve seguir o último run aplicável; nunca converter IN PROGRESS ou NOT RUN em PASS por antecipação.
+**Esta nota contém fotografias documentais sucessivas de 10/10/2026; a prova terminal de referência é a PR #3/SHA `73be29f0` acima, não a linha temporal anterior:** o estado inicial `IN PROGRESS` do SHA `fa8d65c4` e o subsequente **FAIL real**, com correção laboratorial em novo SHA `40d29078` ainda em ensaio no momento da última consulta. A leitura posterior deve seguir o último run aplicável; nunca converter IN PROGRESS ou NOT RUN em PASS por antecipação.
