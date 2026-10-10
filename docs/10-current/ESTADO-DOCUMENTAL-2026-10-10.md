@@ -12,8 +12,10 @@
 - **PR #47:** laboratório Wiki/Flow com regressões de tipos malformados; sem promoção à candidata.
 - **PR #41:** navegação/documentação; base desta revisão e não integrada em main no exame.
 - **PR #46:** inventário, auditoria de links, divergências documentais e privacidade; incompleto e isolado em auditoria/.
-- **PR #48:** clones e inventário Linux; não é espelho validado dos ficheiros físicos do PC, nem limpeza local Windows.
+- **PR #48:** clones Git integrais em Linux de Nexus e Sir Thaddeus (1.446 ficheiros Sir Thaddeus verificados byte a byte; 1.461 registos por seis árvores Nexus públicas). Cópia/limpeza do PC Windows **NOT RUN**, não é espelho físico.
 - **PR #49:** revisão documental, índices históricos e matriz por leitura estática do código da PR #45. Não altera código nem transfere provas de um SHA para outro.
+- **Writer Lab PR #1:** diagnóstico Windows LPAC real identificou falha no pipe legado (WinError 5) e PASS no namespace `LOCAL`; protótipo de fonte passou testes estáticos, **sem compilar nem produzir PDF**.
+- **Writer Lab PR #2 (10/10):** ensaio A/B isolado do Sandy v0.9994 de Hrvoje Abraham no Windows; auditoria/CodeQL SUCCESS, **conversão A/B ainda IN PROGRESS** na consulta (run 38047795468), não assumir Writer resolvido.
 
 Links e estatutos pontuais: [matriz de evidência](../60-evidence/MATRIZ-PRS-2026-10-10.md), [verificação estática do código da PR #45](COMPATIBILIDADE-CODIGO-2026-10-10.md) e [reparação documental dos 11 links históricos](../99-history/RECONCILIACAO-11-REFERENCIAS-2026-10-10.md). Esta última fecha a navegação na árvore documental, **não recupera a memória privada de 24/09**.
 
@@ -21,13 +23,13 @@ Links e estatutos pontuais: [matriz de evidência](../60-evidence/MATRIZ-PRS-202
 
 A entrada é Folha/parser; Kernel/Host/Store mantêm as decisões e os limites. O runner interno é direto e protegido; MCP é transporte opcional para ferramentas quando necessário. O parser reconhece sete intenções, mas a API natural normal só prepara `verify` com um anexo no SHA auditado. Ferramentas são substituíveis. Confirmação humana **pré-execução** não é o mesmo que Human Gate de promoção **Creative → Canonical**.
 
-Activepieces e Conductor não integram a dependência candidata; Spiff só laboratório perante necessidade demonstrada. OpenNotebook é ferramenta especializada valorizada, **não percurso obrigatório** nem executor soberano. Ollama não é requisito. Sandy permanece suspenso por decisão humana, sem apagar o reconhecimento histórico.
+Activepieces e Conductor não integram a dependência candidata; Spiff só laboratório perante necessidade demonstrada. OpenNotebook é ferramenta especializada valorizada, **não percurso obrigatório** nem executor soberano. Ollama não é requisito. **A integração Sandy no produto permanece suspensa.** Distintamente, foi autorizado um ensaio isolado Writer/Sandy no laboratório PR #2; isso não altera a arquitetura candidata nem autoriza instalar/mesclar Sandy. Ver [prova por SHA](../60-evidence/CONCILIACAO-WRITER-SIR-THADDEUS-2026-10-10.md).
 
 ## Estado de aceitação
 
 **Observação do código da PR #45:** o dispatcher define dez processos, mas a Folha pública só constrói a rota natural `verify` com anexo e ticket de confirmação; `/api/run` é diagnóstico desativado no arranque normal. Ver [matriz técnica](COMPATIBILIDADE-CODIGO-2026-10-10.md).
 
-**Não comprovado**: release integrada num único HEAD com todos os gates PASS; Writer/LPAC real completo; OpenNotebook com SurrealDB/modelo locais reais em E2E; inventário/hash SHA-256 de todo o PC; validação física de todas as capacidades; proteção integral de segredos/histórico Git; ligações externas/âncoras de toda a documentação. Não interpretar NOT RUN/BLOCKED/FAIL como PASS.
+**Não comprovado**: release integrada num único HEAD com todos os gates PASS; Writer/LPAC real completo (mesmo com diagnóstico da causa e ensaio A/B em curso); OpenNotebook com SurrealDB/modelo locais reais em E2E; inventário/hash SHA-256 de todo o PC; validação física de todas as capacidades; proteção integral de segredos/histórico Git; ligações externas/âncoras de toda a documentação. Não interpretar NOT RUN/BLOCKED/FAIL como PASS.
 
 ## Regras de atualização
 
