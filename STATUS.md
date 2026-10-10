@@ -1,6 +1,6 @@
 # Estado atual do Nexus
 
-**Reconciliação documental de 10-10-2026:** ver [fotografia datada](docs/10-current/ESTADO-DOCUMENTAL-2026-10-10.md), [compatibilidade com código no SHA da PR #45](docs/10-current/COMPATIBILIDADE-CODIGO-2026-10-10.md) e [matriz de provas](docs/60-evidence/MATRIZ-PRS-2026-10-10.md). PR #45 permanece Draft; PR #48 não prova espelho completo do PC. Não houve teste físico nem release nesta reconciliação.
+**Reconciliação documental de 10-10-2026:** ver [fotografia datada](docs/10-current/ESTADO-DOCUMENTAL-2026-10-10.md), [compatibilidade com código no SHA da PR #45](docs/10-current/COMPATIBILIDADE-CODIGO-2026-10-10.md), [matriz de provas](docs/60-evidence/MATRIZ-PRS-2026-10-10.md) e [clone de Sir Thaddeus + diagnóstico Writer com resultados por SHA](docs/60-evidence/CONCILIACAO-WRITER-SIR-THADDEUS-2026-10-10.md). PR #45 permanece Draft; PR #48 prova clone Linux, não espelho completo do PC. O primeiro A/B Sandy/Writer (run 38047795468) terminou FAIL por prazo/limpeza do caso A, **sem executar B**; novo run do laboratório em SHA 40d29078 estava em curso na última consulta. Não houve teste físico do PC pessoal nem release nesta reconciliação.
 
 O [ponto de situação acumulado](nexus/docs/PONTO-DE-SITUACAO.md) conserva os ciclos de execução e a abertura de 08/10; **não representa, isoladamente, a posterior integração experimental da PR #45**. Para implementação concreta, conferir o HEAD de código e a matriz datada.
 
