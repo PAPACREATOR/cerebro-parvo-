@@ -99,6 +99,23 @@ def test_gateway_forwards_to_real_host_and_one_store_without_modifying_core(tmp_
 
             assert host.list_runs(host.session) == []
             assert not any((tmp_path / "memory" / "runs").iterdir())
+
+            # Real FTS5 search traverses Node -> Python app -> Host -> Store
+            # using the existing isolated WikiBridge implementation.
+            from nexus.tests.test_memory_search_http import stored
+            draft = stored(host, "findthisnote rascunho não aprovado")
+            approved = stored(host, "findthisnote conhecimento aprovado", approved=True)
+            data = {"query": "findthisnote", "include_creative": False, "limit": 8}
+            status, raw = _request(port, "/api/search", method="POST",
+                                   token=host.session, payload=data)
+            assert status == 200
+            assert [x["run_id"] for x in json.loads(raw)["results"]] == [approved]
+            data["include_creative"] = True
+            status, raw = _request(port, "/api/search", method="POST",
+                                   token=host.session, payload=data)
+            assert status == 200
+            assert {x["run_id"] for x in json.loads(raw)["results"]} == {draft, approved}
+            assert host.store.state(draft)["status"] == "HUMAN_REQUIRED"
         finally:
             gateway.terminate()
             try:
