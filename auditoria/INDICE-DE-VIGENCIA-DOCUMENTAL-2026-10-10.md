@@ -33,6 +33,12 @@
 
 **Isolamento editorial:** a PR #46 restaurou os quatro documentos da raiz (`AGENTS.md`, `CEREBRO_CONSTITUTION.md`, `CEREBRO_ARCHITECTURE.md`, `IMPLEMENTATION_PLAN.md`) à versão exata de `main`. As alterações propostas pela PR #41 continuam exclusivamente na respetiva branch. Esta PR acrescenta apenas ficheiros em `auditoria/`.
 
+## História integral até 10-10-2026
+
+- [História comentada e cronologia com fontes](HISTORIA-COMENTADA-NEXUS-2026-10-10.md): explica decisões de 22/09–10/10, motivos da substituição de Logseq/Joplin, Activepieces/Conductor/Spiff, evolução da Folha, wiki, MCP e Windows; distingue proposta, implementação numa branch, PASS limitado e entrega.
+- Complementa `docs/GENEALOGIA.md` (que termina em 27/09), **sem reescrever o arquivo original ou assumir como vigentes as escolhas antigas**.
+- A referência em falta à memória histórica reservada é explicitamente assinalada, sem republicar ficheiros excluídos pelo `.gitignore`.
+
 ## Atualização: documentação em revisão noutras PRs
 
 Esta classificação lê o `main` original e é **provisória**. A [PR #41](https://github.com/PAPACREATOR/cerebro-parvo-/pull/41), ainda aberta, contém propostas documentais datadas de 05/10–09/10 e um novo `docs/20-architecture/MINIMUM-CORE.md` que já não considera Conductor uma dependência candidata. A formulação nessa PR é **Folha/parser + Kernel/Host/Store + regras/schemas + MCP Python/adaptadores + ferramentas externas**, sem Activepieces e sem Conductor como requisitos. A issue [#33](https://github.com/PAPACREATOR/cerebro-parvo-/issues/33) exige ainda convergência do runtime e testes num único SHA. Não equiparar a proposta aberta à branch principal aprovada; confrontar ambas quando houver HEAD definitivo.
