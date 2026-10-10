@@ -180,12 +180,9 @@ def test_two_real_tools_verify_then_writer_each_with_own_human_gates(tmp_path, m
         proposal = {"text": text, **original}
         prepared = call("/api/prepare-run", proposal)
         assert prepared["attachment_sha256"] == hashlib.sha256(raw).hexdigest()
-        assert call("/api/confirm-run", {
+        run = call("/api/confirm-run", {
             "ticket": prepared["ticket"], "confirmed": True, **proposal,
         })["run_id"]
-        # Get exactly the new run ID through the authority-bound API.
-        runs = call("/api/runs")
-        run = next(state["run_id"] for state in runs if state["status"] == "RUNNING")
         deadline = time.monotonic() + 90
         state = call("/api/runs/" + run)
         while state["status"] == "RUNNING" and time.monotonic() < deadline:
