@@ -15,6 +15,12 @@ Estado: EM CURSO. Não declarar fechado sem inventário completo dos artefactos 
 | docs/INVENTARIO-HISTORICO.md | Declara preservar 35 blobs de 24/09; não prova cópia do PC atual. |
 | auditoria/CONSOLIDACAO-2026-10-10.md | Plano, limites, crédito a Hrvoje Abraham e critérios Sandy. |
 
+## Resultado confirmado deste ciclo
+
+- [Índice de vigência documental](INDICE-DE-VIGENCIA-DOCUMENTAL-2026-10-10.md) criado com a classificação de 16 documentos efetivamente lidos. É **parcial** e não certifica o espelho do PC.
+- Decisão humana: Sandy fora do trabalho ativo; integração suspensa, crédito histórico mantido.
+- PR #46 continua Draft e isolada, sem alteração de código.
+
 ## Política documental
 - Documentos constitucionais, decisões, contratos, testes e evidências são conservados; não reescrever o passado como se tivesse sido outra decisão.
 - Separar explicitamente «vigente», «histórico», «experimental» e «pendente de validação».
