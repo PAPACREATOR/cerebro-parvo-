@@ -1,34 +1,25 @@
 # F009 — primeira família Multimédia
 
+> Estado atual (04-10-2026): o transporte Microsoft Conductor/YAML desta fase foi removido do runtime ativo depois dos testes de equivalência. O contrato de dados e a evidência histórica foram preservados. A leitura atual é Nexus-owned, em Python determinístico.
+
 ## Contrato
-INPUT: Markdown UTF-8, até 100 KB, com YAML inicial entre ---.
+INPUT: Markdown UTF-8, até 100 KB, com metadados iniciais entre `---`.
 Campos obrigatórios: tipo=proposta, familia=multimedia, tribo=som ou imagem,
 dominio=creative, lab=windows. Campos adicionais são rejeitados.
 OUTPUT: JSON com nome_ficheiro, dados_yaml e notas_markdown.
 
-O leitor é o nativo do Microsoft Conductor 0.1.41. O adaptador Nexus apenas
-limita tamanho, valida o contrato e compõe o envelope. Não implementa parser YAML.
-As APIs de leitura usadas são internas ao Conductor; a revisão está fixada em
-11dcc41ed3df78f0806127cc901822fe8758294b e exige regressão antes de atualizar.
-
-Conductor executa register_object.yaml e chama essa capability. Nenhuma IA é
-registada no executor. Metadados e notas não concedem capacidades nem aprovação.
-O manifesto do Host inclui os contratos e exemplos desta família.
+O leitor atual é `nexus/adapters/constitutional.py`: parser estrito e limitado,
+sem execução de YAML, sem tags, anchors, listas, duplicação de chaves ou campos
+de autoridade. O documento nunca concede capacidades, aprovação ou acesso a
+Canonical.
 
 ## Evidência
-100 casos válidos (dois ramos, notas e nomes Unicode), 900 casos inválidos
-(cinco campos, quinze valores inválidos, seis variantes de formatação), mais
-18 controlos de campos ausentes, autoridade extra, codificação, tamanho,
-metadados malformados e execução real de ambos os ramos pelo Conductor.
-
-Regressão antes de atualização do manifesto: 1133 testes passaram em 31.96 s.
-As primeiras falhas do ensaio eram dupla descodificação de JSON já convertido
-pelo Conductor e identificação excessivamente longa de um caso parametrizado.
-As asserções de conteúdo foram preservadas. Diagnóstico conservado localmente.
+O contrato mantém 100 casos válidos, 900 casos inválidos e as fronteiras
+históricas. A migração para parser Nexus-owned acrescentou stress de 5.000
+casos válidos e 3.000 inválidos/adversariais. A comparação com o parser antigo
+Conductor permanece no histórico Git, não no código ativo.
 
 ## Limites
-Esta família é uma fundação de contratos, não um gerador instalado.
-Ainda não está selecionável na Folha nem materializa automaticamente o envelope
-em Creative. Nenhum processo de geração de som/imagem foi autorizado no Host.
-Geração permanece por instalar, integrar e testar, uma ferramenta de cada vez.
-Nada foi promovido para Canonical.
+Esta família continua a ser contrato de objetos multimédia, não autoridade nem
+motor de geração. Som/imagem só entram por capabilities explicitamente ligadas
+ao Kernel. Nada neste Markdown promove automaticamente para Canonical.

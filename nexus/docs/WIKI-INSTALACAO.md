@@ -2,6 +2,15 @@
 
 **Começar pelo [ponto de situação revisto](PONTO-DE-SITUACAO.md).**
 
+## Revisão das ligações — 04-10-2026
+
+[F013 — proveniência inversa](F013-PROVENIENCIA-INVERSA.md) testa a ligação de um
+resultado aprovado até ao pedido/original e o retorno à API da Folha após reinício,
+sem executar outra vez o provider. Falhas foram reproduzidas e corrigidas; a
+regressão nativa Windows desta revisão ainda aguarda execução. A wiki relacional,
+backlinks e espelho automático continuam pendentes. Os relatos de C:\Nexos abaixo
+conservam a inspeção anterior; não significam que o PC foi atualizado por este PR.
+
 ## Entrada
 Pasta: C:\Nexos. Atalho no ambiente de trabalho: Nexos.
 Aplicação em aplicacao/nexus; dados da Folha em dados; documentação em documentacao.

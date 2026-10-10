@@ -3,8 +3,6 @@ import json
 import math
 from pathlib import Path
 
-from jsonschema import Draft202012Validator
-
 ROOT = Path(__file__).resolve().parent
 
 
@@ -37,6 +35,8 @@ def strict_json(raw):
 
 
 def validate(name, value):
+    from jsonschema import Draft202012Validator
+
     schema = strict_json((ROOT / "schemas" / (name + ".json")).read_bytes())
     if next(Draft202012Validator(schema).iter_errors(value), None):
         raise Blocked("Os dados não cumprem o contrato " + name + ".")
@@ -48,7 +48,7 @@ def load_policy(root=ROOT):
     expected = {
         "version": "1.0", "canonical_gate": "human_required",
         "automatic_deletion": False, "ai_authority": False,
-        "processes": ["verify", "interpret", "proofread", "convert_pdf"], "max_input_bytes": 2097152,
+        "processes": ["verify", "interpret", "proofread", "convert_pdf", "video", "podcast", "visual_podcast", "book", "music", "web"], "max_input_bytes": 2097152,
     }
     if policy != expected or not (root / "laws/CONSTITUTION.md").read_text("utf-8").strip():
         raise Blocked("Leis ausentes ou incompatíveis com este Host.")

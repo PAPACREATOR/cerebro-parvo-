@@ -1,79 +1,40 @@
-# Matriz de compatibilidade — arquitetura final de composição
+# Matriz de compatibilidade — runtime candidato atual
 
-Data: 28-09-2026.
+“Compatível” significa que a ferramenta pode satisfazer a capability. “PASS” exige integração/teste específico.
 
-Esta matriz separa **capacidade disponível no componente** de **integração já provada neste projeto**. “Compatível” não significa “E2E testado”.
-
-| Necessidade do Cérebro | Provider preferencial | Integração | Compatibilidade | Estado no projeto |
-| --- | --- | --- | --- | --- |
-| Interface única em linguagem natural | Activepieces Human Input / Chat UI | nativo | Alta | NOT RUN |
-| Flows, routing e execução | Activepieces | nativo | Alta | NOT RUN |
-| Reutilização de processos | Activepieces Subflows | nativo | Alta | NOT RUN |
-| Estado estruturado / tabelas | Activepieces Tables | nativo/MCP | Alta | NOT RUN |
-| Estado simples chave/valor | Activepieces Storage | nativo/MCP | Alta | NOT RUN |
-| Human Gate | Activepieces wait/approval + estado do flow | nativo | Alta, exige teste do contrato Creative→Canonical | NOT RUN |
-| Registo de capacidades | Table/configuração Activepieces | nativo | Alta | NOT RUN |
-| Working Memory | estado do flow + Tables/Storage | nativo | Alta | NOT RUN |
-| Behavioral/Procedural Memory | Tables versionadas + regras | nativo/configuração | Alta | NOT RUN |
-| Persistent Knowledge | Creative/Canonical + provider de knowledge governance | formatos abertos/API/MCP | Alta conceptual | NOT RUN |
-| Pesquisa determinística | filtros/condições/hash/text search disponível | flow/provider | Alta | NOT RUN |
-| Pesquisa relacional | K-DLC ou relações/tabelas/índice compatível | MCP/API | Parcial: provider a validar | NOT RUN |
-| Pesquisa semântica / cognição | Open Notebook | REST API | Alta | NOT RUN |
-| Agente único adaptável | mesmo modelo + perfil/contexto por tarefa no Open Notebook | REST API | Alta conceptual; isolamento a provar | NOT RUN |
-| Fontes e referências | Zotero Desktop | Local API HTTP | Alta | NOT RUN |
-| Documentos, folhas e conversões | LibreOffice | headless CLI / UNO API | Alta | NOT RUN |
-| Instalar/lançar apps AI locais | Pinokio | launcher/scripts locais | Alta para hosting/arranque; não é autoridade | NOT RUN |
-| Geração de imagem local | ComfyUI alojado localmente, opcionalmente via Pinokio | HTTP API | Alta | NOT RUN |
-| Áudio/música local | provider local compatível alojado via Pinokio/servidor | API/CLI | Provider ainda por escolher | NOT RUN |
-| Publishing/distribuição | Pieces Activepieces aplicáveis | Piece/API | Alta por capacidade; selecionar apenas quando necessário | NOT RUN |
-| MCP genérico | Activepieces MCP / MCP Piece | MCP | Alta | NOT RUN |
-| Knowledge governance avançada | K-DLC | MCP/CLI quando implementação compatível existir | **Promissor, mas especificação 0.2.0 está Draft for implementation** | NÃO tornar dependência obrigatória |
-| SQLite próprio | nenhum por defeito | — | Só fallback | writer existente preservado |
-| Core Python próprio | nenhum por defeito | — | Só fallback | implementação existente preservada |
+| Capability | Implementação atual/preferida | Integração | Estado |
+|---|---|---|---|
+| Interface principal | Folha Nexus | HTTP/local | candidato funcional |
+| Kernel/autoridade | Host/Store Python | interno | testado |
+| Transporte de tools | MCP Nexus-owned | stdio | testado |
+| Creative/Canonical | Store + Human Gate | interno | testado |
+| Proveniência inversa | Store/Host/Folha | interno | testado |
+| Confinamento de processos lançados | Windows native boundary/LPAC/Job | nativo | testado em CI Windows |
+| Cognição | OpenNotebook | HTTP delimitado pelo Host | boundary/E2E controlado; físico completo pendente |
+| Revisão linguística | LanguageTool CLI | adapter/MCP | integrado; PC físico a reconfirmar |
+| Writer → PDF | LibreOffice Writer headless | adapter/MCP | integrado e limitado |
+| Writer editorial completo | LibreOffice Writer/UNO ou formato ODF controlado | adapter futuro | NÃO IMPLEMENTADO |
+| Referências | Zotero Desktop | Local API | pendente |
+| Música | ACE-Step 1.5 | localhost/API externa | health contract; provisioning físico pendente |
+| Imagem | Forge | localhost/API externa | health contract; checkpoint/licença pendentes |
+| Vídeo/avatar | FFmpeg + Wav2Lip | worker externo | contratos testados; GPU/modelo físico pendente |
+| STT/TTS | provider local substituível | adapter futuro | pendente |
+| Web | capability explícita | adapter/provider | não núcleo |
+| Pesquisa exata | Kernel/Store/FTS quando aplicável | interno | parcial por família |
+| Pesquisa semântica | capability opcional | provider substituível | não autoridade |
+| Relações | Kernel/proveniência | interno | parcial |
 
 ## Fronteiras obrigatórias
 
-Independentemente do provider:
-
-1. a pessoa é a autoridade final;
+1. humano é autoridade final;
 2. ferramenta/IA não promove Canonical;
-3. resultado externo é tratado segundo o nível de confiança aplicável;
-4. Creative preserva propostas, alternativas e contradições;
-5. Human Gate controla promoção/ações protegidas;
-6. instrução humana atual vence memória comportamental;
-7. replay/recovery não reinvoca IA/Web para fabricar a história;
-8. trocar provider não altera estas leis.
+3. output externo é UNTRUSTED/candidate;
+4. Creative preserva alternativas/contradições;
+5. Human Gate controla promoção;
+6. replay não reinvoca IA/Web para fabricar passado;
+7. trocar provider não altera leis;
+8. ausência/timeout/UNKNOWN nunca contam como PASS.
 
-## Compatibilidade prática
+## Genealogia
 
-### Activepieces
-
-É a peça central porque já fornece WebUI/Chat UI, Flows, Subflows, Tables, Storage, MCP e catálogo de integrações. Portanto evita frontend, workflow engine, registry e base simples próprios.
-
-### Open Notebook
-
-Tem REST API completa e pesquisa full-text/vector, controlo de contexto, fontes e chat. Para esta arquitetura deve ser chamado como capacidade cognitiva; não é cofre autoritativo nem decide permissões.
-
-### Zotero
-
-A API local do desktop funciona em `localhost:23119/api/`, offline e sem rate limits para leitura. Escritas no Zotero 10+ requerem autorização local do utilizador. Isto encaixa naturalmente no Human Gate.
-
-### LibreOffice
-
-Suporta `--headless`, `--convert-to` e controlo programático por API/UNO. Pode operar nos bastidores sem se tornar a interface principal.
-
-### Pinokio + ComfyUI
-
-Pinokio instala/arranca aplicações e servidores locais; ComfyUI expõe API para submeter workflows e recuperar resultados. Pinokio é infraestrutura de conveniência, ComfyUI é um possível provider de geração.
-
-### K-DLC
-
-Tem alinhamento forte com proveniência, drafts/overlay, relações, conflitos, revisão humana, índices derivados e MCP. Contudo a especificação atual declara-se draft. Deve permanecer substituível e só ser adotado por funções que passem os nossos testes.
-
-## Regra
-
-**LIGAR > CONFIGURAR > ADAPTAR > CRIAR.**
-
-Se uma linha desta matriz puder ser satisfeita por capacidade madura existente, não criar equivalente próprio.
-
-[Constituição](CEREBRO_CONSTITUTION.md) · [Arquitetura](CEREBRO_ARCHITECTURE.md) · [Plano](IMPLEMENTATION_PLAN.md)
+Activepieces, Memory Provider, Pinokio/ComfyUI, Spiff e Conductor foram estudados como alternativas/etapas. Consultar `DECISIONS.md` e `historico/`; não são requisitos do candidato atual.

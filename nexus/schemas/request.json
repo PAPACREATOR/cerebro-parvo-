@@ -14,7 +14,13 @@
         "verify",
         "interpret",
         "proofread",
-        "convert_pdf"
+        "convert_pdf",
+        "video",
+        "podcast",
+        "visual_podcast",
+        "book",
+        "music",
+        "web"
       ]
     },
     "text": {

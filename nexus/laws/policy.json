@@ -7,7 +7,13 @@
     "verify",
     "interpret",
     "proofread",
-    "convert_pdf"
+    "convert_pdf",
+    "video",
+    "podcast",
+    "visual_podcast",
+    "book",
+    "music",
+    "web"
   ],
   "max_input_bytes": 2097152
 }

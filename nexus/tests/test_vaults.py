@@ -1,7 +1,7 @@
 import pytest
 from nexus.store import Store, HumanDecision
 from nexus.contracts import Blocked
-from nexus.tests.test_store import request, result, candidate
+from nexus.tests.test_store import request, result, candidate, execution_trace
 
 
 def test_original_and_candidate_survive_promotion_and_restart(tmp_path):
@@ -21,7 +21,7 @@ def test_approval_does_not_turn_uncertainty_into_truth(tmp_path, outcome):
     store = Store(tmp_path)
     run = store.create(request())
     output = {**result(), "status": "UNKNOWN", "outcome": outcome}
-    store.accept(run, output, {})
+    store.accept(run, output, execution_trace(store, run))
     store.promote(run, HumanDecision("synthetic-approval", "test-human", run, store.state(run)["candidate_sha256"], "APPROVE"))
     assert Store(tmp_path).state(run)["result_status"] == "UNKNOWN"
     assert store.state(run)["outcome"] == outcome
