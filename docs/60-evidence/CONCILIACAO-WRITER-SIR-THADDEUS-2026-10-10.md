@@ -15,6 +15,20 @@
 
 **CI transversal no Writer Lab PR #2:** [auditoria e suites 38047795447](https://github.com/PAPACREATOR/nexus-writer-lab/actions/runs/38047795447) **SUCCESS**; [CodeQL 38047795406](https://github.com/PAPACREATOR/nexus-writer-lab/actions/runs/38047795406) **SUCCESS** no SHA acima. Esses dois resultados **não substituem o resultado do job de conversão A/B**, que estava em curso na consulta.
 
+## Atualização factual — run A/B concluído com FAIL
+
+**Resultado terminal do primeiro ensaio da PR #2:** [run 38047795468](https://github.com/PAPACREATOR/nexus-writer-lab/actions/runs/38047795468), SHA `fa8d65c4f62596738fd19b33c9419e1caa0b936a`, terminou **FAIL** em 10/10/2026 às 11:20 UTC. [Artefacto preservado](https://github.com/PAPACREATOR/nexus-writer-lab/actions/runs/38047795468/artifacts/11668422448).
+
+Os logs do job `compare` mostram:
+
+- `synthetic_unrestricted_preparation: PASS`: preparação sintética fora do LPAC concluída.
+- Caso **A sem mapeamento do pipe:** Writer lançado sob token AppContainer+LPAC real, mas conversão **FAIL**, prazo de execução **43 segundos** atingido; `pipe_observed=false`.
+- `writers_terminated=false` e `dacls_unchanged=false` na verificação após o caso A; a rotina de recuperação devolveu código 0 e o container foi desregistado, mas isso **não basta** para declarar ausência de processos restantes ou igualdade de ACLs.
+- O próprio ensaio recusou iniciar **B com mapeamento `LOCAL`**, antes do restauro de perfil, porque não estavam demonstradas as condições de terminação/limpeza de A: `A cleanup/termination not proved; B refused before profile restoration`.
+- **Conclusão exata:** o run falhou de forma conservadora; **não existe resultado para B**, logo não se pode dizer que a solução Sandy falhou a conversão B, nem que a resolveu. Host/Human Gate, `book`/`convert_pdf` em produção, rede/clipboard/filhos comportamentais, 100+100 regressões e PC pessoal mantêm-se NOT RUN.
+
+**Continuação identificada noutra branch, sem interferência documental:** a PR #2 avançou depois para SHA `40d29078c9b77a35466956b2dbd3399dd7d2f454`, alterando apenas o ensaio `lab/sandy-local-pipes/compare.py` para aguardar terminação real dos filhos dentro do prazo e gravar as DACL antes/depois. Novo [run Windows 38048136938](https://github.com/PAPACREATOR/nexus-writer-lab/actions/runs/38048136938) estava **IN PROGRESS** na consulta. A [auditoria 38048136989](https://github.com/PAPACREATOR/nexus-writer-lab/actions/runs/38048136989) terminou SUCCESS no novo SHA; isso não certifica B. Consultar o HEAD atual antes de nova conclusão.
+
 ## Sandy: duas decisões que não se contradizem
 
 1. **Integração de Sandy no Host/candidato Nexus: SUSPENSA.** Não existe autorização para introduzir dependência, relaxar LPAC/Job/ACL, fazer merge de outro executor ou instalar Sandy no PC por esta revisão.
@@ -40,4 +54,4 @@ Para dizer «Writer integrado no Nexus»: integrar por outra equipa autorizada; 
 
 [Estado atual Nexus](../10-current/ESTADO-DOCUMENTAL-2026-10-10.md) · [Compatibilidade por SHA](../10-current/COMPATIBILIDADE-CODIGO-2026-10-10.md) · [Matriz de PRs](MATRIZ-PRS-2026-10-10.md) · [Índice histórico outubro](../99-history/2026-10/README.md).
 
-**Esta nota é fotografia documental de 10/10/2026, antes do resultado terminal do ensaio A/B.** Resultados posteriores exigem ligação a run, SHA, relatório e mudança de estado explícita; nunca converter por antecipação IN PROGRESS ou NOT RUN em PASS.
+**Esta nota contém duas fotografias documentais de 10/10/2026:** o estado inicial `IN PROGRESS` do SHA `fa8d65c4` e o subsequente **FAIL real**, com correção laboratorial em novo SHA `40d29078` ainda em ensaio no momento da última consulta. A leitura posterior deve seguir o último run aplicável; nunca converter IN PROGRESS ou NOT RUN em PASS por antecipação.
