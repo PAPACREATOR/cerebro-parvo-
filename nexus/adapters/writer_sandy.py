@@ -206,12 +206,21 @@ def convert(process, work):
         if clean.returncode != 0:
             raise Blocked("Limpeza Sandy falhou; o resultado não pode ser aceite.")
     restored = _restore_exact_ai_only(before, (work,))
-    if process_handle is None or process_handle.returncode != 0:
-        raise Blocked("O Writer em LPAC não concluiu a conversão.")
     state_path = stage / "last-run.json"
-    state = strict_json(state_path.read_bytes())
-    if state.get("phase") != "finished" or state.get("exit_code") != 0:
-        raise Blocked("Sandy não confirmou o encerramento da operação.")
+    # Report only a bounded phase and numeric exit code; never publish paths,
+    # document bytes, environment, or unrestricted sandbox logs in the UI.
+    if state_path.is_file():
+        state = strict_json(state_path.read_bytes())
+    else:
+        state = {}
+    phase = state.get("phase") if state.get("phase") in (
+        "preparing", "initializing", "sandboxed", "failed", "finished"
+    ) else "unreported"
+    if process_handle is None or process_handle.returncode != 0:
+        code = process_handle.returncode if process_handle is not None else -1
+        raise Blocked(f"O Writer LPAC não concluiu a conversão (fase {phase}; launcher {code}).")
+    if phase != "finished" or state.get("exit_code") != 0:
+        raise Blocked(f"Sandy não confirmou a execução (fase {phase}; saída não aprovada).")
     if original.read_bytes() != raw or document.read_bytes() != raw:
         raise Blocked("Os bytes originais mudaram durante a conversão.")
     if _tree_identity(copied) != identity:
