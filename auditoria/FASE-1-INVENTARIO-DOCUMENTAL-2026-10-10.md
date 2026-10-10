@@ -35,6 +35,14 @@ Estado: EM CURSO. Não declarar fechado sem inventário completo dos artefactos 
 
 - [Auditoria completa dos links Markdown da PR #41](PR41-AUDITORIA-LIGACOES-2026-10-10.md): 149/149 documentos, 168 referências relativas, 11 destinos em falta; sem tocar na branch dessa PR.
 
+## Fecho do subciclo — coerência documental entre PRs
+
+- PR #41, SHA `46c6b6722028017b5c174986128be4a151588ae7`: **149/149 Markdown lidos**; 168 ligações locais relativas verificadas, 11 sem destino; ver [auditoria PR #41](PR41-AUDITORIA-LIGACOES-2026-10-10.md).
+- PR #45, SHA `66027af7f2ea084bc62d85b840d1fc3113e60a97`: 142 documentos Markdown, dos quais 137 têm blob idêntico à PR #41, quatro partilhados diferem, um exclusivo; nos cinco exclusivos/alterados, 11 ligações relativas verificadas, zero sem destino; ver [comparação](COMPARACAO-BRANCHES-2026-10-10.md).
+- [Manifesto Git dos documentos Markdown das três refs](MANIFESTO-DOCUMENTOS-BRANCHES-2026-10-10.json) guardado por caminho, tamanho e blob SHA. **SHA Git não equivale automaticamente ao SHA-256 dos ficheiros em `C:\Nexus`.**
+- A PR #46 altera exclusivamente `auditoria/`; os quatro documentos de raiz antes modificados nesta branch foram restaurados à `main` sem alterar a PR #41.
+- **Pendente:** auditoria de fontes locais, comparação de hashes após entrega do Codex, links externos/âncoras, dados pessoais/segredos e escolha do HEAD definitivo. Não aprovar a consolidação antes dessas verificações.
+
 ## Política documental
 - Documentos constitucionais, decisões, contratos, testes e evidências são conservados; não reescrever o passado como se tivesse sido outra decisão.
 - Separar explicitamente «vigente», «histórico», «experimental» e «pendente de validação».
