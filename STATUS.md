@@ -1,15 +1,17 @@
 # Estado atual do Nexus
 
-O estado operacional corrente está em [nexus/docs/PONTO-DE-SITUACAO.md](nexus/docs/PONTO-DE-SITUACAO.md).
+**Reconciliação documental de 10-10-2026:** ver [fotografia datada](docs/10-current/ESTADO-DOCUMENTAL-2026-10-10.md), [compatibilidade com código no SHA da PR #45](docs/10-current/COMPATIBILIDADE-CODIGO-2026-10-10.md), [matriz de provas](docs/60-evidence/MATRIZ-PRS-2026-10-10.md) e [clone de Sir Thaddeus + diagnóstico Writer com resultados por SHA](docs/60-evidence/CONCILIACAO-WRITER-SIR-THADDEUS-2026-10-10.md). PR #45 permanece Draft; PR #48 prova clone Linux, não espelho completo do PC. O primeiro A/B Sandy/Writer (run 38047795468) terminou FAIL e bloqueou B, preservado como histórico; a [PR #3 do Writer Lab](https://github.com/PAPACREATOR/nexus-writer-lab/pull/3) obteve **PASS laboratorial Windows LPAC** no SHA `73be29f01b6928a0058bf2e1b78f607d14329001`: A sem mapeamento FAIL por timeout; B com pipe LOCAL gerou PDF real de 13.902 bytes em 7,218 s; DACLs verificadas idênticas após recuperação explícita. [Prova](https://github.com/PAPACREATOR/nexus-writer-lab/actions/runs/38049519797). Isto **não** altera a PR #45 nem prova rotas Host/Human Gate ou PC pessoal; sem release.
 
-A implementação candidata ativa está na **PR #32**, branch `cleanup/llamacpp-only-20261007`. A issue #33 fixa a convergência final sem novas funcionalidades por antecipação.
+O [ponto de situação acumulado](nexus/docs/PONTO-DE-SITUACAO.md) conserva os ciclos de execução e a abertura de 08/10; **não representa, isoladamente, a posterior integração experimental da PR #45**. Para implementação concreta, conferir o HEAD de código e a matriz datada.
+
+A **PR #32** (`cleanup/llamacpp-only-20261007`, `da86b6dd...`) é a **baseline Windows**. A **PR #45** (`integration/nexus-unified-candidate-20261009`, `66027af7...`) é a **integração candidata posterior**, isolada e ainda Draft; não está em `main`. A issue #33 fixa a convergência final sem novas funcionalidades por antecipação.
 
 ## Composição candidata
 
-- Folha + parser determinístico;
+- Folha + parser determinístico (sete intenções reconhecidas; na API pública normal, apenas a proposta natural `verify` é encaminhada para execução após confirmação no SHA auditado);
 - Kernel / Host / Store;
 - regras, schemas e allowlists;
-- MCP Python e adaptadores autorizados;
+- runner direto sob fronteira Windows e MCP Python opcional para ferramentas autorizadas (MCP não é relay universal);
 - ferramentas externas delimitadas;
 - Creative → Human Gate → Canonical.
 
@@ -40,4 +42,4 @@ Atualizar apenas:
 3. relatórios específicos quando houver evidência técnica nova;
 4. `docs/00-start-here/` e os índices de navegação apenas quando mudar a organização documental.
 
-O histórico anterior permanece no Git, em `historico/`, em relatórios datados e nos PRs fechados.
+O histórico anterior permanece no Git, em `historico/`, em relatórios datados e nos PRs fechados. As [11 referências históricas sem destino da PR #46](docs/99-history/RECONCILIACAO-11-REFERENCIAS-2026-10-10.md) foram tratadas **como navegação** na branch documental: dez ligações reparadas para `nexus/docs/` e uma nota de fonte reservada não materializada. Isto não altera o estado de execução do Nexus nem certifica a recuperação do documento privado.

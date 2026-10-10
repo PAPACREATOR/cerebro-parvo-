@@ -4,17 +4,19 @@ Sistema Windows local-first de criação, conhecimento e execução governada. A
 
 > **Novo no projeto?** Comece em [docs/00-start-here/](docs/00-start-here/README.md).
 
+[Índice documental](docs/README.md) · [Decisões e motivos](docs/40-decisions/README.md) · [História](docs/99-history/README.md).
+
 ## Estado atual
 
-O candidato ativo está na **PR #32 — Convergir Nexus Windows: execução direta, binding e gates nativos**. A issue #33 fixa a direção de convergência: unificar o produto sem acrescentar novas funcionalidades por antecipação.
+A baseline candidata está na **PR #32 — Convergir Nexus Windows: execução direta, binding e gates nativos**; a **PR #45** é integração posterior em Draft, sem merge, release ou PASS global. A issue #33 fixa a direção de convergência: unificar o produto sem acrescentar novas funcionalidades por antecipação.
 
-O estado operacional detalhado, incluindo PASS/FAIL/BLOCKED e limites de cada capability, está em [nexus/docs/PONTO-DE-SITUACAO.md](nexus/docs/PONTO-DE-SITUACAO.md).
+A [matriz de compatibilidade com o código de 10/10](docs/10-current/COMPATIBILIDADE-CODIGO-2026-10-10.md) descreve a PR #45 por ficheiro e SHA. O [ponto de situação técnico](nexus/docs/PONTO-DE-SITUACAO.md) reúne relatórios de vários ciclos, incluindo a abertura de 08/10; não deve ser confundido com aceitação da integração posterior.
 
 PASS histórico não significa release. Um gate atual em FAIL continua FAIL até prova reproduzível.
 
 ## O produto em uma linha
 
-**Folha + parser determinístico + Kernel/Host/Store + regras/schemas + MCP Python/adaptadores + ferramentas externas + Creative/Human Gate/Canonical.**
+**Folha + parser determinístico + Kernel/Host/Store + regras/schemas + execução direta protegida ou MCP delimitado + ferramentas externas + Creative/Human Gate/Canonical.**
 
 ```text
 Humano
@@ -25,7 +27,7 @@ Kernel / Host / Store
   ↓
 regras + schemas + allowlists
   ↓
-MCP Python ou adaptador autorizado
+Runner direto protegido ou MCP Python autorizado
   ↓
 ferramenta externa delimitada
   ↓
@@ -50,7 +52,7 @@ IA pode existir dentro de uma capability delimitada. Não decide autoridade, pro
 
 ## Núcleo mínimo
 
-A hipótese candidata é que **Kernel + parser + regras + MCP Python** chegam para o produto mínimo, acrescentando apenas adaptadores diretos quando forem mais simples/seguros.
+A hipótese candidata é que **Kernel + parser + regras + runner direto protegido**, com **MCP Python apenas quando necessário**, chegam para o produto mínimo. Na PR #45, o despacho interno tem dez processos definidos, mas a API pública da Folha encaminha naturalmente apenas `verify` com confirmação: ver [compatibilidade](docs/10-current/COMPATIBILIDADE-CODIGO-2026-10-10.md).
 
 Activepieces fica como referência de estudo.
 

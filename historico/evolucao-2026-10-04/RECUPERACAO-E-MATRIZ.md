@@ -1,12 +1,14 @@
 # Matriz de controlo Nexus
 
+> **Nota editorial de navegação (10/10/2026):** documento histórico; as decisões e números abaixo pertencem à sua época. Os links técnicos foram reparados para a localização publicada em `nexus/docs/`, **sem atualizar os resultados históricos**. Para o candidato atual consultar [compatibilidade por SHA](../../docs/10-current/COMPATIBILIDADE-CODIGO-2026-10-10.md). [Versão original anterior à reparação](https://github.com/PAPACREATOR/cerebro-parvo-/blob/adbbd5408f7646578400ec71b915bb53dd8eae27/historico/evolucao-2026-10-04/RECUPERACAO-E-MATRIZ.md).
+
 01/10/2026. Cada linha distingue regra, prova e trabalho pendente.
 
-Quadro histórico. Evolução posterior: [conta Nexus em duas pastas](F008-ISOLAMENTO-WINDOWS.md)
-demonstrada, ainda sem ligação ao Host; [ODT→PDF](F007-LIBREOFFICE.md) integrado;
-[circuito cognitivo textual](F005-COGNICAO.md) demonstrado no laboratório,
-ainda sem configuração da nova entrada. Ver [ponto de situação](PONTO-DE-SITUACAO.md)
-e [proveniência inversa](F013-PROVENIENCIA-INVERSA.md) antes de usar as pendências
+Quadro histórico. Evolução posterior: [conta Nexus em duas pastas](../../nexus/docs/F008-ISOLAMENTO-WINDOWS.md)
+demonstrada, ainda sem ligação ao Host; [ODT→PDF](../../nexus/docs/F007-LIBREOFFICE.md) integrado;
+[circuito cognitivo textual](../../nexus/docs/F005-COGNICAO.md) demonstrado no laboratório,
+ainda sem configuração da nova entrada. Ver [ponto de situação](../../nexus/docs/PONTO-DE-SITUACAO.md)
+e [proveniência inversa](../../nexus/docs/F013-PROVENIENCIA-INVERSA.md) antes de usar as pendências
 antigas desta tabela como estado atual. Não houve nova inspeção do PC.
 
 | Etapa | Entrada | Regra/validação | Saída/destino | Evidência atual |

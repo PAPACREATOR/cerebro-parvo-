@@ -1,5 +1,7 @@
 # Gate OpenNotebook — isolamento, funcionalidade e valor
 
+> **Vigência 10/10:** a classificação KEEP/OPTIONAL/REMOVE no final deste estudo ficou histórica quanto à decisão de produto. A [issue #42](https://github.com/PAPACREATOR/cerebro-parvo-/issues/42) regista decisão humana posterior: OpenNotebook é ferramenta especializada valorizada, escolhida por tarefa, nunca motor obrigatório nem autoridade. Os gates técnicos deste estudo continuam hipóteses úteis a validar. [ADR](../40-decisions/ADR-2026-10-09-OPENNOTEBOOK.md).
+
 Data: 2026-10-09  
 Estado: investigação. Não altera o runtime.
 

@@ -2,7 +2,7 @@
 
 ## Estado
 
-A arquitetura conceptual está fechada. O runtime candidato atual é Kernel/Host/Store Python com MCP determinístico e ferramentas externas delimitadas. A PR #23 contém a implementação e evidência corrente.
+A arquitetura conceptual está fechada. O runtime candidato atual é Kernel/Host/Store Python com despacho interno direto protegido e MCP determinístico opcional para ferramentas externas delimitadas. A PR #32 é a baseline candidata Windows; a PR #45 reúne uma integração posterior isolada Draft, sem release aprovada. Revalidar estado pelo SHA exato.
 
 ## Diagrama
 
@@ -48,7 +48,7 @@ flowchart TD
 - confinamento dos processos que lança.
 
 ### MCP
-Transporte determinístico:
+Transporte determinístico **opcional** quando a integração exigir protocolo externo; o runner interno não faz relay MCP universal:
 - allowlist de tools;
 - argumentos delimitados;
 - timeouts e limites;
@@ -85,11 +85,17 @@ A ferramenta deve ser substituível. Se a remoção de uma capability destrói a
 
 ## Windows
 
-O Host limita processos que lança através da fronteira nativa validada. Isso não significa controlo total sobre todo o Windows nem sobre processos externos iniciados fora do Host.
+O Host limita processos que lança através da fronteira nativa candidata. Verificar código, ambiente e gates no mesmo SHA; a leitura documental não certifica a fronteira física. Isso não significa controlo total sobre todo o Windows nem sobre processos externos iniciados fora do Host.
 
 Provisioning externo permanece um gate separado: recusa segura não equivale a instalação protegida funcional.
 
+## Alcance da Folha pública no SHA auditado
+
+O parser distingue sete intenções e o runner define dez processos internos, mas a API normal só aceita proposta natural `verify` com anexo e confirmação pré-execução. A confirmação para Canonical é posterior e distinta. Ver [auditoria de compatibilidade de 10/10](docs/10-current/COMPATIBILIDADE-CODIGO-2026-10-10.md).
+
 ## Genealogia
+
+[Decisões e razões](docs/40-decisions/README.md) · [História](docs/99-history/README.md) · [Matriz de PRs](docs/60-evidence/MATRIZ-PRS-2026-10-10.md). [Issue #42](https://github.com/PAPACREATOR/cerebro-parvo-/issues/42): OpenNotebook especializado, selecionado por tarefa.
 
 Activepieces, Memory Provider, Spiff e Conductor foram etapas reais da investigação e implementação. Permanecem em `DECISIONS.md`, `historico/` e relatórios. Não são runtime obrigatório atual.
 

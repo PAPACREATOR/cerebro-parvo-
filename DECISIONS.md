@@ -1,5 +1,16 @@
 # Decisões vigentes e genealogia
 
+## 10-10-2026 — reconciliação recente
+
+[Índice de decisões e porquês](docs/40-decisions/README.md) · [história](docs/99-history/README.md) · [evidências por SHA](docs/60-evidence/MATRIZ-PRS-2026-10-10.md).
+
+- **09/10, OpenNotebook:** decisão humana na [issue #42](https://github.com/PAPACREATOR/cerebro-parvo-/issues/42): ferramenta especializada selecionada pelo Kernel/Host por tarefa, não obrigação nem orquestrador. A antiga classificação KEEP/OPTIONAL/REMOVE ficou superada quanto ao papel da ferramenta; E2E real pendente.
+- **09–10/10, segurança:** confirmar operação antes da execução e promover Creative para Canonical são autorizações separadas. PR #45 é candidata Draft após FAIL-first e correção parcial.
+- **10/10, frentes:** PR #41 documentação, #46 auditoria, #48 inventário/clones Linux; nenhuma prova uma cópia integral do PC. Sandy suspenso por decisão humana; estudo e crédito preservados.
+- **Nesta frente:** só documentos; nunca alterar código, testes, scripts, configuração executável, Kernel, Host ou Store.
+
+O histórico abaixo não é reescrito. Esta secção não autoriza merges.
+
 ## 09-10-2026 — núcleo mínimo e motores de processo
 
 A implementação candidata continua reduzida a **Folha/parser + Kernel/Host/Store + regras/schemas + MCP Python/adaptadores + ferramentas externas + Creative/Human Gate/Canonical**.

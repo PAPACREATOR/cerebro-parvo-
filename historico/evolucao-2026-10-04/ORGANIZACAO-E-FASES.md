@@ -1,9 +1,11 @@
 # Nexus — organização e próximas fases
 
+> **Nota editorial de navegação (10/10/2026):** documento histórico; as decisões e números abaixo pertencem à sua época. Os links técnicos foram reparados para a localização publicada em `nexus/docs/`, **sem atualizar os resultados históricos**. Para o candidato atual consultar [compatibilidade por SHA](../../docs/10-current/COMPATIBILIDADE-CODIGO-2026-10-10.md). [Versão original anterior à reparação](https://github.com/PAPACREATOR/cerebro-parvo-/blob/adbbd5408f7646578400ec71b915bb53dd8eae27/historico/evolucao-2026-10-04/ORGANIZACAO-E-FASES.md).
+
 Revisão de 01-10-2026. O código atual está na pasta `nexus/` do repositório público. Não está tudo instalado nem tudo integrado.
 
 Inventário histórico dessa revisão. Para o estado revisto, começar pelo
-[ponto de situação](PONTO-DE-SITUACAO.md): a conta Nexus foi depois demonstrada
+[ponto de situação](../../nexus/docs/PONTO-DE-SITUACAO.md): a conta Nexus foi depois demonstrada
 em duas pastas, ODT→PDF foi integrado e o manifesto atual tem 31 ficheiros.
 Os números/pendências do quadro abaixo não são nova inspeção do PC em 04-10.
 

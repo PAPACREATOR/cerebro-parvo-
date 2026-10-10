@@ -1,6 +1,8 @@
 # Cérebro Independente — funcionamento e estado do projeto
 
-**Para retomar o trabalho:** ler primeiro [MEMORIA-DE-TRABALHO.md](MEMORIA-DE-TRABALHO.md), com decisões, cobertura da análise, pendências e estado da cópia para D:.
+> **Arquivo de 22–24/09/2026:** a arquitetura Logseq/Activepieces aqui descrita foi superada; consultar [o estado compatível com o código candidato de outubro](../../docs/10-current/COMPATIBILIDADE-CODIGO-2026-10-10.md). A narrativa histórica permanece como documento de época. [Original anterior à reparação](https://github.com/PAPACREATOR/cerebro-parvo-/blob/adbbd5408f7646578400ec71b915bb53dd8eae27/historico/repositorio-2026-09-24/README.md).
+
+**Para retomar o trabalho (instrução histórica de 22/09/2026):** esta versão indicava a leitura de `MEMORIA-DE-TRABALHO.md`, com decisões, cobertura da análise, pendências e estado da cópia para D:. **O ficheiro original não se encontra publicado nesta árvore**; consultar a [nota de proveniência e alternativas públicas](../../docs/99-history/REFERENCIA-RESERVADA-MEMORIA-DE-TRABALHO-2026-10-10.md), sem presumir que esta nota substitui a memória original.
 
 Data de organização documental: 2026-09-22.
 Autor declarado da conceção: Pedro Alexandre Caldas Coelho.
