@@ -23,7 +23,7 @@ def test_seven_prefixes_interpret_read_only(tmp_path, text, intent):
         assert result["execution"] == "NOT_AUTHORIZED"
         assert result["confirmation_required"] is False
         assert call("/api/runs") == []
-    assert not any((tmp_path/n).iterdir() for n in ("runs","creative","canonical"))
+    assert all(not any((tmp_path/n).iterdir()) for n in ("runs","creative","canonical"))
 
 @pytest.mark.parametrize("value", [
     {"text":"Guarda", "process":"book"},
@@ -37,7 +37,7 @@ def test_interpret_rejects_unexpected_fields(tmp_path, value):
             call("/api/interpret", value)
         assert error.value.code == 403
         assert call("/api/runs") == []
-    assert not any((tmp_path/n).iterdir() for n in ("runs","creative","canonical"))
+    assert all(not any((tmp_path/n).iterdir()) for n in ("runs","creative","canonical"))
 
 @pytest.mark.parametrize("text", [
     "Nao guardes o ficheiro.",
@@ -51,4 +51,4 @@ def test_uncertain_requests_do_not_execute(tmp_path,text):
         assert result["status"]!="RESOLVED"
         assert result["execution"]=="NOT_AUTHORIZED"
         assert call("/api/runs")==[]
-    assert not any((tmp_path/n).iterdir() for n in ("runs","creative","canonical"))
+    assert all(not any((tmp_path/n).iterdir()) for n in ("runs","creative","canonical"))
