@@ -6,7 +6,7 @@
 - Caminhos históricos preservados; nenhum ficheiro original movido, apagado ou reclassificado como runtime atual.
 - Esclarecidos OpenNotebook especializado, confirmações humanas separadas, estado Draft das PRs e suspensão Sandy.
 - Revisão posterior de compatibilidade com a PR #45: nova matriz `app.py`/parser/runner/Host/Store/sandbox/MCP/instalador por SHA; documentado que dez processos internos não equivalem a dez operações naturais públicas.
-- Adicionados índices em `nexus/docs/README.md` e `historico/README.md`, catálogo de classificação documental e protocolo de prova.
+- Adicionados índices em `nexus/docs/README.md` e `historico/README.md`, catálogo de classificação documental, inventário navegável de 172 ficheiros Markdown no snapshot da branch e protocolo de prova.
 - Somente Markdown: nenhuma alteração a código, testes, scripts, workflows ou configuração. Não implica PASS global.
 
 [Índice](docs/README.md) · [Compatibilidade com código](docs/10-current/COMPATIBILIDADE-CODIGO-2026-10-10.md) · [Decisões](docs/40-decisions/README.md) · [História](docs/99-history/README.md).
