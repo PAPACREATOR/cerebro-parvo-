@@ -56,5 +56,5 @@ def test_gateway_does_not_claim_local_approval_or_store():
     assert "/api/confirm-run" in gateway
     assert "/api/approve" in gateway
     assert "/api/runs" in gateway
-    assert "/api/pdf" in gateway
+    assert "(?:runs|pdf)" in gateway
     assert "res.json({ status: 'PASS'" not in gateway
