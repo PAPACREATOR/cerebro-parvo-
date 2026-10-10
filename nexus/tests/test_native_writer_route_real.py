@@ -152,3 +152,79 @@ def test_installed_writer_is_confined_and_returns_only_a_human_approved_candidat
     restored.store.check_commit(restored.store.state(run))
     assert restored.store.state(run)["status"] == "PASS"
     assert {p.name: p.read_bytes() for p in (data / "canonical" / run).iterdir()} == package
+
+
+def test_two_real_tools_verify_then_writer_each_with_own_human_gates(tmp_path, monkeypatch):
+    """One ODT source, two independent Host runs; native verify + Sandy Writer.
+
+    No pseudo-tool, no Store bypass. Each request is approved for execution,
+    validated into Creative, then independently promoted to Canonical.
+    """
+    from urllib.error import HTTPError
+
+    data = tmp_path / "two-tools"
+    data.mkdir()
+    executable = Path(os.environ["LIBREOFFICE_EXE"])
+    sandy = Path(os.environ["SANDY_EXE"])
+    assert executable.is_file() and sandy.is_file()
+    (data / "libreoffice.json").write_text(
+        json.dumps({"executable": str(executable), "sandy": str(sandy)}),
+        encoding="utf-8",
+    )
+    host = Host(data)
+    raw = document()
+    encoded = base64.b64encode(raw).decode("ascii")
+    original = {"filename": "source.odt", "attachment": encoded}
+
+    def finish(call, text):
+        proposal = {"text": text, **original}
+        prepared = call("/api/prepare-run", proposal)
+        assert prepared["attachment_sha256"] == hashlib.sha256(raw).hexdigest()
+        assert call("/api/confirm-run", {
+            "ticket": prepared["ticket"], "confirmed": True, **proposal,
+        })["run_id"]
+        # Get exactly the new run ID through the authority-bound API.
+        runs = call("/api/runs")
+        run = next(state["run_id"] for state in runs if state["status"] == "RUNNING")
+        deadline = time.monotonic() + 90
+        state = call("/api/runs/" + run)
+        while state["status"] == "RUNNING" and time.monotonic() < deadline:
+            time.sleep(0.1)
+            state = call("/api/runs/" + run)
+        assert state["status"] == "HUMAN_REQUIRED", state
+        assert not (data / "canonical" / run).exists()
+        approved = call("/api/prepare", {"run_id": run})
+        assert call("/api/approve", {
+            "run_id": run, "ticket": approved["ticket"], "confirmed": True,
+        })["status"] == "PASS"
+        assert (data / "runs" / run / "input.bin").read_bytes() == raw
+        return run
+
+    with http(host) as call:
+        verify_run = finish(call, "& verificar integridade de ficheiro")
+        assert not (data / "creative" / verify_run / "resultado.pdf").exists()
+
+        writer_proposal = {"text": "& converter para pdf", **original}
+        pending = call("/api/prepare-run", writer_proposal)
+        with pytest.raises(HTTPError) as direct:
+            call("/api/run", {"process": "convert_pdf", **writer_proposal})
+        assert direct.value.code == 403
+        assert call("/api/confirm-run", {
+            "ticket": pending["ticket"], "confirmed": False, **writer_proposal,
+        }) == {"status": "CANCELLED"}
+        assert len(call("/api/runs")) == 1
+
+        writer_run = finish(call, "& converter para pdf")
+        assert writer_run != verify_run
+        pdf = (data / "canonical" / writer_run / "resultado.pdf").read_bytes()
+        assert pdf.startswith(b"%PDF-") and b"%%EOF" in pdf[-1024:]
+        assert len(call("/api/runs")) == 2
+
+    def no_repeat(*_args, **_kwargs):
+        pytest.fail("Reopening must not re-execute either capability")
+    monkeypatch.setattr("nexus.host.launch_confined", no_repeat)
+    monkeypatch.setattr("nexus.adapters.writer_sandy.convert", no_repeat)
+    restored = Host(data)
+    for run_id in (verify_run, writer_run):
+        restored.store.check_commit(restored.store.state(run_id))
+        assert restored.store.state(run_id)["status"] == "PASS"
