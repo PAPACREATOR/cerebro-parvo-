@@ -5,7 +5,7 @@ As ferramentas devolvem trabalho especializado; nenhuma governa o Kernel. A pres
 | Ferramenta | Papel permitido | Limite atual documentado |
 | --- | --- | --- |
 | OpenNotebook | Pesquisa/revisão editorial, comparação, planeamento de podcast | Contratos parciais; E2E real Windows+SurrealDB+modelo ainda pendente |
-| LibreOffice/Writer | Edição/render/export de documentos | Causa de pipes LPAC demonstrada no laboratório PR #1; solução A/B Sandy em ensaio PR #2, **sem PASS real de PDF na consulta**; candidato #45 ainda com gate pendente |
+| LibreOffice/Writer | Edição/render/export de documentos | Namespace LPAC verificado no laboratório PR #1; **primeiro A/B Sandy PR #2 FAIL em A (timeout/limpeza), B não executado**; nova tentativa em curso noutra SHA. Sem PASS Writer/PDF integrado na PR #45 |
 | LanguageTool | Revisão linguística local | Prova anterior por CLI não basta para aceitar toda a integração atual |
 | Zotero | Referências e fontes | Capacidade delimitada; aceitação física não demonstrada aqui |
 | ffmpeg/avatar | Media a partir de áudio e imagem | Não confundir plano/CLI/fixture com vídeo final no PC |
