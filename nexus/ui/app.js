@@ -26,6 +26,23 @@ async function api(path, data) {
   return value;
 }
 function notice(message) { el("notice").textContent = message; }
+function showInterpretation(preview) {
+  // An interpretation is never an execution or a Creative candidate.
+  current=null;
+  el("empty").hidden=true;el("result").hidden=false;
+  el("status").textContent=preview.status==="RESOLVED"?"Reconhecido · não executado":
+    (preview.status==="BLOCKED"?"Bloqueado":"Precisa de esclarecimento");
+  const intents={arquivo:"Arquivo",fontes:"Fontes",perguntar:"Pergunta",
+    trabalhar:"Trabalhar",calcular:"Calcular",tema:"Tema",web:"Web"};
+  el("result-title").textContent=preview.status==="RESOLVED"?
+    ("Intenção: "+(intents[preview.intent]||"por esclarecer")):"Interpretação pendente";
+  el("message").textContent=preview.status==="RESOLVED"?
+    "A Folha compreendeu a intenção, mas esta capacidade ainda não está ligada a execução. Só a verificação de integridade com ficheiro tem confirmação de execução nesta versão.":
+    "Reformula o pedido. Nenhuma ferramenta foi chamada.";
+  el("content").textContent=preview.original;
+  currentContent="";
+  el("actions").hidden=true;el("pdf").hidden=true;
+}
 async function list() {
   const items = await api("/api/runs");
   el("history").replaceChildren();
@@ -72,7 +89,22 @@ el("form").onsubmit=async event=>{
     const revision=editRevision;
     const payload=await requestPayload();
     if (revision!==editRevision) throw new Error("O texto ou anexo mudou durante a preparação. Revê o pedido.");
-    const prepared=await api("/api/prepare-run",payload);
+    const preview=await api("/api/interpret",{text:payload.text});
+    if(revision!==editRevision) throw new Error("O texto ou anexo mudou durante a interpretação.");
+    if(preview.status!=="RESOLVED"||preview.intent!=="trabalhar"||
+       !payload.filename||!payload.attachment) {
+      showInterpretation(preview);
+      return;
+    }
+    let prepared;
+    try {
+      prepared=await api("/api/prepare-run",payload);
+    } catch(error) {
+      // Never pretend a recognized intent is an executable capability.
+      showInterpretation(preview);
+      notice(error.message);
+      return;
+    }
     if (revision!==editRevision) {
       notice("O texto ou anexo mudou durante a preparação. Revê o pedido.");
       return;
@@ -83,7 +115,8 @@ el("form").onsubmit=async event=>{
     el("execution-confirm").checked=false;
     el("execution-approve").disabled=true;
     el("execution-confirmation").showModal();
-  } catch(error) {notice(error.message);el("submit").disabled=false;}
+  } catch(error) {notice(error.message);}
+  finally {if(!el("execution-confirmation").open)el("submit").disabled=false;}
 };
 el("execution-confirm").onchange=()=>{el("execution-approve").disabled=!el("execution-confirm").checked;};
 el("execution-cancel").onclick=async()=>{
@@ -95,9 +128,12 @@ el("execution-cancel").onclick=async()=>{
 };
 el("execution-approve").onclick=async()=>{
   el("execution-approve").disabled=true;
-  const active=executionTicket; executionTicket=null;
+  const active=executionTicket, revision=editRevision; executionTicket=null;
   try {
-    const response=await api("/api/confirm-run",{ticket:active,confirmed:true,...await requestPayload()});
+    if(!active)throw new Error("A confirmação já não é válida.");
+    const payload=await requestPayload();
+    if(revision!==editRevision)throw new Error("O pedido mudou durante a confirmação.");
+    const response=await api("/api/confirm-run",{ticket:active,confirmed:true,...payload});
     el("execution-confirmation").close();
     await list(); await show(response.run_id);
   } catch(error) {
