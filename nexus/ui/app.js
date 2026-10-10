@@ -37,7 +37,7 @@ function showInterpretation(preview) {
   el("result-title").textContent=preview.status==="RESOLVED"?
     ("Intenção: "+(intents[preview.intent]||"por esclarecer")):"Interpretação pendente";
   el("message").textContent=preview.status==="RESOLVED"?
-    "A Folha compreendeu a intenção. Só estão habilitadas, com confirmação humana e anexo, a verificação de integridade e duas exportações Writer expressamente pedidas.":
+    "A Folha reconheceu a intenção. A execução requer uma capacidade registada, pedido explícito, anexo e confirmação humana por tarefa.":
     "Reformula o pedido. Nenhuma ferramenta foi chamada.";
   el("content").textContent=preview.original;
   currentContent="";
@@ -91,7 +91,7 @@ el("form").onsubmit=async event=>{
     if (revision!==editRevision) throw new Error("O texto ou anexo mudou durante a preparação. Revê o pedido.");
     const preview=await api("/api/interpret",{text:payload.text});
     if(revision!==editRevision) throw new Error("O texto ou anexo mudou durante a interpretação.");
-    if(preview.status!=="RESOLVED"||preview.intent!=="trabalhar"||
+    if(preview.status!=="RESOLVED"||!["trabalhar","web"].includes(preview.intent)||
        !payload.filename||!payload.attachment) {
       showInterpretation(preview);
       return;
@@ -111,8 +111,13 @@ el("form").onsubmit=async event=>{
     }
     executionTicket=prepared.ticket;
     el("execution-summary").textContent=prepared.summary;
-    const actions={verify:"Verificar integridade",convert_pdf:"Converter para PDF",
-      book:"Exportar manuscrito para PDF"};
+    const actions={
+      verify:"Verificar integridade",interpret:"Interpretar documento (OpenNotebook)",
+      proofread:"Rever texto (LanguageTool)",convert_pdf:"Converter para PDF",
+      video:"Preparar plano de vídeo",podcast:"Preparar plano de podcast",
+      visual_podcast:"Preparar plano de podcast visual",book:"Exportar manuscrito para PDF",
+      music:"Preparar plano de música",web:"Preparar plano de pesquisa web"
+    };
     if(!Object.prototype.hasOwnProperty.call(actions,prepared.process))
       throw new Error("A operação proposta não está autorizada.");
     el("execution-review").textContent="Ação: "+actions[prepared.process]+"\nFicheiro: "+prepared.filename+"\nBytes: "+prepared.attachment_bytes+"\nSHA-256: "+prepared.attachment_sha256;

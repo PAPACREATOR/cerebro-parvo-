@@ -1,7 +1,7 @@
 {
-  "app.py": "cffec0e201ffbe27eb80ce1489f67d1e22c9658f6d08413db67ffd0e837be287",
+  "app.py": "2146e41a255c075384cead5092c7b36092adf3e6babadd89f0b692c0123840b7",
   "contracts.py": "cd1830c968c757cdad738957dce54672cb70faf33cc11602b6d68d69df50bc65",
-  "host.py": "d285f0c75ef0100d4067bf7cb1f7280a349f96b6593693e5ce73bbea2ea9d924",
+  "host.py": "e74cba142e39c2e770816ff448d70f9a214a420dfc989259716044cd16da9559",
   "store.py": "b3bcea546b2bf6ce97ba5ac574601a2526ace9a432b058c46ff2c5ee11057ba5",
   "__init__.py": "b4f468051a062293cce504af2e229613a15f3d98ef90a6f9430d8e357e9f9591",
   "adapters/tools.py": "db6c0feb6beb658565a02e4feb1dea4f2c138a4a8d23cd8f27ccf3435af28de5",
@@ -16,7 +16,7 @@
   "schemas/languagetool.json": "f3310c0f0d70e86ab80aa22f8deb5331ddb5ccd49bae84be0926010d2ec27afa",
   "adapters/office.py": "75e9d58152b9b2929ea056d0934207922afbf4dfdba290b38c99c629a5ef06c5",
   "ui/index.html": "3c0fc09eeed5e73633116c773fe3aec4831168aeb81c2319cbdefcc8f74eacf7",
-  "ui/app.js": "6e0f77ab369d0bfa09128e49f4d996a348a471bd71b072cbbd9d6b1bf543f955",
+  "ui/app.js": "f0af1d18ee9468babff4204cf3ec805d6cfeb4c195a2cfabc6df6c32a7d65c93",
   "ui/style.css": "89f9641aa4a2f27523a8f756c4c1328042eb86be64be559cc0919584c0867b94",
   "adapters/constitutional.py": "1943aaece17916221d598ce8551e00b0d1a959e47c2d5b38aff7b4282029c026",
   "schemas/multimedia.json": "ea20b02da3c33557d42475c84e111f98a1f7048708af0e434dde4aca53154e01",
@@ -37,5 +37,6 @@
   "adapters/writer_sandy.py": "0018d1367348ae404c200fbf1d753446ca4de44be868b16244503609c19ffdc2",
   "adapters/vendor/sandy/libreoffice-demo.py": "01f01109e3672251a2ea4b910d53acf2f6ef1f681ca4354da85ba522a8a43fd6",
   "adapters/vendor/sandy/libreoffice.toml": "ba2b6eed03218996e12387899229587914731609b0805bcbbef5f5ca054bb7ec",
-  "adapters/vendor/sandy/LICENSE": "71ab2a2ba35053be1bc7370f83080bab7643812351e377c8eb3fdd2ee9f34fce"
+  "adapters/vendor/sandy/LICENSE": "71ab2a2ba35053be1bc7370f83080bab7643812351e377c8eb3fdd2ee9f34fce",
+  "capability_router.py": "d2cff288eec316b5c25afa472f5568d8dfdc9072055df79d745124217c7061c4"
 }
