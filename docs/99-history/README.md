@@ -1,6 +1,6 @@
 # História e genealogia
 
-O Nexus preserva decisões anteriores porque FAILs, experiências e componentes rejeitados são evidência técnica. Esta revisão organiza épocas e motivos **sem deslocar documentos originais**. Preservar histórico não significa que continue ativo.
+O Nexus preserva decisões anteriores porque FAILs, experiências e componentes rejeitados são evidência técnica. Esta revisão organiza épocas e motivos **sem deslocar documentos originais**. Quatro páginas históricas tiveram exclusivamente reparações de navegação e avisos editoriais, mantendo versões anteriores acessíveis pelo commit Git. Preservar histórico não significa que continue ativo.
 
 ## Por mês
 
@@ -12,6 +12,7 @@ O Nexus preserva decisões anteriores porque FAILs, experiências e componentes 
 - [Cronologia 22/09–10/10](LINHA-DO-TEMPO-2026-09-22-A-2026-10-10.md).
 - [Decisões superadas e respetivos motivos](DECISOES-SUPERADAS-E-PORQUE.md).
 - [Mapa de origens](MAPA-DE-ORIGENS.md).
+- [Reconciliação das 11 referências históricas da PR #46](RECONCILIACAO-11-REFERENCIAS-2026-10-10.md): dez links corrigidos e uma fonte reservada identificada sem reprodução.
 - [Classificação documental por família e estatuto](CLASSIFICACAO-DOCUMENTAL-2026-10-10.md).
 - [Inventário integral dos 172 Markdown do snapshot da branch](INVENTARIO-MARKDOWN-POR-CAMINHO-2026-10-10.md) — caminhos e Git blob SHA por pasta.
 - [Decisões vigentes fundamentadas](../40-decisions/README.md).
