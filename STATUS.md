@@ -1,17 +1,17 @@
 # Estado atual do Nexus
 
-**Reconciliação documental de 10-10-2026:** ver [fotografia datada](docs/10-current/ESTADO-DOCUMENTAL-2026-10-10.md) e [evidências](docs/60-evidence/MATRIZ-PRS-2026-10-10.md). PR #45 permanece Draft; PR #48 não prova espelho completo do PC. Esta nota não substitui o estado operacional abaixo.
+**Reconciliação documental de 10-10-2026:** ver [fotografia datada](docs/10-current/ESTADO-DOCUMENTAL-2026-10-10.md), [compatibilidade com código no SHA da PR #45](docs/10-current/COMPATIBILIDADE-CODIGO-2026-10-10.md) e [matriz de provas](docs/60-evidence/MATRIZ-PRS-2026-10-10.md). PR #45 permanece Draft; PR #48 não prova espelho completo do PC. Não houve teste físico nem release nesta reconciliação.
 
-O estado operacional corrente está em [nexus/docs/PONTO-DE-SITUACAO.md](nexus/docs/PONTO-DE-SITUACAO.md).
+O [ponto de situação acumulado](nexus/docs/PONTO-DE-SITUACAO.md) conserva os ciclos de execução e a abertura de 08/10; **não representa, isoladamente, a posterior integração experimental da PR #45**. Para implementação concreta, conferir o HEAD de código e a matriz datada.
 
-A implementação candidata ativa está na **PR #32**, branch `cleanup/llamacpp-only-20261007`. A issue #33 fixa a convergência final sem novas funcionalidades por antecipação.
+A **PR #32** (`cleanup/llamacpp-only-20261007`, `da86b6dd...`) é a **baseline Windows**. A **PR #45** (`integration/nexus-unified-candidate-20261009`, `66027af7...`) é a **integração candidata posterior**, isolada e ainda Draft; não está em `main`. A issue #33 fixa a convergência final sem novas funcionalidades por antecipação.
 
 ## Composição candidata
 
-- Folha + parser determinístico;
+- Folha + parser determinístico (sete intenções reconhecidas; na API pública normal, apenas a proposta natural `verify` é encaminhada para execução após confirmação no SHA auditado);
 - Kernel / Host / Store;
 - regras, schemas e allowlists;
-- MCP Python e adaptadores autorizados;
+- runner direto sob fronteira Windows e MCP Python opcional para ferramentas autorizadas (MCP não é relay universal);
 - ferramentas externas delimitadas;
 - Creative → Human Gate → Canonical.
 
