@@ -1,5 +1,7 @@
 # Plano de implementação vigente
 
+**Nota documental 10/10:** plano não é prova física. PR #32 é baseline, PR #45 é Draft; PRs #46/#48 não certificam cópia integral do PC. Consultar [reconciliação datada](docs/10-current/ESTADO-DOCUMENTAL-2026-10-10.md) e [evidência](docs/60-evidence/README.md) antes de declarar gates concluídos.
+
 Objetivo: fechar um protótipo local funcional no PC, mantendo o Kernel estável e acrescentando capacidades por adapters/contratos.
 
 ## Regra de execução

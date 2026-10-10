@@ -1,6 +1,6 @@
 # Start here — Nexus / Cérebro Local
 
-Este é o ponto de entrada recomendado para quem chega ao repositório pela primeira vez.
+Este é o ponto de entrada recomendado para quem chega ao repositório pela primeira vez. [Mapa completo](../README.md) · [Decisões e razões](../40-decisions/README.md) · [História](../99-history/README.md).
 
 ## Em uma frase
 
@@ -17,7 +17,7 @@ Nexus é um sistema Windows local-first em que a pessoa continua autoridade fina
 
 ## Código ativo
 
-O candidato Windows atual está em [nexus/](../../nexus/). A continuidade de implementação está na PR #32 e a direção de convergência está na issue #33.
+O candidato Windows atual está em [nexus/](../../nexus/). A baseline candidata está na PR #32; a PR #45 é posterior, isolada e Draft. A direção é a issue #33. Ver [matriz de PRs](../60-evidence/MATRIZ-PRS-2026-10-10.md).
 
 As pastas `implementacao/` e `historico/` preservam genealogia, experiências e versões anteriores. Não devem ser usadas como fonte de verdade do runtime atual.
 

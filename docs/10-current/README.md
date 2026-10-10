@@ -1,11 +1,11 @@
 # Estado atual — navegação
 
-Este diretório não duplica o estado operacional. Serve apenas como mapa.
+Este diretório não duplica o estado operacional. Serve apenas como mapa. A [fotografia de 10/10](ESTADO-DOCUMENTAL-2026-10-10.md) documenta refs e lacunas, sem substituir a fonte operacional.
 
 ## Fonte de verdade
 
 - Estado detalhado: [nexus/docs/PONTO-DE-SITUACAO.md](../../nexus/docs/PONTO-DE-SITUACAO.md)
-- Candidato ativo: PR #32 — `cleanup/llamacpp-only-20261007`
+- Baseline candidata: PR #32 — cleanup/llamacpp-only-20261007; PR #45 é integração posterior Draft, sem merge
 - Direção de convergência: issue #33
 - Pedidos públicos de ajuda: issues #35–#39
 
