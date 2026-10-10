@@ -13,6 +13,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import sys
+import tempfile
 
 from nexus.contracts import Blocked, strict_json
 from nexus.adapters.office import document_kind, pdf_bytes
@@ -116,8 +117,8 @@ def _tree_identity(root):
     return count, h.hexdigest()
 
 
-def convert(process, work):
-    """Return the same runner envelope as before, for existing Host/Store gates."""
+def _convert_impl(process, work, stage_root):
+    """Run the verified user task using a short, disposable Writer-only root."""
     if os.name != "nt" or process not in ("book", "convert_pdf"):
         raise Blocked("Writer requer o Windows e uma operação autorizada.")
     work = Path(work).resolve()
@@ -148,7 +149,14 @@ def convert(process, work):
         if not item.is_file() or item.is_symlink() or item.is_junction():
             raise Blocked("A instalação Writer está incompleta ou foi redirecionada.")
     source_identity = _tree_identity(install)
-    stage, copied = work / "writer-lpac", work / "writer-runtime-copy"
+    # LibreOffice still has Win32 components that fail with deep nested paths.
+    # Lab success used a short user-owned scratch root; keep the Host/Store
+    # input path untouched and copy only the selected document under LPAC.
+    if (not stage_root.is_absolute() or not stage_root.is_dir()
+            or stage_root.is_symlink() or stage_root.is_junction()
+            or len(str(stage_root)) > 150):
+        raise Blocked("Área de sandbox Writer demasiado longa ou redirecionada.")
+    stage, copied = stage_root / "stage", stage_root / "runtime"
     # Do not operate on the user-installed Writer tree. Sandy may change ACL
     # metadata, so its entire runtime is copied to this disposable task.
     copied.mkdir()
@@ -163,7 +171,7 @@ def convert(process, work):
     identity = _tree_identity(copied)
     if identity != source_identity:
         raise Blocked("Cópia Writer diferente da instalação de origem.")
-    sandy_copy = work / "sandy.exe"
+    sandy_copy = stage_root / "sandy.exe"
     shutil.copy2(sandy, sandy_copy)
     if sandy_copy.stat().st_size != SANDY_SIZE or digest_file(sandy_copy) != SANDY_SHA256:
         raise Blocked("Cópia do Sandy diferente da fonte autenticada.")
@@ -172,9 +180,10 @@ def convert(process, work):
         (stage / name).mkdir()
     document = stage / "work" / ("resultado" + kind)
     document.write_bytes(raw)
-    # The 4 relevant mutable paths and the runtime copy were measured in the
-    # successful Windows A/B laboratory; never restore outside work.
-    paths = (work, stage, copied, stage / "profile", stage / "work", stage / "temp")
+    # Also observe the Host's staging directory; Sandy is never granted its
+    # path. Recovery may only touch the new isolated scratch, not Host/Store.
+    paths = (work, stage_root, stage, copied,
+             stage / "profile", stage / "work", stage / "temp")
     before = {str(p): _native_dacl(p) for p in paths}
     script = VENDOR / "libreoffice-demo.py"
     cmd = [sys.executable, "-I", str(script), "--scratch", str(stage),
@@ -185,7 +194,7 @@ def convert(process, work):
     # user-supplied document is read only after Sandy's LPAC setup.
     process_handle = None
     try:
-        process_handle = subprocess.Popen(cmd, cwd=work, stdin=subprocess.PIPE,
+        process_handle = subprocess.Popen(cmd, cwd=stage_root, stdin=subprocess.PIPE,
                         stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                         creationflags=subprocess.CREATE_NO_WINDOW | subprocess.CREATE_NEW_PROCESS_GROUP)
         out, err = process_handle.communicate(timeout=135)
@@ -203,7 +212,7 @@ def convert(process, work):
         clean = subprocess.run([str(sandy_copy), "--cleanup"], capture_output=True, timeout=15)
         if clean.returncode != 0:
             raise Blocked("Limpeza Sandy falhou; o resultado não pode ser aceite.")
-    _restore_exact_ai_only(before, (work,))
+    _restore_exact_ai_only(before, (stage_root,))
     state_path = stage / "last-run.json"
     # Report only a bounded phase and numeric exit code; never publish paths,
     # document bytes, environment, or unrestricted sandbox logs in the UI.
@@ -259,3 +268,16 @@ def convert(process, work):
         "evidence": [{"capability": "libreoffice.writer-pdf", "status": "PASS", "value": evidence_hash}],
     }
     return {"result": result, "trace": _trace(process, PROCESS_TO_TOOL[process])}
+
+
+def convert(process, work):
+    """Return a Host-compatible envelope; one short scratch per Writer run.
+
+    No Store contents, permissions or executable paths are moved. The only
+    external runtime copy and Sandbox grants belong to the disposable root.
+    """
+    if os.name != "nt" or process not in ("book", "convert_pdf"):
+        raise Blocked("Writer só está autorizado para estas operações em Windows.")
+    with tempfile.TemporaryDirectory(prefix="nw-") as short_scratch:
+        root = Path(short_scratch).resolve()
+        return _convert_impl(process, work, root)
