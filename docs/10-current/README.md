@@ -1,11 +1,11 @@
 # Estado atual — navegação
 
-Este diretório não duplica o estado operacional. Serve apenas como mapa. A [fotografia de 10/10](ESTADO-DOCUMENTAL-2026-10-10.md) documenta refs e lacunas, sem substituir a fonte operacional.
+Este diretório não duplica a execução. Serve de mapa para a [fotografia de 10/10](ESTADO-DOCUMENTAL-2026-10-10.md) e a [auditoria código-documentação da PR #45](COMPATIBILIDADE-CODIGO-2026-10-10.md), ambas com SHA e limites. Não afirma aprovação física.
 
 ## Fonte de verdade
 
-- Estado detalhado: [nexus/docs/PONTO-DE-SITUACAO.md](../../nexus/docs/PONTO-DE-SITUACAO.md)
-- Baseline candidata: PR #32 — cleanup/llamacpp-only-20261007; PR #45 é integração posterior Draft, sem merge
+- Relatório operacional acumulado (abertura de 08/10): [nexus/docs/PONTO-DE-SITUACAO.md](../../nexus/docs/PONTO-DE-SITUACAO.md). Ler cada ciclo pelo respetivo SHA.
+- Baseline Windows: PR #32 — `cleanup/llamacpp-only-20261007`; integração posterior: PR #45, Draft, HEAD examinado `66027af7...`, sem merge
 - Direção de convergência: issue #33
 - Pedidos públicos de ajuda: issues #35–#39
 
@@ -18,7 +18,7 @@ Kernel / Host / Store
       ↓
 regras + schemas + allowlists
       ↓
-MCP Python ou adaptador direto autorizado
+Runner direto protegido ou MCP Python autorizado
       ↓
 ferramenta externa delimitada
       ↓
@@ -31,7 +31,7 @@ Human Gate
 Canonical
 ```
 
-Activepieces, Conductor e Spiff não são dependências do runtime candidato atual.
+Activepieces, Conductor e Spiff não são dependências do runtime candidato atual. **Sete prefixos interpretados e dez processos internos não equivalem a dez operações disponíveis na Folha**; a rota natural pública comprovável pelo código examinado é `verify`, com ticket pré-execução.
 
 ## Importante
 
