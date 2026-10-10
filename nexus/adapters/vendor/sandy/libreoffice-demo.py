@@ -221,7 +221,18 @@ def launch(args):
                     try:
                         state.update(phase=phase, pid=process.pid)
                         write_json(state_path, state)
-                        return process.wait()
+                        # Nexus policy: 43s of Writer execution plus up to 2s
+                        # to terminate. No unbounded wait in the trusted shim.
+                        try:
+                            return process.wait(timeout=43)
+                        except subprocess.TimeoutExpired:
+                            process.send_signal(signal.CTRL_BREAK_EVENT)
+                            try:
+                                process.wait(timeout=2)
+                            except subprocess.TimeoutExpired:
+                                process.kill()
+                                process.wait(timeout=2)
+                            raise RuntimeError("Writer phase exceeded the 45-second native budget")
                     except BaseException:
                         # Never remove temp while our child is still using it,
                         # including when publishing run metadata fails.
