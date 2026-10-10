@@ -7,43 +7,6 @@ const code = fs.readFileSync(require("node:path").join(__dirname, "..", "ui", "a
 
 const flush = async () => { for (let i = 0; i < 8; i++) await Promise.resolve(); };
 
-async function caseRun({restoreText,changeFile}) {
-  const elements = new Map(), events = new Map();
-  let modalCount = 0, prepareResolve, prepareCalls = 0, runCalls = 0;
-  const element = (id) => {
-    if (!elements.has(id)) {
-      const x = {value: "",textContent: "",files: [],open: false,disabled: false,hidden: false,
-        checked:false,append(){},appendChild(){},replaceChildren(){},reset(){this.value = "";},
-        close(){this.open=false;},showModal(){this.open=true;modalCount++;},
-        addEventListener(type,fn){events.set(id+":"+type,fn);}};
-      elements.set(id,x);
-    }
-    return elements.get(id);
-  };
-  const ctx = {
-    document:{getElementById:element}, location:{hash:""}, history:{replaceState(){}},
-    sessionStorage:{getItem(){return "test-session";},setItem(){}},
-    URLSearchParams, Uint8Array, clearTimeout(){}, setTimeout(){return 1;},
-    fetch:async(path) => {
-      if (path==="/api/runs") return {ok:true,json:async()=>[]};
-      if (path==="/api/prepare-run") {
-        prepareCalls++;
-        return new Promise(resolve=>prepareResolve=()=>resolve({
-          ok:true,json:async()=>({ticket:"stale",summary:"Verificar ficheiro",attachment_bytes:1,
-            filename:"a.txt",attachment_sha256:"0".repeat(64)})}));
-      }
-      if (path==="/api/confirm-run"){runCalls++;return {ok:true,json:async()=>({status:"CANCELLED"})};}
-      throw new Error("Unexpected HTTP call: "+path);
-    }
-  };
-  vm.runInNewContext(code,ctx,{filename:"app.js"});
-  const form=element("form"), field=element("text");
-  field.value="Verifica a integridade deste ficheiro.";
-  await form.onsubmit({preventDefault(){}});
-  // A deferred API response remains unresolved; test the race on submit.
-  // Above call will not resolve until prepareResolve is called, so run separately.
-}
-
 async function run(mode) {
   const elements=new Map(), events=new Map();
   let resolvePrepare, opens=0, confirms=0;
