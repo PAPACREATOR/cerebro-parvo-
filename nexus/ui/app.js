@@ -142,6 +142,24 @@ el("execution-approve").onclick=async()=>{
 };
 el("text").addEventListener("input", invalidateExecutionProposal);
 el("file").onchange=()=>{invalidateExecutionProposal();el("file-label").textContent=el("file").files[0]?.name || "Até 2 MB · um ficheiro de cada vez";};
+// Drag-and-drop is an input convenience, not an authorization or execution.
+const surface=document.querySelector?.(".sheet");
+if(surface){
+  surface.addEventListener("dragover",event=>event.preventDefault());
+  surface.addEventListener("drop",event=>{
+    event.preventDefault();
+    const files=event.dataTransfer?.files;
+    if(!files?.length)return;
+    if(files.length!==1){notice("Junta um ficheiro de cada vez.");return;}
+    if(files[0].size>2097152){notice("Escolhe um ficheiro até 2 MB.");return;}
+    try {el("file").files=files;el("file").onchange();}
+    catch(_error){notice("Usa «Juntar ficheiro» para selecionar o documento.");}
+  });
+}
+const attach=document.querySelector?.(".attachment");
+if(attach) attach.addEventListener("keydown",event=>{
+  if(event.key==="Enter"||event.key===" "){event.preventDefault();el("file").click();}
+});
 el("new").onclick=()=>{
   clearTimeout(poll); current=null; invalidateExecutionProposal(); el("form").reset(); el("file-label").textContent="Até 2 MB · um ficheiro de cada vez";
   el("empty").hidden=false;el("result").hidden=true;el("submit").disabled=false;notice("");el("text").focus();
