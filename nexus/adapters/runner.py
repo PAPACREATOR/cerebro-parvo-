@@ -53,6 +53,10 @@ PROCESS_FILES = {
     "convert_pdf": (
         "adapters/runner.py",
         "adapters/office.py",
+        "adapters/writer_sandy.py",
+        "adapters/vendor/sandy/libreoffice-demo.py",
+        "adapters/vendor/sandy/libreoffice.toml",
+        "adapters/vendor/sandy/LICENSE",
     ),
     "video": (
         "adapters/runner.py",
@@ -69,6 +73,10 @@ PROCESS_FILES = {
     "book": (
         "adapters/runner.py",
         "adapters/office.py",
+        "adapters/writer_sandy.py",
+        "adapters/vendor/sandy/libreoffice-demo.py",
+        "adapters/vendor/sandy/libreoffice.toml",
+        "adapters/vendor/sandy/LICENSE",
     ),
     "music": (
         "adapters/runner.py",
@@ -148,7 +156,7 @@ def prepare_task(process, input_path, work, *, config_root=None):
         if not (config_root / name).is_file():
             raise Blocked("A ferramenta precisa de configuração local.")
         config = strict_json((config_root / name).read_bytes())
-        keys = {"java", "jar"} if process == "proofread" else {"executable"}
+        keys = {"java", "jar"} if process == "proofread" else {"executable", "sandy"}
         if not isinstance(config, dict) or set(config) != keys:
             raise Blocked("Configuração da ferramenta inválida.")
         for value in config.values():
@@ -161,7 +169,8 @@ def prepare_task(process, input_path, work, *, config_root=None):
             roots += [java.parent.parent, jar.parent]
         else:
             exe = Path(config["executable"])
-            if exe.name.lower() != "soffice.com":
+            sandy = Path(config["sandy"])
+            if exe.name.lower() != "soffice.com" or sandy.name.lower() != "sandy.exe":
                 raise Blocked("Ferramenta não autorizada.")
             roots.append(exe.parent.parent)
         (work / name).write_text(json.dumps(config), encoding="utf-8")
