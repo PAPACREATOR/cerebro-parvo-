@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "node server.js",
     "start": "node server.js",
-    "test": "node --test nexus/tests/gateway_transport.test.cjs && node nexus/tests/folha_revision_smoke.cjs"
+    "test": "node --test nexus/tests/gateway_transport.test.cjs && node nexus/tests/folha_revision_smoke.cjs && node nexus/tests/folha_search_smoke.cjs"
   },
   "dependencies": {
     "express": "4.21.2"
