@@ -34,8 +34,8 @@ def unsupported_zip_compression():
     raw = bytearray(doc())
     # Change the same member's method in local and central directory headers.
     # zipfile.ZipFile can enumerate it but .read() raises NotImplementedError.
-    local = raw.index(b"PK\\x03\\x04")
-    central = raw.index(b"PK\\x01\\x02")
+    local = raw.index(b"PK\x03\x04")
+    central = raw.index(b"PK\x01\x02")
     struct.pack_into("<H", raw, local + 8, 99)
     struct.pack_into("<H", raw, central + 10, 99)
     return bytes(raw)
