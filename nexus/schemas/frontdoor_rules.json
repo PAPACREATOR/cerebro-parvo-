@@ -102,8 +102,15 @@
           "process": {
             "enum": [
               "verify",
+              "interpret",
+              "proofread",
               "convert_pdf",
-              "book"
+              "video",
+              "podcast",
+              "visual_podcast",
+              "book",
+              "music",
+              "web"
             ]
           },
           "intent": {
