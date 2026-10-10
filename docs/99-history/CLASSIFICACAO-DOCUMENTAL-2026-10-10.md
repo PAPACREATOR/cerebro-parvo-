@@ -26,7 +26,7 @@
 | [`nexus/docs/RELATORIO-*`](../../nexus/docs/README.md), [`TESTES-ADVERSARIAIS.md`](../../nexus/docs/TESTES-ADVERSARIAIS.md), [`WINDOWS-STACK-COMPATIBILITY-2026-10-07.md`](../../nexus/docs/WINDOWS-STACK-COMPATIBILITY-2026-10-07.md) | RELATÓRIO/EVIDÊNCIA | Resultado datado por ambiente; alguns relatórios são de laboratório ou simulação |
 | [`auditoria/`](../../auditoria/) e [PR #46](https://github.com/PAPACREATOR/cerebro-parvo-/pull/46) | EVIDÊNCIA | Inventários e reconciliações; não validam o PC físico nem segredos completos |
 | [`docs/PROJETO-FINAL-AUDITADO-2026-09-28.md`](../PROJETO-FINAL-AUDITADO-2026-09-28.md), [`docs/baseline/`](../baseline/), [`docs/CONTRATOS-IMP.md`](../CONTRATOS-IMP.md) | HISTÓRICO/CONTRATOS | Fonte de decisões de setembro; «final» no título não significa release de outubro |
-| [`historico/repositorio-2026-09-24/`](../../historico/repositorio-2026-09-24/), [`historico/evolucao-2026-10-04/`](../../historico/evolucao-2026-10-04/) | HISTÓRICO | Imutável nesta revisão; consultar genealogia e motivos das substituições |
+| [`historico/repositorio-2026-09-24/`](../../historico/repositorio-2026-09-24/), [`historico/evolucao-2026-10-04/`](../../historico/evolucao-2026-10-04/) | HISTÓRICO | Conteúdo de época conservado. Quatro páginas receberam só reparação de links e avisos; [originais por SHA e 11 casos](RECONCILIACAO-11-REFERENCIAS-2026-10-10.md) |
 | [`implementacao/`](../../implementacao/) | HISTÓRICO/CÓDIGO LEGADO (só leitura aqui) | Não é o runtime `nexus/`; não converter PASS da PR #31 em aceitação do produto atual |
 | [PR #48](https://github.com/PAPACREATOR/cerebro-parvo-/pull/48) | EVIDÊNCIA DE CÓPIA LINUX | Sem prova de inventário/limpeza do PC |
 
