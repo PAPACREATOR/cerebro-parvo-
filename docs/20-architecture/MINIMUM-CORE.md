@@ -1,7 +1,7 @@
 # Núcleo mínimo atual
 
 Data: 2026-10-09  
-Estado: decisão de implementação candidata; arquitetura conceptual M1–M14 não reaberta.
+Estado: decisão de implementação candidata; arquitetura conceptual M1–M14 não reaberta. [Fronteiras](FRONTEIRAS-DE-AUTORIDADE.md) · [Decisões](../40-decisions/README.md) · [Evidências](../60-evidence/README.md).
 
 ## Hipótese mínima
 

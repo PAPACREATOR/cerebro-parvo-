@@ -2,6 +2,8 @@
 
 Obrigado por querer contribuir. O objetivo é facilitar contribuições concretas sem alterar o núcleo conceptual nem trabalhar por cima de outra pessoa.
 
+Consultar [estado datado](../10-current/ESTADO-DOCUMENTAL-2026-10-10.md), [história](../99-history/README.md) e [evidência por SHA](../60-evidence/MATRIZ-PRS-2026-10-10.md). Uma branch Draft não equivale a release.
+
 ## Começar aqui
 
 1. Leia [Start here](../00-start-here/README.md).
