@@ -1,6 +1,6 @@
 # Estado atual — navegação
 
-Este diretório não duplica a execução. Serve de mapa para a [fotografia de 10/10](ESTADO-DOCUMENTAL-2026-10-10.md) e a [auditoria código-documentação da PR #45](COMPATIBILIDADE-CODIGO-2026-10-10.md), ambas com SHA e limites. Não afirma aprovação física.
+Este diretório não duplica a execução. Serve de mapa para a [fotografia de 10/10](ESTADO-DOCUMENTAL-2026-10-10.md), a [auditoria código-documentação da PR #45](COMPATIBILIDADE-CODIGO-2026-10-10.md) e a [reconciliação de hoje — Writer/Sir Thaddeus](../60-evidence/CONCILIACAO-WRITER-SIR-THADDEUS-2026-10-10.md), com fontes por SHA e limites. Não afirma aprovação física.
 
 ## Fonte de verdade
 
