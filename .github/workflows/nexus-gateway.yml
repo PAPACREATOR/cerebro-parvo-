@@ -8,6 +8,10 @@ on:
       - 'nexus/tests/gateway_transport.test.cjs'
       - 'nexus/tests/test_single_runtime_boundary.py'
       - 'nexus/tests/test_gateway_real_host.py'
+      - 'nexus/tests/test_memory_search_http.py'
+      - 'nexus/app.py'
+      - 'nexus/ui/app.js'
+      - 'nexus/integrity.json'
       - 'nexus/ui/index.html'
       - '.github/workflows/nexus-gateway.yml'
   push:
@@ -50,5 +54,7 @@ jobs:
         run: python -m pytest nexus/tests/test_single_runtime_boundary.py -q -o pythonpath=.
       - name: Real Python app and Host over optional Node transport
         run: python -m pytest nexus/tests/test_gateway_real_host.py -q -o pythonpath=.
+      - name: Real authenticated FTS5 HTTP and adversarial regressions
+        run: python -m pytest nexus/tests/test_memory_search_http.py -q -o pythonpath=.
       - name: Existing FTS5 derived-index and Store provenance lab
         run: python -m pytest nexus/lab/wiki/test_kernel_bridge.py -q -o pythonpath=.
