@@ -13,6 +13,6 @@ As ferramentas devolvem trabalho especializado; nenhuma governa o Kernel. A pres
 | Sir Thaddeus | Ferramenta externa potencial, sob autorização Host | Clone Git Linux registado; instalação/execução real Windows não provadas |
 | Sandy | Investigação de sandbox Windows | Integração suspensa; guardar estudo e crédito, não ativar |
 
-Princípios: execução por necessidade real, allowlist, inputs confinados, validação/proveniência do output, estado Creative e Human Gate antes de Canonical; sem Ollama obrigatório e sem fallback cloud implícito.
+Princípios: execução por necessidade real, allowlist, inputs confinados, validação/proveniência do output, estado Creative e Human Gate antes de Canonical; sem Ollama obrigatório e sem fallback cloud implícito. A [matriz código-documentação da PR #45](../10-current/COMPATIBILIDADE-CODIGO-2026-10-10.md) distingue dez processos internos de operações naturais públicas e de capacidades físicas. O instalador completo pode exigir `llama.cpp`; isso não reintroduz Ollama como dependência.
 
 Fontes: [issue #42](https://github.com/PAPACREATOR/cerebro-parvo-/issues/42), [PR #32](https://github.com/PAPACREATOR/cerebro-parvo-/pull/32), [PR #45](https://github.com/PAPACREATOR/cerebro-parvo-/pull/45), [PR #48](https://github.com/PAPACREATOR/cerebro-parvo-/pull/48), [contratos técnicos Nexus](../../nexus/docs/).
