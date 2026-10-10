@@ -13,6 +13,7 @@ O Nexus preserva decisões anteriores porque FAILs, experiências e componentes 
 - [Decisões superadas e respetivos motivos](DECISOES-SUPERADAS-E-PORQUE.md).
 - [Mapa de origens](MAPA-DE-ORIGENS.md).
 - [Classificação documental por família e estatuto](CLASSIFICACAO-DOCUMENTAL-2026-10-10.md).
+- [Inventário integral dos 172 Markdown do snapshot da branch](INVENTARIO-MARKDOWN-POR-CAMINHO-2026-10-10.md) — caminhos e Git blob SHA por pasta.
 - [Decisões vigentes fundamentadas](../40-decisions/README.md).
 
 ## Onde está o histórico
