@@ -1,7 +1,7 @@
 {
-  "app.py": "cffec0e201ffbe27eb80ce1489f67d1e22c9658f6d08413db67ffd0e837be287",
+  "app.py": "9d99aac17e68c71b3115bd6dd5267ae095a86181c3096516c6d16008f10abb08",
   "contracts.py": "cd1830c968c757cdad738957dce54672cb70faf33cc11602b6d68d69df50bc65",
-  "host.py": "d285f0c75ef0100d4067bf7cb1f7280a349f96b6593693e5ce73bbea2ea9d924",
+  "host.py": "8e4245c5c2d68a1685167ec5a2245d57fba50419fde5d37d44bfdd6d5b75c328",
   "store.py": "b3bcea546b2bf6ce97ba5ac574601a2526ace9a432b058c46ff2c5ee11057ba5",
   "__init__.py": "b4f468051a062293cce504af2e229613a15f3d98ef90a6f9430d8e357e9f9591",
   "adapters/tools.py": "db6c0feb6beb658565a02e4feb1dea4f2c138a4a8d23cd8f27ccf3435af28de5",
@@ -16,7 +16,7 @@
   "schemas/languagetool.json": "f3310c0f0d70e86ab80aa22f8deb5331ddb5ccd49bae84be0926010d2ec27afa",
   "adapters/office.py": "75e9d58152b9b2929ea056d0934207922afbf4dfdba290b38c99c629a5ef06c5",
   "ui/index.html": "3c0fc09eeed5e73633116c773fe3aec4831168aeb81c2319cbdefcc8f74eacf7",
-  "ui/app.js": "6e0f77ab369d0bfa09128e49f4d996a348a471bd71b072cbbd9d6b1bf543f955",
+  "ui/app.js": "c3f1fd4de1a09125e11e57d75c28d8041849820393bce92b5bd38afaca2bba81",
   "ui/style.css": "89f9641aa4a2f27523a8f756c4c1328042eb86be64be559cc0919584c0867b94",
   "adapters/constitutional.py": "1943aaece17916221d598ce8551e00b0d1a959e47c2d5b38aff7b4282029c026",
   "schemas/multimedia.json": "ea20b02da3c33557d42475c84e111f98a1f7048708af0e434dde4aca53154e01",
@@ -32,10 +32,11 @@
   "native_mcp.py": "c55c0497697f61469b6bde21e0a279847db7cb4bfd84f39a1c94ecbfacc090ac",
   "adapters/product_routes.py": "3df52c97f13bb5f3417c283f7c8cc86e203f1bf255cc4aa6db97d638aba17acd",
   "frontdoor.py": "90f2ce2ef806872b0d067d62096c98cd0553882b34aa6f3b2787f138f0b71ad6",
-  "frontdoor_rules.json": "590417f2f37bd81162d4acb69ffb2997cd5596bed733fe0156940625b1859e06",
-  "schemas/frontdoor_rules.json": "f717d8274d6e3fbec2c8901d405a88d0a4e243c17ef11604358a0bd29f2f1494",
+  "frontdoor_rules.json": "c3094aae9b1d953b05422bd6739e008a4a2e4f3669e42460a4318fee311fde97",
+  "schemas/frontdoor_rules.json": "d05622a2b1cd0ba5612ba40dd02dd6bd65163f965224088cb88ff8e715a5fff9",
   "adapters/writer_sandy.py": "0018d1367348ae404c200fbf1d753446ca4de44be868b16244503609c19ffdc2",
   "adapters/vendor/sandy/libreoffice-demo.py": "01f01109e3672251a2ea4b910d53acf2f6ef1f681ca4354da85ba522a8a43fd6",
   "adapters/vendor/sandy/libreoffice.toml": "ba2b6eed03218996e12387899229587914731609b0805bcbbef5f5ca054bb7ec",
-  "adapters/vendor/sandy/LICENSE": "71ab2a2ba35053be1bc7370f83080bab7643812351e377c8eb3fdd2ee9f34fce"
+  "adapters/vendor/sandy/LICENSE": "71ab2a2ba35053be1bc7370f83080bab7643812351e377c8eb3fdd2ee9f34fce",
+  "adapters/tool_router.py": "ba9750cf60b48f72f18c2f5bb77c652a92032f049be1df4c4caf5f5acab22cb3"
 }
