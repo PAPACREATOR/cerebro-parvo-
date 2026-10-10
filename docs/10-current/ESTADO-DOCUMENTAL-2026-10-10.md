@@ -15,7 +15,7 @@
 - **PR #48:** clones Git integrais em Linux de Nexus e Sir Thaddeus (1.446 ficheiros Sir Thaddeus verificados byte a byte; 1.461 registos por seis árvores Nexus públicas). Cópia/limpeza do PC Windows **NOT RUN**, não é espelho físico.
 - **PR #49:** revisão documental, índices históricos e matriz por leitura estática do código da PR #45. Não altera código nem transfere provas de um SHA para outro.
 - **Writer Lab PR #1:** diagnóstico Windows LPAC real identificou falha no pipe legado (WinError 5) e PASS no namespace `LOCAL`; protótipo de fonte passou testes estáticos, **sem compilar nem produzir PDF**.
-- **Writer Lab PR #2 (10/10):** ensaio A/B isolado do Sandy v0.9994 de Hrvoje Abraham no Windows; auditoria/CodeQL SUCCESS, **conversão A/B ainda IN PROGRESS** na consulta (run 38047795468), não assumir Writer resolvido.
+- **Writer Lab PR #2 (10/10):** ensaio A/B isolado com Sandy v0.9994 de Hrvoje Abraham. O primeiro [run 38047795468](https://github.com/PAPACREATOR/nexus-writer-lab/actions/runs/38047795468), SHA `fa8d65c4`, terminou **FAIL** após timeout e limpeza/terminação não demonstrada de A; **B nem chegou a correr**. A nova tentativa [run 38048136938](https://github.com/PAPACREATOR/nexus-writer-lab/actions/runs/38048136938), SHA `40d29078`, estava em curso na consulta. Auditoria/CodeQL do primeiro SHA SUCCESS, mas não substituem PDF real.
 
 Links e estatutos pontuais: [matriz de evidência](../60-evidence/MATRIZ-PRS-2026-10-10.md), [verificação estática do código da PR #45](COMPATIBILIDADE-CODIGO-2026-10-10.md) e [reparação documental dos 11 links históricos](../99-history/RECONCILIACAO-11-REFERENCIAS-2026-10-10.md). Esta última fecha a navegação na árvore documental, **não recupera a memória privada de 24/09**.
 
