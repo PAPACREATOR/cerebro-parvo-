@@ -158,9 +158,10 @@
     {
       "process": "web",
       "intent": "web",
-      "requires_attachment": true,
+      "requires_attachment": false,
       "patterns": [
-        "^preparar consulta web$"
+        "^preparar consulta web$",
+        "^preparar consulta web: .+$"
       ]
     }
   ]
