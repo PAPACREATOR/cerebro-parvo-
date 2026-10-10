@@ -105,7 +105,8 @@ def test_installed_writer_is_confined_and_returns_only_a_human_approved_candidat
         json.dumps({"executable": str(executable), "sandy": str(sandy)}), encoding="utf-8")
     raw = document()
     host = Host(data)
-    with http(host) as call:
+    # Diagnostic-only route in this explicit Windows acceptance test; product /api/run stays disabled.
+    with http(host, allow_direct_run=True) as call:
         run = call("/api/run", {"process": process, "text": "", "filename": "original.odt",
                                "attachment": base64.b64encode(raw).decode("ascii")})["run_id"]
         deadline = time.monotonic() + 90
