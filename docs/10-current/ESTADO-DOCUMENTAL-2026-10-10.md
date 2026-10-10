@@ -15,7 +15,7 @@
 - **PR #48:** clones e inventário Linux; não é espelho validado dos ficheiros físicos do PC, nem limpeza local Windows.
 - **PR #49:** revisão documental, índices históricos e matriz por leitura estática do código da PR #45. Não altera código nem transfere provas de um SHA para outro.
 
-Links e estatutos pontuais: [matriz de evidência](../60-evidence/MATRIZ-PRS-2026-10-10.md) e [verificação estática do código da PR #45](COMPATIBILIDADE-CODIGO-2026-10-10.md).
+Links e estatutos pontuais: [matriz de evidência](../60-evidence/MATRIZ-PRS-2026-10-10.md), [verificação estática do código da PR #45](COMPATIBILIDADE-CODIGO-2026-10-10.md) e [reparação documental dos 11 links históricos](../99-history/RECONCILIACAO-11-REFERENCIAS-2026-10-10.md). Esta última fecha a navegação na árvore documental, **não recupera a memória privada de 24/09**.
 
 ## Política vigente a descrever
 
