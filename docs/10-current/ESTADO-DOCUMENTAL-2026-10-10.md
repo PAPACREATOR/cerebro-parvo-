@@ -14,11 +14,11 @@
 - **PR #46:** inventário, auditoria de links, divergências documentais e privacidade; incompleto e isolado em auditoria/.
 - **PR #48:** clones e inventário Linux; não é espelho validado dos ficheiros físicos do PC, nem limpeza local Windows.
 
-Links e estatutos pontuais: [matriz de evidência](../60-evidence/MATRIZ-PRS-2026-10-10.md).
+Links e estatutos pontuais: [matriz de evidência](../60-evidence/MATRIZ-PRS-2026-10-10.md) e [verificação estática do código da PR #45](COMPATIBILIDADE-CODIGO-2026-10-10.md).
 
 ## Política vigente a descrever
 
-A entrada é Folha/parser; Kernel/Host/Store mantêm as decisões e os limites; MCP ou adaptador direto transportam apenas operações autorizadas. Ferramentas são substituíveis. Confirmação humana **pré-execução** não é o mesmo que Human Gate de promoção **Creative → Canonical**.
+A entrada é Folha/parser; Kernel/Host/Store mantêm as decisões e os limites. O runner interno é direto e protegido; MCP é transporte opcional para ferramentas quando necessário. O parser reconhece sete intenções, mas a API natural normal só prepara `verify` com um anexo no SHA auditado. Ferramentas são substituíveis. Confirmação humana **pré-execução** não é o mesmo que Human Gate de promoção **Creative → Canonical**.
 
 Activepieces e Conductor não integram a dependência candidata; Spiff só laboratório perante necessidade demonstrada. OpenNotebook é ferramenta especializada valorizada, **não percurso obrigatório** nem executor soberano. Ollama não é requisito. Sandy permanece suspenso por decisão humana, sem apagar o reconhecimento histórico.
 
