@@ -5,7 +5,7 @@ Este diretório reúne documentos de vários momentos do projeto; não confundir
 ## Ponto de situação
 
 - [PONTO-DE-SITUACAO.md](PONTO-DE-SITUACAO.md) — relato operacional **acumulado e datado**, cuja abertura documenta trabalhos de 08/10. A PR #45 é candidata posterior em Draft; comparar [matriz de PRs](../../docs/60-evidence/MATRIZ-PRS-2026-10-10.md) antes de afirmar «último estado».
-- [WINDOWS-ACCEPTANCE-ISOLATED.md](WINDOWS-ACCEPTANCE-ISOLATED.md) — procedimento de **aceitação isolada**, não instalação no PC comprovada.
+- [WINDOWS-ACCEPTANCE-ISOLATED.md na PR #45](https://github.com/PAPACREATOR/cerebro-parvo-/blob/66027af7f2ea084bc62d85b840d1fc3113e60a97/nexus/docs/WINDOWS-ACCEPTANCE-ISOLATED.md) — procedimento de **aceitação isolada** presente apenas no candidato de código; ainda não existe nesta branch documental e não prova instalação no PC.
 - [WINDOWS-STACK-COMPATIBILITY-2026-10-07.md](WINDOWS-STACK-COMPATIBILITY-2026-10-07.md) — compatibilidade estudada no âmbito próprio.
 
 ## Contratos de capacidades
