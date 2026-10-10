@@ -15,7 +15,7 @@
 - **PR #48:** clones Git integrais em Linux de Nexus e Sir Thaddeus (1.446 ficheiros Sir Thaddeus verificados byte a byte; 1.461 registos por seis árvores Nexus públicas). Cópia/limpeza do PC Windows **NOT RUN**, não é espelho físico.
 - **PR #49:** revisão documental, índices históricos e matriz por leitura estática do código da PR #45. Não altera código nem transfere provas de um SHA para outro.
 - **Writer Lab PR #1:** diagnóstico Windows LPAC real identificou falha no pipe legado (WinError 5) e PASS no namespace `LOCAL`; protótipo de fonte passou testes estáticos, **sem compilar nem produzir PDF**.
-- **Writer Lab PR #2 (10/10):** ensaio A/B isolado com Sandy v0.9994 de Hrvoje Abraham. O primeiro [run 38047795468](https://github.com/PAPACREATOR/nexus-writer-lab/actions/runs/38047795468), SHA `fa8d65c4`, terminou **FAIL** após timeout e limpeza/terminação não demonstrada de A; **B nem chegou a correr**. A nova tentativa [run 38048136938](https://github.com/PAPACREATOR/nexus-writer-lab/actions/runs/38048136938), SHA `40d29078`, estava em curso na consulta. Auditoria/CodeQL do primeiro SHA SUCCESS, mas não substituem PDF real.
+- **Writer Lab PRs #2/#3 (10/10):** os primeiros ensaios falharam em gate de limpeza/DACL. A [PR #3](https://github.com/PAPACREATOR/nexus-writer-lab/pull/3) produziu **PASS laboratorial de Writer/PDF real** sob LPAC no SHA `73be29f01b6928a0058bf2e1b78f607d14329001`, [run 38049519797](https://github.com/PAPACREATOR/nexus-writer-lab/actions/runs/38049519797): controlo A timeout aos 43,016 s; variante B com pipe `LOCAL` produziu PDF válido de 13.902 bytes em 7,218 s, com texto exato. Quatro DACLs com mudança apenas `AI` foram recuperadas de modo explícito e verificadas literalmente contra a origem. Auditoria e CodeQL SUCCESS no mesmo SHA. **A PR #45 não contém esta correção; não existe PASS da integração final.**
 
 Links e estatutos pontuais: [matriz de evidência](../60-evidence/MATRIZ-PRS-2026-10-10.md), [verificação estática do código da PR #45](COMPATIBILIDADE-CODIGO-2026-10-10.md) e [reparação documental dos 11 links históricos](../99-history/RECONCILIACAO-11-REFERENCIAS-2026-10-10.md). Esta última fecha a navegação na árvore documental, **não recupera a memória privada de 24/09**.
 
@@ -29,7 +29,7 @@ Activepieces e Conductor não integram a dependência candidata; Spiff só labor
 
 **Observação do código da PR #45:** o dispatcher define dez processos, mas a Folha pública só constrói a rota natural `verify` com anexo e ticket de confirmação; `/api/run` é diagnóstico desativado no arranque normal. Ver [matriz técnica](COMPATIBILIDADE-CODIGO-2026-10-10.md).
 
-**Não comprovado**: release integrada num único HEAD com todos os gates PASS; Writer/LPAC real completo (mesmo com diagnóstico da causa e ensaio A/B em curso); OpenNotebook com SurrealDB/modelo locais reais em E2E; inventário/hash SHA-256 de todo o PC; validação física de todas as capacidades; proteção integral de segredos/histórico Git; ligações externas/âncoras de toda a documentação. Não interpretar NOT RUN/BLOCKED/FAIL como PASS.
+**Não comprovado**: release integrada num único HEAD com todos os gates PASS; Writer/LPAC real **nas rotas Host do Nexus** (apesar do PDF PASS isolado na bancada PR #3); OpenNotebook com SurrealDB/modelo locais reais em E2E; inventário/hash SHA-256 de todo o PC; validação física de todas as capacidades; proteção integral de segredos/histórico Git; ligações externas/âncoras de toda a documentação. Não interpretar NOT RUN/BLOCKED/FAIL como PASS.
 
 ## Regras de atualização
 
