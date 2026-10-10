@@ -1,0 +1,204 @@
+{
+  "date": "2026-10-10",
+  "source": "PAPACREATOR/cerebro-parvo-",
+  "kind": "GitHub branch HEAD snapshot only, no verification of merge/test status",
+  "count": 49,
+  "branches": [
+    {
+      "name": "audit-consolidation-20261010",
+      "commit_sha": "91f169529155800e19ec2c65b2bab20560581918"
+    },
+    {
+      "name": "audit/nexus-convergence-negative-gates-20261009",
+      "commit_sha": "66027af7f2ea084bc62d85b840d1fc3113e60a97"
+    },
+    {
+      "name": "audit/nexus-windows-ci-20261001",
+      "commit_sha": "8471ceedcbceeab06e80df36b8ee5310f83a220b"
+    },
+    {
+      "name": "cleanup/llamacpp-only-20261007",
+      "commit_sha": "da86b6dd181d00fd7a87addaa01a12ec3a14e57b"
+    },
+    {
+      "name": "consolidacao-2026-09-27",
+      "commit_sha": "83d478a982cfb515e7bd90b86a7d502b0965ca57"
+    },
+    {
+      "name": "dependabot/github_actions/actions/checkout-7",
+      "commit_sha": "7548f5d4c2df931ef1df04fd0d3ef4c9d373d0e8"
+    },
+    {
+      "name": "dependabot/github_actions/actions/setup-python-7.0.0",
+      "commit_sha": "ddc45d51f47d1427fe9826b2dd511a9203b225d5"
+    },
+    {
+      "name": "dependabot/github_actions/github/codeql-action-4",
+      "commit_sha": "59e3026ca5bf1c44142cc95d8b448b40ef695903"
+    },
+    {
+      "name": "dependabot/pip/pytest-9.1.1",
+      "commit_sha": "58035466f1e6416f494ae5972cbb114ef6f8127b"
+    },
+    {
+      "name": "docs/convergencia-pr31-pr32-20261007",
+      "commit_sha": "2c91ad036f94c03777183d60b4c977a4ee9dc68e"
+    },
+    {
+      "name": "docs/external-navigation-20261009",
+      "commit_sha": "46c6b6722028017b5c174986128be4a151588ae7"
+    },
+    {
+      "name": "docs/reconciliacao-2026-09-27",
+      "commit_sha": "284d1b98b58ff628b08f4872419fb31a69e4279e"
+    },
+    {
+      "name": "integration-convergence-20261004",
+      "commit_sha": "30ff272794c222203da8157df50d09154ee1bc2a"
+    },
+    {
+      "name": "integration-lab-20261004",
+      "commit_sha": "6bbf7fed454e747918a73a38db267972239d7aec"
+    },
+    {
+      "name": "integration-open-notebook-mcp-tiny-20261004",
+      "commit_sha": "7f02d6fca998bf78810a653dcd312ad09d19c34b"
+    },
+    {
+      "name": "integration-python-mcp-stepwise-20261004",
+      "commit_sha": "0753f573f2dee739a4e43a5e255a4999319cc605"
+    },
+    {
+      "name": "integration/nexus-unified-candidate-20261009",
+      "commit_sha": "66027af7f2ea084bc62d85b840d1fc3113e60a97"
+    },
+    {
+      "name": "lab-bootstrap-20261004",
+      "commit_sha": "ef6937949081eea5ac152ecc8cd83c2f7e64d685"
+    },
+    {
+      "name": "lab-conductor-verify-perf-20261004",
+      "commit_sha": "0067ca349b97299925d6d3f1326bd80c2df9b58d"
+    },
+    {
+      "name": "lab-consolidated-analysis-20261004",
+      "commit_sha": "829764dee6144d05c29fed92bcf6e48829d70ff2"
+    },
+    {
+      "name": "lab-e2e-frontdoor-20261004",
+      "commit_sha": "7006184d1148faeefae2ba5b27a41a0d0e4dec60"
+    },
+    {
+      "name": "lab-frontdoor-minimal-language-20261004",
+      "commit_sha": "4d91d05e3e0f6ddd91ba56bb883fffb2e7c2e30b"
+    },
+    {
+      "name": "lab-integrated-20261004",
+      "commit_sha": "89c06bee2e5b65135e8f87d1f9a7b499048ca5ef"
+    },
+    {
+      "name": "lab-minimal-python-mcp-20261004",
+      "commit_sha": "c3245b32fefc8f82f85a926df5c40d79d938321b"
+    },
+    {
+      "name": "lab-open-notebook-avatar-20261004",
+      "commit_sha": "7762fbfd6a1f32c147602e63d53c936215812675"
+    },
+    {
+      "name": "lab-python-mcp-minimal-20261004",
+      "commit_sha": "ede5fecff208eab1646b84ebc74c26673ae960cc"
+    },
+    {
+      "name": "lab-spiff-conductor-20261004",
+      "commit_sha": "829764dee6144d05c29fed92bcf6e48829d70ff2"
+    },
+    {
+      "name": "lab-spiff-conductor-compare-500-20261004",
+      "commit_sha": "c39e76a8247b36db6115b5c7db7cde7669c2e7ba"
+    },
+    {
+      "name": "lab-spiff-conductor-roles-20261004",
+      "commit_sha": "9f1c2b9fbb9577f54ee9830ff63efdfa8ddc1df7"
+    },
+    {
+      "name": "lab-wiki-complemento-20261004",
+      "commit_sha": "57da6d5f72758abee1bc5e50382d336538c93e2a"
+    },
+    {
+      "name": "lab-wiki-knowledge-20261004",
+      "commit_sha": "b0a82e63eae60fdec66afdee6705246c0d3465ea"
+    },
+    {
+      "name": "lab/notebook-authority-regression-20261009-2327-chat",
+      "commit_sha": "18eb990b5028bfc6e2d1bb05d24aa8f939a84bea"
+    },
+    {
+      "name": "lab/notebook-negative-shapes-on-unified-20261010-0526-chat",
+      "commit_sha": "66027af7f2ea084bc62d85b840d1fc3113e60a97"
+    },
+    {
+      "name": "lab/open-notebook-host-failclosed-20261009-chat",
+      "commit_sha": "66027af7f2ea084bc62d85b840d1fc3113e60a97"
+    },
+    {
+      "name": "lab/open-notebook-isolation-20261009",
+      "commit_sha": "da86b6dd181d00fd7a87addaa01a12ec3a14e57b"
+    },
+    {
+      "name": "lab/opennotebook-negative-tests-20261009-chat",
+      "commit_sha": "27cd34c9741763ae4893278d25a371208b47828f"
+    },
+    {
+      "name": "lab/windows-full-install-20261006",
+      "commit_sha": "90683cd3744db074c4ea3b3c170aad6218f2b8ed"
+    },
+    {
+      "name": "main",
+      "commit_sha": "aeeb6f662a8282b3793708aa3e6782ef20d2d0ca"
+    },
+    {
+      "name": "nexus-startup-lock-20261003",
+      "commit_sha": "6bbf7fed454e747918a73a38db267972239d7aec"
+    },
+    {
+      "name": "pc-full-mirror-20261004",
+      "commit_sha": "1e9e6127564a9247e562029552f73d56a8b9d3a7"
+    },
+    {
+      "name": "pc-snapshot-tooling-20261004",
+      "commit_sha": "7cc6a05d358d988c1bcd71486aaee51d3741eaf6"
+    },
+    {
+      "name": "snapshot/nexus-pr32-b4d50ab-20261008",
+      "commit_sha": "b4d50ab8469cf60dfa3228c7c34ef9a1285ac827"
+    },
+    {
+      "name": "validated-integrated-20261004",
+      "commit_sha": "89c06bee2e5b65135e8f87d1f9a7b499048ca5ef"
+    },
+    {
+      "name": "windows-real-acceptance-20261006",
+      "commit_sha": "14419f795e55bbf4759c9fc52068233c95a9ca14"
+    },
+    {
+      "name": "work-core-audit-20261007",
+      "commit_sha": "628359cb4dfc363734894e0724eba25fb164acd8"
+    },
+    {
+      "name": "work/audit-bidirectional-20261004",
+      "commit_sha": "7921fac7d4901dff7e729879fe637a475289be11"
+    },
+    {
+      "name": "work/core-atomicity-20261007",
+      "commit_sha": "fac93ecabc2a9fd823ce91481a2c2eb68913e2f4"
+    },
+    {
+      "name": "work/core-regression-20261007",
+      "commit_sha": "e99f9e40176e0042d08b62432b70842a3c768d9e"
+    },
+    {
+      "name": "work/frontdoor-verify-20261009",
+      "commit_sha": "debd41ba7673570d666a0c99d009719d37838d58"
+    }
+  ]
+}
