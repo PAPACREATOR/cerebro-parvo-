@@ -17,6 +17,7 @@ from urllib.parse import urlsplit
 
 from nexus.contracts import ROOT, Blocked, strict_json, validate
 from nexus.frontdoor import parse, propose_operation
+from nexus.capability_router import registered_router
 from nexus.host import Host
 from nexus.instance import data_directory_lock
 from nexus.store import atomic
@@ -44,7 +45,15 @@ def _natural_request(data, host):
     process = propose_operation(
         parsed, filename=data["filename"], attachment=data["attachment"]
     )
-    if process not in ("verify", "convert_pdf", "book"):
+    if process is None and parsed.status == "RESOLVED" and parsed.explicit:
+        # Registry is proposal-only; unknown/compound requests fail closed.
+        # Never infer permission from a loosely recognized natural intent.
+        candidate = registered_router().propose(
+            intent=parsed.intent, text=parsed.content,
+            attachment_present=bool(data["filename"] and data["attachment"]),
+        )
+        process = candidate.process
+    if process is None:
         raise Blocked("Não consigo determinar com segurança essa operação. Reformula o pedido.")
 
     request = {"process": process, **data}
@@ -79,8 +88,15 @@ def _natural_request(data, host):
             raise Blocked("A extensão não corresponde ao conteúdo DOCX ou ODT.")
     descriptions = {
         "verify": "Verificar a integridade de " + name + ".",
+        "interpret": "Pedir interpretação da fonte " + name + " à bancada OpenNotebook configurada.",
+        "proofread": "Rever " + name + " com LanguageTool local configurado.",
         "convert_pdf": "Converter " + name + " para PDF; original conservado. Não altera os estilos.",
+        "video": "Preparar plano de vídeo a partir de " + name + "; não renderiza vídeo.",
+        "podcast": "Preparar plano de podcast a partir de " + name + "; não gera áudio.",
+        "visual_podcast": "Preparar plano de podcast visual a partir de " + name + "; não gera vídeo.",
         "book": "Exportar o manuscrito " + name + " para PDF; não cria nem redesenha o livro.",
+        "music": "Preparar plano de música a partir de " + name + "; não gera áudio.",
+        "web": "Preparar plano de pesquisa web a partir de " + name + "; não navega automaticamente.",
     }
     return request, {
         "process": process,
