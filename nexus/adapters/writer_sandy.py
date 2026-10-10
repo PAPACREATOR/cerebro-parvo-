@@ -188,7 +188,7 @@ def convert(process, work):
         process_handle = subprocess.Popen(cmd, cwd=work, stdin=subprocess.PIPE,
                         stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                         creationflags=subprocess.CREATE_NO_WINDOW | subprocess.CREATE_NEW_PROCESS_GROUP)
-        process_handle.communicate(timeout=135)
+        out, err = process_handle.communicate(timeout=135)
     except subprocess.TimeoutExpired:
         if process_handle is not None:
             subprocess.run([str(Path(os.environ["SystemRoot"]) / "System32/taskkill.exe"),
@@ -214,9 +214,30 @@ def convert(process, work):
     phase = state.get("phase") if state.get("phase") in (
         "preparing", "initializing", "sandboxed", "failed", "finished"
     ) else "unreported"
+    # Preserve only fixed diagnostic categories; the subprocess output may
+    # contain absolute paths, document text and private profile information.
+    diagnostic = "indefinida"
+    stderr_text = err.decode("utf-8", errors="replace") if process_handle is not None else ""
+    stdout_text = out.decode("utf-8", errors="replace") if process_handle is not None else ""
+    if "initialization failed" in stderr_text:
+        diagnostic = "inicialização normal do perfil sem PDF sintético"
+    elif "Cannot lock scratch folder" in stderr_text:
+        diagnostic = "bloqueio de pasta temporária"
+    elif "Runtime must be separate" in stderr_text or "runtime must be separate" in stderr_text:
+        diagnostic = "separação da runtime e dados"
+    elif "Cannot determine the Windows user SID" in stderr_text:
+        diagnostic = "identidade do utilizador"
+    elif "Cannot launch" in stderr_text or "access denied" in stderr_text.lower():
+        diagnostic = "restrição de acesso"
+    elif "Sandy exit:" in stdout_text:
+        diagnostic = "saída do sandbox"
+    elif "Initializing outside LPAC" in stdout_text:
+        diagnostic = "preparação de perfil"
     if process_handle is None or process_handle.returncode != 0:
         code = process_handle.returncode if process_handle is not None else -1
-        raise Blocked(f"O Writer LPAC não concluiu a conversão (fase {phase}; launcher {code}).")
+        exits = state.get("exit_codes", [])
+        exits = exits[:3] if isinstance(exits, list) and all(type(v) is int for v in exits[:3]) else []
+        raise Blocked(f"Writer LPAC recusado: {diagnostic}; fase {phase}; launcher {code}; subprocessos {exits}.")
     if phase != "finished" or state.get("exit_code") != 0:
         raise Blocked(f"Sandy não confirmou a execução (fase {phase}; saída não aprovada).")
     if original.read_bytes() != raw or document.read_bytes() != raw:
