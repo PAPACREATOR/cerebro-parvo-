@@ -37,7 +37,7 @@ function showInterpretation(preview) {
   el("result-title").textContent=preview.status==="RESOLVED"?
     ("Intenção: "+(intents[preview.intent]||"por esclarecer")):"Interpretação pendente";
   el("message").textContent=preview.status==="RESOLVED"?
-    "A Folha compreendeu a intenção. Só estão habilitadas, com confirmação humana e anexo, a verificação de integridade e duas exportações Writer expressamente pedidas.":
+    "A Folha reconheceu a intenção, mas isso não autoriza uma ferramenta. Apenas comandos explicitamente registados podem ser propostos e confirmados por ti.":
     "Reformula o pedido. Nenhuma ferramenta foi chamada.";
   el("content").textContent=preview.original;
   currentContent="";
@@ -91,8 +91,7 @@ el("form").onsubmit=async event=>{
     if (revision!==editRevision) throw new Error("O texto ou anexo mudou durante a preparação. Revê o pedido.");
     const preview=await api("/api/interpret",{text:payload.text});
     if(revision!==editRevision) throw new Error("O texto ou anexo mudou durante a interpretação.");
-    if(preview.status!=="RESOLVED"||preview.intent!=="trabalhar"||
-       !payload.filename||!payload.attachment) {
+    if(preview.status!=="RESOLVED"||!["trabalhar","web"].includes(preview.intent)) {
       showInterpretation(preview);
       return;
     }
@@ -111,11 +110,11 @@ el("form").onsubmit=async event=>{
     }
     executionTicket=prepared.ticket;
     el("execution-summary").textContent=prepared.summary;
-    const actions={verify:"Verificar integridade",convert_pdf:"Converter para PDF",
-      book:"Exportar manuscrito para PDF"};
-    if(!Object.prototype.hasOwnProperty.call(actions,prepared.process))
-      throw new Error("A operação proposta não está autorizada.");
-    el("execution-review").textContent="Ação: "+actions[prepared.process]+"\nFicheiro: "+prepared.filename+"\nBytes: "+prepared.attachment_bytes+"\nSHA-256: "+prepared.attachment_sha256;
+    if(typeof prepared.process!=="string"||!prepared.summary||
+       !Number.isInteger(prepared.attachment_bytes)||!prepared.attachment_sha256)
+      throw new Error("A proposta da ferramenta é inválida.");
+    // Display only the server-issued, policy-pinned human preview as text.
+    el("execution-review").textContent="Ação: "+prepared.summary+"\nOrigem: "+prepared.filename+"\nBytes: "+prepared.attachment_bytes+"\nSHA-256: "+prepared.attachment_sha256;
     el("execution-confirm").checked=false;
     el("execution-approve").disabled=true;
     el("execution-confirmation").showModal();

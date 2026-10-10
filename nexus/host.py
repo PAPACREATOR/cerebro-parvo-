@@ -21,7 +21,7 @@ def verify_integrity():
     manifest = strict_json((ROOT / "integrity.json").read_bytes())
     required = {
         "__init__.py", "app.py", "host.py", "store.py", "contracts.py", "approval_binding.py", "instance.py",
-        "windows_sandbox.py", "native_mcp.py", "frontdoor.py", "frontdoor_rules.json", "schemas/frontdoor_rules.json", "adapters/runner.py", "mcp_client.py", "mcp_tools_server.py", "adapters/verify_direct.py", "adapters/tools.py", "adapters/notebook.py",
+        "windows_sandbox.py", "native_mcp.py", "frontdoor.py", "frontdoor_rules.json", "schemas/frontdoor_rules.json", "adapters/runner.py", "adapters/tool_router.py", "mcp_client.py", "mcp_tools_server.py", "adapters/verify_direct.py", "adapters/tools.py", "adapters/notebook.py",
         "adapters/languagetool.py", "adapters/office.py", "adapters/writer_sandy.py",
         "adapters/vendor/sandy/libreoffice-demo.py", "adapters/vendor/sandy/libreoffice.toml",
         "adapters/vendor/sandy/LICENSE", "adapters/media_tools.py", "adapters/product_routes.py",

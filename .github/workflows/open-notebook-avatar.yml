@@ -4,7 +4,7 @@ on:
     branches: ['lab-open-notebook-avatar-*']
     paths: ['nexus/lab/open_notebook_avatar/**', '.github/workflows/open-notebook-avatar.yml']
   pull_request:
-    paths: ['nexus/lab/open_notebook_avatar/**', '.github/workflows/open-notebook-avatar.yml']
+    paths: ['nexus/lab/open_notebook_avatar/**', 'nexus/adapters/tool_router.py', '.github/workflows/open-notebook-avatar.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -22,6 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:

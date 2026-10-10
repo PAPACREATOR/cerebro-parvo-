@@ -16,7 +16,8 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 from nexus.contracts import ROOT, Blocked, strict_json, validate
-from nexus.frontdoor import parse, propose_operation
+from nexus.frontdoor import parse
+from nexus.adapters.tool_router import route_request
 from nexus.host import Host
 from nexus.instance import data_directory_lock
 from nexus.store import atomic
@@ -34,62 +35,8 @@ def _request_digest(request):
 
 
 def _natural_request(data, host):
-    """Build one bounded request proposal. This function never executes it."""
-    if not isinstance(data, dict) or set(data) != {"text", "filename", "attachment"}:
-        raise Blocked("Pedido natural inválido.")
-    if not all(isinstance(data[key], str) for key in data):
-        raise Blocked("Pedido natural inválido.")
-
-    parsed = parse(data["text"])
-    process = propose_operation(
-        parsed, filename=data["filename"], attachment=data["attachment"]
-    )
-    if process not in ("verify", "convert_pdf", "book"):
-        raise Blocked("Não consigo determinar com segurança essa operação. Reformula o pedido.")
-
-    request = {"process": process, **data}
-    validate("request", request)
-    try:
-        attachment = base64.b64decode(request["attachment"], validate=True)
-    except (ValueError, TypeError) as error:
-        raise Blocked("Anexo inválido.") from error
-    if not attachment or len(attachment) > host.store.policy["max_input_bytes"]:
-        raise Blocked("Junta um ficheiro até 2 MB para verificar.")
-    name = request["filename"]
-    if not name or any(ord(char) < 32 for char in name) or "/" in name or "\\" in name:
-        raise Blocked("Nome de anexo inválido.")
-
-    if process in ("convert_pdf", "book"):
-        # A conversion proposal may never interpret arbitrary file bytes,
-        # scripts, macros, external objects, or an extension/MIME mismatch.
-        from nexus.adapters.office import document_kind
-        ext = Path(name).suffix.lower()
-        if ext not in (".odt", ".docx"):
-            raise Blocked("A exportação requer um documento DOCX ou ODT válido e com extensão correspondente.")
-        try:
-            kind = document_kind(attachment)
-        except Blocked:
-            raise
-        except Exception as error:
-            # Untrusted ZIP decoding can raise NotImplementedError for an
-            # unsupported compression method (and other decoder failures).
-            # No parser exception may escape the HTTP refusal boundary.
-            raise Blocked("O documento não pode ser validado em segurança.") from error
-        if kind != ext:
-            raise Blocked("A extensão não corresponde ao conteúdo DOCX ou ODT.")
-    descriptions = {
-        "verify": "Verificar a integridade de " + name + ".",
-        "convert_pdf": "Converter " + name + " para PDF; original conservado. Não altera os estilos.",
-        "book": "Exportar o manuscrito " + name + " para PDF; não cria nem redesenha o livro.",
-    }
-    return request, {
-        "process": process,
-        "filename": name,
-        "attachment_bytes": len(attachment),
-        "attachment_sha256": hashlib.sha256(attachment).hexdigest(),
-        "summary": descriptions[process],
-        "parser": parsed.parser,
-    }
+    """Select N permitted tools through a pure, bounded adapter proposal."""
+    return route_request(data, max_input_bytes=host.store.policy["max_input_bytes"])
 
 
 class NexusHTTPServer(ThreadingHTTPServer):

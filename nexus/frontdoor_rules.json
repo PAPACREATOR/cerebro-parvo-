@@ -88,7 +88,23 @@
       "intent": "trabalhar",
       "requires_attachment": true,
       "patterns": [
-        "\\bverific(?:a|ar|as|ares)\\b.*\\bintegridade\\b.*\\b(?:ficheiro|documento|arquivo)\\b"
+        "^verific(?:a|ar|as|ares)\\s+a\\s+integridade\\s+(?:deste|do|de um)\\s+(?:ficheiro|documento|arquivo)\\.?$"
+      ]
+    },
+    {
+      "process": "interpret",
+      "intent": "trabalhar",
+      "requires_attachment": true,
+      "patterns": [
+        "^interpretar texto$"
+      ]
+    },
+    {
+      "process": "proofread",
+      "intent": "trabalhar",
+      "requires_attachment": true,
+      "patterns": [
+        "^rever texto$"
       ]
     },
     {
@@ -100,11 +116,52 @@
       ]
     },
     {
+      "process": "video",
+      "intent": "trabalhar",
+      "requires_attachment": true,
+      "patterns": [
+        "^preparar plano de video$"
+      ]
+    },
+    {
+      "process": "podcast",
+      "intent": "trabalhar",
+      "requires_attachment": true,
+      "patterns": [
+        "^preparar plano de podcast$"
+      ]
+    },
+    {
+      "process": "visual_podcast",
+      "intent": "trabalhar",
+      "requires_attachment": true,
+      "patterns": [
+        "^preparar plano de podcast visual$"
+      ]
+    },
+    {
       "process": "book",
       "intent": "trabalhar",
       "requires_attachment": true,
       "patterns": [
         "^exportar manuscrito para pdf$"
+      ]
+    },
+    {
+      "process": "music",
+      "intent": "trabalhar",
+      "requires_attachment": true,
+      "patterns": [
+        "^preparar especificacao musical$"
+      ]
+    },
+    {
+      "process": "web",
+      "intent": "web",
+      "requires_attachment": false,
+      "patterns": [
+        "^preparar consulta web$",
+        "^preparar consulta web: .+$"
       ]
     }
   ]
