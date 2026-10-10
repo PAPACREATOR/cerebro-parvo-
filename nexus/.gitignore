@@ -1,4 +1,5 @@
 runtime/
+*-fts5-index/
 open-notebook.json
 launch-url.txt
 *.gguf
