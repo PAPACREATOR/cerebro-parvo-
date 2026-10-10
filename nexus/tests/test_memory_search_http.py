@@ -118,3 +118,46 @@ def test_fts_operators_are_data_not_authority(tmp_path, query):
     with http(host) as call:
         assert search(call, query=query)["results"] == []
         assert len(search(call)["results"]) == 1
+
+
+def test_bidirectional_human_approval_changes_search_scope_without_new_authority(tmp_path):
+    """Creative -> explicit Host review -> Canonical -> FTS5 -> authentic Store."""
+    host = Host(tmp_path / "memory")
+    draft = stored(host, "nexusterm conteúdo precisa de assinatura humana")
+    with http(host) as call:
+        # Forward: Creative is searchable only when explicitly requested.
+        assert search(call)["results"] == []
+        before = search(call, include_creative=True)["results"]
+        assert len(before) == 1 and before[0]["run_id"] == draft
+        assert before[0]["authority"] == "creative"
+        assert not host.store.path("canonical", draft).exists()
+        # Reverse: forged or refused approval must not promote.
+        with pytest.raises(HTTPError) as refused:
+            call("/api/approve", {"run_id": draft, "ticket": "forged", "confirmed": True})
+        assert refused.value.code == 403
+        prepared = call("/api/prepare", {"run_id": draft})
+        assert "nexusterm" in prepared["content"]
+        with pytest.raises(HTTPError) as declined:
+            call("/api/approve", {"run_id": draft, "ticket": prepared["ticket"], "confirmed": False})
+        assert declined.value.code == 403
+        assert not host.store.path("canonical", draft).exists()
+        assert search(call)["results"] == []
+        # Explicit, fresh approval bound to current candidate SHA-256.
+        approved = call("/api/prepare", {"run_id": draft})
+        decided = call("/api/approve", {
+            "run_id": draft, "ticket": approved["ticket"], "confirmed": True
+        })
+        assert decided["status"] == "PASS"
+        canonical = search(call)["results"]
+        assert [item["run_id"] for item in canonical] == [draft]
+        assert canonical[0]["authority"] == "canonical"
+        assert canonical[0]["content_sha256"] == before[0]["content_sha256"]
+        assert canonical[0]["provenance_sha256"] != before[0]["provenance_sha256"]
+        assert search(call, include_creative=True)["results"][0]["authority"] == "canonical"
+        # Reverse verification from the FTS result back to the authoritative bytes.
+        approved_file = host.store.path("canonical", draft) / "content.md"
+        assert approved_file.read_text(encoding="utf-8") == prepared["content"]
+        assert host.store.state(draft)["status"] == "PASS"
+        with pytest.raises(HTTPError) as replay:
+            call("/api/approve", {"run_id": draft, "ticket": approved["ticket"], "confirmed": True})
+        assert replay.value.code == 403
