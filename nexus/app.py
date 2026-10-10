@@ -64,8 +64,19 @@ def _natural_request(data, host):
         # scripts, macros, external objects, or an extension/MIME mismatch.
         from nexus.adapters.office import document_kind
         ext = Path(name).suffix.lower()
-        if ext not in (".odt", ".docx") or document_kind(attachment) != ext:
+        if ext not in (".odt", ".docx"):
             raise Blocked("A exportação requer um documento DOCX ou ODT válido e com extensão correspondente.")
+        try:
+            kind = document_kind(attachment)
+        except Blocked:
+            raise
+        except Exception as error:
+            # Untrusted ZIP decoding can raise NotImplementedError for an
+            # unsupported compression method (and other decoder failures).
+            # No parser exception may escape the HTTP refusal boundary.
+            raise Blocked("O documento não pode ser validado em segurança.") from error
+        if kind != ext:
+            raise Blocked("A extensão não corresponde ao conteúdo DOCX ou ODT.")
     descriptions = {
         "verify": "Verificar a integridade de " + name + ".",
         "convert_pdf": "Converter " + name + " para PDF; original conservado. Não altera os estilos.",
