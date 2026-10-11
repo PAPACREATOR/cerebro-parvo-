@@ -5,7 +5,7 @@ on:
     paths:
       - 'server.js'
       - 'package.json'
-      - 'nexus/tests/gateway_transport.test.cjs'
+      - 'nexus/tests/gateway_*.test.cjs'
       - 'nexus/tests/folha_search_smoke.cjs'
       - 'nexus/tests/test_single_runtime_boundary.py'
       - 'nexus/tests/test_gateway_real_host.py'

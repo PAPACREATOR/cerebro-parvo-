@@ -1,5 +1,17 @@
 # Nexus — ponto de situação atual
 
+## Retoma de 11-10-2026 — ligação existente e resultado desconhecido
+
+Base desta frente: `main` `e3833856ed8ebc8947c4229344bab3be3f54654a`, com a PR #57 integrada. A árvore integrada é idêntica à candidata `e9fc98a`; os três workflows pós-merge (Windows, Auditoria e CodeQL) passaram no próprio `e383385`, com checkout conferido nos cinco jobs. A prova completa anterior de 10 workflows/21 jobs, Writer real e Chrome Windows/Linux permanece na PR #57.
+
+Pedido humano atual: continuar, reler o que foi estudado/testado e aproveitar a ligação Folha → aprovação humana → Host/Kernel → função → resultado quando essa ligação estiver provada. Não acrescentar um roteador/framework para duplicar funções existentes. A releitura das decisões de 11/10 mantém Pyperplan rejeitado e MAF/LangGraph apenas em estudo/bancada, com integração por aprovar. Não foram reinstalados motores nem recuperadas bancadas eliminadas.
+
+Microprocesso atual, em branch própria `fix/gateway-result-unknown-20261011`: reproduzir o alerta da issue #39 sobre perda de resposta HTTP. A ausência de resposta após `confirm-run` ou `approve` não prova ausência de execução/promoção. O gateway dizia «Nenhuma operação executada»; a Folha podia ainda sugerir tentar novamente. O contrato exige resultado desconhecido, consulta explícita do histórico e nenhum reenvio automático ou reaproveitamento de ticket.
+
+FAIL-first local sobre os bytes de produção da base: **13 FAIL / 29 PASS Node** e **1 FAIL / 1 PASS Python**. Os sete cenários de transporte usam sockets reais e efeitos sintéticos, incluindo timeout real de 30 segundos, enquadramento truncado e cancelamento; não executam ferramentas. Os seis cenários UI exercitam as duas confirmações e perda de ligação/JSON/resposta UNKNOWN. O E2E Python adicional usa app/Host/Store originais, dados temporários e aprovação humana explícita: a promoção real fica `PASS`, a resposta é cortada pela fronteira de rede e o gateway ainda afirma ausência de operação. Recusa prévia mantém `HUMAN_REQUIRED`; não há monkeypatch do núcleo.
+
+Próximo passo: correção mínima exclusivamente no transporte/apresentação, seguida de repetição dos testes e dos gates aplicáveis no mesmo SHA. Kernel, Host, Store, contratos, políticas, MCP e adaptadores permanecem intactos. Nenhum FAIL é contado como PASS; a issue #39 continua aberta, com revisão independente por provar. Pesquisa/produção final dos quatro produtos e controlo autorizado das proteções do Windows continuam pendentes em fases próprias.
+
 ## Folha limpa e preparação dos quatro produtos — retoma de 11-10-2026
 
 Prioridade humana recebida às 20:45 de Lisboa: abrir uma folha vazia, reduzir os controlos e organizar Texto, Podcast, Música e Curta pelo trabalho anterior à geração. Este pedido passa à frente da revisão geral de sintaxe/contratos preparada na PR #54. A fase documental daquela PR tem seis workflows SUCCESS no SHA `85bed0097eaa8dff279e58339c230126c9ae501b`, continua isolada e sem merge.
