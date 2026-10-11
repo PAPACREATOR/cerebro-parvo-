@@ -27,7 +27,7 @@ const os=require("node:os"),net=require("node:net"),{spawn}=require("node:child_
     }
     assert.ok(ready,"Python Folha did not start: "+diagnostics.join(""));
     browser=await chromium.launch({channel:"chrome",headless:true});
-    const page=await browser.newPage({viewport:{width:1280,height:960}});
+    const page=await browser.newPage({viewport:{width:1280,height:960},locale:"pt-PT"});
     const errors=[],apiCalls=[];
     page.on("pageerror",e=>errors.push(e.message));
     page.on("request",r=>{if(new URL(r.url()).pathname.startsWith("/api/"))apiCalls.push(r.url());});
