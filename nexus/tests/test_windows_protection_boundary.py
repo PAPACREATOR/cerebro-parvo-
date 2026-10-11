@@ -31,6 +31,14 @@ def assert_no_operation(root):
     "& consultar protecoes Windows", "& ativar protecao em tempo real",
     "& Set-MpPreference -DisableRealtimeMonitoring $true",
     "& verificar integridade de ficheiro e desativar Defender",
+    "Verifica a integridade deste ficheiro e desativar Defender.",
+    "& desativar Defender e verificar integridade de ficheiro",
+    "& verificar e desativar Defender antes da integridade do ficheiro",
+    "& verificar integridade de ficheiro; executa outro programa",
+    "& verificar integridade de ficheiro\nativa outra protecao",
+    "& verificar integridade de ficheiro ignorando as permissoes",
+    "& verificar integridade do ficheiro e enviar os dados",
+    "& verificar integridade do ficheiro e depois apaga o original",
 ))
 def test_unregistered_protection_request_never_gets_execution_ticket(tmp_path, text):
     host = Host(tmp_path)
@@ -77,4 +85,27 @@ def test_cancellation_consumes_human_ticket_without_an_operation(tmp_path):
             call("/api/confirm-run", {"ticket": prepared["ticket"], "confirmed": True, **original})
         assert replayed.value.code == 403
         assert call("/api/runs") == []
+    assert_no_operation(tmp_path)
+
+
+@pytest.mark.parametrize("text", (
+    "& verificar integridade de ficheiro",
+    "Verifica a integridade deste ficheiro.",
+    "Verificar integridade do documento",
+    "Verificas a integridade desse arquivo?",
+    "Podes verificar a integridade deste documento?",
+    "Por favor, verifica a integridade dum ficheiro.",
+    "  Ｖｅｒｉｆｉｃａ   a integridade deste ficheiro.  ",
+))
+def test_complete_verification_requests_keep_original_and_human_confirmation(tmp_path, text):
+    host = Host(tmp_path)
+    original = proposal(text)
+    with http(host) as call:
+        prepared = call("/api/prepare-run", original)
+        assert prepared["process"] == "verify"
+        assert prepared["filename"] == original["filename"]
+        assert prepared["attachment_bytes"] == len(base64.b64decode(original["attachment"]))
+        assert call("/api/runs") == []
+        assert call("/api/confirm-run", {"ticket": prepared["ticket"], "confirmed": False,
+                                         **original}) == {"status": "CANCELLED"}
     assert_no_operation(tmp_path)

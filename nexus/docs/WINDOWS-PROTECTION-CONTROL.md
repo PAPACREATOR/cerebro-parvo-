@@ -2,7 +2,7 @@
 
 Estado em 11-10-2026: **PROPOSTA; alteração efetiva NÃO IMPLEMENTADA**.
 Base: `main` `0f39fc81fc6f8109cdea66db8e15cf8bb8de0671`.
-Este contrato não concede permissões nem cria uma ferramenta executável.
+Este contrato não concede permissões nem cria uma ferramenta executável. A mudança de produção associada limita-se à recusa de verificações compostas na entrada HTTP da Folha.
 
 ## Pedido e fronteira encontrada
 
@@ -95,8 +95,8 @@ nada foi alterado.
 
 | Gate | Critério de PASS | Estado nesta proposta |
 | --- | --- | --- |
-| Fronteira existente | Pedidos de proteções não registados são recusados por HTTP e contrato, sem runs/Creative/Canonical | A testar contra o Host original |
-| Integridade | Kernel/Host/Store, políticas, schemas, adapters e os 40 hashes da base intactos | A reconferir |
+| Fronteira existente | Pedidos de proteções não registados e verificações com ações adicionais são recusados por HTTP/contrato, sem runs/Creative/Canonical | PASS local após correção da entrada Folha; sem prova de administração |
+| Integridade | Kernel/Host/Store, políticas, schemas e adapters intactos; mesmas 40 entradas, apenas hash de app.py muda | A reconferir |
 | Consulta Windows | Observação por API suportada, limites de tempo, indisponibilidade e dados inválidos | NOT RUN |
 | Recusa da alteração | Sem confirmação/UAC válida, estado Windows permanece igual | NOT RUN |
 | Alteração permitida | Windows descartável, antes/depois reais e registo pela autoridade original | NOT RUN |
@@ -108,6 +108,14 @@ PASS de recusa prova que o controlo ainda não está disponível. Não prova con
 elevação, ativação ou desativação. Não aplicar mudanças de segurança a um runner
 partilhado para fabricar prova positiva; usar Windows descartável delimitado para
 esse gate.
+
+## Falha encontrada antes de implementar
+
+Na base, os testes produziram **14 PASS / 1 FAIL**: «verificar integridade de ficheiro e desativar Defender» obteve um ticket de verificação. A expansão adversarial, com os mesmos bytes de produção, produziu **21 PASS / 9 FAIL** para ações adicionais antes, dentro e depois da frase, incluindo nova linha. Nenhuma proteção foi alterada.
+
+Causa: a regra histórica de verificação procura uma expressão dentro de texto maior; a entrada HTTP aceitava a seleção parcial. A correção em `app.py` exige uma frase inteira e delimitada de verificação, conservando normalização Unicode/espaços, anexo e ticket humano. Os outros nove processos continuam a usar os contratos existentes. Frases adicionais têm de ser reformuladas num pedido separado.
+
+Esta recusa não depende de nomes de antivírus, listas de verbos administrativos ou deteção por IA. O parser e as regras do Kernel não são alterados.
 
 ## Extensão necessária para implementar
 
