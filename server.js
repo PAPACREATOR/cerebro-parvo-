@@ -1,4 +1,5 @@
 import http from 'node:http';
+import { pipeline } from 'node:stream';
 import express from 'express';
 
 /**
@@ -38,13 +39,13 @@ const WRITE_PATHS = new Set([
 const ID_PATH = /^\/api\/(?:runs|pdf)\/[0-9a-f]{32}$/;
 const MAX_BODY = 3200000;
 
-function reject(res, code, message) {
+function reject(res, code, message, outcome) {
   res.writeHead(code, {
     'Content-Type': 'application/json; charset=utf-8',
     'Cache-Control': 'no-store',
     'X-Content-Type-Options': 'nosniff',
   });
-  res.end(JSON.stringify({error: message}));
+  res.end(JSON.stringify({error: message, ...(outcome ? {outcome} : {})}));
 }
 
 function allowed(method, url) {
@@ -106,15 +107,21 @@ app.use((req, res) => {
       }
     }
     res.writeHead(upstreamResponse.statusCode || 502, headers);
-    upstreamResponse.pipe(res);
+    // A broken upstream frame must close the downstream response promptly.
+    // The browser then knows delivery failed; it cannot infer no operation ran.
+    pipeline(upstreamResponse, res, () => {});
   });
 
   upstream.on('timeout', () => upstream.destroy(new Error('Backend timed out')));
   upstream.on('error', () => {
-    if (!res.headersSent) return reject(res, 503, 'Host Nexus indisponível. Nenhuma operação executada.');
+    if (res.destroyed) return;
+    if (!res.headersSent) return reject(res, 503,
+      'Não foi possível confirmar o resultado. Consulta os trabalhos anteriores antes de repetir o pedido.', 'UNKNOWN');
     res.destroy();
   });
   req.on('aborted', () => upstream.destroy());
+  // Stop abandoned transport only, never cancel/replay a Host operation.
+  res.on('close', () => { if (!res.writableEnded) upstream.destroy(); });
   req.pipe(upstream);
 });
 

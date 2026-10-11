@@ -1,7 +1,8 @@
 """Real loopback Nexus app/Host/Store behind optional Node gateway.
 
-No modifications to the sealed Python runtime. The test uses temporary Store
-data and never starts an external tool or promotes a result.
+No modifications to the sealed Python runtime. Tests use temporary Store data
+and never start an external tool. The lost-reply case promotes a fixture only
+after explicit human approval, then reconciles the real Store without replay.
 """
 
 import http.client
@@ -51,7 +52,7 @@ def _optional_gateway_installed():
 
     The main Python/Windows suite must not gain an npm install dependency:
     it exercises the Python authority independently. The dedicated gateway
-    workflow runs the full test on both Windows and Linux after npm ci.
+    workflow runs the full test on both Windows and Linux after npm install.
     """
     node = shutil.which("node")
     if node is None:

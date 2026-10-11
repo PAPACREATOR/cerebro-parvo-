@@ -2,7 +2,7 @@
 
 The existing Python app/Host/Store own interpretation, execution, memory and
 Canonical approval. The gateway may only forward HTTP to that existing boundary.
-No production Kernel, parser, Host, Store or integrity manifest is modified.
+No production Kernel, parser, Host or Store is modified.
 """
 
 import hashlib
@@ -52,7 +52,7 @@ def test_folha_html_matches_host_integrity_manifest():
 def test_gateway_does_not_claim_local_approval_or_store():
     gateway = (REPOSITORY / "server.js").read_text(encoding="utf-8")
     assert "req.pipe(upstream)" in gateway
-    assert "upstreamResponse.pipe(res)" in gateway
+    assert "pipeline(upstreamResponse, res," in gateway
     assert "/api/confirm-run" in gateway
     assert "/api/approve" in gateway
     assert "/api/runs" in gateway
