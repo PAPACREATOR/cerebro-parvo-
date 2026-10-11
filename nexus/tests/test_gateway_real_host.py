@@ -166,12 +166,23 @@ def test_lost_approval_reply_is_unknown_and_real_store_is_reconciled_without_rep
         backend_thread = threading.Thread(target=server.serve_forever, daemon=True)
         backend_thread.start()
         effects = []
+        run = stored(host, "Material temporário — aprovação explícita 🇵🇹")
+        # Closed fixture routes: request input selects trusted paths, never
+        # becomes an outbound URL or a response header.
+        routes = (("GET", "/"), ("GET", "/api/runs"),
+                  ("GET", f"/api/runs/{run}"),
+                  ("POST", "/api/prepare"), ("POST", "/api/approve"))
 
         class LostReply(BaseHTTPRequestHandler):
             def log_message(self, *_args):
                 pass
 
             def forward(self):
+                selected = [route for route in routes if route == (self.command, self.path)]
+                if not selected:
+                    self.send_error(403, "Route outside the fault fixture")
+                    return
+                method, target = selected[0]
                 length = int(self.headers.get("Content-Length", "0"))
                 body = self.rfile.read(length) if length else None
                 headers = {"Host": f"127.0.0.1:{server.server_port}",
@@ -180,19 +191,20 @@ def test_lost_approval_reply_is_unknown_and_real_store_is_reconciled_without_rep
                     headers["Content-Type"] = "application/json"
                 connection = http.client.HTTPConnection("127.0.0.1", server.server_port, timeout=5)
                 try:
-                    connection.request(self.command, self.path, body=body, headers=headers)
+                    connection.request(method, target, body=body, headers=headers)
                     reply = connection.getresponse()
-                    status, content_type, raw = reply.status, reply.getheader("Content-Type"), reply.read()
+                    status, raw = reply.status, reply.read()
                 finally:
                     connection.close()
-                if self.path == "/api/approve" and status == 200:
+                if target == "/api/approve" and status == 200:
                     effects.append("real-approved-reply-lost")
                     self.close_connection = True
                     self.connection.shutdown(socket.SHUT_RDWR)
                     self.connection.close()
                     return
                 self.send_response(status)
-                self.send_header("Content-Type", content_type or "application/json")
+                self.send_header("Content-Type", "text/html; charset=utf-8" if target == "/"
+                                 else "application/json; charset=utf-8")
                 self.send_header("Content-Length", str(len(raw)))
                 self.end_headers()
                 self.wfile.write(raw)
@@ -221,7 +233,13 @@ def test_lost_approval_reply_is_unknown_and_real_store_is_reconciled_without_rep
             else:
                 pytest.fail("Gateway startup timeout")
 
-            run = stored(host, "Material temporário — aprovação explícita 🇵🇹")
+            # Exercise the fixture itself, before reaching the production gate.
+            for forbidden in ("http://127.0.0.1:1/other", "/api/../other", "/api/runs?other=1"):
+                assert _request(proxy.server_port, forbidden, token=host.session)[0] == 403
+            assert _request(proxy.server_port, "/api/runs", method="POST", token=host.session,
+                            payload={})[0] == 403
+            assert effects == []
+            assert host.store.state(run)["status"] == "HUMAN_REQUIRED"
             status, raw = _request(port, "/api/prepare", method="POST", token=host.session,
                                    payload={"run_id": run})
             assert status == 200
