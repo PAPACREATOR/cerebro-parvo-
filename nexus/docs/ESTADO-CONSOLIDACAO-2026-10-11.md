@@ -5,11 +5,13 @@
 ## Produto oficial
 
 - Repositório: `PAPACREATOR/cerebro-parvo-`; **um só runtime autoritativo no `main`**.
-- HEAD de referência na auditoria: [`fc3c48a5cb9a594ae4de0fc790fd586147d91de4`](https://github.com/PAPACREATOR/cerebro-parvo-/commit/fc3c48a5cb9a594ae4de0fc790fd586147d91de4).
+- HEAD de referência da triagem original: [`fc3c48a5cb9a594ae4de0fc790fd586147d91de4`](https://github.com/PAPACREATOR/cerebro-parvo-/commit/fc3c48a5cb9a594ae4de0fc790fd586147d91de4). Após o merge da [PR #57](https://github.com/PAPACREATOR/cerebro-parvo-/pull/57), o `main` foi observado em [`e3833856ed8ebc8947c4229344bab3be3f54654a`](https://github.com/PAPACREATOR/cerebro-parvo-/commit/e3833856ed8ebc8947c4229344bab3be3f54654a), em 11-10-2026. Estes SHA são referências datadas; não substituem a conferência do HEAD antes de qualquer instalação.
 - PR [#50](https://github.com/PAPACREATOR/cerebro-parvo-/pull/50): Folha Única, Writer/Sandy e dois gates humanos distintos; #51: convergência do candidato para `main`; #53: seleção determinística das dez capacidades existentes; [#55](https://github.com/PAPACREATOR/cerebro-parvo-/pull/55): gateway Node opcional subordinado ao Python, FTS5 de consulta através do Host e Creative/Canonical separados.
 - A PR #55 teve **8 de 8 workflows SUCCESS no mesmo HEAD candidato** `7c217b3c2fdb24e9e75997d93191ce175a03aead`, antes do merge. Não equivalem a certificação de todo o software no PC físico.
 - Runtime: Folha → API Python → confirmação pré-execução → Host → runner direto ou Writer/Sandy na fronteira Windows → Store/Creative → revisão e **aprovação humana explícita** → Canonical. MCP é transporte opcional de ferramentas externas e tem regressões reais de protocolo; não é outra autoridade.
 - Índice FTS5 derivado: o modo normal pesquisa só Canonical; Creative é consultável apenas quando pedido explicitamente. Nenhuma consulta concede aprovação nem promoção.
+- [PR #57](https://github.com/PAPACREATOR/cerebro-parvo-/pull/57): **integrada** em 11-10-2026 (merge `e3833856`, candidato `e9fc98aa`). Folha inicialmente vazia, sem botões visíveis nem chamadas automáticas, apresentação sem nomes de ferramentas e preparação humana de Texto, Podcast, Música e Curta em seis etapas. O utilizador vê apenas a Folha, as decisões humanas e os resultados. A preparação exporta `nexus.preparation.v1` com `produced: false`, não gera os produtos finais, não aprova a execução e não promove Canonical. A sessão do navegador não é arquivo durável; exportações não transportam os bytes dos anexos.
+- Evidência da PR #57 no **mesmo SHA candidato** `e9fc98aa425e4b5340cd25bdf9c5f113f8a2468d`: 10 workflows/21 jobs SUCCESS, incluindo CodeQL, Windows, confinamento, stress, Writer real e Chrome UI; integração reporta **1844 PASS / 18 SKIP / 1 warning**. Os SKIP não são PASS; testes em CI não demonstram instalação no PC pessoal nem a produção final de áudio, música e MP4. [Detalhes e ligações aos runs](https://github.com/PAPACREATOR/cerebro-parvo-/pull/57).
 
 ## Organização das PRs e trabalho preservado
 
@@ -23,12 +25,13 @@
 ## Issues — não confundir encerramento com resolução funcional
 
 - [#33](https://github.com/PAPACREATOR/cerebro-parvo-/issues/33) fechada como **substituída** pela convergência. Não significa produto integralmente concluído.
+- O pedido de controlar ativações/desativações de proteções do Windows mediante risco, autorização humana explícita, elevação quando necessária e prova de alteração está **registado na PR #57, mas NOT IMPLEMENTED / NOT RUN**. Não confundir documentação com mudança real de SmartScreen ou Smart App Control.
 - Continuam abertas #3 (IMP-001 receção), #4 (G10/IMP-019 e recuperação), #35 (ajuda pública), #36 (Writer real/LPAC, prova final), #37 (linguagem PT-PT adversarial), #38 (classificação documental completa), #39 (revisão independente), #42 (OpenNotebook real e microprocessos).
 - Nenhum comentário externo com «Closes #...» conta como contribuição aceite sem PR, commit ou patch reprodutível. Não fechar #36 apenas por PASS Writer num SHA antigo: repetir Writer real no candidato correto com os gates aplicáveis.
 
 ## Limitações verificadas
 
-- CI GitHub `PASS` ≠ instalação no PC físico, GPU, criação de podcast/vídeo/áudio, Writer editorial completo ou resistência a perda súbita de energia.
+- CI GitHub `PASS` ≠ instalação no PC físico, GPU, criação de podcast/vídeo/áudio, Writer editorial completo ou resistência a perda súbita de energia. A PR #57 valida o **preparo manual**, não a pesquisa factual automática, a produção final dos quatro produtos ou a persistência durável de anexos de preparação.
 - A execução interna das dez capacidades é atualmente Python direto governado pelo Host; não instalar um segundo orquestrador/MCP interno só para aumentar a contagem de ferramentas.
 - Sem alterações a Kernel, Host, Store, contratos, parser, sandbox ou manifesto nesta organização documental.
 - Creative nunca é promovido automaticamente. Canonical **exige decisão humana específica e válida**.
