@@ -36,3 +36,5 @@ REGISTO-DE-EVENTOS-E-ACOES.md
 **/.venv/
 **/.pytest_cache/
 **/__pycache__/
+node_modules/
+folha-browser-evidence/
