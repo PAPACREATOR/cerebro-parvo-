@@ -1,5 +1,40 @@
 # Nexus — ponto de situação atual
 
+## Folha limpa e preparação dos quatro produtos — retoma de 11-10-2026
+
+Prioridade humana recebida às 20:45 de Lisboa: abrir uma folha vazia, reduzir os controlos e organizar Texto, Podcast, Música e Curta pelo trabalho anterior à geração. Este pedido passa à frente da revisão geral de sintaxe/contratos preparada na PR #54. A fase documental daquela PR tem seis workflows SUCCESS no SHA `85bed0097eaa8dff279e58339c230126c9ae501b`, continua isolada e sem merge.
+
+Base inicial desta fase de interface: `b798d7bf441efb7c9af9ab1da924b5b04310f23c`. Na retoma de 11-10, conferiu-se a integração da PR #55 e reconciliou-se a branch própria `ui/folha-limpa-preparacao-20261010` com a main `fc3c48a5cb9a594ae4de0fc790fd586147d91de4`. O gateway e a pesquisa autenticada já integrados foram preservados. O ZIP enviado foi lido como referência e preservado. Não foi editada a frente de outra sessão.
+
+Pedido humano reforçado às 09:55 de Lisboa: entregar primeiro o relatório; o utilizador vê apenas a Folha, o processo humano e os resultados. Não mostrar ferramentas ou detalhes internos na interface. A pesquisa apresenta trabalhos aprovados/rascunhos, sem nomes de processos ou IDs. A revisão conserva pedido, ficheiro e conteúdo humano; tickets, hashes e diagnósticos continuam na evidência original. Os dois portões humanos permanecem distintos e obrigatórios.
+
+### Contrato e implementação desta fase
+
+- Arranque: página branca, editor vazio, sem exemplos, cartões, histórico aberto, chamadas de API ou botões visíveis. O menu discreto conserva nova folha, anexar, retomar preparação e histórico. Os controlos do pedido aparecem após escrita ou anexo.
+- Preparação: pedido de criação → produto reconhecido ou escolha humana em caso de ambiguidade → brief → Ideia → Pesquisa → Plano → Guião/texto → plano de Produção → revisão da preparação. Objetivo, público, tema e formato são exigidos antes de rever a primeira etapa; os outros campos conservam tom, duração, data de corte e fontes permitidas.
+- Material: notas e fontes são entradas humanas. Mudar pedido, brief, fonte ou material anterior retira as revisões posteriores e conserva o texto. O rascunho pode ser retomado e exportado como JSON; a exportação declara `produced: false`. Revisão de preparação não cria uma aprovação Kernel nem publica em Canonical.
+- Continuação: reenviar a folha em preparação conserva brief, notas, revisões e etapa atual; o mesmo pedido retoma também a preparação depois de consultar outro resultado. «Nova folha» permite começar outro trabalho. Na revisão final, uma regressão nova reproduziu 1 FAIL local sobre `cf1e522`: o botão principal podia reiniciar o rascunho. Foi corrigido apenas no script UI e acrescentada prova no Chrome real; os portões e o runtime não mudaram.
+- Ferramentas: os dez comandos registados continuam a usar interpretação, ticket pré-execução, confirmação humana, Host e segunda decisão de aprovação. Os nomes dos programas foram retirados dos controlos; pedido e ficheiro ficam na revisão. Apresentação dos resultados traduz apenas rodapés/metadados fixos emitidos pelos adaptadores, preservando conteúdo livre, ficheiros descarregados e binding do original. Respostas tardias não substituem uma nova folha nem abrem uma aprovação antiga.
+- Persistência de trabalho: preparação em `sessionStorage` quando disponível, com fallback em memória se o navegador impedir armazenamento. Este fallback conserva uma sessão previamente fornecida pelo Host, mas nunca inventa credenciais ou aprovação. Fechar a sessão do navegador pode perder o rascunho; exportar conserva uma cópia. Os bytes dos anexos não são guardados neste rascunho da interface.
+
+### Reconciliação do transporte e integridade
+
+Na base inicial `b798d7b`, `server.js` fabricava runs, relatórios e PDF sem Host. Entretanto a PR #55 corrigiu essa fronteira e integrou pesquisa FTS5 autenticada. A solução experimental desta fase foi retirada e reutiliza-se o `server.js` da main byte a byte: transporte exclusivamente loopback, backend Python explícito (`NEXUS_BACKEND_PORT`), sem execução, memória ou aprovação própria. A rota de pesquisa da main foi conservada, alterando somente a apresentação humana. Nenhuma rota direta ou credencial automática foi acrescentada.
+
+O manifesto foi atualizado apenas para os três assets UI alterados, preservando os hashes Python integrados pela PR #55. Nenhum ficheiro Python foi modificado: Kernel, Host, Store, contratos, política, adaptadores e binding humano conservam os bytes da main `fc3c48a`. O servidor Node não substitui a instalação nativa do Nexus.
+
+### Prova e limites
+
+Prova local inicial antes da reconciliação: 27 PASS Node; 88 PASS / 1 SKIP Windows nos gates Python relacionados; 4 PASS na auditoria de sintaxe/JSON. Estas contagens pertencem à árvore inicial, não provam a árvore reconciliada. Na árvore reconciliada: 29 PASS Node (23 preparação/revisão e 6 transporte), mais os dois smoke existentes; 116 PASS / 1 SKIP Windows nos gates Python de seleção, execução, memória/Host, sintaxe e documentação. O E2E Node → app Python → Host/Store correu localmente com o gateway integrado. Verificação documental: 47 ficheiros preservados, 84 ligações válidas. Os 40 hashes passam; só os três hashes UI mudaram; Python, gateway e histórico permanecem byte a byte iguais à base. As regressões novas cobrem conservação do trabalho ao continuar, apresentação dos resultados, evidência preservada e revisão sem detalhes de ferramentas. A prova remota da árvore final fica na PR; ensaios e subconjuntos não se somam como inputs distintos.
+
+Validação visual local: NOT RUN; não há Chrome instalado utilizável. Foi acrescentado ao CI existente um teste Chrome real por HTTP servido pela aplicação Python original, em Windows/Linux, com dados temporários, para arranque vazio, quatro briefs, seis etapas, exportação, retoma, largura pequena e ausência de chamadas a ferramentas durante preparação. As imagens e o resultado remoto ficam nos artefactos e na PR desta fase. Antes de declarar esta fase verde, conferir todos os workflows aplicáveis e o checkout do mesmo SHA; sem merge nesta fase.
+
+**Continua pendente:** pesquisa automática com fontes/factos verificados; ligação de OpenNotebook/Zotero/LanguageTool à preparação; estudo comparativo de Local Deep Research e GPT Researcher; produção final DOCX/PDF, áudio, música e MP4 a partir desse trabalho. Os produtores atuais de planos não foram transformados em geradores. A fase seguinte deve avaliar pesquisa delimitada e compatibilidade dos contratos num contexto separado, antes de instalar motores ou lhes entregar dados.
+
+## Histórico anterior preservado
+
+As secções seguintes conservam as decisões e a evidência das datas indicadas; não substituem a prioridade e a base acima.
+
 ## Convergência técnica Work — 08-10-2026
 
 Pedido corrente: convergir a PR #32 num único produto Windows, seguindo #31, #32, #34 e #33. Work altera código/testes e regista operação; a PR #34 conserva arquitetura/documentação/auditoria. Os relatórios datados abaixo continuam como história; não validam o HEAD corrente.

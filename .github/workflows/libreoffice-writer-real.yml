@@ -19,6 +19,9 @@ on:
       - '.github/workflows/libreoffice-writer-real.yml'
   pull_request:
     paths:
+      - 'nexus/ui/**'
+      - 'nexus/integrity.json'
+      - 'nexus/tests/folha_*'
       - 'nexus/adapters/office.py'
       - 'nexus/adapters/writer_sandy.py'
       - 'nexus/adapters/vendor/sandy/**'

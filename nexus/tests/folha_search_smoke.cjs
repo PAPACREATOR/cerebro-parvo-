@@ -58,7 +58,9 @@ async function submit(message) {
   await submit("?? pesquisar rascunhos evidência");
   assert.equal(apiCalls.at(-1).body.include_creative,true);
   assert.equal(apiCalls.at(-1).body.query,"evidência");
-  assert.equal(node("result-title").textContent,"Memória Creative + Canonical");
+  assert.equal(node("result-title").textContent,"Trabalhos aprovados e rascunhos");
+  assert.doesNotMatch(node("content").textContent,/canonical|creative|verify|[a-f0-9]{32}/);
+  assert.match(node("content").textContent,/Rascunho · por rever/);
   await submit("?? perguntar algo geral");
   assert.equal(apiCalls.at(-1).path,"/api/interpret");
   assert.equal(apiCalls.some(x=>/prepare-run|confirm-run|\/api\/approve/.test(x.path)),false);
