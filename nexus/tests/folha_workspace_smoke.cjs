@@ -4,7 +4,7 @@ const assert=require("node:assert/strict");
 const fs=require("node:fs"),path=require("node:path"),vm=require("node:vm");
 const code=fs.readFileSync(path.join(__dirname,"..","ui","app.js"),"utf8");
 const tick=async()=>{for(let i=0;i<18;i++)await Promise.resolve();};
-function sheet({handler,storageBlocked=false,hash=""}={}) {
+function sheet({handler,responseHandler,storageBlocked=false,hash=""}={}) {
   const nodes=new Map(),storage=new Map([["nexus-session","host-session"]]),calls=[],downloads=[];
   const hidden=new Set(["workspace","history-panel","composer-bottom","notice","result","actions","pdf","empty","resume"]);
   const node=id=>{
@@ -32,6 +32,7 @@ function sheet({handler,storageBlocked=false,hash=""}={}) {
     fetch:async(route,options)=>{
       const body=options?.body?JSON.parse(options.body):undefined;calls.push({route,body,headers:options?.headers});
       const value=handler?await handler(route,body):[];
+      if(responseHandler)return responseHandler(route,value);
       return {ok:true,json:async()=>value};
     },
     URLSearchParams,Uint8Array,Blob,btoa,clearTimeout(){},setTimeout(){return 0;},
@@ -261,3 +262,47 @@ test("PDF metadata and native failure diagnostics do not leak into the sheet",as
   assert.doesNotMatch(ui.node("message").textContent,/Writer|Sandy|LPAC|DACL/);
   assert.match(ui.node("message").textContent,/pedido foi conservado/);
 });
+for(const route of ["/api/confirm-run","/api/approve"]) {
+  for(const failure of ["connection lost","truncated JSON","declared UNKNOWN"]) {
+    test(route+" "+failure+": human outcome is uncertain, consumed ticket is never retried",async()=>{
+      const effects=[];
+      const content="Material original — conservar 🇵🇹";
+      const ui=sheet({handler:async(path,body)=>{
+        if(path===route){effects.push(body);return {run_id:"work"};}
+        if(path==="/api/interpret")return {status:"RESOLVED",intent:"trabalhar"};
+        if(path==="/api/prepare-run")return {ticket:"once",process:"verify",filename:"fonte.txt"};
+        if(path==="/api/runs/work")return {status:"HUMAN_REQUIRED",title:"Trabalho",content};
+        if(path==="/api/prepare")return {ticket:"once",content};
+        return [];
+      },responseHandler:(path,value)=>{
+        if(path!==route)return {ok:true,json:async()=>value};
+        if(failure==="connection lost")throw new Error("Host Nexus indisponível. Nenhuma operação executada.");
+        if(failure==="truncated JSON")return {ok:true,json:async()=>{throw new SyntaxError("Unexpected end of JSON input");}};
+        return {ok:false,json:async()=>({outcome:"UNKNOWN",error:"Host unavailable"})};
+      }});
+      const execution=route==="/api/confirm-run";
+      if(execution){
+        ui.node("file").files=[{name:"fonte.txt",size:1,arrayBuffer:async()=>Uint8Array.from([97]).buffer}];
+        await ui.submit("& verificar integridade de ficheiro");
+        ui.node("execution-confirm").checked=true;ui.node("execution-confirm").onchange();
+      }else{
+        await vm.runInContext('show("work")',ui.ctx);
+        await ui.node("prepare").onclick();
+        ui.node("confirm").checked=true;ui.node("confirm").onchange();
+      }
+      const button=ui.node(execution?"execution-approve":"approve");
+      await button.onclick();
+      assert.equal(effects.length,1);
+      assert.equal(effects[0].ticket,"once");assert.equal(effects[0].confirmed,true);
+      assert.match(ui.node("notice").textContent,/confirmar.*resultado/iu);
+      assert.match(ui.node("notice").textContent,/trabalhos anteriores/iu);
+      assert.doesNotMatch(ui.node("notice").textContent,/nenhuma operação|tenta novamente|Host|Kernel|JSON/iu);
+      assert.equal(ui.node(execution?"execution-confirmation":"approval").open,false);
+      if(execution)assert.equal(ui.node("text").value,"& verificar integridade de ficheiro");
+      else assert.equal(ui.node("content").textContent,content);
+      await button.onclick();
+      assert.equal(effects.length,1);
+      assert.equal(ui.calls.filter(call=>call.route===route).length,1);
+    });
+  }
+}

@@ -32,12 +32,22 @@ function invalidateExecutionProposal() {
   el("submit").disabled = false;
 }
 const labels = {RUNNING:"A trabalhar",HUMAN_REQUIRED:"Rascunho · por rever",PASS:"Aprovado",FAIL:"Não concluído",UNKNOWN:"Por esclarecer",BLOCKED:"Precisa de atenção"};
+const unclearResult = "Não foi possível confirmar o resultado. Consulta os trabalhos anteriores antes de repetir o pedido.";
 async function api(path, data) {
-  const response = await fetch(path, {method:data === undefined ? "GET":"POST",
+  const options = {method:data === undefined ? "GET":"POST",
     headers:{"X-Nexus-Session":session,"Content-Type":"application/json"},
-    body:data === undefined ? undefined:JSON.stringify(data)});
-  const value = await response.json();
-  if (!response.ok) throw new Error(value.error || "Não foi possível concluir.");
+    body:data === undefined ? undefined:JSON.stringify(data)};
+  let response, value;
+  try {
+    response = await fetch(path, options);
+    value = await response.json();
+  } catch(error) {
+    // The confirmed operation may have run even if its reply was lost/broken.
+    // Consumed tickets remain consumed; do not infer denial or retry here.
+    if (path === "/api/confirm-run" || path === "/api/approve") throw new Error(unclearResult);
+    throw error;
+  }
+  if (!response.ok) throw new Error(value?.outcome === "UNKNOWN" ? unclearResult : value?.error || "Não foi possível concluir.");
   return value;
 }
 function userMessage(message) {
