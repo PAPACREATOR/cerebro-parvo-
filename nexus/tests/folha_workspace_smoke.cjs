@@ -75,6 +75,28 @@ test("ambiguous products require a human choice; original Unicode remains intact
   assert.equal(JSON.parse(ui.storage.get("nexus-preparation")).original,original);
   assert.equal(ui.calls.length,0);
 });
+test("submitting the working sheet again preserves the brief, notes and current stage",async()=>{
+  const ui=sheet();await ui.submit("Prepara uma curta sobre Lisboa.");
+  ui.input("brief-objective","Contar uma história com sentido.");
+  ui.input("brief-audience","Público português.");
+  ui.input("brief-format","MP4");
+  ui.input("stage-notes","Ideia humana — conservar.");
+  const before=ui.storage.get("nexus-preparation");
+  await ui.node("form").onsubmit({preventDefault(){}});
+  assert.equal(ui.storage.get("nexus-preparation"),before);
+  ui.node("stage-reviewed").checked=true;ui.node("stage-reviewed").onchange();
+  ui.node("stage-next").click();ui.input("stage-notes","Notas e fontes a confirmar.");
+  const research=ui.storage.get("nexus-preparation");
+  await ui.node("form").onsubmit({preventDefault(){}});
+  assert.equal(ui.storage.get("nexus-preparation"),research);
+  assert.equal(ui.node("stage-title").textContent,"Pesquisa");
+  ui.node("workspace").hidden=true;
+  await ui.node("form").onsubmit({preventDefault(){}});
+  assert.equal(ui.node("workspace").hidden,false);
+  assert.equal(ui.storage.get("nexus-preparation"),research);
+  assert.equal(ui.node("stage-title").textContent,"Pesquisa");
+  assert.equal(ui.calls.length,0);
+});
 test("ordered reviews, edited upstream material and export preserve an honest draft",async()=>{
   const ui=sheet();await ui.submit("Faz-me um artigo sobre o Alentejo.");
   for(const [key,value] of [["objective","Informar"],["audience","Leitores locais"],["format","DOCX/PDF"]])

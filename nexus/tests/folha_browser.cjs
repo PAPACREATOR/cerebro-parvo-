@@ -57,6 +57,10 @@ const os=require("node:os"),net=require("node:net"),{spawn}=require("node:child_
     await page.locator("#brief-objective").fill("Contar uma história com sentido.");
     await page.locator("#brief-audience").fill("Público português.");
     await page.locator("#brief-format").fill("MP4, horizontal, legendado.");
+    await page.locator("#stage-notes").fill("Ideia humana — conservar.");
+    await page.locator("#submit").click();
+    assert.equal(await page.locator("#brief-objective").inputValue(),"Contar uma história com sentido.");
+    assert.equal(await page.locator("#stage-notes").inputValue(),"Ideia humana — conservar.");
     await page.screenshot({path:path.join(images,"folha-preparacao.png"),fullPage:true});
     await page.locator("#stage-reviewed").check();await page.locator("#stage-next").click();
     assert.equal(await page.locator("#stage-title").textContent(),"Pesquisa");
@@ -65,6 +69,8 @@ const os=require("node:os"),net=require("node:net"),{spawn}=require("node:child_
       await page.locator("#stage-reviewed").check();
       if(i<5)await page.locator("#stage-next").click();
     }
+    assert.equal(await page.locator("#workspace-status").textContent(),"Preparação revista");
+    await page.locator("#submit").click();
     assert.equal(await page.locator("#workspace-status").textContent(),"Preparação revista");
     const [download]=await Promise.all([page.waitForEvent("download"),page.locator("#save-preparation").click()]);
     const exported=JSON.parse(await fs.readFile(await download.path(),"utf8"));
@@ -84,7 +90,8 @@ const os=require("node:os"),net=require("node:net"),{spawn}=require("node:child_
     await page.screenshot({path:path.join(images,"folha-mobile.png"),fullPage:true});
     assert.deepEqual(errors,[]);
     console.log(JSON.stringify({result:"PASS",initialVisibleButtons:0,productBriefs:4,steps:6,
-      desktopAndMobile:true,draftExport:true,restore:true,hostCallsDuringPreparation:apiCalls.length,pageErrors:errors.length}));
+      desktopAndMobile:true,draftExport:true,restore:true,repeatedContinuePreservesWork:true,
+      hostCallsDuringPreparation:apiCalls.length,pageErrors:errors.length}));
   } finally {
     if(browser)await browser.close();
     if(backend.pid && backend.exitCode===null){backend.kill();await new Promise(resolve=>backend.once("exit",resolve));}

@@ -430,7 +430,12 @@ if(hasWorkspace) {
     const creation=/\b(?:faz|fazer|cria|criar|escreve|escrever|quero|prepara|preparar|preciso)\b/i.test(text);
     const candidates=!explicit && creation?productCandidates(text):[];
     if(candidates.length) {
-      event.preventDefault();notice("");startPreparation(candidates);
+      event.preventDefault();notice("");
+      if(project && (!el("workspace").hidden || project.original===text)) {
+        // Continuing the same sheet must never discard the person's work.
+        invalidateExecutionProposal();clearTimeout(poll);current=null;viewRevision++;
+        renderStage();el("workspace").scrollIntoView?.({block:"start"});
+      } else startPreparation(candidates);
       return;
     }
     el("workspace").hidden=true;
