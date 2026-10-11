@@ -1,15 +1,14 @@
 {
-  "name": "folha-nexus",
-  "version": "1.0.0",
+  "name": "nexus-folha-local-gateway",
+  "version": "1.0.1",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "node server.js",
-    "build": "node -e \"console.log('Build completed')\"",
     "start": "node server.js",
-    "test": "node nexus/tests/folha_revision_smoke.cjs"
+    "test": "node --test nexus/tests/gateway_transport.test.cjs && node nexus/tests/folha_revision_smoke.cjs && node nexus/tests/folha_search_smoke.cjs"
   },
   "dependencies": {
-    "express": "^4.21.2"
+    "express": "4.21.2"
   }
 }

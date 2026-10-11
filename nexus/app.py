@@ -6,6 +6,7 @@ import json
 import os
 import secrets
 import socket
+import sqlite3
 import sys
 import threading
 import time
@@ -25,6 +26,31 @@ from nexus.store import atomic
 
 _PREEXECUTION_TTL_SECONDS = 180
 _MAX_PREEXECUTION_TICKETS = 64
+
+# Laboratory code is not in Host.verify_integrity()'s fixed required set.
+# Pin its exact audited bytes here: app.py itself is Host-sealed. Never import
+# mutable experimental code into the product without verifying these digests.
+_PINNED_WIKI_LAB = {
+    "lab/wiki/kernel_bridge.py": "d9560b680b1b783acca3aec4effc1142d95944f14c7d26c5f1d8511c9d71a2ef",
+    "lab/wiki/context_packet.py": "b82b1c7899a6f088e51cfd90aab3554a2bbace9f4f123fab20283e95362ef6e8",
+}
+
+
+def _verified_wiki_bridge(store):
+    for relative, expected in _PINNED_WIKI_LAB.items():
+        target = ROOT / relative
+        if target.is_symlink() or target.is_junction() or not target.is_file():
+            raise Blocked("Componente de pesquisa não autorizado.")
+        if not secrets.compare_digest(hashlib.sha256(target.read_bytes()).hexdigest(), expected):
+            raise Blocked("A integridade do módulo FTS5 mudou; pesquisa bloqueada.")
+    # Reuse the original laboratory's Store verification and FTS5 implementation.
+    from nexus.lab.wiki.kernel_bridge import WikiBridge
+
+    # Derived SQLite index must be outside the sovereign Store and Git tree.
+    index_root = store.root.parent / (store.root.name + "-fts5-index")
+    if index_root.is_symlink() or index_root.is_junction():
+        raise Blocked("Índice de pesquisa redirecionado.")
+    return WikiBridge(store, index_root)
 
 
 def _request_digest(request):
@@ -121,6 +147,49 @@ class NexusHTTPServer(ThreadingHTTPServer):
 def make_server(host, port=0, *, allow_direct_run=False):
     preexecution_tickets = {}
     preexecution_lock = threading.Lock()
+    memory_lock = threading.Lock()
+    memory_state = {"bridge": None, "revision": None}
+
+    def search_memory(data, session):
+        # Exact schema, no tool execution, no approval or Store mutation.
+        if not isinstance(data, dict) or set(data) != {"query", "include_creative", "limit"}:
+            raise Blocked("Consulta de memória inválida.")
+        query, creative, limit = data["query"], data["include_creative"], data["limit"]
+        if (not isinstance(query, str) or not query.strip() or len(query) > 200 or
+                "\x00" in query or type(creative) is not bool or type(limit) is not int or
+                not 1 <= limit <= 8):
+            raise Blocked("Consulta de memória inválida.")
+        # Authorization and visible state come from the authoritative Host.
+        visible = host.list_runs(session)
+        allowed = [item["run_id"] for item in visible
+                   if item["status"] == "PASS" or
+                   (creative and item["status"] == "HUMAN_REQUIRED")]
+        scope = "canonical+creative" if creative else "canonical"
+        if not allowed:
+            return {"scope": scope, "results": []}
+        revision = tuple(sorted((item["run_id"], item["status"], item.get("updated_at"),
+                                 item.get("candidate_sha256"), item.get("provenance_sha256"))
+                                for item in visible))
+        with memory_lock:
+            try:
+                # Recheck all imported laboratory bytes at every query.
+                checked = _verified_wiki_bridge(host.store)
+                bridge = memory_state["bridge"]
+                if bridge is None:
+                    bridge = checked
+                    memory_state["bridge"] = bridge
+                if memory_state["revision"] != revision or not bridge.index.is_file():
+                    bridge.rebuild()  # atomic derived rebuild; originals untouched.
+                    memory_state["revision"] = revision
+                found = bridge.search(query, allowed, include_creative=creative, limit=limit)
+            except (OSError, sqlite3.Error) as error:
+                raise Blocked("Índice de memória indisponível; conteúdo original preservado.") from error
+        return {"scope": scope, "results": [
+            {"run_id": item["run_id"], "authority": item["authority"],
+             "process_id": item["process_id"], "snippet": item["content"][:240],
+             "content_sha256": item["content_sha256"],
+             "provenance_sha256": item["provenance_sha256"]}
+            for item in found]}
 
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *_):
@@ -177,6 +246,8 @@ def make_server(host, port=0, *, allow_direct_run=False):
                 if not isinstance(data, dict):
                     raise Blocked("Pedido inválido.")
                 path = urlsplit(self.path).path
+                if path == "/api/search":
+                    return self.reply(200, search_memory(data, session))
                 if path == "/api/interpret":
                     # Read-only Folha interpretation. Parsing never executes,
                     # creates Store records, or grants any tool permission.
