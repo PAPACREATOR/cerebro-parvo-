@@ -45,7 +45,27 @@ def _request(port, path, *, method="GET", token=None, payload=None):
         connection.close()
 
 
-@pytest.mark.skipif(shutil.which("node") is None, reason="Node.js unavailable")
+def _optional_gateway_installed():
+    """Only the dedicated Node gateway CI installs Express by design.
+
+    The main Python/Windows suite must not gain an npm install dependency:
+    it exercises the Python authority independently. The dedicated gateway
+    workflow runs the full test on both Windows and Linux after npm ci.
+    """
+    node = shutil.which("node")
+    if node is None:
+        return False
+    probe = subprocess.run(
+        [node, "-e", "require.resolve('express')"],
+        cwd=REPO, capture_output=True, timeout=10, check=False,
+    )
+    return probe.returncode == 0
+
+
+@pytest.mark.skipif(
+    not _optional_gateway_installed(),
+    reason="Optional Express not installed; full E2E required in nexus-gateway.yml on Windows and Linux",
+)
 def test_gateway_forwards_to_real_host_and_one_store_without_modifying_core(tmp_path):
     with application(tmp_path / "memory") as (host, server):
         thread = threading.Thread(target=server.serve_forever, daemon=True)
@@ -54,12 +74,13 @@ def test_gateway_forwards_to_real_host_and_one_store_without_modifying_core(tmp_
         env = dict(os.environ, PORT=str(port), NEXUS_BACKEND_PORT=str(server.server_port))
         gateway = subprocess.Popen(
             [shutil.which("node"), "server.js"], cwd=REPO, env=env,
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
         )
         try:
             for _ in range(80):
                 if gateway.poll() is not None:
-                    pytest.fail("Optional gateway exited before opening loopback listener.")
+                    pytest.fail("Optional gateway exited before opening loopback listener: " +
+                                gateway.stderr.read().decode("utf-8", errors="replace")[:4000])
                 try:
                     code, payload = _request(port, "/")
                     if code == 200:
