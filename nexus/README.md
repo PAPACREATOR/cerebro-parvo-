@@ -2,11 +2,11 @@
 
 Folha → Kernel/Host Python → adapter na fronteira nativa Windows → JSON validado → Creative. MCP externo é transporte opcional. A promoção para Canonical exige confirmação humana ligada ao conteúdo.
 
-Estado, SHA validado e falhas pendentes: [ponto de situação único](docs/PONTO-DE-SITUACAO.md). A branch candidata da [PR #32](https://github.com/PAPACREATOR/cerebro-parvo-/pull/32) ainda não foi integrada em `main`.
+Estado, SHA validado e falhas pendentes: [ponto de situação único](docs/PONTO-DE-SITUACAO.md). A linha de produto já está integrada em `main` pelas PRs #50/#51/#53/#55. A [reconciliação de GitHub](docs/ESTADO-CONSOLIDACAO-2026-10-11.md) distingue os candidatos históricos do runtime atual e dos testes ainda pendentes.
 
 ## Arranque determinístico
 
-Requisitos: Windows, Python 3.12, Git e checkout oficial limpo. Conferir primeiro o SHA aceito na PR #32 e o estado dos gates. Na raiz desse checkout:
+Requisitos: Windows, Python 3.12, Git e checkout oficial limpo. Conferir o SHA exato do `main` que se pretende autorizar e os gates associados; não aceitar automaticamente o antigo SHA da PR #32. Na raiz desse checkout:
 
 ```powershell
 $accepted = git rev-parse HEAD
@@ -15,7 +15,7 @@ powershell.exe -NoProfile -File nexus/windows/bootstrap-nexus-local.ps1 -RepoRoo
 
 O bootstrap core existente reutiliza preparação, inventário e plano; cria o atalho Nexus.lnk com o launcher e binding fora do repositório. HEAD diferente, origin incorreto ou checkout alterado recusam o arranque. Uma atualização exige aceitar explicitamente o novo SHA e repetir o bootstrap. O bundle completo é opcional e depende da aceitação no PC.
 
-O core exige jsonschema; MCP/trio estão em `requirements-mcp.txt` para integrações externas e testes de protocolo. O bootstrap instala também dependências de teste para verificar gates. A Folha mantém seleção explícita de dez processos: Front Door natural com sete intenções **NOT INTEGRATED**, à espera do mapa aprovado. Os FAILs Writer/LPAC registados no ponto de situação impedem declarar release convergida.
+O core exige jsonschema; MCP/trio estão em `requirements-mcp.txt` para integrações externas e testes de protocolo. O bootstrap instala também dependências de teste para verificar gates. A Folha mantém dez processos declarados e um roteador determinístico de propostas exatas, ligados à confirmação pré-execução. As sete intenções da Front Door **não** concedem autorização genérica para ferramentas desconhecidas; ambiguidades ficam por esclarecer. A pesquisa `?? pesquisar termo` devolve apenas resultados Canonical aprovados; `?? pesquisar rascunhos termo` permite incluir Creative explicitamente. Writer/Sandy já foi integrado; continuam pendentes aceitação física e provas finais das ferramentas reais.
 
 A Folha abre no navegador, apenas em 127.0.0.1. Verificar texto/anexo calcula SHA-256 por Windows CNG e Python/hashlib e compara os resultados. Este circuito não chama IA. Os dados ficam em `nexus/runtime/`, excluído do Git. O arranque reserva a memória: uma segunda instância com os mesmos dados é recusada antes de recuperar ou alterar pedidos. Se a janela for encerrada normalmente, a tarefa ativa termina antes de libertar a memória. Um crash liberta o bloqueio no sistema operativo; o próximo arranque faz a recuperação existente. Não apagar `.nexus.lock`: a sua existência não indica que a aplicação esteja aberta.
 
@@ -37,9 +37,9 @@ Com Java e LanguageTool instalados, criar no diretório de dados `languagetool.j
 
 ## Conversão PDF opcional
 
-Com LibreOffice instalado, criar no diretório de dados `libreoffice.json` com o campo `executable`: caminho absoluto de `soffice.com`. Selecionar **Converter para PDF** e anexar ODT ou DOCX até 2 MB. O PDF fica em Creative e pode ser descarregado. A aprovação inclui o hash do ficheiro; PDF alterado bloqueia download/promoção. Usar inicialmente documentos confiáveis de ensaio. ODT teve prova real; DOCX ainda precisa de ensaio nesta versão.
+Com LibreOffice e Sandy instalados e verificados, criar no diretório de dados `libreoffice.json` com **exatamente dois campos**: `executable`, caminho absoluto de `soffice.com`, e `sandy`, caminho absoluto do binário `sandy.exe` da versão aprovada. A instalação e os hashes têm de corresponder aos contratos atuais; não executar Writer sem essa validação. Selecionar **Converter para PDF** e anexar ODT ou DOCX até 2 MB. O PDF fica em Creative e pode ser descarregado. A aprovação inclui o hash do ficheiro; PDF alterado bloqueia download/promoção. Usar inicialmente documentos confiáveis de ensaio. ODT teve prova real; DOCX ainda precisa de ensaio nesta versão.
 
-[Contrato, testes e limites](docs/F007-LIBREOFFICE.md). A conversão pelas rotas book/convert_pdf no Host/LPAC tem FAIL por timeout no Writer instalado; os PASS anteriores fora dessa fronteira não fecham esse E2E. O Writer editorial completo (livros, estilos, paginação, gutter, viúvas/órfãos, imagens, sumário e round-trip) tem contrato separado em [CAPABILITY-WRITER-EDITORIAL.md](docs/CAPABILITY-WRITER-EDITORIAL.md) e ainda não deve ser confundido com a conversão PDF já provada.
+[Contrato, testes e limites](docs/F007-LIBREOFFICE.md). O timeout original da PR #32 é evidência histórica. Posteriormente a PR #50 teve **PASS real do Writer/Sandy em Windows** no seu SHA; isso não prova a instalação no PC pessoal nem substitui a repetição no candidato final, como se explica na issue #36. O Writer editorial completo (livros, estilos, paginação, gutter, viúvas/órfãos, imagens, sumário e round-trip) tem contrato separado em [CAPABILITY-WRITER-EDITORIAL.md](docs/CAPABILITY-WRITER-EDITORIAL.md) e ainda não deve ser confundido com a conversão PDF já provada.
 
 ## Testes
 
@@ -54,7 +54,7 @@ A suite combina testes reais de Python/MCP/PowerShell com falhas controladas. N�
 
 [Estado, inventário documental e próximas validações](docs/PONTO-DE-SITUACAO.md).
 
-- `app.py`, `host.py`: Folha local e execução governada pelo Kernel.
+- `app.py`, `host.py`: Folha local e execução governada pelo Host/Kernel. O `server.js` da raiz é gateway Node **opcional**, sem Store, execução ou aprovação própria; o servidor Python é suficiente para a Folha.
 - `store.py`, `approval_binding.py`: Creative, gate e recuperação de aprovação.
 - `laws/`, `schemas/`: leis e contratos; o executor candidato é Python, sem a antiga pasta de workflows YAML.
 - `adapters/`: ferramentas determinísticas e chamada delimitada ao Notebook.
