@@ -32,7 +32,7 @@ A pessoa escreve em linguagem natural. O sistema organiza processos, memória, f
 - Escritores independentes e cronistas.
 - Investigadores e estudantes.
 - Criadores digitais e produtores de conteúdo.
-- Utilizadores de Obsidian, Zotero, LibreOffice, Whisper, Ollama e MCP.
+- Utilizadores de Obsidian, Zotero, LibreOffice, Whisper e MCP.
 - Pessoas que querem privacidade, controlo local e menos dispersão.
 
 ## O que mostramos
@@ -68,7 +68,7 @@ A demonstração mínima deve mostrar:
 
 2. **YouTube**
    - Vídeos curtos de demonstração.
-   - Tutoriais: “Nexus + Ollama”, “Nexus + Obsidian”, “Nexus + Zotero”.
+   - Tutoriais: “Nexus + Obsidian”, “Nexus + Zotero”.
    - Vídeos de processo: investigação, escrita, arquivo e revisão.
 
 3. **Facebook**
@@ -88,7 +88,7 @@ A demonstração mínima deve mostrar:
 ### Comunidades secundárias
 
 - Discord e fóruns de ferramentas de conhecimento.
-- Comunidades de Ollama, LM Studio, MCP e automação.
+- Comunidades de LM Studio, MCP e automação.
 - Newsletter e blogs de produtividade, IA local e escrita.
 - Dev.to, com etiqueta `#showdev`.
 
@@ -157,7 +157,7 @@ I’m the author. I built Nexus because I wanted AI help without losing control 
 
 It is a local-first studio: you write in natural language, the system organizes processes, memory, tools and results, and a human gate decides what becomes canonical.
 
-It is still a prototype. I’m sharing it to get feedback from people who care about local-first workflows, Obsidian, Zotero, Ollama and personal knowledge management.
+It is still a prototype. I’m sharing it to get feedback from people who care about local-first workflows, Obsidian, Zotero and personal knowledge management.
 
 Repo: https://github.com/PAPACREATOR/cerebro-parvo-
 ```

@@ -7,7 +7,7 @@ Esta pasta contém a documentação para desenvolvimento, planeamento e manuten�
 - [`architecture/`](architecture/) — arquitetura, constituição e decisões
 - [`planning/`](planning/) — planos de implementação, instalação, compatibilidade e estado
 - [`internal/`](internal/) — fluxo de trabalho, agentes e regras internas
-- [`adr/`](adr/) — decisões arquiteturais futuras, uma por ficheiro
+- [`architecture/DECISIONS.md`](architecture/DECISIONS.md) — decisões arquiteturais e genealogia
 
 ## Regra
 
