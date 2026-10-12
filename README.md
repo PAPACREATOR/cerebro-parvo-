@@ -1,8 +1,14 @@
 # Nexus / Cérebro Independente
 
-**Nexus é um estúdio pessoal local-first para escrever, investigar, organizar conhecimento e executar tarefas no teu computador — mantendo a tua memória, fontes e autoridade.**
+**Nexus é um estúdio pessoal local-first para escrever, investigar, organizar conhecimento e executar tarefas delimitadas no teu computador — mantendo a tua memória, fontes e autoridade.**
 
 Escreves em linguagem natural. O sistema organiza o trabalho, usa ferramentas locais quando são necessárias e mostra o resultado para revisão. A IA pode ajudar, mas não decide sozinha nem substitui a tua aprovação.
+
+## Exemplo
+
+Escreves na Folha: “Verifica este texto e prepara um resumo com as fontes anexadas.”
+
+O Nexus reconhece o pedido, valida o material, propõe a ação e pede confirmação humana antes de executar. O resultado fica como rascunho verificável; só a tua decisão o promove a conhecimento aprovado.
 
 ## Para quem é
 
@@ -18,8 +24,8 @@ Esta é a realidade observada no repositório, não uma promessa de produto fina
 - comandos naturais registados com ticket de uso único, aprovação humana antes da execução e aprovação do resultado;
 - verificação de texto/anexo por hash;
 - revisão de português opcional com LanguageTool;
-- conversão de ODT para PDF com LibreOffice;
-- bancada cognitiva opcional com OpenNotebook;
+- conversão de ODT para PDF com LibreOffice; DOCX ainda precisa de validação nesta fronteira;
+- bancada cognitiva opcional com OpenNotebook; integração completa e aceitação física permanecem pendentes;
 - memória, proveniência, recuperação e separação entre rascunho e conhecimento aprovado.
 
 A PR [#61](https://github.com/PAPACREATOR/cerebro-parvo-/pull/61) foi integrada em `main` no commit `89e8b7e4a54ce6bb10ee97e0285d3ec21e2d8148`. O candidato `2e0f3e8a3babe89b06ca38263d94e2f4d74bf569` teve 10 workflows, 21 jobs e 22 checks verdes; após o merge, 3 workflows, 5 jobs e 5 checks passaram no SHA de merge.
@@ -72,11 +78,17 @@ Nada é promovido para Canonical sem decisão humana aplicável. A IA e as ferra
 - Ferramentas devem poder ser desligadas ou substituídas sem destruir a memória.
 - `LIGAR > CONFIGURAR > ADAPTAR > CRIAR`.
 
+## Apoiar o projeto
+
+O Nexus está numa fase de protótipo técnico. O apoio pode ajudar a financiar testes reais, documentação verificável, demonstrações e trabalho de engenharia focado — sem prometer funcionalidades que ainda não existem.
+
+Se quiseres apoiar, visita [GitHub Sponsors](https://github.com/sponsors/PAPACREATOR).
+
 ## Começar
 
 O protótipo Windows está em [`nexus/`](nexus/README.md). Antes de executar, consulta o [estado operacional](nexus/docs/PONTO-DE-SITUACAO.md), o guia de [arranque](nexus/README.md) e os requisitos do teu sistema.
 
-Para contribuir, começa por [`CONTRIBUTING.md`](CONTRIBUTING.md) e pela [documentação interna](docs/README.md).
+Para trabalho interno, começa pela [documentação interna](docs/README.md). Pedidos de ajuda e contribuições direcionadas serão organizados em issues próprias.
 
 ## Documentação
 
@@ -85,7 +97,7 @@ Para contribuir, começa por [`CONTRIBUTING.md`](CONTRIBUTING.md) e pela [docume
 - [Constituição](docs/architecture/CEREBRO_CONSTITUTION.md) — invariantes e autoridade.
 - [Arquitetura](docs/architecture/CEREBRO_ARCHITECTURE.md) — composição e desacoplamento.
 - [Decisões e genealogia](docs/architecture/DECISIONS.md) — evolução datada do projeto.
-- [Documentação interna](docs/README.md) — mapa para colaboradores.
+- [Documentação interna](docs/README.md) — mapa para quem trabalha no projeto.
 
 ## Licença
 
