@@ -50,7 +50,7 @@ def test_invalid_import_is_atomic(tmp_path, mutation):
     "{", '{"version":1,"version":1,"nodes":[],"edges":[]}',
     '{"version":1,"nodes":[],"edges":[],"invalid":NaN}',
     b"\xff", "x" * 8_000_001,
-])
+], ids=["syntax", "duplicate-keys", "nan", "invalid-utf8", "oversized"])
 def test_invalid_json_is_rejected_without_state_change(tmp_path, raw):
     graph = GraphMinimo(tmp_path / "a.sqlite")
     graph.criar_node("a", "nota", "Original")
