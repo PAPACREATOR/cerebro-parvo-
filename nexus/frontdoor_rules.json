@@ -61,7 +61,8 @@
       "\\bmelhora(?:r)?\\b",
       "\\breescreve(?:r)?\\b",
       "\\bcorrige(?:r)?\\b",
-      "\\bverific(?:a|ar|as|ares)\\b.*\\bintegridade\\b"
+      "\\bverific(?:a|ar|as|ares)\\b.*\\bintegridade\\b",
+      "^interpretar documento$"
     ],
     "perguntar": [
       "\\bexplica(?:r)?\\b",

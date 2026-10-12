@@ -228,6 +228,31 @@ def test_natural_verify_then_interpret_require_independent_gates_and_survive_res
             }
             content = state["content"].encode("utf-8")
             assert (root / "creative" / run_id / "content.md").read_bytes() == content
+            provenance = json.loads(
+                (root / "creative" / run_id / "provenance.json").read_bytes()
+            )
+            original_sha = hashlib.sha256(original).hexdigest()
+            assert state["process_id"] == process
+            assert state["input_sha256"] == original_sha
+            assert provenance["process_id"] == process
+            assert provenance["input_references"] == [{
+                "path": "runs/" + run_id + "/input.bin", "sha256": original_sha,
+            }]
+            assert provenance["output_references"] == [{
+                "path": "creative/" + run_id + "/content.md",
+                "sha256": hashlib.sha256(content).hexdigest(),
+            }]
+            assert provenance["execution"]["process_sha256"] == state["process_sha256"]
+            assert provenance["execution"]["summary"]["agents_executed"] == [
+                "interpret_file" if process == "interpret" else "verify_file",
+            ]
+            assert provenance["tools"] == [
+                item["capability"] for item in state["result"]["evidence"]
+            ]
+            if process == "verify":
+                assert all(
+                    item["value"] == original_sha for item in state["result"]["evidence"]
+                )
 
             if process == "interpret":
                 assert backend.calls == 1
