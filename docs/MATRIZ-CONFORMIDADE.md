@@ -1,4 +1,4 @@
-> **Documento histórico datado.** Conserva a análise desta fase e não define o runtime atual. Para implementação vigente consultar [CEREBRO_ARCHITECTURE.md](../CEREBRO_ARCHITECTURE.md), [DECISIONS.md](../DECISIONS.md) e [PONTO-DE-SITUACAO](../nexus/docs/PONTO-DE-SITUACAO.md).
+> **Documento histórico datado.** Conserva a análise desta fase e não define o runtime atual. Para implementação vigente consultar [CEREBRO_ARCHITECTURE.md](architecture/CEREBRO_ARCHITECTURE.md), [DECISIONS.md](architecture/DECISIONS.md) e [PONTO-DE-SITUACAO](../nexus/docs/PONTO-DE-SITUACAO.md).
 
 # Matriz de conformidade — 27-09-2026
 

@@ -4,12 +4,12 @@ ROOT = Path(__file__).resolve().parents[2]
 
 CURRENT_DOCS = (
     "README.md",
-    "AGENTS.md",
-    "CEREBRO_CONSTITUTION.md",
-    "CEREBRO_ARCHITECTURE.md",
-    "IMPLEMENTATION_PLAN.md",
-    "INSTALLATION_PLAN.md",
-    "COMPATIBILITY-MATRIX.md",
+    "docs/internal/AGENTS.md",
+    "docs/architecture/CEREBRO_CONSTITUTION.md",
+    "docs/architecture/CEREBRO_ARCHITECTURE.md",
+    "docs/planning/IMPLEMENTATION_PLAN.md",
+    "docs/planning/INSTALLATION_PLAN.md",
+    "docs/planning/COMPATIBILITY-MATRIX.md",
 )
 
 FORBIDDEN_CURRENT_CLAIMS = (
@@ -34,7 +34,7 @@ def test_current_documents_do_not_reactivate_superseded_runtime():
 
 
 def test_current_architecture_names_kernel_and_mcp_roles():
-    body = read("CEREBRO_ARCHITECTURE.md")
+    body = read("docs/architecture/CEREBRO_ARCHITECTURE.md")
     assert "Kernel / Host / Store" in body
     assert "MCP" in body
     assert "Transporte determinístico" in body
@@ -43,7 +43,7 @@ def test_current_architecture_names_kernel_and_mcp_roles():
 
 
 def test_constitution_keeps_human_authority_and_canonical_gate():
-    body = read("CEREBRO_CONSTITUTION.md")
+    body = read("docs/architecture/CEREBRO_CONSTITUTION.md")
     assert "a pessoa é a autoridade final" in body
     assert "promoção para Canonical exige Human Gate" in body
     assert "similaridade/paráfrase nunca autoriza eliminação" in body
