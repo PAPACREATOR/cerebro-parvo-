@@ -32,7 +32,8 @@ const ctx = {
     if (path === "/api/search") return {ok:true,json:async()=>({
       scope:request.body.include_creative ? "canonical+creative" : "canonical",
       results:[{run_id:"a".repeat(32),authority:request.body.include_creative?"creative":"canonical",
-                process_id:"verify",snippet:"teste FTS5 local"}],
+                process_id:"verify",snippet:"teste FTS5 local",
+        related:[{authority:"canonical",process_id:"verify",snippet:"ligação comprovada"}]}],
     })};
     if (path === "/api/interpret") return {ok:true,json:async()=>({
       status:"RESOLVED", intent:"perguntar",original:request.body.text,
@@ -54,6 +55,8 @@ async function submit(message) {
   assert.equal(apiCalls.at(-1).body.include_creative,false);
   assert.equal(apiCalls.at(-1).body.query,"nexo");
   assert.match(node("content").textContent,/teste FTS5 local/);
+  assert.match(node("content").textContent,/Relacionado pela mesma origem/);
+  assert.match(node("content").textContent,/ligação comprovada/);
   assert.equal(node("actions").hidden,true);
   await submit("?? pesquisar rascunhos evidência");
   assert.equal(apiCalls.at(-1).body.include_creative,true);

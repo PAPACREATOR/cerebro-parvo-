@@ -171,9 +171,15 @@ el("form").onsubmit=async event=>{
       el("status").textContent="Pesquisa local · apenas leitura";
       el("result-title").textContent=drafts?"Trabalhos aprovados e rascunhos":"Trabalhos aprovados";
       el("message").textContent=answer.results.length+" resultado(s) nos teus trabalhos. A pesquisa não altera nem aprova conteúdo.";
-      el("content").textContent=answer.results.map((entry,i)=>
-        (i+1)+". "+(entry.authority==="canonical"?"Aprovado":"Rascunho · por rever")+
-        "\n"+resultText(entry.snippet,entry.process_id)).join("\n\n") || "Não foram encontrados resultados neste âmbito.";
+      el("content").textContent=answer.results.map((entry,i)=>{
+        const lead=(i+1)+". "+(entry.authority==="canonical"?"Aprovado":"Rascunho · por rever")+
+          "\n"+resultText(entry.snippet,entry.process_id);
+        const links=(entry.related||[]).map(other=>
+          "\n  ↳ Relacionado pela mesma origem · "+
+          (other.authority==="canonical"?"Aprovado":"Rascunho · por rever")+
+          "\n"+resultText(other.snippet,other.process_id)).join("\n");
+        return lead+links;
+      }).join("\n\n") || "Não foram encontrados resultados neste âmbito.";
       el("actions").hidden=true;el("pdf").hidden=true;
       return;
     }

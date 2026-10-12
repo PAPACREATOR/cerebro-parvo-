@@ -15,7 +15,7 @@ O Nexus não é “mais um chatbot” nem “mais um agente de IA”.
 - Escritores independentes e cronistas.
 - Investigadores e estudantes.
 - Criadores digitais e produtores de conteúdo.
-- Utilizadores de Obsidian, Zotero, LibreOffice, Whisper e MCP.
+- Utilizadores de Zotero, LibreOffice, Whisper e MCP.
 - Pessoas que querem privacidade, controlo local e menos dispersão.
 
 ## Funil
@@ -33,7 +33,7 @@ O Nexus não é “mais um chatbot” nem “mais um agente de IA”.
 | GitHub | Casa central do projeto | Atualizações contínuas |
 | YouTube | Demonstrações e tutoriais | 1 vídeo curto por semana |
 | TikTok / Reels / Shorts | Alcance e curiosidade | 2–3 clipes por semana |
-| Reddit | Comunidades de IA local, Obsidian e self-hosting | 1 participação útil por semana |
+| Reddit | Comunidades de IA local e self-hosting | 1 participação útil por semana |
 | Facebook | Público português, crónicas e reflexão | 3 publicações por semana |
 | Newsletter / blog | Profundidade e arquivo | 1 texto por semana |
 
