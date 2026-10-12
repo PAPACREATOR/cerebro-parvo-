@@ -152,7 +152,12 @@ class GraphMinimo:
                     aprovado_por,
                 ),
             )
-        return edge_id
+        with self._connect() as con:
+            actual = con.execute(
+                "SELECT id FROM edges WHERE origem_id = ? AND destino_id = ? AND relacao = ?",
+                (origem_id, destino_id, relacao),
+            ).fetchone()
+        return actual[0]
 
     def ligacoes(self, node_id: str) -> list[dict]:
         with self._connect() as con:
@@ -277,9 +282,10 @@ class GraphMinimo:
             }:
                 raise ValueError("Nó inválido.")
             if (not identificador(item["id"]) or item["id"] in ids
-                    or item["tipo"] not in TIPOS_NODE
+                    or type(item["tipo"]) is not str or item["tipo"] not in TIPOS_NODE
                     or type(item["titulo"]) is not str or len(item["titulo"]) > 2000
                     or not item["titulo"].strip()
+                    or type(item["estado"]) is not str
                     or item["estado"] not in {"creative", "canonical", "arquivado"}
                     or not all(v is None or (type(v) is str and len(v) <= 4096)
                                for v in (item["fonte_path"], item["conteudo_hash"]))):
@@ -300,6 +306,7 @@ class GraphMinimo:
                         ("id", "origem_id", "destino_id"))
                     or item["id"] in edge_ids or item["origem_id"] == item["destino_id"]
                     or item["origem_id"] not in ids or item["destino_id"] not in ids
+                    or type(item["relacao"]) is not str
                     or item["relacao"] not in RELACOES or triple in triples
                     or item["propriedades"] is not None and
                        type(item["propriedades"]) is not dict
@@ -365,7 +372,7 @@ class GraphMinimo:
             edges.append(dict(id=hashlib.sha256((run_id + ":" + source).encode()).hexdigest(),
                               origem_id=run_id, destino_id=src_id, relacao="deriva_de",
                               propriedades={"evidencia": "input_sha256"},
-                              criado_em=datetime.now(timezone.utc).isoformat(),
+                              criado_em="1970-01-01T00:00:00+00:00",
                               aprovado_por=None))
         self.reconstruir_json({"version": 1, "nodes": nodes, "edges": edges})
 
