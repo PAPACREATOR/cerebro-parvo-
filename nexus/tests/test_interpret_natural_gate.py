@@ -48,7 +48,7 @@ def await_result(call, run_id):
         if state["status"] != "RUNNING":
             return state
         time.sleep(0.1)
-    pytest.fail("The native test did not finish within its bounded deadline")
+    raise AssertionError("The native test did not finish within its bounded deadline")
 
 
 @pytest.mark.parametrize("text", NATURAL_COMMANDS)
