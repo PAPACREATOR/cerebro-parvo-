@@ -15,7 +15,7 @@ O Nexus não é “mais um chatbot” nem “mais um agente de IA”.
 - Escritores independentes e cronistas.
 - Investigadores e estudantes.
 - Criadores digitais e produtores de conteúdo.
-- Utilizadores de Obsidian, Zotero, LibreOffice, Whisper, Ollama e MCP.
+- Utilizadores de Obsidian, Zotero, LibreOffice, Whisper e MCP.
 - Pessoas que querem privacidade, controlo local e menos dispersão.
 
 ## Funil

@@ -73,9 +73,9 @@ def _natural_request(data, host):
     process = propose_operation(
         parsed, filename=data["filename"], attachment=data["attachment"]
     )
-    if process is None and parsed.status == "RESOLVED" and parsed.explicit:
-        # Registry is proposal-only; unknown/compound requests fail closed.
-        # Never infer permission from a loosely recognized natural intent.
+    if process is None and parsed.status == "RESOLVED":
+        # Match the whole registered command after the intent is resolved.
+        # A proposal never grants permission to execute the selected function.
         candidate = registered_router().propose(
             intent=parsed.intent, text=parsed.content,
             attachment_present=bool(data["filename"] and data["attachment"]),
