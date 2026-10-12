@@ -103,6 +103,6 @@ Para evitar dispersão, o projeto externo de comparação escolhido em 30-09-202
 
 Código/documentação próprios: PolyForm Noncommercial 1.0.0. Dependências mantêm as suas próprias licenças; antes de redistribuição devem ser fixadas versões e `THIRD_PARTY_NOTICES`.
 
-[Estado operacional](nexus/docs/PONTO-DE-SITUACAO.md) · [Arranque](nexus/README.md) · [Constituição](CEREBRO_CONSTITUTION.md) · [Arquitetura e genealogia](CEREBRO_ARCHITECTURE.md) · [Decisões](DECISIONS.md)
+[Estado operacional](nexus/docs/PONTO-DE-SITUACAO.md) · [Arranque](nexus/README.md) · [Constituição](docs/architecture/CEREBRO_CONSTITUTION.md) · [Arquitetura e genealogia](docs/architecture/CEREBRO_ARCHITECTURE.md) · [Decisões](docs/architecture/DECISIONS.md)
 
 Os documentos conceptuais e planos datados preservam etapas anteriores (incluindo Activepieces/Conductor); a composição executável atual deve ser conferida no código, na PR #23 e na evidência por SHA. A organização documental não altera as invariantes M1–M14.
