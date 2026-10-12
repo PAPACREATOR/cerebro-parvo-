@@ -32,7 +32,7 @@ A pessoa escreve em linguagem natural. O sistema organiza processos, memória, f
 - Escritores independentes e cronistas.
 - Investigadores e estudantes.
 - Criadores digitais e produtores de conteúdo.
-- Utilizadores de Obsidian, Zotero, LibreOffice, Whisper e MCP.
+- Utilizadores de Zotero, LibreOffice, Whisper e MCP.
 - Pessoas que querem privacidade, controlo local e menos dispersão.
 
 ## O que mostramos
@@ -61,14 +61,13 @@ A demonstração mínima deve mostrar:
 
 1. **Reddit**
    - r/LocalLLaMA — IA local, modelos, hardware e privacidade.
-   - r/ObsidianMD — conhecimento, escrita, plugins e fluxos pessoais.
    - r/selfhosted — controlo local e serviços próprios.
    - r/opensource — projetos abertos e feedback.
    - r/SideProject — lançamentos e construção pública.
 
 2. **YouTube**
    - Vídeos curtos de demonstração.
-   - Tutoriais: “Nexus + Obsidian”, “Nexus + Zotero”.
+   - Tutoriais: “Nexus + Zotero”, “Nexus + LibreOffice”.
    - Vídeos de processo: investigação, escrita, arquivo e revisão.
 
 3. **Facebook**
@@ -79,11 +78,11 @@ A demonstração mínima deve mostrar:
 4. **Hacker News**
    - Apenas quando houver demo funcional e uma história técnica honesta.
    - Formato: “Show HN: Nexus — local-first studio for personal knowledge and AI-assisted creation”.
-   - Responder a todos os comentários no dia do lançamento. [web:68]
+   - Responder a todos os comentários no dia do lançamento.
 
 5. **Product Hunt / Dev Hunt**
    - Só depois de haver demo, screenshots, tagline curta e página pronta.
-   - Exige preparação visual e respostas rápidas. [web:73][web:74]
+   - Exige preparação visual e respostas rápidas.
 
 ### Comunidades secundárias
 
@@ -118,7 +117,7 @@ A demonstração mínima deve mostrar:
 - [ ] Três vídeos curtos: memória, fontes, Human Gate.
 - [ ] Um artigo: “Porque a IA não deve ser autoridade”.
 - [ ] Um caso de uso completo: investigação → rascunho → revisão → arquivo.
-- [ ] Integrar Obsidian ou Zotero numa demo.
+- [ ] Integrar Zotero numa demo.
 - [ ] Convidar 5–10 pessoas específicas para testar.
 
 ### Dias 61–90: lançamento maior
@@ -157,7 +156,7 @@ I’m the author. I built Nexus because I wanted AI help without losing control 
 
 It is a local-first studio: you write in natural language, the system organizes processes, memory, tools and results, and a human gate decides what becomes canonical.
 
-It is still a prototype. I’m sharing it to get feedback from people who care about local-first workflows, Obsidian, Zotero and personal knowledge management.
+It is still a prototype. I’m sharing it to get feedback from people who care about local-first workflows, Zotero and personal knowledge management.
 
 Repo: https://github.com/PAPACREATOR/cerebro-parvo-
 ```
