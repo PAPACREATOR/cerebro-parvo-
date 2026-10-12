@@ -219,6 +219,175 @@ class GraphMinimo:
         return resultado
 
 
+    def exportar_json(self) -> str:
+        """Exporta apenas o índice derivado; não exporta a autoridade do Store."""
+        with self._connect() as con:
+            nodes = [dict(zip(
+                ("id", "tipo", "titulo", "fonte_path", "conteudo_hash", "estado"), row
+            )) for row in con.execute(
+                "SELECT id,tipo,titulo,fonte_path,conteudo_hash,estado FROM nodes ORDER BY id"
+            )]
+            edges = [dict(zip(
+                ("id", "origem_id", "destino_id", "relacao", "propriedades",
+                 "criado_em", "aprovado_por"),
+                (*row[:4], json.loads(row[4]) if row[4] else None, *row[5:])
+            )) for row in con.execute(
+                "SELECT id,origem_id,destino_id,relacao,propriedades,criado_em,aprovado_por "
+                "FROM edges ORDER BY id"
+            )]
+        return json.dumps({"version": 1, "nodes": nodes, "edges": edges},
+                          ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+
+    def reconstruir_json(self, documento: str | bytes | dict) -> None:
+        """Valida integralmente antes de substituir, numa única transação.
+
+        Este JSON é um índice não autoritativo. Nunca promove conteúdo a Canonical.
+        """
+        if isinstance(documento, (str, bytes)):
+            if len(documento) > 8_000_000:
+                raise ValueError("Índice demasiado grande.")
+            try:
+                def sem_duplicados(pares):
+                    d = {}
+                    for k, v in pares:
+                        if k in d:
+                            raise ValueError("Chave JSON duplicada.")
+                        d[k] = v
+                    return d
+                documento = json.loads(documento, object_pairs_hook=sem_duplicados,
+                                       parse_constant=lambda _: (_ for _ in ()).throw(
+                                           ValueError("Valor JSON inválido.")))
+            except (UnicodeError, json.JSONDecodeError) as error:
+                raise ValueError("JSON inválido.") from error
+        if (type(documento) is not dict or set(documento) !=
+                {"version", "nodes", "edges"} or type(documento["version"]) is not int
+                or documento["version"] != 1 or type(documento["nodes"]) is not list
+                or type(documento["edges"]) is not list
+                or len(documento["nodes"]) > 10000 or len(documento["edges"]) > 50000):
+            raise ValueError("Contrato do grafo inválido.")
+
+        def identificador(value):
+            return (type(value) is str and 1 <= len(value) <= 200
+                    and not any(ord(c) < 32 for c in value))
+
+        nodes, ids = [], set()
+        for item in documento["nodes"]:
+            if type(item) is not dict or set(item) != {
+                "id", "tipo", "titulo", "fonte_path", "conteudo_hash", "estado"
+            }:
+                raise ValueError("Nó inválido.")
+            if (not identificador(item["id"]) or item["id"] in ids
+                    or item["tipo"] not in TIPOS_NODE
+                    or type(item["titulo"]) is not str or len(item["titulo"]) > 2000
+                    or not item["titulo"].strip()
+                    or item["estado"] not in {"creative", "canonical", "arquivado"}
+                    or not all(v is None or (type(v) is str and len(v) <= 4096)
+                               for v in (item["fonte_path"], item["conteudo_hash"]))):
+                raise ValueError("Nó inválido ou duplicado.")
+            ids.add(item["id"])
+            nodes.append(tuple(item[k] for k in
+                               ("id", "tipo", "titulo", "fonte_path",
+                                "conteudo_hash", "estado")))
+        edges, edge_ids, triples = [], set(), set()
+        for item in documento["edges"]:
+            if type(item) is not dict or set(item) != {
+                "id", "origem_id", "destino_id", "relacao", "propriedades",
+                "criado_em", "aprovado_por"
+            }:
+                raise ValueError("Relação inválida.")
+            triple = (item["origem_id"], item["destino_id"], item["relacao"])
+            if (not all(identificador(item[k]) for k in
+                        ("id", "origem_id", "destino_id"))
+                    or item["id"] in edge_ids or item["origem_id"] == item["destino_id"]
+                    or item["origem_id"] not in ids or item["destino_id"] not in ids
+                    or item["relacao"] not in RELACOES or triple in triples
+                    or item["propriedades"] is not None and
+                       type(item["propriedades"]) is not dict
+                    or type(item["criado_em"]) is not str
+                    or not 1 <= len(item["criado_em"]) <= 80
+                    or item["aprovado_por"] is not None and
+                       (type(item["aprovado_por"]) is not str
+                        or not identificador(item["aprovado_por"]))):
+                raise ValueError("Relação inválida ou duplicada.")
+            properties = (json.dumps(item["propriedades"], ensure_ascii=False)
+                          if item["propriedades"] is not None else None)
+            if properties is not None and len(properties) > 16000:
+                raise ValueError("Propriedades demasiado grandes.")
+            edge_ids.add(item["id"])
+            triples.add(triple)
+            edges.append((item["id"], *triple, properties, item["criado_em"],
+                          item["aprovado_por"]))
+        with self._connect() as con:
+            con.execute("DELETE FROM edges")
+            con.execute("DELETE FROM nodes")
+            con.executemany(
+                "INSERT INTO nodes(id,tipo,titulo,fonte_path,conteudo_hash,estado) "
+                "VALUES(?,?,?,?,?,?)", nodes
+            )
+            con.executemany(
+                "INSERT INTO edges(id,origem_id,destino_id,relacao,propriedades,"
+                "criado_em,aprovado_por) VALUES(?,?,?,?,?,?,?)", edges
+            )
+
+    def reconstruir_snapshots(self, snapshots: list[dict]) -> None:
+        """Materializa ligações comprovadas pelo mesmo hash de entrada.
+
+        O chamador tem de fornecer snapshots previamente verificados pelo Store.
+        Não infere ligações semânticas nem assinala aprovação por si próprio.
+        """
+        import hashlib
+        if type(snapshots) is not list or len(snapshots) > 10000:
+            raise ValueError("Seleção inválida.")
+        nodes, edges, source_ids = [], [], set()
+        seen = set()
+        for item in snapshots:
+            if type(item) is not dict:
+                raise ValueError("Snapshot inválido.")
+            run_id, source = item.get("run_id"), item.get("input_sha256")
+            digest = item.get("content_sha256")
+            if (type(run_id) is not str or len(run_id) != 32
+                    or any(c not in "0123456789abcdef" for c in run_id)
+                    or run_id in seen or type(source) is not str or len(source) != 64
+                    or any(c not in "0123456789abcdef" for c in source)
+                    or type(digest) is not str or len(digest) != 64
+                    or any(c not in "0123456789abcdef" for c in digest)
+                    or item.get("authority") not in {"canonical", "creative"}):
+                raise ValueError("Snapshot inválido.")
+            seen.add(run_id)
+            nodes.append(dict(id=run_id, tipo="nota", titulo="Resultado verificado",
+                              fonte_path=None, conteudo_hash=digest,
+                              estado=item["authority"]))
+            src_id = "fonte:" + source
+            if src_id not in source_ids:
+                source_ids.add(src_id)
+                nodes.append(dict(id=src_id, tipo="fonte", titulo="Origem verificada",
+                                  fonte_path=None, conteudo_hash=source, estado="creative"))
+            edges.append(dict(id=hashlib.sha256((run_id + ":" + source).encode()).hexdigest(),
+                              origem_id=run_id, destino_id=src_id, relacao="deriva_de",
+                              propriedades={"evidencia": "input_sha256"},
+                              criado_em=datetime.now(timezone.utc).isoformat(),
+                              aprovado_por=None))
+        self.reconstruir_json({"version": 1, "nodes": nodes, "edges": edges})
+
+    def relacionados(self, node_id: str, permitidos: set[str], limite: int = 8) -> list[str]:
+        """Outros resultados com a mesma origem, exclusivamente dentro do escopo."""
+        if (type(node_id) is not str or type(permitidos) is not set
+                or any(type(item) is not str for item in permitidos)
+                or type(limite) is not int or not 1 <= limite <= 8):
+            raise ValueError("Consulta de relações inválida.")
+        if node_id not in permitidos:
+            return []
+        with self._connect() as con:
+            rows = con.execute(
+                "SELECT DISTINCT outro.origem_id FROM edges atual "
+                "JOIN edges outro ON outro.destino_id = atual.destino_id "
+                "WHERE atual.origem_id = ? AND atual.relacao = 'deriva_de' "
+                "AND outro.relacao = 'deriva_de' AND outro.origem_id != ? "
+                "ORDER BY outro.origem_id", (node_id, node_id)
+            )
+            return [other for (other,) in rows if other in permitidos][:limite]
+
+
 if __name__ == "__main__":
     g = GraphMinimo()
     g.criar_node("nota-1", "nota", "Capítulo 3")
