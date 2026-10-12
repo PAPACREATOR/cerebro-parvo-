@@ -55,6 +55,25 @@ def _verified_wiki_bridge(store):
     return WikiBridge(store, index_root)
 
 
+_PINNED_GRAPH_SHA256 = "ac9a972c5a3b066285c6eb2a478c15a4d32eddec123af29e21ba1b41e5bfeb33"
+
+
+def _verified_graph(store):
+    # The graph is a derived index, not an authority. Pin its audited source.
+    module = ROOT / "graph" / "graph_minimo.py"
+    if (module.is_symlink() or module.is_junction() or not module.is_file()
+            or not secrets.compare_digest(hashlib.sha256(module.read_bytes()).hexdigest(),
+                                          _PINNED_GRAPH_SHA256)):
+        raise Blocked("Integridade do grafo alterada; pesquisa bloqueada.")
+    from nexus.graph.graph_minimo import GraphMinimo
+
+    root = store.root.parent / (store.root.name + "-fts5-index")
+    file = root / "graph.sqlite"
+    if root.is_symlink() or root.is_junction() or file.is_symlink() or file.is_junction():
+        raise Blocked("Índice de relações redirecionado.")
+    return GraphMinimo(file)
+
+
 def _request_digest(request):
     raw = json.dumps(
         request, ensure_ascii=False, sort_keys=True, separators=(",", ":")
@@ -161,7 +180,7 @@ def make_server(host, port=0, *, allow_direct_run=False):
     preexecution_tickets = {}
     preexecution_lock = threading.Lock()
     memory_lock = threading.Lock()
-    memory_state = {"bridge": None, "revision": None}
+    memory_state = {"bridge": None, "revision": None, "graph_revision": None}
 
     def search_memory(data, session):
         # Exact schema, no tool execution, no approval or Store mutation.
@@ -195,13 +214,38 @@ def make_server(host, port=0, *, allow_direct_run=False):
                     bridge.rebuild()  # atomic derived rebuild; originals untouched.
                     memory_state["revision"] = revision
                 found = bridge.search(query, allowed, include_creative=creative, limit=limit)
+                # Store-verified snapshots only; graph cannot promote vault data.
+                graph = _verified_graph(host.store)
+                graph_revision = (scope, revision)
+                snapshots = [bridge.snapshot(run_id, include_creative=creative)
+                             for run_id in allowed]
+                if memory_state["graph_revision"] != graph_revision or not graph.db_path.is_file():
+                    graph.reconstruir_snapshots(snapshots)
+                    memory_state["graph_revision"] = graph_revision
+                by_run = {item["run_id"]: item for item in snapshots}
+                visible_ids = set(by_run)
+                related = {}
+                for item in found:
+                    linked = []
+                    for run_id in graph.relacionados(item["run_id"], visible_ids):
+                        other = by_run[run_id]
+                        # Authentic hashes, never graph labels, decide provenance.
+                        if other["input_sha256"] != item["input_sha256"]:
+                            raise Blocked("Índice do grafo inconsistente com a fonte.")
+                        linked.append({
+                            "authority": other["authority"],
+                            "process_id": other["process_id"],
+                            "snippet": other["content"][:240],
+                        })
+                    related[item["run_id"]] = linked
             except (OSError, sqlite3.Error) as error:
                 raise Blocked("Índice de memória indisponível; conteúdo original preservado.") from error
         return {"scope": scope, "results": [
             {"run_id": item["run_id"], "authority": item["authority"],
              "process_id": item["process_id"], "snippet": item["content"][:240],
              "content_sha256": item["content_sha256"],
-             "provenance_sha256": item["provenance_sha256"]}
+             "provenance_sha256": item["provenance_sha256"],
+             "related": related[item["run_id"]]}
             for item in found]}
 
     class Handler(BaseHTTPRequestHandler):
