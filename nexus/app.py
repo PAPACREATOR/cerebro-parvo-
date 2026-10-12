@@ -240,6 +240,25 @@ def make_server(host, port=0, *, allow_direct_run=False):
                     related[item["run_id"]] = linked
             except (OSError, sqlite3.Error) as error:
                 raise Blocked("Índice de memória indisponível; conteúdo original preservado.") from error
+        # Relations are a disposable, validated view over authoritative Store
+        # snapshots. FTS5 supplies relevance; no graph node grants access.
+        from nexus.graph.graph_minimo import GraphMinimo
+        graph_root = host.store.root.parent / (host.store.root.name + "-graph-index")
+        if graph_root.is_symlink() or graph_root.is_junction():
+            raise Blocked("Índice do grafo redirecionado.")
+        try:
+            graph = GraphMinimo(graph_root / "relations.sqlite")
+            # Revalidate all visible entries, including those not returned by FTS5,
+            # so a source already in scope can be related to the search result.
+            snapshots = []
+            for run_id in allowed:
+                snapshots.append(bridge.snapshot(run_id, include_creative=creative))
+            graph.reconstruir_snapshots(snapshots)
+            accessible = {item["run_id"] for item in snapshots}
+            relatives = {item["run_id"]: graph.relacionados(
+                item["run_id"], accessible, limite=8) for item in found}
+        except (OSError, sqlite3.Error, ValueError) as error:
+            raise Blocked("Índice de relações indisponível; fontes preservadas.") from error
         return {"scope": scope, "results": [
             {"run_id": item["run_id"], "authority": item["authority"],
              "process_id": item["process_id"], "snippet": item["content"][:240],
