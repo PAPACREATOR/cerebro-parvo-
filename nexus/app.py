@@ -4,12 +4,14 @@ import base64
 import hashlib
 import json
 import os
+import re
 import secrets
 import socket
 import sqlite3
 import sys
 import threading
 import time
+import unicodedata
 import webbrowser
 from contextlib import contextmanager
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -81,6 +83,17 @@ def _natural_request(data, host):
         process = candidate.process
     if process is None:
         raise Blocked("Não consigo determinar com segurança essa operação. Reformula o pedido.")
+
+    if process == "verify":
+        # The legacy operation rule finds a verification inside larger text.
+        # A human ticket must cover one complete request, never that substring.
+        command = re.sub(r"\s+", " ", unicodedata.normalize("NFKC", parsed.content).casefold()).strip()
+        if not re.fullmatch(
+            r"(?:por favor,? )?(?:podes )?verific(?:a|ar|as|ares) (?:a )?integridade "
+            r"(?:(?:de um|deste|desse|do|dum|de) )?(?:ficheiro|documento|arquivo)[.!?]?",
+            command,
+        ):
+            raise Blocked("Pede uma única verificação do ficheiro. Separa outras ações num novo pedido.")
 
     request = {"process": process, **data}
     validate("request", request)
