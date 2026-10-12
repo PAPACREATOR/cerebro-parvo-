@@ -22,13 +22,14 @@ Esta é a realidade observada no repositório, não uma promessa de produto fina
 
 - protótipo Windows com Folha, Kernel/Host/Store Python e fronteira nativa de execução;
 - comandos naturais registados com ticket de uso único, aprovação humana antes da execução e aprovação do resultado;
+- a Folha exige um pedido completo e delimitado antes de emitir um ticket humano; pedidos mistos de verificação e administração são recusados;
 - verificação de texto/anexo por hash;
 - revisão de português opcional com LanguageTool;
 - conversão de ODT para PDF com LibreOffice; DOCX ainda precisa de validação nesta fronteira;
 - bancada cognitiva opcional com OpenNotebook; integração completa e aceitação física permanecem pendentes;
 - memória, proveniência, recuperação e separação entre rascunho e conhecimento aprovado.
 
-A PR [#61](https://github.com/PAPACREATOR/cerebro-parvo-/pull/61) foi integrada em `main` no commit `89e8b7e4a54ce6bb10ee97e0285d3ec21e2d8148`. O candidato `2e0f3e8a3babe89b06ca38263d94e2f4d74bf569` teve 10 workflows, 21 jobs e 22 checks verdes; após o merge, 3 workflows, 5 jobs e 5 checks passaram no SHA de merge.
+A PR [#59](https://github.com/PAPACREATOR/cerebro-parvo-/pull/59) foi integrada em `main` no commit `31ef37010aa34548836223cbcf37851411e82769`. A PR [#61](https://github.com/PAPACREATOR/cerebro-parvo-/pull/61) foi integrada em `main` no commit `89e8b7e4a54ce6bb10ee97e0285d3ec21e2d8148`; o candidato `2e0f3e8a3babe89b06ca38263d94e2f4d74bf569` teve 10 workflows, 21 jobs e 22 checks verdes.
 
 ## O que ainda não está provado
 
@@ -80,9 +81,9 @@ Nada é promovido para Canonical sem decisão humana aplicável. A IA e as ferra
 
 ## Apoiar o projeto
 
-O Nexus está numa fase de protótipo técnico. O apoio pode ajudar a financiar testes reais, documentação verificável, demonstrações e trabalho de engenharia focado — sem prometer funcionalidades que ainda não existem.
+O Nexus está numa fase de protótipo técnico. Está em preparação uma via de apoio através do GitHub Sponsors; a checklist de ativação está acompanhada na issue [#60](https://github.com/PAPACREATOR/cerebro-parvo-/issues/60).
 
-Se quiseres apoiar, visita [GitHub Sponsors](https://github.com/sponsors/PAPACREATOR).
+O apoio poderá ajudar a financiar testes reais, documentação verificável, demonstrações e trabalho de engenharia focado — sem prometer funcionalidades que ainda não existem.
 
 ## Começar
 
