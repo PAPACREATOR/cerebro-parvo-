@@ -21,6 +21,7 @@ from urllib.parse import urlsplit
 from nexus.contracts import ROOT, Blocked, strict_json, validate
 from nexus.frontdoor import parse, propose_operation
 from nexus.capability_router import declared_router, registered_router
+from nexus.adapters.constitutional import build_molde
 from nexus.host import Host
 from nexus.instance import data_directory_lock
 from nexus.store import atomic
@@ -157,6 +158,8 @@ def _natural_request(data, host):
         "web": "Preparar plano de pesquisa web a partir de " + name + "; não navega automaticamente.",
     }
     return request, {
+        "molde": build_molde(data["text"], data["filename"], data["attachment"],
+                              intent=parsed.intent, process=process),
         "process": process,
         "filename": name,
         "attachment_bytes": len(attachment),
@@ -248,6 +251,25 @@ def make_server(host, port=0, *, allow_direct_run=False):
              "related": related[item["run_id"]]}
             for item in found]}
 
+    def verified_molde(run_id, state):
+        """Read-only projection of the exact Store-verified source and execution."""
+        host.store.check_input(state)
+        request = validate("request", strict_json(
+            host.store.checked_bytes("runs", run_id, "request.json")))
+        parsed = parse(request["text"])
+        mold = build_molde(request["text"], request["filename"], request["attachment"],
+                           intent=parsed.intent if parsed.status == "RESOLVED" else None,
+                           process=request["process"])
+        if not secrets.compare_digest(mold["source"]["sha256"], state["input_sha256"]):
+            raise Blocked("O molde não corresponde ao original verificado.")
+        mold["record"] = {
+            "run_id": run_id,
+            "created_at": state["created_at"],
+            "status": state["status"],
+            "process_version": state["process_version"],
+        }
+        return mold
+
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *_):
             pass
@@ -287,7 +309,10 @@ def make_server(host, port=0, *, allow_direct_run=False):
                 if path.startswith("/api/pdf/"):
                     return self.reply(200, host.artifact(path.split("/")[-1], session), "application/pdf")
                 if path.startswith("/api/runs/"):
-                    return self.reply(200, host.detail(path.split("/")[-1], session))
+                    run_id = path.split("/")[-1]
+                    detail = host.detail(run_id, session)
+                    detail["molde"] = verified_molde(run_id, detail)
+                    return self.reply(200, detail)
                 self.reply(404, {"error": "Não encontrado."})
             except (Blocked, FileNotFoundError) as error:
                 self.reply(403, {"error": str(error)})
@@ -321,6 +346,8 @@ def make_server(host, port=0, *, allow_direct_run=False):
                         "confirmation_required": False,
                         "execution": "NOT_AUTHORIZED",
                         "registered_command": command is not None and command.intent == parsed.intent,
+                        "molde": build_molde(data["text"], intent=parsed.intent if parsed.status == "RESOLVED" else None)
+                                 if data["text"] else None,
                     })
                 if path == "/api/prepare-run":
                     request, preview = _natural_request(data, host)
