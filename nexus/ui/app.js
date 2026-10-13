@@ -144,12 +144,16 @@ async function requestPayload() {
   }
   return {text:el("text").value,filename:file ? file.name:"",attachment};
 }
-el("form").onsubmit=async event=>{
+el("form").onsubmit=async (event, classified=null)=>{
   event.preventDefault(); notice(""); el("submit").disabled=true;
   try {
-    const revision=editRevision;
+    const revision=classified ? classified.revision : editRevision;
+    if(classified && (revision!==editRevision || el("text").value!==classified.text ||
+       classified.preview.original!==classified.text))
+      throw new Error("O pedido mudou durante a interpretação. Revê o pedido.");
     const payload=await requestPayload();
-    if (revision!==editRevision) throw new Error("O texto ou anexo mudou durante a preparação. Revê o pedido.");
+    if (revision!==editRevision || classified && payload.text!==classified.text)
+      throw new Error("O texto ou anexo mudou durante a preparação. Revê o pedido.");
     // Read-only FTS5 search uses the existing blank Folha; no additional
     // buttons, parser authority, execution ticket or Canonical promotion.
     // ?? pesquisar termo                 -> Canonical only
@@ -183,7 +187,7 @@ el("form").onsubmit=async event=>{
       el("actions").hidden=true;el("pdf").hidden=true;
       return;
     }
-    const preview=await api("/api/interpret",{text:payload.text});
+    const preview=classified ? classified.preview : await api("/api/interpret",{text:payload.text});
     if(revision!==editRevision) throw new Error("O texto ou anexo mudou durante a interpretação.");
     if(preview.status!=="RESOLVED"||!["trabalhar","web"].includes(preview.intent)||
        !payload.filename||!payload.attachment) {
@@ -447,11 +451,29 @@ if(hasWorkspace) {
     const candidates=!explicit && creation?productCandidates(text):[];
     if(candidates.length) {
       event.preventDefault();notice("");
-      if(project && (!el("workspace").hidden || project.original===text)) {
-        // Continuing the same sheet must never discard the person's work.
-        invalidateExecutionProposal();clearTimeout(poll);current=null;viewRevision++;
-        renderStage();el("workspace").scrollIntoView?.({block:"start"});
-      } else startPreparation(candidates);
+      const revision=editRevision;
+      el("submit").disabled=true;
+      try {
+        let preview=null;
+        try {preview=await api("/api/interpret",{text});}
+        catch(_error) {
+          // Classification is optional for a local draft; never retry execution.
+        }
+        if(revision!==editRevision || el("text").value!==text) return;
+        if(preview && preview.status==="RESOLVED" && preview.registered_command===true) {
+          el("workspace").hidden=true;
+          await nativeSubmit(event,{preview,text,revision});
+          return;
+        }
+        if(project && (!el("workspace").hidden || project.original===text)) {
+          // Continuing the same sheet must never discard the person's work.
+          invalidateExecutionProposal();clearTimeout(poll);current=null;viewRevision++;
+          renderStage();el("workspace").scrollIntoView?.({block:"start"});
+        } else startPreparation(candidates);
+      } finally {
+        if(revision===editRevision && !el("execution-confirmation").open)
+          el("submit").disabled=false;
+      }
       return;
     }
     el("workspace").hidden=true;

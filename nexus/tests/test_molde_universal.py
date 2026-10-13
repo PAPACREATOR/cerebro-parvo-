@@ -9,6 +9,8 @@ from urllib.error import HTTPError
 from nexus.adapters.constitutional import build_molde
 from nexus.contracts import Blocked
 from nexus.host import Host
+from nexus.capability_router import BUILTIN_CAPABILITIES
+from nexus.tests.test_registered_natural_commands import proposal
 from nexus.tests.test_reverse_flow import http
 
 
@@ -155,3 +157,29 @@ def test_unpaired_unicode_is_http_refusal_not_server_crash(tmp_path):
             call("/api/interpret", {"text": "Explica \ud800"})
         assert failed.value.code == 403
         assert call("/api/runs") == []
+
+
+@pytest.mark.parametrize("capability", BUILTIN_CAPABILITIES, ids=lambda c: c.process)
+def test_registered_natural_commands_and_mold_share_human_gate(tmp_path, capability):
+    host = Host(tmp_path)
+    request = proposal(capability)
+    raw = base64.b64decode(request["attachment"])
+    digest = hashlib.sha256(raw).hexdigest()
+    with http(host) as call:
+        classification = call("/api/interpret", {"text": request["text"]})
+        assert classification["registered_command"] is True
+        assert classification["execution"] == "NOT_AUTHORIZED"
+        assert classification["molde"]["process"]["authority"] == "NONE"
+        assert classification["molde"]["source"]["sha256"] == hashlib.sha256(
+            request["text"].encode("utf-8")).hexdigest()
+        prepared = call("/api/prepare-run", request)
+        assert prepared["process"] == capability.process
+        assert prepared["molde"]["source"]["sha256"] == prepared["attachment_sha256"] == digest
+        assert prepared["molde"]["process"] == {"candidate": capability.process, "authority": "NONE"}
+        assert prepared["molde"]["record"] is None
+        assert call("/api/runs") == []
+        assert call("/api/confirm-run", {
+            "ticket": prepared["ticket"], "confirmed": False, **request,
+        }) == {"status": "CANCELLED"}
+        assert call("/api/runs") == []
+    assert all(not list((tmp_path / name).iterdir()) for name in ("runs", "creative", "canonical"))

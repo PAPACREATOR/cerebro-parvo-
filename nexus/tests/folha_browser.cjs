@@ -1,6 +1,6 @@
 "use strict";
 // Real Chrome over HTTP from the original Python app in the CI workspace.
-// Temporary test Store; preparation must make zero API/tool/approval calls.
+// Temporary test Store; preparation permits read-only classification, no tool/approval calls.
 const {chromium}=require("playwright");
 const fs=require("node:fs/promises"),path=require("node:path"),assert=require("node:assert/strict");
 const os=require("node:os"),net=require("node:net"),{spawn}=require("node:child_process");
@@ -33,7 +33,11 @@ const os=require("node:os"),net=require("node:net"),{spawn}=require("node:child_
     page.on("request",r=>{if(new URL(r.url()).pathname.startsWith("/api/"))apiCalls.push(r.url());});
     const images=path.resolve("folha-browser-evidence");
     await fs.mkdir(images,{recursive:true});
-    await page.goto(base);
+    // Use the real Host's private launch reference in the disposable test Store.
+    const launch=new URL(await fs.readFile(path.join(data,"memory","launch-url.txt"),"utf8"));
+    assert.equal(launch.origin,base);
+    assert.match(launch.hash,/^#session=[A-Za-z0-9_-]+$/);
+    await page.goto(launch.href);
     assert.equal(await page.locator("#text").inputValue(),"");
     assert.equal(await page.locator("#workspace").isVisible(),false);
     assert.equal(await page.locator("#history-panel").isVisible(),false);
@@ -41,6 +45,7 @@ const os=require("node:os"),net=require("node:net"),{spawn}=require("node:child_
     assert.equal(await page.locator("button:visible").count(),0);
     assert.equal(apiCalls.length,0);
     await page.screenshot({path:path.join(images,"folha-vazia.png"),fullPage:true});
+    const classificationsOnly=()=>assert.ok(apiCalls.every(url=>new URL(url).pathname==="/api/interpret"));
     for(const [product,request] of [
       ["text","Faz-me um artigo sobre o turismo no Alentejo."],
       ["podcast","Quero um podcast sobre o Alentejo."],
@@ -49,10 +54,11 @@ const os=require("node:os"),net=require("node:net"),{spawn}=require("node:child_
     ]) {
       await page.reload();
       await page.locator("#text").fill(request);await page.locator("#submit").click();
+      await page.locator("#workspace").waitFor({state:"visible",timeout:5000});
       assert.equal(await page.locator("#product").inputValue(),product);
       assert.equal(await page.locator("#stage-title").textContent(),"Ideia");
       assert.equal(await page.locator(".stages button").count(),6);
-      assert.equal(apiCalls.length,0);
+      classificationsOnly();
     }
     await page.locator("#brief-objective").fill("Contar uma história com sentido.");
     await page.locator("#brief-audience").fill("Público português.");
@@ -75,7 +81,7 @@ const os=require("node:os"),net=require("node:net"),{spawn}=require("node:child_
     const [download]=await Promise.all([page.waitForEvent("download"),page.locator("#save-preparation").click()]);
     const exported=JSON.parse(await fs.readFile(await download.path(),"utf8"));
     assert.equal(exported.product,"short");assert.equal(exported.produced,false);
-    assert.ok(exported.stages.every(s=>s.reviewed));assert.equal(apiCalls.length,0);
+    assert.ok(exported.stages.every(s=>s.reviewed));classificationsOnly();
     await page.locator("#navigation summary").click();await page.locator("#new").click();
     assert.equal(await page.locator("#text").inputValue(),"");
     assert.equal(await page.locator("#workspace").isVisible(),false);
@@ -88,10 +94,43 @@ const os=require("node:os"),net=require("node:net"),{spawn}=require("node:child_
     await page.locator("#text").fill("Cria uma música sobre a cidade.");await page.locator("#submit").click();
     assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth));
     await page.screenshot({path:path.join(images,"folha-mobile.png"),fullPage:true});
+    const preparationCalls=apiCalls.slice();
+    // Regression: a registered plan must reach H1 through the actual Folha.
+    await page.reload();
+    const command="preparar plano de podcast";
+    const source=Buffer.from("Fonte humana — original.\n","utf8");
+    const submitted=[];
+    page.on("request",r=>{
+      const route=new URL(r.url()).pathname;
+      if(["/api/interpret","/api/prepare-run","/api/confirm-run","/api/approve"].includes(route))
+        submitted.push({route,body:r.postDataJSON()});
+    });
+    await page.locator("#text").fill(command);
+    await page.locator("#file").setInputFiles({name:"fonte.txt",mimeType:"text/plain",buffer:source});
+    await page.locator("#submit").click();
+    await page.screenshot({path:path.join(images,"folha-comando-natural.png"),fullPage:true});
+    await page.locator("#execution-confirmation").waitFor({state:"visible",timeout:5000});
+    assert.equal(await page.locator("#workspace").isVisible(),false);
+    assert.equal(await page.locator("#execution-confirm").isChecked(),false);
+    assert.equal(await page.locator("#execution-approve").isDisabled(),true);
+    assert.deepEqual(submitted.map(c=>c.route),["/api/interpret","/api/prepare-run"]);
+    assert.deepEqual(submitted[1].body,{text:command,filename:"fonte.txt",attachment:source.toString("base64")});
+    assert.equal(await page.locator("#text").inputValue(),command);
+    assert.doesNotMatch(await page.locator("#execution-summary").textContent(),/OpenNotebook|MCP|SHA-256/);
+    await page.locator("#execution-cancel").click();
+    await page.waitForFunction(()=>!document.getElementById("execution-confirmation").open);
+    assert.equal(submitted.filter(c=>c.route==="/api/confirm-run").length,1);
+    const cancellation=submitted.find(c=>c.route==="/api/confirm-run").body;
+    assert.equal(cancellation.confirmed,false);
+    assert.equal(cancellation.text,command);
+    assert.equal(cancellation.filename,"fonte.txt");
+    assert.equal(cancellation.attachment,source.toString("base64"));
+    assert.equal(submitted.some(c=>c.route==="/api/approve"),false);
     assert.deepEqual(errors,[]);
     console.log(JSON.stringify({result:"PASS",initialVisibleButtons:0,productBriefs:4,steps:6,
       desktopAndMobile:true,draftExport:true,restore:true,repeatedContinuePreservesWork:true,
-      hostCallsDuringPreparation:apiCalls.length,pageErrors:errors.length}));
+      classificationCalls:preparationCalls.filter(url=>new URL(url).pathname==="/api/interpret").length,
+      naturalCommandH1:true,hostCallsDuringPreparation:preparationCalls.filter(url=>new URL(url).pathname!=="/api/interpret").length,pageErrors:errors.length}));
   } finally {
     if(browser)await browser.close();
     if(backend.pid && backend.exitCode===null){backend.kill();await new Promise(resolve=>backend.once("exit",resolve));}
