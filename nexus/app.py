@@ -20,7 +20,7 @@ from urllib.parse import urlsplit
 
 from nexus.contracts import ROOT, Blocked, strict_json, validate
 from nexus.frontdoor import parse, propose_operation
-from nexus.capability_router import registered_router
+from nexus.capability_router import declared_router, registered_router
 from nexus.host import Host
 from nexus.instance import data_directory_lock
 from nexus.store import atomic
@@ -311,6 +311,8 @@ def make_server(host, port=0, *, allow_direct_run=False):
                     if set(data) != {"text"} or not isinstance(data["text"], str):
                         raise Blocked("Pedido de interpretação inválido.")
                     parsed = parse(data["text"])
+                    command = (declared_router().recognise_command(parsed.content)
+                               if parsed.status == "RESOLVED" else None)
                     return self.reply(200, {
                         "status": parsed.status,
                         "intent": parsed.intent,
@@ -318,6 +320,7 @@ def make_server(host, port=0, *, allow_direct_run=False):
                         "parser": parsed.parser,
                         "confirmation_required": False,
                         "execution": "NOT_AUTHORIZED",
+                        "registered_command": command is not None and command.intent == parsed.intent,
                     })
                 if path == "/api/prepare-run":
                     request, preview = _natural_request(data, host)

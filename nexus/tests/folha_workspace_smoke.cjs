@@ -45,6 +45,10 @@ function sheet({handler,responseHandler,storageBlocked=false,hash=""}={}) {
     async submit(text){this.input("text",text);await node("form").onsubmit({preventDefault(){}});await tick();}
   };
 }
+function assertClassificationOnly(ui) {
+  assert.ok(ui.calls.every(c=>c.route==="/api/interpret"));
+  assert.ok(ui.calls.every(c=>Object.keys(c.body).length===1 && typeof c.body.text==="string"));
+}
 for(const [product,request] of [
   ["text","Faz-me um artigo sobre o turismo no Alentejo."],
   ["podcast","Quero criar um podcast: Alma Lusitana."],
@@ -58,14 +62,15 @@ for(const [product,request] of [
     assert.equal(ui.node("product").value,product);
     assert.equal(ui.node("stage-title").textContent,"Ideia");
     assert.equal(ui.node("stage-reviewed").disabled,true);
+    assert.equal(ui.calls.length,1);
     const draft=JSON.parse(ui.storage.get("nexus-preparation"));
     assert.equal(draft.original,request);assert.equal(draft.produced,false);
     assert.ok(draft.stages.every(s=>!s.reviewed && !s.text));
-    assert.equal(ui.calls.length,0);
+    assertClassificationOnly(ui);
     ui.node("stage-4").click();
     assert.match(ui.node("stage-guidance").textContent,/ainda não/);
     assert.equal(ui.node("stage-reviewed").disabled,true);
-    assert.equal(ui.calls.length,0);
+    assertClassificationOnly(ui);
   });
 }
 test("ambiguous products require a human choice; original Unicode remains intact",async()=>{
@@ -74,7 +79,7 @@ test("ambiguous products require a human choice; original Unicode remains intact
   assert.equal(ui.node("product").value,"");
   ui.node("product").value="podcast";ui.node("product").onchange();
   assert.equal(JSON.parse(ui.storage.get("nexus-preparation")).original,original);
-  assert.equal(ui.calls.length,0);
+  assertClassificationOnly(ui);
 });
 test("submitting the working sheet again preserves the brief, notes and current stage",async()=>{
   const ui=sheet();await ui.submit("Prepara uma curta sobre Lisboa.");
@@ -96,7 +101,7 @@ test("submitting the working sheet again preserves the brief, notes and current 
   assert.equal(ui.node("workspace").hidden,false);
   assert.equal(ui.storage.get("nexus-preparation"),research);
   assert.equal(ui.node("stage-title").textContent,"Pesquisa");
-  assert.equal(ui.calls.length,0);
+  assertClassificationOnly(ui);
 });
 test("ordered reviews, edited upstream material and export preserve an honest draft",async()=>{
   const ui=sheet();await ui.submit("Faz-me um artigo sobre o Alentejo.");
@@ -114,7 +119,7 @@ test("ordered reviews, edited upstream material and export preserve an honest dr
   ui.node("save-preparation").click();
   const exported=JSON.parse(await ui.storage.get("download-blob").text());
   assert.equal(exported.produced,false);assert.ok(exported.stages.every(s=>s.reviewed));
-  assert.equal(ui.calls.length,0);
+  assertClassificationOnly(ui);
   ui.node("stage-1").click();ui.input("stage-notes","Fonte revista.");
   const changed=JSON.parse(ui.storage.get("nexus-preparation"));
   assert.equal(changed.stages[0].reviewed,true);
@@ -136,7 +141,7 @@ test("a new sheet is blank; restoring the draft does not restore authority",asyn
   ui.node("resume").click();
   assert.equal(ui.node("text").value,"Cria música: emoção e saudade.");
   assert.equal(ui.node("execution-confirmation").open,false);
-  assert.equal(ui.node("approval").open,false);assert.equal(ui.calls.length,0);
+  assert.equal(ui.node("approval").open,false);assertClassificationOnly(ui);
   ui.storage.set("nexus-preparation",'{"schema":"bad"}');ui.node("resume").click();
   assert.match(ui.node("notice").textContent,/retomar/);
 });
@@ -154,7 +159,9 @@ test("blocked browser storage keeps the supplied Host session; drafts grant no a
   ui.node("new").click();ui.node("resume").click();
   assert.equal(ui.node("text").value,"Cria um podcast sobre a cidade.");
   assert.equal(ui.node("execution-confirmation").open,false);
-  assert.equal(ui.calls.length,2);
+  assert.equal(ui.calls.length,3);
+  assertClassificationOnly({calls:ui.calls.slice(2)});
+  assert.ok(ui.calls.every(c=>c.headers["X-Nexus-Session"]==="provided-by-host"));
 });
 const commands=[
   ["verify","& verificar integridade de ficheiro"],
@@ -306,3 +313,62 @@ for(const route of ["/api/confirm-run","/api/approve"]) {
     });
   }
 }
+
+for(const [process,prefixed] of commands) {
+  const command=prefixed.slice(2);
+  test(process+" natural registered command reaches H1 without a second interpretation",async()=>{
+    let reads=0;
+    const ui=sheet({handler:async(route,body)=>{
+      if(route==="/api/interpret")return {status:"RESOLVED",intent:process==="web"?"web":"trabalhar",original:body.text,registered_command:true};
+      if(route==="/api/prepare-run")return {ticket:"natural-ticket",process,filename:"fonte.txt"};
+      return [];
+    }});
+    ui.node("file").files=[{name:"fonte.txt",size:1,arrayBuffer:async()=>{reads++;return Uint8Array.from([97]).buffer;}}];
+    await ui.submit(command);
+    assert.equal(ui.node("execution-confirmation").open,true);
+    assert.equal(ui.node("workspace").hidden,true);
+    assert.deepEqual(ui.calls.map(c=>c.route),["/api/interpret","/api/prepare-run"]);
+    assert.deepEqual(ui.calls[1].body,{text:command,filename:"fonte.txt",attachment:"YQ=="});
+    assert.equal(reads,1);
+    assert.equal(ui.node("execution-confirm").checked,false);
+    assert.equal(ui.node("execution-approve").disabled,true);
+    assert.ok(!ui.calls.some(c=>c.route==="/api/confirm-run"||c.route==="/api/approve"));
+  });
+}
+
+test("offline classification retains a local draft without tickets or execution",async()=>{
+  const ui=sheet({handler:async()=>{throw new Error("Backend unavailable");}});
+  await ui.submit("Cria um podcast sobre a cidade.");
+  assert.equal(ui.node("workspace").hidden,false);
+  assert.equal(ui.node("execution-confirmation").open,false);
+  assert.equal(JSON.parse(ui.storage.get("nexus-preparation")).produced,false);
+  assert.deepEqual(ui.calls.map(c=>c.route),["/api/interpret"]);
+});
+for(const edit of ["text","file","new"]) {
+  test("late registered classification cannot prepare after "+edit+" changes",async()=>{
+    let resolve;
+    const ui=sheet({handler:async()=>new Promise(done=>{resolve=done;})});
+    const command="preparar plano de podcast";
+    ui.input("text",command);
+    ui.node("file").files=[{name:"fonte.txt",size:1,arrayBuffer:async()=>Uint8Array.from([97]).buffer}];
+    const pending=ui.node("form").onsubmit({preventDefault(){}});
+    await tick();
+    if(edit==="text")ui.input("text","Um pedido novo.");
+    if(edit==="file"){ui.node("file").files=[];ui.node("file").onchange();ui.node("file").dispatch("change");}
+    if(edit==="new")ui.node("new").click();
+    resolve({status:"RESOLVED",intent:"trabalhar",original:command,registered_command:true});
+    await pending;
+    assert.equal(ui.node("execution-confirmation").open,false);
+    assert.equal(ui.node("workspace").hidden,true);
+    assert.deepEqual(ui.calls.map(c=>c.route),["/api/interpret"]);
+  });
+}
+test("a classification for different original text is never reused",async()=>{
+  let reads=0;
+  const ui=sheet({handler:async()=>({status:"RESOLVED",intent:"trabalhar",original:"outro pedido",registered_command:true})});
+  ui.node("file").files=[{name:"fonte.txt",size:1,arrayBuffer:async()=>{reads++;return Uint8Array.from([97]).buffer;}}];
+  await ui.submit("preparar plano de podcast");
+  assert.equal(ui.node("execution-confirmation").open,false);
+  assert.equal(reads,0);
+  assert.deepEqual(ui.calls.map(c=>c.route),["/api/interpret"]);
+});
