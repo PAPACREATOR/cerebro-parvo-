@@ -34,7 +34,7 @@ GOOD = {
 
 
 class ReusableHTTPServer(ThreadingHTTPServer):
-    allow_reuse_address = True
+    allow_reuse_address = os.name != "nt"
     daemon_threads = True
 
 

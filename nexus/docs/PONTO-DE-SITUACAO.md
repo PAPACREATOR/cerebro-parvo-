@@ -1,5 +1,11 @@
 # Nexus — ponto de situação atual
 
+## Bancada Windows — propriedade da porta do peer, 12-10-2026
+
+Frente independente sobre `main` `a0403808586036259cf120ef1947f6f185eb3a93`, sem editar os quatro caminhos reservados na issue #62. No PC, o OpenNotebook real já responde na porta 5055. A fixture sintética usava `SO_REUSEADDR` em Windows e podia partilhar uma porta já ocupada. A regressão usa dois servidores descartáveis numa porta atribuída pelo sistema, sem tocar em 5055: **1 FAIL** no SHA `ea314eebe65a141b9bbb01cfb1723e7cad4b7a8b`.
+
+Correção mínima: desativar `allow_reuse_address` só em Windows na fixture existente. Nenhum ficheiro de produção, endpoint permitido, Kernel/Host/Store, integridade ou serviço instalado muda. O peer deve falhar ao tentar ocupar uma porta em uso; não parar serviços nem transformar conflito em PASS/skip. A regressão acrescentada verifica a exclusividade; ida/volta, portões, citações inválidas e reinício continuam nas suites existentes. Ensaio local da correção: **31 PASS**, incluindo verificação nativa com os dois portões, retorno persistido e ausência de replay; repetição no commit final e CI ficam registados na PR. OpenNotebook deste E2E é sintético; backend/modelo reais e restauro integral do backup continuam gates separados. Sem PASS global ou merge antes da matriz completa no mesmo SHA.
+
 ## Proteções Windows — contrato e recusa de seleção parcial, 11-10-2026
 
 Pedido humano às 21:13 de Lisboa: «controlo das proteções Windows», retomando ativação perante perigo e desativação autorizada. Base desta frente: `main` `0f39fc81fc6f8109cdea66db8e15cf8bb8de0671`, PR #58 integrada; 22 checks do candidato e 5 pós-merge verdes, árvores idênticas e checkouts reais conferidos. Branch própria: `proposal/windows-protection-contract-20261011`; outras frentes/worktrees preservadas.
