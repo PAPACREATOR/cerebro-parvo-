@@ -30,7 +30,7 @@
   "adapters/media_tools.py": "d4eedf365080c7eb4018097bc660606e3904d0de4784782265949af8a60f2e80",
   "windows_sandbox.py": "2ce5e47c207259adb75e371fc6064f7d49d4f22ff7e9d620598280edef46370c",
   "native_mcp.py": "c55c0497697f61469b6bde21e0a279847db7cb4bfd84f39a1c94ecbfacc090ac",
-  "adapters/product_routes.py": "3df52c97f13bb5f3417c283f7c8cc86e203f1bf255cc4aa6db97d638aba17acd",
+  "adapters/product_routes.py": "2a3e195059beff31b1cce0e528353e7f2a96bc7e9ed9fc6f46469598d7ba7ab7",
   "frontdoor.py": "d496217964fd002a9c85eefdf39e7613f6a4bd9839ba7c576d2796ac917ac2d5",
   "frontdoor_rules.json": "fced73c2838c26e511d76da8eb3ca6170a38fe851453eec9e765e291f887646c",
   "schemas/frontdoor_rules.json": "f717d8274d6e3fbec2c8901d405a88d0a4e243c17ef11604358a0bd29f2f1494",
