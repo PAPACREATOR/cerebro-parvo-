@@ -138,3 +138,20 @@ def test_verified_run_uses_store_as_authority_not_mold(tmp_path):
         with pytest.raises(HTTPError) as rejected:
             call("/api/runs/" + run_id)
         assert rejected.value.code == 403
+
+
+@pytest.mark.parametrize("bad", ["\ud800", "name\udfff"])
+def test_unpaired_unicode_is_rejected_without_creating_a_mold(bad):
+    with pytest.raises(Blocked):
+        build_molde(bad)
+    with pytest.raises(Blocked):
+        build_molde("texto", bad + ".txt", payload(b"abc"))
+
+
+def test_unpaired_unicode_is_http_refusal_not_server_crash(tmp_path):
+    host = Host(tmp_path)
+    with http(host) as call:
+        with pytest.raises(HTTPError) as failed:
+            call("/api/interpret", {"text": "Explica \ud800"})
+        assert failed.value.code == 403
+        assert call("/api/runs") == []
