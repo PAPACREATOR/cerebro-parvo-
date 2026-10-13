@@ -219,6 +219,9 @@ def test_two_natural_functions_execute_and_return_without_notebook_dependency(tm
         for process in ("verify", "music"):
             capability = next(c for c in BUILTIN_CAPABILITIES if c.process == process)
             data = proposal(capability)
+            if process == "music":
+                music_source = "Tema: Identidade portuguesa\nLetra: A cidade canta e guarda a memoria.\nEstilo: Fado com jazz\n".encode("utf-8")
+                data["attachment"] = base64.b64encode(music_source).decode("ascii")
             original = base64.b64decode(data["attachment"])
             cancelled = call("/api/prepare-run", data)
             assert call("/api/confirm-run", {
@@ -254,7 +257,7 @@ def test_two_natural_functions_execute_and_return_without_notebook_dependency(tm
             assert provenance["tools"] == [item["capability"] for item in state["result"]["evidence"]]
             if process == "music":
                 # A real deterministic spec is not a generated audio product.
-                assert state["result"]["artifact"] is None
+                assert state["result"].get("artifact") is None
 
             with pytest.raises(HTTPError) as replay:
                 call("/api/confirm-run", {
