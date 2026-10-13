@@ -28,7 +28,7 @@
   "mcp_client.py": "5b5a80353e768842bb3c684117f1d5d876d20069ac8c0dd1ea5061be23615f9b",
   "mcp_tools_server.py": "5578b9ecef32a1e47cb8f1b27b6f74d52229a2f4f48dae33a7783d351e1a31e6",
   "adapters/media_tools.py": "d4eedf365080c7eb4018097bc660606e3904d0de4784782265949af8a60f2e80",
-  "windows_sandbox.py": "95e5b0424ea2019429365b6278619391093bb8d4309d6c067ad30898210f79c0",
+  "windows_sandbox.py": "2ce5e47c207259adb75e371fc6064f7d49d4f22ff7e9d620598280edef46370c",
   "native_mcp.py": "c55c0497697f61469b6bde21e0a279847db7cb4bfd84f39a1c94ecbfacc090ac",
   "adapters/product_routes.py": "3df52c97f13bb5f3417c283f7c8cc86e203f1bf255cc4aa6db97d638aba17acd",
   "frontdoor.py": "d496217964fd002a9c85eefdf39e7613f6a4bd9839ba7c576d2796ac917ac2d5",
