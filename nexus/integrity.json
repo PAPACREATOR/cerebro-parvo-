@@ -9,7 +9,7 @@
   "laws/policy.json": "ed7a8de09564d30cf6e97bb0c99b19815ca213c91fe28efb637e8a5584858cb1",
   "schemas/request.json": "5d28d505af087814fe276f630d7e36732ea8f5fe724f8d0e890a33d017b7fa32",
   "schemas/result.json": "50f49a1b214d3a8f9584c53a9de9c3b52cece39b20e96ee1031858d13bf84315",
-  "adapters/notebook.py": "0bb65f8a1eeb6749f01e144271df7c8982a44141aa77c5678c6c9b88c80ed19d",
+  "adapters/notebook.py": "1edf6376a9bcc9439b3cf614d5ccab25a4e56f47ba3426577f4379a186f45276",
   "schemas/cognitive.json": "e38903b40c416c14f09877f1bae1ec0beadab8c90c228b7b62641856b429edc3",
   "approval_binding.py": "93b7fe307d23d06904dec4c32e9843f30d125c1feb876fc5b9fcfd20c35b25d6",
   "adapters/languagetool.py": "6f2b56292fb05ae5717da84ad5f570b5394cc377af989614d35cbf2bf4f2b311",
