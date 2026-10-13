@@ -26,22 +26,42 @@ jobs:
           python-version: '3.12'
       - name: Install pinned test dependencies
         run: python -m pip install -r nexus/requirements-test.txt
-      - name: Bounded diagnostic with thread stacks
+      - name: Pure source projection probe
         shell: python
         run: |
+          import hashlib
+          from nexus.adapters.constitutional import build_molde
+          value = build_molde("original")
+          assert value["source"]["sha256"] == hashlib.sha256(b"original").hexdigest()
+          assert value["process"]["authority"] == "NONE"
+          print("PURE_SOURCE_PROJECTION_PASS", flush=True)
+      - name: Bounded diagnostic with persistent output
+        shell: python
+        run: |
+          import os
+          import pathlib
           import subprocess
           import sys
+          import tempfile
           command = [sys.executable, "-m", "pytest",
                      "nexus/tests/test_molde_universal.py", "-vv", "-p", "no:cacheprovider",
                      "-o", "pythonpath=.", "-o", "faulthandler_timeout=45"]
-          try:
-              result = subprocess.run(command, capture_output=True, text=True,
-                                      encoding="utf-8", errors="replace", timeout=120)
-          except subprocess.TimeoutExpired as error:
-              for output in (error.stdout, error.stderr):
-                  if output:
-                      print(output.decode("utf-8", "replace") if isinstance(output, bytes) else output)
-              raise SystemExit("FAIL: diagnostic exceeded 120 seconds")
-          print(result.stdout)
-          print(result.stderr, file=sys.stderr)
-          raise SystemExit(result.returncode)
+          log_path = pathlib.Path(tempfile.gettempdir()) / "nexus-molde-diagnostic.log"
+          timed_out = False
+          with log_path.open("w", encoding="utf-8") as output:
+              process = subprocess.Popen(command, stdout=output, stderr=subprocess.STDOUT,
+                                         env={**os.environ, "PYTHONUNBUFFERED": "1"})
+              try:
+                  code = process.wait(timeout=120)
+              except subprocess.TimeoutExpired:
+                  timed_out = True
+                  process.kill()
+                  try:
+                      process.wait(timeout=5)
+                  except subprocess.TimeoutExpired:
+                      pass
+                  code = 1
+          print(log_path.read_text(encoding="utf-8", errors="replace"), flush=True)
+          if timed_out:
+              print("FAIL: diagnostic exceeded 120 seconds", flush=True)
+          raise SystemExit(code)
