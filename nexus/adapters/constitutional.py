@@ -82,6 +82,11 @@ def build_molde(text, filename="", attachment="", *, intent=None, process=None):
         raise Blocked("Entrada do molde demasiado grande.")
     if any(ord(char) < 32 or ord(char) == 127 or char in "/\\" for char in filename):
         raise Blocked("Nome de ficheiro do molde inválido.")
+    try:
+        text.encode("utf-8")
+        filename.encode("utf-8")
+    except UnicodeError as error:
+        raise Blocked("Texto ou nome com Unicode inválido.") from error
     if intent is not None and (type(intent) is not str or len(intent) > 100):
         raise Blocked("Intenção do molde inválida.")
     if process is not None and (type(process) is not str or len(process) > 100):
