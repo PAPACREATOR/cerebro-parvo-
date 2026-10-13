@@ -34,7 +34,7 @@ GOOD = {
 
 
 class ReusableHTTPServer(ThreadingHTTPServer):
-    allow_reuse_address = True
+    allow_reuse_address = os.name != "nt"
     daemon_threads = True
 
 
@@ -169,7 +169,7 @@ def test_frontdoor_kernel_mcp_open_notebook_creative_human_gate_canonical_restar
     }
 
     host = Host(data_root)
-    with fake_open_notebook() as backend, http(host) as call:
+    with fake_open_notebook() as backend, http(host, allow_direct_run=True) as call:
         run_id = call("/api/run", request)["run_id"]
         deadline = time.monotonic() + 60
         state = call("/api/runs/" + run_id)
