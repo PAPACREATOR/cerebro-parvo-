@@ -34,7 +34,7 @@ GOOD = {
 
 
 class ReusableHTTPServer(ThreadingHTTPServer):
-    allow_reuse_address = os.name != "nt"
+    allow_reuse_address = True
     daemon_threads = True
 
 
@@ -78,6 +78,10 @@ class OpenNotebookHandler(BaseHTTPRequestHandler):
             output = "not-json"
         elif type(self).mode == "wrong-quote":
             output = json.dumps({**GOOD, "quotes": ["Porto recebeu 99 caixas."]}, ensure_ascii=False)
+        elif type(self).mode == "quotes-not-list":
+            output = json.dumps({**GOOD, "quotes": SOURCE}, ensure_ascii=False)
+        elif type(self).mode == "output-not-object":
+            output = json.dumps([GOOD], ensure_ascii=False)
         else:
             output = json.dumps(GOOD, ensure_ascii=False)
 
@@ -141,7 +145,10 @@ def test_runner_real_mcp_stdio_to_open_notebook_loopback_and_back(tmp_path):
     assert result["evidence"][0]["capability"] == "open-notebook/local-model"
 
 
-@pytest.mark.parametrize("mode", ["malformed-output", "wrong-quote", "http-error"])
+@pytest.mark.parametrize("mode", [
+    "malformed-output", "wrong-quote", "quotes-not-list",
+    "output-not-object", "http-error",
+])
 def test_runner_rejects_bad_open_notebook_results_after_mcp_boundary(tmp_path, mode):
     source = prepared_input(tmp_path)
     with fake_open_notebook(mode):
@@ -162,7 +169,7 @@ def test_frontdoor_kernel_mcp_open_notebook_creative_human_gate_canonical_restar
     }
 
     host = Host(data_root)
-    with fake_open_notebook() as backend, http(host, allow_direct_run=True) as call:
+    with fake_open_notebook() as backend, http(host) as call:
         run_id = call("/api/run", request)["run_id"]
         deadline = time.monotonic() + 60
         state = call("/api/runs/" + run_id)
