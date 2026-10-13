@@ -47,6 +47,11 @@ def fetch_output(source, config):
         if len(raw) > 200000:
             raise Blocked("Resposta demasiado grande.")
         envelope = strict_json(raw)
+        if not isinstance(envelope, dict) or set(envelope) != {"output", "model_id", "transformation_id"}:
+            raise Blocked("Envelope OpenNotebook fora do contrato fixado.")
+        if (envelope["model_id"] != config["model_id"] or
+                envelope["transformation_id"] != config["transformation_id"]):
+            raise Blocked("Identidade de modelo ou transformação OpenNotebook divergente.")
         output = envelope["output"]
         if not isinstance(output, str):
             raise Blocked("Resposta cognitiva sem texto estruturado.")
