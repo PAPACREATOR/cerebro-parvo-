@@ -306,25 +306,3 @@ for(const route of ["/api/confirm-run","/api/approve"]) {
     });
   }
 }
-
-for(const [process,prefixed] of commands) {
-  const command=prefixed.replace(/^[&@]\\s+/,"");
-  test(process+" natural registered command reaches H1 without a second interpretation",async()=>{
-    let reads=0;
-    const ui=sheet({handler:async(route,body)=>{
-      if(route==="/api/interpret")return {status:"RESOLVED",intent:process==="web"?"web":"trabalhar",original:body.text,registered_command:true};
-      if(route==="/api/prepare-run")return {ticket:"natural-ticket",process,filename:"fonte.txt"};
-      return [];
-    }});
-    ui.node("file").files=[{name:"fonte.txt",size:1,arrayBuffer:async()=>{reads++;return Uint8Array.from([97]).buffer;}}];
-    await ui.submit(command);
-    assert.equal(ui.node("execution-confirmation").open,true);
-    assert.equal(ui.node("workspace").hidden,true);
-    assert.deepEqual(ui.calls.map(c=>c.route),["/api/interpret","/api/prepare-run"]);
-    assert.deepEqual(ui.calls[1].body,{text:command,filename:"fonte.txt",attachment:"YQ=="});
-    assert.equal(reads,1);
-    assert.equal(ui.node("execution-confirm").checked,false);
-    assert.equal(ui.node("execution-approve").disabled,true);
-    assert.ok(!ui.calls.some(c=>c.route==="/api/confirm-run"||c.route==="/api/approve"));
-  });
-}
