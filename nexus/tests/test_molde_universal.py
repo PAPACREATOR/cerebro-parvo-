@@ -69,6 +69,17 @@ def test_text_exact_identity_and_no_implicit_authority(text):
     ("texto", "fonte.txt", "!invalid!"),
     ("x" * 100001, "", ""),
     ("texto", "a.txt", payload(b"z" * (2_097_152 + 1))),
+], ids=[
+    'empty',
+    'filename-without-attachment',
+    'attachment-without-filename',
+    'parent-path',
+    'backslash-path',
+    'drive-path',
+    'newline-filename',
+    'invalid-base64',
+    'text-over-limit',
+    'attachment-over-limit',
 ])
 def test_bad_file_text_and_sizes_fail_closed(text, filename, attachment):
     with pytest.raises(Blocked):
