@@ -44,6 +44,8 @@ def unsupported_zip_compression():
 @pytest.mark.parametrize(("text", "expected"), (
     ("& converter para pdf", "convert_pdf"),
     ("& exportar manuscrito para pdf", "book"),
+    ("converter para pdf", "convert_pdf"),
+    ("exportar manuscrito para pdf", "book"),
 ))
 def test_writer_requires_preexecution_human_ticket(tmp_path, monkeypatch, text, expected):
     host = Host(tmp_path)
@@ -85,7 +87,6 @@ def test_writer_requires_preexecution_human_ticket(tmp_path, monkeypatch, text, 
     proposal("& converter para pdf", raw=unsupported_zip_compression()),
     proposal("& exportar manuscrito para pdf", filename="malicioso.txt"),
     {"text": "& converter para pdf", "filename": "", "attachment": ""},
-    proposal("converter para pdf"),
 ))
 def test_writer_ambiguous_or_invalid_document_never_gets_ticket(tmp_path, data):
     host = Host(tmp_path)

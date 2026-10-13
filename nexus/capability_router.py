@@ -67,6 +67,15 @@ class CapabilityRouter:
             raise ValueError("Ambiguous or duplicate capability")
         self._capabilities = values
 
+    def recognise_command(self, text):
+        """Match one complete declaration only; no policy read or permission."""
+        normal = _normalise(text)
+        matches = [candidate for candidate in self._capabilities
+                   if _normalise(candidate.command) == normal]
+        if len(matches) > 1:
+            raise Blocked("Comando registado ambíguo.")
+        return matches[0] if matches else None
+
     def propose(self, *, intent, text, attachment_present):
         if type(intent) is not str or type(attachment_present) is not bool:
             raise Blocked("Pedido de seleção inválido.")
@@ -82,6 +91,11 @@ class CapabilityRouter:
         if len(matches) != 1:
             raise Blocked("Operação desconhecida, incompleta ou ambígua.")
         return matches[0]
+
+
+def declared_router():
+    """Pure command metadata; execution still requires the registered router."""
+    return CapabilityRouter(BUILTIN_CAPABILITIES)
 
 
 def registered_router():

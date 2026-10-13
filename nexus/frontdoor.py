@@ -7,6 +7,7 @@ import unicodedata
 
 from nexus.contracts import ROOT, Blocked, strict_json, validate
 from nexus.adapters.languagetool import correction_shadow
+from nexus.capability_router import declared_router
 
 
 _RULES = validate("frontdoor_rules", strict_json((ROOT / "frontdoor_rules.json").read_bytes()))
@@ -61,6 +62,13 @@ def _natural(text: str, *, original: str | None = None, parser="eliza-rules-v1",
         if any(re.search(pattern, normal) for pattern in patterns)
     ]
     source = text if original is None else original
+    if not matches and not requires_clarification(source) and not requires_clarification(text):
+        try:
+            candidate = declared_router().recognise_command(text)
+        except (Blocked, ValueError):
+            candidate = None
+        if candidate is not None:
+            matches = [candidate.intent]
     if len(matches) != 1 or requires_clarification(source) or requires_clarification(text):
         return ParsedInput("UNRESOLVED", None, source, source, parser, False, shadow)
     return ParsedInput("RESOLVED", matches[0], source, source, parser, False, shadow)
