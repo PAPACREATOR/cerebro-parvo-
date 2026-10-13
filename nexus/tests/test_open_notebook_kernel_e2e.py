@@ -85,11 +85,20 @@ class OpenNotebookHandler(BaseHTTPRequestHandler):
         else:
             output = json.dumps(GOOD, ensure_ascii=False)
 
-        self._json(200, {
+        envelope = {
             "output": output,
             "transformation_id": payload.get("transformation_id"),
             "model_id": payload.get("model_id"),
-        })
+        }
+        if type(self).mode == "wrong-model-id":
+            envelope["model_id"] = "model:unexpected"
+        elif type(self).mode == "wrong-transformation-id":
+            envelope["transformation_id"] = "transformation:unexpected"
+        elif type(self).mode == "missing-model-id":
+            del envelope["model_id"]
+        elif type(self).mode == "extra-envelope-field":
+            envelope["authority"] = "APPROVED"
+        self._json(200, envelope)
 
 
 @contextmanager
@@ -147,7 +156,8 @@ def test_runner_real_mcp_stdio_to_open_notebook_loopback_and_back(tmp_path):
 
 @pytest.mark.parametrize("mode", [
     "malformed-output", "wrong-quote", "quotes-not-list",
-    "output-not-object", "http-error",
+    "output-not-object", "wrong-model-id", "wrong-transformation-id",
+    "missing-model-id", "extra-envelope-field", "http-error",
 ])
 def test_runner_rejects_bad_open_notebook_results_after_mcp_boundary(tmp_path, mode):
     source = prepared_input(tmp_path)
