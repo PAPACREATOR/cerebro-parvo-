@@ -78,8 +78,12 @@ def fetch_plan(source: str, route: str, config: dict) -> dict:
     if len(raw) > MAX_HTTP:
         raise Blocked("Resposta OpenNotebook demasiado grande.")
     envelope = strict_json(raw)
-    if not isinstance(envelope, dict) or not isinstance(envelope.get("output"), str):
+    if not isinstance(envelope, dict) or set(envelope) != {
+        "output", "model_id", "transformation_id"
+    } or not isinstance(envelope["output"], str):
         raise Blocked("OpenNotebook devolveu uma resposta incompatível.")
+    if envelope["model_id"] != model_id or envelope["transformation_id"] != transformation_id:
+        raise Blocked("Identidade de modelo ou transformação OpenNotebook divergente.")
     return {
         "output": envelope["output"],
         "model_id": model_id,
