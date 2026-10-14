@@ -35,7 +35,7 @@ _MAX_PREEXECUTION_TICKETS = 64
 # mutable experimental code into the product without verifying these digests.
 _PINNED_WIKI_LAB = {
     "lab/wiki/kernel_bridge.py": "078fd05c7ec0e9ebeb05500f8c536c374b38d57482fe753578fb96b60e2ac5c9",
-    "lab/wiki/context_packet.py": "b82b1c7899a6f088e51cfd90aab3554a2bbace9f4f123fab20283e95362ef6e8",
+    "lab/wiki/context_packet.py": "ff16ae99dc74637ca59f66c788fc39bb68cbc47eb3462a1d024bce005269c0d0",
 }
 
 
