@@ -21,7 +21,7 @@ def verify_integrity():
     manifest = strict_json((ROOT / "integrity.json").read_bytes())
     required = {
         "__init__.py", "app.py", "host.py", "store.py", "contracts.py", "approval_binding.py", "capability_router.py", "instance.py",
-        "windows_sandbox.py", "native_mcp.py", "frontdoor.py", "frontdoor_rules.json", "schemas/frontdoor_rules.json", "adapters/runner.py", "windows/runner-shell.ps1", "mcp_client.py", "mcp_tools_server.py", "adapters/verify_direct.py", "adapters/tools.py", "adapters/notebook.py",
+        "windows_sandbox.py", "native_mcp.py", "frontdoor.py", "frontdoor_rules.json", "schemas/frontdoor_rules.json", "adapters/runner.py", "windows/runner-shell.cmd", "mcp_client.py", "mcp_tools_server.py", "adapters/verify_direct.py", "adapters/tools.py", "adapters/notebook.py",
         "adapters/languagetool.py", "adapters/office.py", "adapters/writer_sandy.py",
         "adapters/vendor/sandy/libreoffice-demo.py", "adapters/vendor/sandy/libreoffice.toml",
         "adapters/vendor/sandy/LICENSE", "adapters/media_tools.py", "adapters/product_routes.py",
@@ -95,20 +95,16 @@ class Host:
                     stdout = json.dumps(envelope, ensure_ascii=False).encode("utf-8")
                     stderr = b""
                 else:
-                    # Windows Shell is the deterministic process launcher. The
-                    # selected PowerShell script is Host-sealed, receives only
-                    # trusted positional arguments and inherits LPAC/Job. It
-                    # never accepts arbitrary command text from the Folha.
+                    # Windows CMD is a fixed, lightweight Shell launcher.
+                    # The Host alone selects the registered process. The shell
+                    # inherits LPAC/Job and has no arbitrary Folha commands.
                     environment = process_environment(work)
-                    shell = Path(environment.get("SystemRoot", "C:/Windows")) / "System32" / "WindowsPowerShell" / "v1.0" / "powershell.exe"
-                    # Unit tests can simulate a Windows boundary while
-                    # injecting a failing launcher on another OS.
+                    shell = Path(environment.get("SystemRoot", "C:/Windows")) / "System32" / "cmd.exe"
                     if sys.platform == "win32" and (not shell.is_file() or shell.is_symlink()):
                         raise Blocked("Runner Shell do Windows indisponível.")
                     command = [
-                        str(shell), "-NoLogo", "-NoProfile", "-NonInteractive",
-                        "-ExecutionPolicy", "Bypass", "-File",
-                        str(ROOT / "windows/runner-shell.ps1"),
+                        str(shell), "/D", "/Q", "/C",
+                        str(ROOT / "windows/runner-shell.cmd"),
                         sys.executable, str(ROOT / "adapters/runner.py"),
                         process, str(work / "input.bin"),
                     ]
