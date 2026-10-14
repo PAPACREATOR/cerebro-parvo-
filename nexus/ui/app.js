@@ -277,7 +277,7 @@ el("execution-approve").onclick=async()=>{
     el("execution-confirmation").close(); notice(error.message); el("submit").disabled=false;
   }
 };
-el("text").addEventListener("input", invalidateExecutionProposal);
+el("text").addEventListener("input",()=>{invalidateExecutionProposal();paintComposer();});
 el("file").onchange=()=>{invalidateExecutionProposal();el("file-label").textContent=el("file").files[0]?.name || "Até 2 MB · um ficheiro de cada vez";};
 // Drag-and-drop is an input convenience, not an authorization or execution.
 const surface=document.querySelector?.(".sheet");
@@ -346,7 +346,7 @@ el("pdf").onclick=async()=>{
 function paintComposer() {
   el("composer-bottom").hidden=!el("text").value.trim() && !el("file").files.length;
 }
-el("text").addEventListener("input",paintComposer);
+
 el("text").addEventListener("keydown",event=>{
   if(event.key==="Enter" && (event.ctrlKey || event.metaKey)) {
     event.preventDefault();el("form").requestSubmit();
