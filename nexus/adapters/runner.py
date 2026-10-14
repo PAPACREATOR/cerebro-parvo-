@@ -96,7 +96,7 @@ def process_fingerprint(process):
     h = hashlib.sha256()
     h.update(process.encode("utf-8"))
     h.update(b"\0")
-    for relative in (*files, "windows_sandbox.py", "contracts.py", "schemas/result.json"):
+    for relative in (*files, "windows/runner-shell.ps1", "windows_sandbox.py", "contracts.py", "schemas/result.json"):
         path = ROOT / relative
         h.update(relative.encode("utf-8"))
         h.update(b"\0")
