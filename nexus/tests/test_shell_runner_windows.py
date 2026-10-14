@@ -80,6 +80,27 @@ def test_real_shell_inside_native_lpac_returns_valid_result(tmp_path):
     work = tmp_path / ".nexus-task-shelltest" / "runs" / ("a" * 32)
     work.mkdir(parents=True)
     roots = prepare_task("verify", source, work, config_root=tmp_path)
+    # Diagnostic gates exercise the exact same native LPAC token and job.
+    # Distinguish shell startup, reading the fixed script, and child Python
+    # execution. None of these probes grants new permissions or fakes PASS.
+    probes = (
+        ([_shell(), "/D", "/Q", "/C", "echo NEXUS_SHELL_ALIVE"], 0),
+        ([_shell(), "/D", "/Q", "/C",
+          str(ROOT / "windows/runner-shell.cmd"),
+          sys.executable, str(ROOT / "adapters/runner.py"),
+          "not_registered", str(work / "input.bin")], 2),
+    )
+    for probe, expected in probes:
+        with launch_confined(probe, cwd=work, env=process_environment(work),
+                             read_roots=roots) as diagnostic:
+            out, err = diagnostic.communicate(timeout=35)
+            exit_code = diagnostic.returncode
+        assert exit_code == expected, {
+            "phase": "shell-start" if expected == 0 else "shell-script",
+            "returncode": exit_code,
+            "stdout": out.decode("utf-8", "replace")[-800:],
+            "stderr": err.decode("utf-8", "replace")[-2000:],
+        }
     command = [
         _shell(), "/D", "/Q", "/C",
         str(ROOT / "windows/runner-shell.cmd"),
