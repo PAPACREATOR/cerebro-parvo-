@@ -95,21 +95,34 @@ class Host:
                     stdout = json.dumps(envelope, ensure_ascii=False).encode("utf-8")
                     stderr = b""
                 else:
-                    # Windows CMD is a fixed, lightweight Shell launcher.
-                    # The Host alone selects the registered process. The shell
-                    # inherits LPAC/Job and has no arbitrary Folha commands.
+                    # Shell is the pinned Host-owned dispatcher; it has no
+                    # permission to execute any tool or interpret Folha text.
+                    # Windows LPAC blocks CMD child creation without lpacCom,
+                    # so only the Python worker enters LPAC/Job, without COM.
                     environment = process_environment(work)
                     shell = Path(environment.get("SystemRoot", "C:/Windows")) / "System32" / "cmd.exe"
-                    if sys.platform == "win32" and (not shell.is_file() or shell.is_symlink()):
+                    script = ROOT / "windows" / "runner-shell.cmd"
+                    if not shell.is_file() or shell.is_symlink() or not script.is_file() or script.is_symlink():
                         raise Blocked("Runner Shell do Windows indisponível.")
-                    command = [
-                        str(shell), "/D", "/Q", "/C",
-                        str(ROOT / "windows/runner-shell.cmd"),
-                        sys.executable, str(ROOT / "adapters/runner.py"),
-                        process, str(work / "input.bin"),
-                    ]
+                    # Do not let unusual installation paths become shell syntax.
+                    if any(char in str(script) for char in '&|<>^%!\r\n"'):
+                        raise Blocked("Caminho da Shell contém caracteres não autorizados.")
+                    try:
+                        dispatch = subprocess.run(
+                            [str(shell), "/D", "/Q", "/C", str(script), process],
+                            cwd=work, env=environment, capture_output=True,
+                            timeout=12, check=False, creationflags=subprocess.CREATE_NO_WINDOW,
+                        )
+                    except (OSError, subprocess.TimeoutExpired) as error:
+                        raise Blocked("A Shell autorizada não conseguiu preparar a tarefa.") from error
+                    expected = ("NEXUS_SHELL_READY:" + process).encode("ascii")
+                    if (dispatch.returncode != 0 or dispatch.stdout.strip() != expected
+                            or dispatch.stderr.strip()):
+                        raise Blocked("O despacho da Shell foi recusado.")
+                    command = [sys.executable, "-I", str(ROOT / "adapters/runner.py"),
+                               process, str(work / "input.bin")]
                     with launch_confined(command, cwd=work, env=environment,
-                                         read_roots=(*roots, ROOT / 'windows/runner-shell.cmd'),
+                                         read_roots=roots,
                                          deny_roots=(self.store.root,)) as proc:
                         try:
                             stdout, stderr = proc.communicate(
