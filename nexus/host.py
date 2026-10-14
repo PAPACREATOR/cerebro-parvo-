@@ -21,7 +21,7 @@ def verify_integrity():
     manifest = strict_json((ROOT / "integrity.json").read_bytes())
     required = {
         "__init__.py", "app.py", "host.py", "store.py", "contracts.py", "approval_binding.py", "capability_router.py", "instance.py",
-        "windows_sandbox.py", "native_mcp.py", "frontdoor.py", "frontdoor_rules.json", "schemas/frontdoor_rules.json", "adapters/runner.py", "mcp_client.py", "mcp_tools_server.py", "adapters/verify_direct.py", "adapters/tools.py", "adapters/notebook.py",
+        "windows_sandbox.py", "native_mcp.py", "frontdoor.py", "frontdoor_rules.json", "schemas/frontdoor_rules.json", "adapters/runner.py", "windows/runner-shell.ps1", "mcp_client.py", "mcp_tools_server.py", "adapters/verify_direct.py", "adapters/tools.py", "adapters/notebook.py",
         "adapters/languagetool.py", "adapters/office.py", "adapters/writer_sandy.py",
         "adapters/vendor/sandy/libreoffice-demo.py", "adapters/vendor/sandy/libreoffice.toml",
         "adapters/vendor/sandy/LICENSE", "adapters/media_tools.py", "adapters/product_routes.py",
@@ -95,9 +95,23 @@ class Host:
                     stdout = json.dumps(envelope, ensure_ascii=False).encode("utf-8")
                     stderr = b""
                 else:
-                    command = [sys.executable, "-I", str(ROOT / "adapters/runner.py"), process, str(work / "input.bin")]
+                    # Windows Shell is the deterministic process launcher. The
+                    # selected PowerShell script is Host-sealed, receives only
+                    # trusted positional arguments and inherits LPAC/Job. It
+                    # never accepts arbitrary command text from the Folha.
+                    shell = Path(os.environ.get("SystemRoot", "C:/Windows")) / "System32" / "WindowsPowerShell" / "v1.0" / "powershell.exe"
+                    if not shell.is_file() or shell.is_symlink():
+                        raise Blocked("Runner Shell do Windows indisponível.")
+                    command = [
+                        str(shell), "-NoLogo", "-NoProfile", "-NonInteractive",
+                        "-ExecutionPolicy", "Bypass", "-File",
+                        str(ROOT / "windows/runner-shell.ps1"),
+                        sys.executable, str(ROOT / "adapters/runner.py"),
+                        process, str(work / "input.bin"),
+                    ]
                     with launch_confined(command, cwd=work, env=process_environment(work),
-                                         read_roots=roots, deny_roots=(self.store.root,)) as proc:
+                                         read_roots=(*roots, shell.parent),
+                                         deny_roots=(self.store.root,)) as proc:
                         try:
                             stdout, stderr = proc.communicate(
                                 timeout=150 if process in ("interpret", "video", "podcast", "visual_podcast") else 75
