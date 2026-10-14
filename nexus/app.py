@@ -231,7 +231,8 @@ def _natural_request(data, host):
         "visual_podcast": "Preparar plano de podcast visual a partir de " + name + "; não gera vídeo.",
         "book": "Exportar o manuscrito " + name + " para PDF; não cria nem redesenha o livro.",
         "music": "Preparar plano de música a partir de " + name + "; não gera áudio.",
-        "web": "Preparar plano de pesquisa web a partir de " + name + "; não navega automaticamente.",
+        "web": ("Pesquisar fontes públicas na Internet e guardar as referências obtidas." if text_only
+                else "Preparar plano de pesquisa web a partir de " + name + "."),
     }
     return request, {
         "molde": build_molde(data["text"], data["filename"], data["attachment"],
@@ -426,6 +427,18 @@ def make_server(host, port=0, *, allow_direct_run=False):
                         "molde": build_molde(data["text"], intent=parsed.intent if parsed.status == "RESOLVED" else None)
                                  if data["text"] else None,
                     })
+                if path == "/api/research":
+                    # Read-only web discovery is an authorized natural user
+                    # request, not Canonical promotion and never an arbitrary
+                    # process dispatch. No upload, no hidden action, no retry.
+                    if (set(data) != {"text"} or not isinstance(data["text"], str)
+                            or _natural_work_process(data["text"]) != "web"):
+                        raise Blocked("A pesquisa externa exige um pedido claro na Folha.")
+                    request, _proposal = _natural_request(
+                        {"text": data["text"], "filename": "", "attachment": ""}, host)
+                    if request["process"] != "web":
+                        raise Blocked("Processo de pesquisa não autorizado.")
+                    return self.reply(202, host.start(request, session))
                 if path == "/api/prepare-run":
                     request, preview = _natural_request(data, host)
                     now = time.monotonic()
