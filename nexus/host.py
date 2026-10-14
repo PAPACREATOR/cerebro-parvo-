@@ -99,8 +99,11 @@ class Host:
                     # selected PowerShell script is Host-sealed, receives only
                     # trusted positional arguments and inherits LPAC/Job. It
                     # never accepts arbitrary command text from the Folha.
-                    shell = Path(os.environ.get("SystemRoot", "C:/Windows")) / "System32" / "WindowsPowerShell" / "v1.0" / "powershell.exe"
-                    if not shell.is_file() or shell.is_symlink():
+                    environment = process_environment(work)
+                    shell = Path(environment.get("SystemRoot", "C:/Windows")) / "System32" / "WindowsPowerShell" / "v1.0" / "powershell.exe"
+                    # Unit tests can simulate a Windows boundary while
+                    # injecting a failing launcher on another OS.
+                    if sys.platform == "win32" and (not shell.is_file() or shell.is_symlink()):
                         raise Blocked("Runner Shell do Windows indisponível.")
                     command = [
                         str(shell), "-NoLogo", "-NoProfile", "-NonInteractive",
@@ -109,8 +112,8 @@ class Host:
                         sys.executable, str(ROOT / "adapters/runner.py"),
                         process, str(work / "input.bin"),
                     ]
-                    with launch_confined(command, cwd=work, env=process_environment(work),
-                                         read_roots=(*roots, shell.parent),
+                    with launch_confined(command, cwd=work, env=environment,
+                                         read_roots=roots,
                                          deny_roots=(self.store.root,)) as proc:
                         try:
                             stdout, stderr = proc.communicate(
