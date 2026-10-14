@@ -68,3 +68,36 @@ def test_host_shell_still_uses_native_lp_ac_and_does_not_accept_invalid_output(t
     assert observed["kwargs"]["deny_roots"] == (host.store.root,)
     assert host.store.state(run)["status"] == "BLOCKED"
     assert not list((host.store.root / "canonical").iterdir())
+
+
+def test_real_shell_inside_native_lpac_returns_valid_result(tmp_path):
+    """Actual OS boundary: output diagnostic is an error, never a fake PASS."""
+    import json
+    from nexus.adapters.runner import prepare_task
+    from nexus.windows_sandbox import launch_confined
+    from nexus.contracts import validate
+
+    source = tmp_path / "source.txt"
+    source.write_bytes(b"Nexus Windows shell native acceptance\n")
+    work = tmp_path / ".nexus-task-shelltest" / "runs" / ("a" * 32)
+    work.mkdir(parents=True)
+    roots = prepare_task("verify", source, work, config_root=tmp_path)
+    command = [
+        _shell(), "-NoLogo", "-NoProfile", "-NonInteractive",
+        "-ExecutionPolicy", "Bypass", "-File",
+        str(ROOT / "windows/runner-shell.ps1"),
+        sys.executable, str(ROOT / "adapters/runner.py"),
+        "verify", str(work / "input.bin"),
+    ]
+    with launch_confined(command, cwd=work, env=process_environment(work),
+                         read_roots=roots) as proc:
+        stdout, stderr = proc.communicate(timeout=35)
+        code = proc.returncode
+    assert code == 0, {
+        "returncode": code,
+        "stdout": stdout[-1500:].decode("utf-8", "replace"),
+        "stderr": stderr[-4500:].decode("utf-8", "replace"),
+    }
+    envelope = json.loads(stdout)
+    assert validate("result", envelope["result"])["status"] == "PASS"
+    assert envelope["trace"]["process"] == "verify"
