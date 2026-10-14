@@ -1,6 +1,6 @@
 # Instruções correntes — Cérebro
 
-Ler primeiro [STATUS](docs/planning/STATUS.md) e o [ponto de situação operacional](nexus/docs/PONTO-DE-SITUACAO.md), depois [CEREBRO_CONSTITUTION.md](docs/architecture/CEREBRO_CONSTITUTION.md), [CEREBRO_ARCHITECTURE.md](docs/architecture/CEREBRO_ARCHITECTURE.md), [DECISIONS.md](docs/architecture/DECISIONS.md) e o contrato da tarefa. O [projeto auditado de 28/09](docs/PROJETO-FINAL-AUDITADO-2026-09-28.md) conserva a composição daquela data; não é uma ordem para reintroduzir Activepieces/Conductor no runtime candidato.
+Ler primeiro [STATUS](../docs/planning/STATUS.md) e o [ponto de situação operacional](../nexus/docs/PONTO-DE-SITUACAO.md), depois [CEREBRO_CONSTITUTION.md](CEREBRO_CONSTITUTION.md), [CEREBRO_ARCHITECTURE.md](CEREBRO_ARCHITECTURE.md), [DECISIONS.md](DECISIONS.md) e o contrato da tarefa. O [projeto auditado de 28/09](../docs/PROJETO-FINAL-AUDITADO-2026-09-28.md) conserva a composição daquela data; não é uma ordem para reintroduzir Activepieces/Conductor no runtime candidato.
 
 ## Reconciliação operacional — 05-10-2026
 

@@ -20,6 +20,7 @@ if (fragment.has("session")) {
 const session = pageStorage.getItem("nexus-session") || "";
 let current = null, ticket = null, poll = null, currentContent = "", currentProcess = "", executionTicket = null;
 let editRevision = 0, viewRevision = 0, approvalRun = null;
+let pendingDialogue = null;
 const hasWorkspace = Boolean(document.querySelector?.("#workspace"));
 function invalidateExecutionProposal() {
   editRevision++;
@@ -88,7 +89,7 @@ function showInterpretation(preview) {
   el("result-title").textContent=preview.status==="RESOLVED"?
     ("Intenção: "+(intents[preview.intent]||"por esclarecer")):"Interpretação pendente";
   el("message").textContent=preview.status==="RESOLVED"?
-    "Revê o pedido. Para avançar com este trabalho, junta o ficheiro e confirma a proposta.":
+    "Pedido reconhecido.":
     "Reformula o pedido. O trabalho ainda não começou.";
   el("content").textContent=preview.original;
   currentContent="";
@@ -152,6 +153,15 @@ el("form").onsubmit=async (event, classified=null)=>{
        classified.preview.original!==classified.text))
       throw new Error("O pedido mudou durante a interpretação. Revê o pedido.");
     const payload=await requestPayload();
+    if (pendingDialogue && !payload.filename && !payload.attachment) {
+      const answer=payload.text.trim();
+      if(!answer || answer.length>500)throw new Error("Escreve uma resposta até 500 caracteres.");
+      const continuation=pendingDialogue.missing.map(key=>key==="tom"?
+        "Tom: "+answer:"Duração: "+answer).join("\n");
+      payload.text=pendingDialogue.original+"\n"+continuation;
+      el("text").value=payload.text;
+      pendingDialogue=null;
+    }
     if (revision!==editRevision || classified && payload.text!==classified.text)
       throw new Error("O texto ou anexo mudou durante a preparação. Revê o pedido.");
     // Read-only FTS5 search uses the existing blank Folha; no additional
@@ -189,8 +199,27 @@ el("form").onsubmit=async (event, classified=null)=>{
     }
     const preview=classified ? classified.preview : await api("/api/interpret",{text:payload.text});
     if(revision!==editRevision) throw new Error("O texto ou anexo mudou durante a interpretação.");
-    if(preview.status!=="RESOLVED"||!["trabalhar","web"].includes(preview.intent)||
-       !payload.filename||!payload.attachment) {
+    if(preview.assistant?.question && !payload.filename && !payload.attachment) {
+      pendingDialogue={original:payload.text,missing:preview.assistant.missing};
+      clearTimeout(poll);current=null;currentContent="";viewRevision++;
+      workingLayout(true);
+      el("empty").hidden=true;el("result").hidden=false;
+      el("status").textContent="Nexus";
+      el("result-title").textContent="Uma pergunta";
+      el("message").textContent=preview.assistant.question;
+      el("content").textContent="";
+      el("actions").hidden=true;el("pdf").hidden=true;
+      el("text").value="";el("text").focus();
+      return;
+    }
+    if(preview.assistant?.process==="web" && !payload.filename && !payload.attachment) {
+      const work=await api("/api/research",{text:payload.text});
+      if(revision===editRevision)await show(work.run_id);
+      return;
+    }
+    if((preview.status!=="RESOLVED" && !preview.assistant?.process) ||
+       (!["trabalhar","web"].includes(preview.intent) && !preview.assistant?.process) ||
+       ((!payload.filename||!payload.attachment) && !preview.assistant?.process)) {
       showInterpretation(preview);
       return;
     }
@@ -217,7 +246,7 @@ el("form").onsubmit=async (event, classified=null)=>{
     if(!Object.prototype.hasOwnProperty.call(actions,prepared.process))
       throw new Error("A operação proposta não está autorizada.");
     executionTicket=prepared.ticket;
-    el("execution-summary").textContent=actions[prepared.process]+" · "+prepared.filename;
+    el("execution-summary").textContent=actions[prepared.process]+(payload.filename?" · "+prepared.filename:"");
     el("execution-review").textContent="Pedido: "+payload.text+"\nFicheiro: "+prepared.filename;
     el("execution-confirm").checked=false;
     el("execution-approve").disabled=true;
@@ -248,7 +277,7 @@ el("execution-approve").onclick=async()=>{
     el("execution-confirmation").close(); notice(error.message); el("submit").disabled=false;
   }
 };
-el("text").addEventListener("input", invalidateExecutionProposal);
+el("text").addEventListener("input",()=>{invalidateExecutionProposal();paintComposer();});
 el("file").onchange=()=>{invalidateExecutionProposal();el("file-label").textContent=el("file").files[0]?.name || "Até 2 MB · um ficheiro de cada vez";};
 // Drag-and-drop is an input convenience, not an authorization or execution.
 const surface=document.querySelector?.(".sheet");
@@ -312,254 +341,34 @@ el("pdf").onclick=async()=>{
 };
 
 
-// Preparation belongs to the working sheet. It never creates a Host run or approval.
-const stageIds = ["ideia","pesquisa","plano","guiao","producao","revisao"];
-const stageNames = ["Ideia","Pesquisa","Plano","Guião / texto","Plano de produção","Rever a preparação"];
-const briefKeys = ["objective","audience","topic","tone","length","format","cutoff","sources"];
-const productNames = {text:"Texto",podcast:"Podcast",music:"Música",short:"Curta"};
-const guidance = {
-  text:[
-    "Define a pergunta, o objetivo, o público, o tamanho, o tom e as fontes permitidas.",
-    "Regista as fontes, as notas e os factos. Distingue o que está confirmado do que falta verificar.",
-    "Organiza o argumento, as secções e a ordem das ideias.",
-    "Escreve o rascunho. Reserva a correção e a revisão humana antes da exportação.",
-    "Planeia o documento editável e o PDF. A produção do ficheiro ainda não foi executada.",
-    "Revê a preparação, as fontes e as decisões que devem orientar o documento final."
-  ],
-  podcast:[
-    "Define a promessa ao ouvinte, o público, o tema, o tom e a duração.",
-    "Reúne fontes e factos para o episódio. Regista as dúvidas e as referências usadas.",
-    "Escolhe o ângulo e organiza os segmentos, a abertura e o fecho.",
-    "Escreve o guião, as transições e as indicações de locução.",
-    "Planeia voz, música, limpeza, mistura, capítulos e transcrição. O áudio ainda não foi produzido.",
-    "Revê guião, fontes, título, descrição e capítulos antes de aprovar a produção."
-  ],
-  music:[
-    "Define a intenção, a emoção, o público, o tema, o estilo e a duração.",
-    "Regista referências descritivas, contexto e limites do projeto.",
-    "Planeia instrumentos, BPM, estrutura e as versões que queres comparar.",
-    "Escreve a letra, o refrão e as indicações para a versão instrumental ou com voz.",
-    "Planeia três a cinco versões e a escolha humana. A música ainda não foi gerada.",
-    "Revê a letra, a intenção e os critérios de escolha antes da geração."
-  ],
-  short:[
-    "Define a ideia, o público, o tom, a duração e o formato da curta.",
-    "Reúne pesquisa, referências e factos que sustentam a história.",
-    "Prepara logline, sinopse, argumento e continuidade.",
-    "Escreve cenas, lista de planos, storyboard e guião de voz.",
-    "Planeia imagens, animação, narração, música, legendas e montagem. O vídeo ainda não foi produzido.",
-    "Revê a história, os planos, as fontes e a continuidade antes da produção."
-  ]
-};
-let project = null, projectStage = 0;
-function productCandidates(text) {
-  const normal=text.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
-  return [
-    ["text",/\b(?:texto|artigo|livro|ensaio|relatorio)\b/],
-    ["podcast",/\bpodcast\b/],
-    ["music",/\b(?:musica|cancao|fado|rap)\b/],
-    ["short",/\b(?:curta|curta-metragem|filme|video)\b/]
-  ].filter(([_id,pattern])=>pattern.test(normal)).map(([id])=>id);
-}
+// The Nexus assistant handles processes internally. No stage wizard or
+// product selector is presented: the Folha stays one editable white surface.
 function paintComposer() {
-  if(!hasWorkspace) return;
   el("composer-bottom").hidden=!el("text").value.trim() && !el("file").files.length;
 }
-function saveDraft() {
-  if(!project) return;
-  try {
-    const persisted=pageStorage.setItem("nexus-preparation",JSON.stringify(project));
-    el("resume").hidden=false;
-    if(!persisted) notice("A preparação continua nesta folha. Guarda uma cópia para a conservar.");
-  } catch(_error) {
-    notice("A preparação continua na folha. Guarda uma cópia para a conservar.");
+
+el("text").addEventListener("keydown",event=>{
+  if(event.key==="Enter" && (event.ctrlKey || event.metaKey)) {
+    event.preventDefault();el("form").requestSubmit();
   }
-}
-function revokeStageReviews(from) {
-  for(let i=from;i<project.stages.length;i++) project.stages[i].reviewed=false;
-}
-function stageReady(index) {
-  if(!project || !project.product || project.stages.slice(0,index).some(s=>!s.reviewed)) return false;
-  if(index===0) return ["objective","audience","topic","format"].every(key=>project.brief[key].trim());
-  return Boolean(project.stages[index].text.trim());
-}
-function renderStage() {
-  if(!project) return;
-  workingLayout(true);
-  el("workspace").hidden=false; el("result").hidden=true;
-  el("product").value=project.product;
-  el("stage-title").textContent=stageNames[projectStage];
-  el("stage-guidance").textContent=project.product?guidance[project.product][projectStage]:"Escolhe o produto para preparar o trabalho.";
-  el("brief-fields").hidden=projectStage!==0;
-  briefKeys.forEach(key=>{el("brief-"+key).value=project.brief[key];});
-  el("stage-note-label").textContent=projectStage===1?"Fontes, factos, notas e dúvidas":"Notas desta etapa";
-  el("stage-notes").value=project.stages[projectStage].text;
-  el("stage-reviewed").checked=project.stages[projectStage].reviewed;
-  el("stage-reviewed").disabled=!stageReady(projectStage);
-  el("stage-next").disabled=!project.stages[projectStage].reviewed || projectStage===5;
-  el("stage-next").hidden=projectStage===5;
-  el("workspace-status").textContent=project.stages.every(s=>s.reviewed)?"Preparação revista":"Preparação";
-  stageIds.forEach((_id,index)=>{
-    el("stage-"+index).setAttribute("aria-current",index===projectStage?"step":"false");
-    el("stage-"+index).setAttribute("data-reviewed",String(project.stages[index].reviewed));
-  });
-}
-function startPreparation(candidates) {
-  invalidateExecutionProposal(); clearTimeout(poll); current=null; viewRevision++;
-  projectStage=0;
-  project={
-    schema:"nexus.preparation.v1",product:candidates.length===1?candidates[0]:"",
-    original:el("text").value,source_filename:el("file").files[0]?.name || "",
-    brief:Object.fromEntries(briefKeys.map(key=>[key,""])),
-    stages:stageIds.map(id=>({id,text:"",reviewed:false})),
-    produced:false
-  };
-  project.brief.topic=project.original.slice(0,2000);
-  renderStage();saveDraft();
-  workingLayout(true);
-  el("workspace").scrollIntoView?.({block:"start"});
-}
-function restorePreparation(raw) {
-  const value=JSON.parse(raw);
-  if(!value || value.schema!=="nexus.preparation.v1" || value.produced!==false ||
-      !Object.prototype.hasOwnProperty.call(productNames,value.product) && value.product!=="" ||
-      typeof value.original!=="string" || value.original.length>100000 ||
-      !value.brief || briefKeys.some(key=>typeof value.brief[key]!=="string" || value.brief[key].length>10000) ||
-      !Array.isArray(value.stages) || value.stages.length!==6 ||
-      value.stages.some((s,i)=>!s || s.id!==stageIds[i] || typeof s.text!=="string" ||
-        s.text.length>100000 || typeof s.reviewed!=="boolean")) {
-    throw new Error("Não foi possível retomar esta preparação.");
+});
+const originalFileChange=el("file").onchange;
+el("file").onchange=()=>{originalFileChange();paintComposer();};
+const originalNewSheet=el("new").onclick;
+el("new").onclick=()=>{
+  pendingDialogue=null;
+  originalNewSheet();
+  workingLayout(false);el("history-panel").hidden=true;
+  el("history-toggle").setAttribute("aria-expanded","false");
+  el("navigation").open=false;paintComposer();
+};
+el("browse-file").onclick=()=>{el("navigation").open=false;el("file").click();};
+el("history-toggle").onclick=async()=>{
+  el("history-panel").hidden=!el("history-panel").hidden;
+  el("history-toggle").setAttribute("aria-expanded",String(!el("history-panel").hidden));
+  el("navigation").open=false;
+  if(!el("history-panel").hidden) {
+    try {await list();}catch(error){notice(error.message);}
   }
-  project=value;projectStage=0;
-  // Restoring a browser draft never restores execution or promotion authority.
-  invalidateExecutionProposal();current=null;viewRevision++;clearTimeout(poll);
-  el("text").value=project.original;el("file").value="";el("file-label").textContent="";
-  paintComposer();renderStage();notice("");el("navigation").open=false;
-}
-function downloadPreparation() {
-  if(!project) return;
-  const url=URL.createObjectURL(new Blob([JSON.stringify(project,null,2)],{type:"application/json;charset=utf-8"}));
-  const a=document.createElement("a");a.href=url;a.download="preparacao-"+(project.product || "nexus")+".json";a.click();
-  setTimeout(()=>URL.revokeObjectURL(url),1000);
-}
-if(hasWorkspace) {
-  const nativeSubmit=el("form").onsubmit;
-  el("form").onsubmit=async event=>{
-    const text=el("text").value;
-    const explicit=/^\s*(?:@@|@|""|&|\?\?|%|#)/.test(text);
-    const creation=/\b(?:faz|fazer|cria|criar|escreve|escrever|quero|prepara|preparar|preciso)\b/i.test(text);
-    const candidates=!explicit && creation?productCandidates(text):[];
-    if(candidates.length) {
-      event.preventDefault();notice("");
-      const revision=editRevision;
-      el("submit").disabled=true;
-      try {
-        let preview=null;
-        try {preview=await api("/api/interpret",{text});}
-        catch(_error) {
-          // Classification is optional for a local draft; never retry execution.
-        }
-        if(revision!==editRevision || el("text").value!==text) return;
-        if(preview && preview.status==="RESOLVED" && preview.registered_command===true) {
-          el("workspace").hidden=true;
-          await nativeSubmit(event,{preview,text,revision});
-          return;
-        }
-        if(project && (!el("workspace").hidden || project.original===text)) {
-          // Continuing the same sheet must never discard the person's work.
-          invalidateExecutionProposal();clearTimeout(poll);current=null;viewRevision++;
-          renderStage();el("workspace").scrollIntoView?.({block:"start"});
-        } else startPreparation(candidates);
-      } finally {
-        if(revision===editRevision && !el("execution-confirmation").open)
-          el("submit").disabled=false;
-      }
-      return;
-    }
-    el("workspace").hidden=true;
-    await nativeSubmit(event);
-  };
-  el("text").addEventListener("input",()=>{
-    paintComposer();
-    if(project && !el("workspace").hidden) {
-      project.original=el("text").value;revokeStageReviews(0);renderStage();saveDraft();
-    }
-  });
-  el("text").addEventListener("keydown",event=>{
-    if(event.key==="Enter" && (event.ctrlKey || event.metaKey)) {
-      event.preventDefault();el("form").requestSubmit();
-    }
-  });
-  const fileChange=el("file").onchange;
-  el("file").onchange=()=>{fileChange();paintComposer();};
-  el("file").addEventListener("change",()=>{
-    if(project && !el("workspace").hidden) {
-      project.source_filename=el("file").files[0]?.name || "";
-      revokeStageReviews(0);renderStage();saveDraft();
-    }
-  });
-  const newSheet=el("new").onclick;
-  el("new").onclick=()=>{
-    newSheet();project=null;projectStage=0;
-    workingLayout(false);
-    el("workspace").hidden=true;el("history-panel").hidden=true;
-    el("history-toggle").setAttribute("aria-expanded","false");
-    el("navigation").open=false;paintComposer();
-  };
-  el("history-toggle").onclick=async()=>{
-    el("history-panel").hidden=!el("history-panel").hidden;
-    el("history-toggle").setAttribute("aria-expanded",String(!el("history-panel").hidden));
-    el("navigation").open=false;
-    if(!el("history-panel").hidden) {
-      try {await list();} catch(error) {notice(error.message);}
-    }
-  };
-  el("resume").hidden=!pageStorage.getItem("nexus-preparation");
-  el("browse-file").onclick=()=>{el("navigation").open=false;el("file").click();};
-  el("resume").onclick=()=>{
-    try {restorePreparation(pageStorage.getItem("nexus-preparation"));}
-    catch(error) {notice(error.message);}
-  };
-  el("product").onchange=()=>{
-    if(!project) return;
-    project.product=el("product").value;revokeStageReviews(0);
-    invalidateExecutionProposal();renderStage();saveDraft();
-  };
-  stageIds.forEach((_id,index)=>{
-    el("stage-"+index).onclick=()=>{projectStage=index;renderStage();};
-  });
-  briefKeys.forEach(key=>{
-    el("brief-"+key).addEventListener("input",()=>{
-      project.brief[key]=el("brief-"+key).value;revokeStageReviews(0);
-      invalidateExecutionProposal();saveDraft();
-      el("stage-reviewed").checked=false;el("stage-reviewed").disabled=!stageReady(projectStage);
-      el("stage-next").disabled=true;el("workspace-status").textContent="Preparação";
-      stageIds.forEach((_id,index)=>el("stage-"+index).setAttribute("data-reviewed","false"));
-    });
-  });
-  el("stage-notes").addEventListener("input",()=>{
-    project.stages[projectStage].text=el("stage-notes").value;revokeStageReviews(projectStage);
-    invalidateExecutionProposal();saveDraft();
-    el("stage-reviewed").checked=false;el("stage-reviewed").disabled=!stageReady(projectStage);
-    el("stage-next").disabled=true;el("workspace-status").textContent="Preparação";
-    stageIds.forEach((_id,index)=>el("stage-"+index).setAttribute("data-reviewed",String(project.stages[index].reviewed)));
-  });
-  el("stage-reviewed").onchange=()=>{
-    if(!stageReady(projectStage)) {el("stage-reviewed").checked=false;return;}
-    project.stages[projectStage].reviewed=el("stage-reviewed").checked;
-    if(!project.stages[projectStage].reviewed) revokeStageReviews(projectStage);
-    renderStage();saveDraft();
-  };
-  el("stage-next").onclick=()=>{
-    if(!project.stages[projectStage].reviewed || projectStage>=5) return;
-    projectStage++;renderStage();
-  };
-  el("save-preparation").onclick=downloadPreparation;
-  el("execution-confirmation").addEventListener("cancel",event=>{
-    event.preventDefault();el("execution-cancel").onclick();
-  });
-  el("approval").addEventListener("cancel",event=>{
-    event.preventDefault();el("cancel").onclick();
-  });
-  paintComposer();
-}
+};
+paintComposer();

@@ -9,4 +9,4 @@
 - Reprodução da suite fornecida; matrizes de cobertura, pendências e evidência real.
 - Actions e modelos de issue/pull request para rastreabilidade futura.
 
-[Changelog anterior](historico/repositorio-2026-09-24/CHANGELOG.md).
+[Changelog anterior](../historico/repositorio-2026-09-24/CHANGELOG.md).

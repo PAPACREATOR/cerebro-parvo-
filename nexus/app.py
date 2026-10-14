@@ -82,6 +82,76 @@ def _request_digest(request):
     return hashlib.sha256(raw).hexdigest()
 
 
+def _natural_work_process(text):
+    """Deterministic process proposal for bounded natural text, never authority."""
+    if not isinstance(text, str) or not text.strip() or len(text) > 12000:
+        return None
+    from nexus.frontdoor import requires_clarification
+    if requires_clarification(text):
+        return None
+    normal = re.sub(r"\s+", " ", unicodedata.normalize("NFKC", text).casefold()).strip()
+    if re.search(r"\b(?:apaga|elimina|remove|desativa|envia|publica|instala|executa|transfere)\b", normal):
+        return None
+    web = re.match(
+        r"^(?:por favor[, ]+)?(?:pesquisa|pesquisar|procura|procurar|encontra|encontrar)"
+        r"\s+(?:(?:na\s+)?(?:web|internet)\s+)?(?:(?:fontes?|informações)\s+)?"
+        r"(?:(?:sobre|acerca de|para)\s+)?(.+)$", normal,
+    )
+    if web:
+        subject = web.group(1).strip(" .?!")
+        if subject and subject not in {"web", "internet", "na web", "na internet", "fontes"}:
+            return "web"
+    candidate = re.match(
+        r"^(?:por favor[, ]+)?(?:cria|criar|faz|fazer|prepara|preparar|"
+        r"quero\s+(?:criar|fazer|preparar)|preciso\s+de)\s+"
+        r"(?:(?:um|uma|o|a)\s+)?"
+        r"(podcast\s+visual|podcast|v[ií]deo|curta(?:-metragem)?|m[uú]sica|can[cç][aã]o)\b",
+        normal,
+    )
+    if not candidate:
+        return None
+    family = candidate.group(1)
+    if family == "podcast visual":
+        return "visual_podcast"
+    if family == "podcast":
+        return "podcast"
+    if family in ("vídeo", "video", "curta", "curta-metragem"):
+        return "video"
+    return "music"
+
+
+def _natural_assistant(text):
+    """Read-only conversational preparation by Nexus; tools have no say here."""
+    process = _natural_work_process(text)
+    if process not in {"podcast", "visual_podcast", "video", "music"}:
+        return {"process": process, "question": None, "missing": []}
+    normal = unicodedata.normalize("NFKC", text).casefold()
+    # Fixed recognition, not an invented default. Unsupported tone words can
+    # be supplied explicitly as 'tom: ...' or 'estilo: ...'.
+    tone = bool(re.search(
+        r"\b(?:documental|jornalístico|jornalistico|informal|formal|académico|academico|"
+        r"narrativo|educativo|didático|didatico|descontraído|descontraido|"
+        r"humorístico|humoristico|humor|sério|serio|emocional|conversacional|"
+        r"cinematográfico|cinematografico|folk|fado|rock|rap|pop|clássico|classico)\b",
+        normal,
+    ) or re.search(r"\b(?:tom|estilo)\s*:\s*\S+", normal))
+    duration = bool(re.search(
+        r"\b\d+(?:[.,]\d+)?\s*(?:segundos?|seg|minutos?|min|horas?|h)\b",
+        normal,
+    ))
+    missing = []
+    if not tone:
+        missing.append("tom")
+    if not duration:
+        missing.append("duração")
+    questions = {
+        ("tom", "duração"): "Que tom pretendes e quanto deve durar?",
+        ("tom",): "Que tom pretendes?",
+        ("duração",): "Quanto deve durar?",
+    }
+    return {"process": process, "question": questions.get(tuple(missing)), "missing": missing}
+
+
 def _natural_request(data, host):
     """Build one bounded request proposal. This function never executes it."""
     if not isinstance(data, dict) or set(data) != {"text", "filename", "attachment"}:
@@ -93,14 +163,23 @@ def _natural_request(data, host):
     process = propose_operation(
         parsed, filename=data["filename"], attachment=data["attachment"]
     )
+    inferred = _natural_work_process(data["text"]) if not data["filename"] and not data["attachment"] else None
     if process is None and parsed.status == "RESOLVED":
-        # Match the whole registered command after the intent is resolved.
-        # A proposal never grants permission to execute the selected function.
-        candidate = registered_router().propose(
-            intent=parsed.intent, text=parsed.content,
-            attachment_present=bool(data["filename"] and data["attachment"]),
-        )
-        process = candidate.process
+        # Registry only accepts exact legacy commands. Unknown registered
+        # commands must not prevent a separately validated, safe text-only
+        # natural proposal from running via Host/Store. Never catch a real
+        # integrity or registry failure in this branch.
+        try:
+            candidate = registered_router().propose(
+                intent=parsed.intent, text=parsed.content,
+                attachment_present=bool(data["filename"] and data["attachment"]),
+            )
+            process = candidate.process
+        except Blocked as error:
+            if "Operação desconhecida, incompleta ou ambígua." != str(error):
+                raise
+    if process is None and parsed.status != "BLOCKED":
+        process = inferred
     if process is None:
         raise Blocked("Não consigo determinar com segurança essa operação. Reformula o pedido.")
 
@@ -121,9 +200,12 @@ def _natural_request(data, host):
         attachment = base64.b64decode(request["attachment"], validate=True)
     except (ValueError, TypeError) as error:
         raise Blocked("Anexo inválido.") from error
+    text_only = inferred == process and not request["filename"] and not request["attachment"]
+    if text_only:
+        attachment = request["text"].encode("utf-8")
     if not attachment or len(attachment) > host.store.policy["max_input_bytes"]:
-        raise Blocked("Junta um ficheiro até 2 MB para verificar.")
-    name = request["filename"]
+        raise Blocked("O pedido ou o ficheiro ultrapassa o limite permitido.")
+    name = request["filename"] if not text_only else "pedido"
     if not name or any(ord(char) < 32 for char in name) or "/" in name or "\\" in name:
         raise Blocked("Nome de anexo inválido.")
 
@@ -155,7 +237,8 @@ def _natural_request(data, host):
         "visual_podcast": "Preparar plano de podcast visual a partir de " + name + "; não gera vídeo.",
         "book": "Exportar o manuscrito " + name + " para PDF; não cria nem redesenha o livro.",
         "music": "Preparar plano de música a partir de " + name + "; não gera áudio.",
-        "web": "Preparar plano de pesquisa web a partir de " + name + "; não navega automaticamente.",
+        "web": ("Pesquisar fontes públicas na Internet e guardar as referências obtidas." if text_only
+                else "Preparar plano de pesquisa web a partir de " + name + "."),
     }
     return request, {
         "molde": build_molde(data["text"], data["filename"], data["attachment"],
@@ -346,9 +429,22 @@ def make_server(host, port=0, *, allow_direct_run=False):
                         "confirmation_required": False,
                         "execution": "NOT_AUTHORIZED",
                         "registered_command": command is not None and command.intent == parsed.intent,
+                        "assistant": _natural_assistant(data["text"]) if parsed.status != "BLOCKED" else {"process": None, "question": None, "missing": []},
                         "molde": build_molde(data["text"], intent=parsed.intent if parsed.status == "RESOLVED" else None)
                                  if data["text"] else None,
                     })
+                if path == "/api/research":
+                    # Read-only web discovery is an authorized natural user
+                    # request, not Canonical promotion and never an arbitrary
+                    # process dispatch. No upload, no hidden action, no retry.
+                    if (set(data) != {"text"} or not isinstance(data["text"], str)
+                            or _natural_work_process(data["text"]) != "web"):
+                        raise Blocked("A pesquisa externa exige um pedido claro na Folha.")
+                    request, _proposal = _natural_request(
+                        {"text": data["text"], "filename": "", "attachment": ""}, host)
+                    if request["process"] != "web":
+                        raise Blocked("Processo de pesquisa não autorizado.")
+                    return self.reply(202, host.start(request, session))
                 if path == "/api/prepare-run":
                     request, preview = _natural_request(data, host)
                     now = time.monotonic()

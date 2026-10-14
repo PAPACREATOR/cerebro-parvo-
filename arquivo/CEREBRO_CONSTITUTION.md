@@ -84,4 +84,4 @@ Markdown, IDs, schemas, SQLite, MCP, adapters, processos e aplicações especial
 
 A evolução histórica nunca é apagada para tornar a documentação “limpa”. Documentação ativa descreve o estado atual; decisões anteriores ficam na genealogia.
 
-[Arquitetura vigente](CEREBRO_ARCHITECTURE.md) · [Decisões e genealogia](DECISIONS.md) · [Estado operacional](nexus/docs/PONTO-DE-SITUACAO.md).
+[Arquitetura vigente](CEREBRO_ARCHITECTURE.md) · [Decisões e genealogia](DECISIONS.md) · [Estado operacional](../nexus/docs/PONTO-DE-SITUACAO.md).
