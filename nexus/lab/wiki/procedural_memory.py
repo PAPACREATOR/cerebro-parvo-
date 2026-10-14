@@ -240,6 +240,24 @@ class ProceduralMemory:
                 "family": family, "goal": goal, "candidates": suggestions[:8],
                 "requires_human_review": True}
 
+    def bind_wiki_candidate(self, molde, *, goal, source_ids, objective):
+        """Link a learned/initial suggestion to the EXISTING Wiki flow v1 gate.
+
+        Only the four processes explicitly accepted by Wiki flow v1 can produce
+        a validated candidate here. Any other family/tool stays a suggestion,
+        never an invented executor, workflow engine or bypass.
+        """
+        from nexus.lab.wiki.flow_proposal import ALLOWED_STEPS, propose, validate_proposal
+        suggestions = self.suggest(molde, goal=goal)["candidates"]
+        if not suggestions:
+            raise Blocked("Não existe receita candidata confirmável.")
+        steps = suggestions[0]["steps"]
+        if any(step not in ALLOWED_STEPS for step in steps):
+            raise Blocked("A Wiki v1 não suporta esta sequência; sem execução.")
+        packet = self.bridge.prepare(objective, source_ids, include_creative=False)
+        plan = propose(packet, steps)
+        return validate_proposal(packet, plan)
+
     def recognise(self, molde, text):
         """Tolerant candidate retrieval, never auto-dispatch or executable regex."""
         family = _family(molde)
