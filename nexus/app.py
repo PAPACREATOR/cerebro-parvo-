@@ -163,15 +163,21 @@ def _natural_request(data, host):
     process = propose_operation(
         parsed, filename=data["filename"], attachment=data["attachment"]
     )
-    if process is None and parsed.status == "RESOLVED":
-        # Match the whole registered command after the intent is resolved.
-        # A proposal never grants permission to execute the selected function.
-        candidate = registered_router().propose(
-            intent=parsed.intent, text=parsed.content,
-            attachment_present=bool(data["filename"] and data["attachment"]),
-        )
-        process = candidate.process
     inferred = _natural_work_process(data["text"]) if not data["filename"] and not data["attachment"] else None
+    if process is None and parsed.status == "RESOLVED":
+        # Registry only accepts exact legacy commands. Unknown registered
+        # commands must not prevent a separately validated, safe text-only
+        # natural proposal from running via Host/Store. Never catch a real
+        # integrity or registry failure in this branch.
+        try:
+            candidate = registered_router().propose(
+                intent=parsed.intent, text=parsed.content,
+                attachment_present=bool(data["filename"] and data["attachment"]),
+            )
+            process = candidate.process
+        except Blocked as error:
+            if "Operação desconhecida, incompleta ou ambígua." != str(error):
+                raise
     if process is None and parsed.status != "BLOCKED":
         process = inferred
     if process is None:
