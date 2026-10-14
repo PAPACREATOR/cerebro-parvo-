@@ -151,6 +151,19 @@ def prepare_task(process, input_path, work, *, config_root=None):
         response = fetch_plan(prepare_text(raw), process, config)
         (work / "product-plan-response.json").write_text(
             json.dumps(response, ensure_ascii=False), encoding="utf-8")
+    elif process == "web":
+        # External network runs only in the Host-owned preparation phase.
+        # Legacy 'Consulta:' plan requests retain their existing behaviour.
+        from nexus.adapters.product_routes import (
+            prepare_text, natural_web_query, fetch_web_sources,
+        )
+        source_text = prepare_text(raw)
+        if natural_web_query(source_text) is not None:
+            cfg_path = config_root / "web-search.json"
+            configuration = strict_json(cfg_path.read_bytes()) if cfg_path.is_file() else None
+            sources = fetch_web_sources(source_text, configuration)
+            (work / "web-search-response.json").write_text(
+                json.dumps(sources, ensure_ascii=False), encoding="utf-8")
     elif process in ("proofread", "convert_pdf", "book"):
         name = "languagetool.json" if process == "proofread" else "libreoffice.json"
         if not (config_root / name).is_file():
