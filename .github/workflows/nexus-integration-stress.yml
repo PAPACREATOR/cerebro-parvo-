@@ -97,8 +97,68 @@ jobs:
           Write-Output 'LOCAL_BOOTSTRAP_PARSE=PASS'
       - name: Block F — ACE-Step and Forge bounded local MCP health
         run: python -m pytest nexus/tests/test_media_tools.py nexus/tests/test_media_tools_mcp.py nexus/tests/test_media_tools_checker.py -q -p no:cacheprovider -o pythonpath=.
-      - name: Block G — complete Nexus regression
-        run: python -m pytest nexus/tests -q -p no:cacheprovider -o pythonpath=. --ignore=nexus/tests/test_product_flows_5000.py --ignore=nexus/tests/test_product_system_50000.py --ignore=nexus/tests/test_product_themes_canonical_200k.py --ignore=nexus/tests/test_public_product_routes_10000.py --ignore=nexus/tests/test_public_product_routes_all_50000.py
+      - name: Block G — coverage delegated to four independent complete-regression shards
+        shell: pwsh
+        run: |
+          Write-Output 'BLOCK_G_DELEGATED_TO_REGRESSION_MATRIX=4'
+
+  regression:
+    name: Nexus full regression G partition ${{ matrix.shard }}
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
+    runs-on: windows-latest
+    timeout-minutes: 45
+    env:
+      PYTHONUTF8: '1'
+      PYTHONIOENCODING: utf-8
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Install pinned Nexus test dependencies
+        run: python -m pip install -r nexus/requirements-test.txt
+      - name: Block G — full regression coverage partition ${{ matrix.shard }}
+        shell: pwsh
+        run: |
+          # Preserve the old Block G collection: every test module except its
+          # five intentionally delegated high-volume modules, no new exclusions.
+          $volume = @(
+            'nexus/tests/test_product_flows_5000.py',
+            'nexus/tests/test_product_system_50000.py',
+            'nexus/tests/test_product_themes_canonical_200k.py',
+            'nexus/tests/test_public_product_routes_10000.py',
+            'nexus/tests/test_public_product_routes_all_50000.py'
+          )
+          $modules = @(Get-ChildItem -LiteralPath nexus/tests -File -Recurse |
+            Where-Object { $_.Name -like 'test_*.py' -or $_.Name -like '*_test.py' } |
+            ForEach-Object { [IO.Path]::GetRelativePath($PWD.Path, $_.FullName).Replace('\', '/') } |
+            Where-Object { $volume -notcontains $_ } | Sort-Object)
+          $shard = [int]'${{ matrix.shard }}'
+          $selected = @(for ($i = 0; $i -lt $modules.Count; $i++) {
+            if (($i % 4) -eq $shard) { $modules[$i] }
+          })
+          if ($modules.Count -eq 0 -or $selected.Count -eq 0) {
+            throw 'Empty full-regression shard'
+          }
+          Write-Output ("BLOCK_G_TOTAL_MODULES=" + $modules.Count + " SHARD=" + $shard + " SELECTED=" + $selected.Count)
+          $selected | ForEach-Object { Write-Output ("BLOCK_G_MODULE=" + $_) }
+          New-Item -ItemType Directory -Force -Path regression-evidence | Out-Null
+          python -m pytest @selected -q -p no:cacheprovider -o pythonpath=. --durations=15 "--junitxml=regression-evidence/block-g-$shard.xml"
+          if ($LASTEXITCODE -ne 0) { throw "Block G partition $shard failed" }
+          Write-Output ("NEXUS_BLOCK_G_PARTITION_" + $shard + "=PASS")
+      - name: Preserve regression evidence on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nexus-block-g-evidence-${{ matrix.shard }}
+          path: regression-evidence/
+          if-no-files-found: error
 
   product-flows:
     name: Product flows — 6x5000 + whole system 50000

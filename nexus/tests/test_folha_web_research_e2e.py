@@ -5,7 +5,10 @@ No tool, AI, cloud index, or Canonical authority is simulated.
 import json
 import os
 import time
+import urllib.parse
+import urllib.request
 from pathlib import Path
+from types import SimpleNamespace
 from urllib.error import HTTPError
 
 import pytest
@@ -45,9 +48,19 @@ def fixture_search(monkeypatch):
             seen.append(request.full_url)
             return SearchResponse()
 
+    # Isolate the provider fixture to product_routes, not the global urllib
+    # singleton: patching urllib.request.build_opener directly leaks into
+    # other HTTP tests when pytest runs several modules in the same process.
     monkeypatch.setattr(
-        "nexus.adapters.product_routes.urllib.request.build_opener",
-        lambda *_args: Opener(),
+        "nexus.adapters.product_routes.urllib",
+        SimpleNamespace(
+            parse=urllib.parse,
+            request=SimpleNamespace(
+                Request=urllib.request.Request,
+                ProxyHandler=urllib.request.ProxyHandler,
+                build_opener=lambda *_args: Opener(),
+            ),
+        ),
     )
     return seen
 
@@ -124,3 +137,10 @@ def test_windows_folha_host_to_verified_creative_and_human_canonical(tmp_path, m
                         pytest.fail("Must never repeat a completed web search"))
     restored = Host(host.store.root)
     restored.store.check_commit(restored.store.state(run_id))
+
+
+def test_search_fixture_never_mutates_global_urllib_opener(monkeypatch):
+    original = urllib.request.build_opener
+    fixture_search(monkeypatch)
+    assert urllib.request.build_opener is original
+    assert callable(urllib.request.urlopen)

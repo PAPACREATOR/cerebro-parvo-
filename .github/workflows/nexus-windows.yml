@@ -74,7 +74,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [0, 1]
+        shard: [0, 1, 2, 3]
     runs-on: windows-latest
     timeout-minutes: 30
     env:
@@ -109,7 +109,7 @@ jobs:
             Where-Object { $volume -notcontains $_ } | Sort-Object)
           $shard = [int]$env:NEXUS_REGRESSION_SHARD
           $selected = @(for ($i = 0; $i -lt $modules.Count; $i++) {
-            if (($i % 2) -eq $shard) { $modules[$i] }
+            if (($i % 4) -eq $shard) { $modules[$i] }
           })
           if ($selected.Count -eq 0) { throw 'Empty regression partition' }
           Write-Output ("STANDARD_MODULES=" + $modules.Count + " PARTITION=" + $shard + " SELECTED=" + $selected.Count)
