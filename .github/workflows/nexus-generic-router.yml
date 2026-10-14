@@ -47,7 +47,7 @@ jobs:
         run: npm run test:browser
       - name: Preserve Folha browser evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: folha-browser-${{ matrix.os }}
           path: folha-browser-evidence/

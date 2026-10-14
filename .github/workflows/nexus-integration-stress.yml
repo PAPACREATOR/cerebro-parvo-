@@ -154,7 +154,7 @@ jobs:
           Write-Output ("NEXUS_BLOCK_G_PARTITION_" + $shard + "=PASS")
       - name: Preserve regression evidence on failure
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: nexus-block-g-evidence-${{ matrix.shard }}
           path: regression-evidence/
