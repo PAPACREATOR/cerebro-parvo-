@@ -14,6 +14,6 @@ Seleção documental não significa instalação, integração nem licença veri
 
 Antes de copiar terceiro: URL + commit/tag + ficheiro/função + hash + licença/notices + dependências/permissões + alterações + testes. A biblioteca citada no README do candidato não se torna dependência automaticamente. Não converter descrições históricas de licenças em verificação atual.
 
-As dependências de auditoria estão fixadas em [requirements-auditoria.txt](requirements-auditoria.txt). Os Actions oficiais têm SHA fixo resolvido em 27/09/2026. Não foi reutilizado código novo desses projetos nesta reconciliação.
+As dependências de auditoria estão fixadas em [requirements-auditoria.txt](../../requirements-auditoria.txt). Os Actions oficiais têm SHA fixo resolvido em 27/09/2026. Não foi reutilizado código novo desses projetos nesta reconciliação.
 
-[Seleção histórica de 24/09](historico/repositorio-2026-09-24/LEGO-LOCK.md) · [Genealogia](docs/GENEALOGIA.md).
+[Seleção histórica de 24/09](../../historico/repositorio-2026-09-24/LEGO-LOCK.md) · [Genealogia](../GENEALOGIA.md).

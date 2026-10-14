@@ -100,7 +100,11 @@
         ],
         "properties": {
           "process": {
-            "const": "verify"
+            "enum": [
+              "verify",
+              "convert_pdf",
+              "book"
+            ]
           },
           "intent": {
             "enum": [

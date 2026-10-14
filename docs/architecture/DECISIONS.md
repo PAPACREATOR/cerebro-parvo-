@@ -14,7 +14,7 @@ Isto adiciona capacidade, não altera M1–M14 nem autoridade.
 
 A [PR #21](https://github.com/PAPACREATOR/cerebro-parvo-/pull/21) documenta a remoção de Conductor/Spiff/YAML de execução do ativo; a [PR #23](https://github.com/PAPACREATOR/cerebro-parvo-/pull/23) é a única continuação. Kernel/Host/Store Python, MCP determinístico, ferramentas externas e Human Gate constituem a composição candidata. A pessoa continua autoridade máxima; M1–M14 e os princípios não são reabertos por esta nota.
 
-A entrada de 30/09 mantém a genealogia do produto, mas as suas escolhas de executor/templates foram substituídas na implementação. O [ponto de situação](nexus/docs/PONTO-DE-SITUACAO.md) é a fonte operacional para SHAs, PASS/FAIL e limites. Referência verde histórica não equivale a HEAD atual aprovado.
+A entrada de 30/09 mantém a genealogia do produto, mas as suas escolhas de executor/templates foram substituídas na implementação. O [ponto de situação](../../nexus/docs/PONTO-DE-SITUACAO.md) é a fonte operacional para SHAs, PASS/FAIL e limites. Referência verde histórica não equivale a HEAD atual aprovado.
 
 Esta entrada regista decisões já materializadas e evidência anterior; não cria uma nova decisão arquitetural.
 

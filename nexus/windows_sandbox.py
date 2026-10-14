@@ -106,6 +106,9 @@ class _API:
                 "GetLengthSid": (D, [P]),
                 "GetNamedSecurityInfoW": (D, [W.LPCWSTR, D, D, P, P, P, P, P]),
                 "SetEntriesInAclW": (D, [D, P, P, P]),
+                "GetAclInformation": (W.BOOL, [P, P, D, D]),
+                "GetAce": (W.BOOL, [P, D, P]),
+                "DeleteAce": (W.BOOL, [P, D]),
                 "SetNamedSecurityInfoW": (D, [W.LPWSTR, D, D, P, P, P, P]),
                 "SetSecurityInfo": (D, [H, D, D, P, P, P, P]),
                 "ConvertStringSecurityDescriptorToSecurityDescriptorW": (W.BOOL, [W.LPCWSTR, D, P, P]),
@@ -131,6 +134,19 @@ class _API:
             raise Blocked(f"A proteção Windows não pôde ser aplicada ({operation}, erro {C.get_last_error()}).")
         return value
 
+    def _remove_task_denies(self, acl, sid):
+        # REVOKE_ACCESS removes allow/audit ACEs, but retains deny ACEs.
+        # Only remove the ordinary deny ACEs this boundary creates for its SID.
+        info = (self.D * 3)()
+        self.check(self.a.GetAclInformation(acl, C.byref(info), C.sizeof(info), 2),
+                   "task ACL size")
+        for index in range(info[0] - 1, -1, -1):
+            ace = self.P()
+            self.check(self.a.GetAce(acl, index, C.byref(ace)), "task ACE read")
+            if (C.c_ubyte.from_address(ace.value).value == 1
+                    and self.a.EqualSid(self.P(ace.value + 8), sid)):
+                self.check(self.a.DeleteAce(acl, index), "task deny removal")
+
     def acl(self, path, sid, mask, mode=1, inherit=True):
         old, descriptor, new = self.P(), self.P(), self.P()
         path = str(path)
@@ -143,6 +159,8 @@ class _API:
             entry.trustee.form, entry.trustee.type, entry.trustee.name = 0, 5, sid
             error = self.a.SetEntriesInAclW(1, C.byref(entry), old, C.byref(new))
             if not error:
+                if mode == 4:
+                    self._remove_task_denies(new, sid)
                 if not inherit and Path(path).is_dir():
                     # Documented MAXIMUM_ALLOWED handle semantics suppress
                     # propagation to children. Only this task SID's ACE changes;

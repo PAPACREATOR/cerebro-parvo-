@@ -260,6 +260,36 @@ def test_direct_product_capability_is_pinned_then_human_approved_without_restart
         return original_launch(command, **kwargs)
     monkeypatch.setattr(host_module, "launch_confined", launch)
     host = Host(data)
+    if process in {"book", "convert_pdf"}:
+        # Intentional missing-Sandy negative gate: these old CLI peers prove
+        # transport equivalence only, NOT a trusted Writer LPAC installation.
+        # The separate real-Windows test_native_writer_route_real.py proves
+        # positive end-to-end Writer, PDF, human approval and restart safety.
+        # Never allow a fake soffice.com to bypass the new pinned Sandy gate.
+        with http(host, allow_direct_run=True) as call:
+            run = call("/api/run", {"process": process, "text": "",
+                                   "filename": "source.bin",
+                                   "attachment": base64.b64encode(raw).decode("ascii")})["run_id"]
+            deadline = time.monotonic() + 20
+            state = call("/api/runs/" + run)
+            while state["status"] == "RUNNING" and time.monotonic() < deadline:
+                time.sleep(0.05)
+                state = call("/api/runs/" + run)
+            assert state["status"] == "BLOCKED", state
+            assert "Configuração da ferramenta inválida." in state["message"]
+            assert (data / "runs" / run / "input.bin").read_bytes() == raw
+            assert not (data / "canonical" / run).exists()
+            assert not (data / "creative" / run).exists()
+            from urllib.error import HTTPError
+            with pytest.raises(HTTPError) as refused:
+                call("/api/prepare", {"run_id": run})
+            assert refused.value.code == 403
+        assert launches == []
+        assert brokers == []
+        restored = Host(data)
+        assert restored.store.state(run)["status"] == "BLOCKED"
+        assert not (data / "canonical" / run).exists()
+        return
     # Diagnostic A/B only; product default remains fail-closed.
     with http(host, allow_direct_run=True) as call:
         run = call("/api/run", {"process": process, "text": "", "filename": "source.bin",

@@ -53,6 +53,10 @@ PROCESS_FILES = {
     "convert_pdf": (
         "adapters/runner.py",
         "adapters/office.py",
+        "adapters/writer_sandy.py",
+        "adapters/vendor/sandy/libreoffice-demo.py",
+        "adapters/vendor/sandy/libreoffice.toml",
+        "adapters/vendor/sandy/LICENSE",
     ),
     "video": (
         "adapters/runner.py",
@@ -69,6 +73,10 @@ PROCESS_FILES = {
     "book": (
         "adapters/runner.py",
         "adapters/office.py",
+        "adapters/writer_sandy.py",
+        "adapters/vendor/sandy/libreoffice-demo.py",
+        "adapters/vendor/sandy/libreoffice.toml",
+        "adapters/vendor/sandy/LICENSE",
     ),
     "music": (
         "adapters/runner.py",
@@ -88,7 +96,7 @@ def process_fingerprint(process):
     h = hashlib.sha256()
     h.update(process.encode("utf-8"))
     h.update(b"\0")
-    for relative in (*files, "windows_sandbox.py", "contracts.py", "schemas/result.json"):
+    for relative in (*files, "windows/runner-shell.cmd", "windows_sandbox.py", "contracts.py", "schemas/result.json"):
         path = ROOT / relative
         h.update(relative.encode("utf-8"))
         h.update(b"\0")
@@ -143,12 +151,25 @@ def prepare_task(process, input_path, work, *, config_root=None):
         response = fetch_plan(prepare_text(raw), process, config)
         (work / "product-plan-response.json").write_text(
             json.dumps(response, ensure_ascii=False), encoding="utf-8")
+    elif process == "web":
+        # External network runs only in the Host-owned preparation phase.
+        # Legacy 'Consulta:' plan requests retain their existing behaviour.
+        from nexus.adapters.product_routes import (
+            prepare_text, natural_web_query, fetch_web_sources,
+        )
+        source_text = prepare_text(raw)
+        if natural_web_query(source_text) is not None:
+            cfg_path = config_root / "web-search.json"
+            configuration = strict_json(cfg_path.read_bytes()) if cfg_path.is_file() else None
+            sources = fetch_web_sources(source_text, configuration)
+            (work / "web-search-response.json").write_text(
+                json.dumps(sources, ensure_ascii=False), encoding="utf-8")
     elif process in ("proofread", "convert_pdf", "book"):
         name = "languagetool.json" if process == "proofread" else "libreoffice.json"
         if not (config_root / name).is_file():
             raise Blocked("A ferramenta precisa de configuração local.")
         config = strict_json((config_root / name).read_bytes())
-        keys = {"java", "jar"} if process == "proofread" else {"executable"}
+        keys = {"java", "jar"} if process == "proofread" else {"executable", "sandy"}
         if not isinstance(config, dict) or set(config) != keys:
             raise Blocked("Configuração da ferramenta inválida.")
         for value in config.values():
@@ -161,7 +182,8 @@ def prepare_task(process, input_path, work, *, config_root=None):
             roots += [java.parent.parent, jar.parent]
         else:
             exe = Path(config["executable"])
-            if exe.name.lower() != "soffice.com":
+            sandy = Path(config["sandy"])
+            if exe.name.lower() != "soffice.com" or sandy.name.lower() != "sandy.exe":
                 raise Blocked("Ferramenta não autorizada.")
             roots.append(exe.parent.parent)
         (work / name).write_text(json.dumps(config), encoding="utf-8")

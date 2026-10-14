@@ -95,7 +95,6 @@ def test_wiki_flow_candidate_is_deterministic_and_source_bound():
     with pytest.raises(Blocked):
         validate_proposal(changed, first)
 
-
 # Fail-first regression: untrusted context/flow JSON must never exploit Python's
 # bool == 1 or float == 1.0 coercion or leak TypeError into the caller.
 @pytest.mark.parametrize("wrong", [True, 1.0, "1", None])

@@ -120,7 +120,16 @@ try {
     $remote = (& $git -C $repoPath config --get remote.origin.url).Trim()
     if ($LASTEXITCODE -ne 0 -or $remote -cne $origin) { throw 'NEXUS_TEST_ORIGIN_MISMATCH' }
     $dirty = @(& $git -C $repoPath status --porcelain=v1 --untracked-files=all)
-    if ($LASTEXITCODE -ne 0 -or ($dirty -join '').Trim()) { throw 'NEXUS_TEST_SOURCE_DIRTY' }
+    $dirtyExit = $LASTEXITCODE
+    if ($dirtyExit -ne 0 -or ($dirty -join '').Trim()) {
+        # Diagnostic-only: retain bounded path/status evidence; never waive
+        # the clean-source precondition or install from a dirty checkout.
+        $report.checks['git-pin-and-clean'] = 'FAIL'
+        $report['dirty_git_status'] = @($dirty | Select-Object -First 30)
+        $report['dirty_git_exit_code'] = $dirtyExit
+        Save-Report
+        throw 'NEXUS_TEST_SOURCE_DIRTY'
+    }
     $report.checks['git-pin-and-clean'] = 'PASS'
     Save-Report
 

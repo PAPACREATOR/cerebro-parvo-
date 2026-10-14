@@ -32,7 +32,7 @@ jobs:
           python-version: '3.12'
       - name: Install fixed Nexus test dependencies
         run: python -m pip install -r nexus/requirements-test.txt
-      - name: Wiki Kernel bridge and bounded flow proposal on Windows
+      - name: Wiki Kernel bridge on Windows
         run: python -m pytest nexus/lab/wiki/test_kernel_bridge.py nexus/lab/wiki/test_flow_proposal.py -q -o pythonpath=.
       - name: Wiki 100K study on Windows
         shell: pwsh

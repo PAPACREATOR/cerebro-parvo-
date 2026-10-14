@@ -11,6 +11,8 @@ for item in manifest:
     elif hashlib.sha256(path.read_bytes()).hexdigest()!=item['sha256']:
         errors.append('Preserved bytes changed: '+item['path'])
 active=list(ROOT.glob('*.md'))+list((ROOT/'docs').glob('*.md'))+list((ROOT/'tasks').glob('*.md'))+list((ROOT/'auditoria').glob('*.md'))+[ROOT/'implementacao/README.md']
+for directory in ("architecture","planning","internal"):
+    active.extend((ROOT/"docs"/directory).glob("*.md"))
 links=0
 for path in active:
     for target in re.findall(r'\]\(([^)]+)\)',path.read_text()):
@@ -27,7 +29,7 @@ if not evidence.is_file():errors.append('Suite evidence missing')
 if state['product_release']!='NOT_APPROVED':
     errors.append('This reconciliation must not promote the product release')
 # Check tracked sources and instructions cannot silently revert to the old baseline.
-for p in ['README.md','AGENTS.md','CEREBRO_CONSTITUTION.md','STATUS.md','docs/MATRIZ-CONFORMIDADE.md']:
+for p in ['README.md','docs/internal/AGENTS.md','docs/architecture/CEREBRO_CONSTITUTION.md','docs/planning/STATUS.md','docs/MATRIZ-CONFORMIDADE.md']:
     if 'M1' not in (ROOT/p).read_text():errors.append('Missing architecture reference: '+p)
 if errors:
     print('\n'.join(errors));sys.exit(1)

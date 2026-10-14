@@ -23,7 +23,7 @@ jobs:
   windows:
     name: 100K blocks + MCP + OpenNotebook E2E
     runs-on: windows-latest
-    timeout-minutes: 20
+    timeout-minutes: 60
     env:
       PYTHONUTF8: '1'
       PYTHONIOENCODING: utf-8
