@@ -83,7 +83,7 @@ def _request_digest(request):
 
 
 def _natural_work_process(text):
-    """Conservative, deterministic text-only capability proposal; no authority."""
+    """Deterministic process proposal for bounded natural text, never authority."""
     if not isinstance(text, str) or not text.strip() or len(text) > 12000:
         return None
     from nexus.frontdoor import requires_clarification
@@ -92,8 +92,15 @@ def _natural_work_process(text):
     normal = re.sub(r"\s+", " ", unicodedata.normalize("NFKC", text).casefold()).strip()
     if re.search(r"\b(?:apaga|elimina|remove|desativa|envia|publica|instala|executa|transfere)\b", normal):
         return None
-    if re.match(r"^(?:por favor[, ]+)?(?:pesquisa|pesquisar|procura|procurar|encontra|encontrar)\s+(?:(?:na\s+)?(?:web|internet)\s+)?(?:fontes?\s+)?(?:sobre\s+|acerca\s+de\s+|para\s+)?\S", normal):
-        return "web"
+    web = re.match(
+        r"^(?:por favor[, ]+)?(?:pesquisa|pesquisar|procura|procurar|encontra|encontrar)"
+        r"\s+(?:(?:na\s+)?(?:web|internet)\s+)?(?:(?:fontes?|informações)\s+)?"
+        r"(?:(?:sobre|acerca de|para)\s+)?(.+)$", normal,
+    )
+    if web:
+        subject = web.group(1).strip(" .?!")
+        if subject and subject not in {"web", "internet", "na web", "na internet", "fontes"}:
+            return "web"
     candidate = re.match(
         r"^(?:por favor[, ]+)?(?:cria|criar|faz|fazer|prepara|preparar|"
         r"quero\s+(?:criar|fazer|preparar)|preciso\s+de)\s+"
@@ -111,6 +118,38 @@ def _natural_work_process(text):
     if family in ("vídeo", "video", "curta", "curta-metragem"):
         return "video"
     return "music"
+
+
+def _natural_assistant(text):
+    """Read-only conversational preparation by Nexus; tools have no say here."""
+    process = _natural_work_process(text)
+    if process not in {"podcast", "visual_podcast", "video", "music"}:
+        return {"process": process, "question": None, "missing": []}
+    normal = unicodedata.normalize("NFKC", text).casefold()
+    # Fixed recognition, not an invented default. Unsupported tone words can
+    # be supplied explicitly as 'tom: ...' or 'estilo: ...'.
+    tone = bool(re.search(
+        r"\b(?:documental|jornalístico|jornalistico|informal|formal|académico|academico|"
+        r"narrativo|educativo|didático|didatico|descontraído|descontraido|"
+        r"humorístico|humoristico|humor|sério|serio|emocional|conversacional|"
+        r"cinematográfico|cinematografico|folk|fado|rock|rap|pop|clássico|classico)\b",
+        normal,
+    ) or re.search(r"\b(?:tom|estilo)\s*:\s*\S+", normal))
+    duration = bool(re.search(
+        r"\b\d+(?:[.,]\d+)?\s*(?:segundos?|seg|minutos?|min|horas?|h)\b",
+        normal,
+    ))
+    missing = []
+    if not tone:
+        missing.append("tom")
+    if not duration:
+        missing.append("duração")
+    questions = {
+        ("tom", "duração"): "Que tom pretendes e quanto deve durar?",
+        ("tom",): "Que tom pretendes?",
+        ("duração",): "Quanto deve durar?",
+    }
+    return {"process": process, "question": questions.get(tuple(missing)), "missing": missing}
 
 
 def _natural_request(data, host):
@@ -383,6 +422,7 @@ def make_server(host, port=0, *, allow_direct_run=False):
                         "confirmation_required": False,
                         "execution": "NOT_AUTHORIZED",
                         "registered_command": command is not None and command.intent == parsed.intent,
+                        "assistant": _natural_assistant(data["text"]) if parsed.status != "BLOCKED" else {"process": None, "question": None, "missing": []},
                         "molde": build_molde(data["text"], intent=parsed.intent if parsed.status == "RESOLVED" else None)
                                  if data["text"] else None,
                     })
