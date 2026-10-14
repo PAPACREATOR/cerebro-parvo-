@@ -92,7 +92,7 @@ def test_real_shell_inside_native_lpac_returns_valid_result(tmp_path):
     )
     for probe, expected in probes:
         with launch_confined(probe, cwd=work, env=process_environment(work),
-                             read_roots=roots) as diagnostic:
+                             read_roots=(*roots, ROOT / 'windows/runner-shell.cmd')) as diagnostic:
             out, err = diagnostic.communicate(timeout=35)
             exit_code = diagnostic.returncode
         assert exit_code == expected, {
@@ -108,7 +108,7 @@ def test_real_shell_inside_native_lpac_returns_valid_result(tmp_path):
         "verify", str(work / "input.bin"),
     ]
     with launch_confined(command, cwd=work, env=process_environment(work),
-                         read_roots=roots) as proc:
+                         read_roots=(*roots, ROOT / 'windows/runner-shell.cmd')) as proc:
         stdout, stderr = proc.communicate(timeout=35)
         code = proc.returncode
     assert code == 0, {
