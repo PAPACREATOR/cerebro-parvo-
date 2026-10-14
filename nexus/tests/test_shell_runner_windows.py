@@ -21,7 +21,6 @@ def _shell():
 
 
 @pytest.mark.parametrize("process", ["shell", "approve", "canonical", "web;whoami", "verify;echo"])
-@pytest.mark.parametrize("process", ["shell", "approve", "canonical", "web;whoami", "verify;echo"])
 def test_shell_rejects_unknown_process_without_invoking_python(tmp_path, process):
     result = subprocess.run(
         [_shell(), "/D", "/Q", "/C", str(ROOT / "windows/runner-shell.cmd"), process],
