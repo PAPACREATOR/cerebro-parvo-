@@ -1,4 +1,4 @@
-"""Windows PowerShell runner contract: fixed process list and native LPAC launch."""
+"""Windows CMD Shell runner: fixed process list and native LPAC launch."""
 import os
 import subprocess
 import sys
@@ -15,7 +15,7 @@ pytestmark = pytest.mark.skipif(os.name != "nt", reason="Native Windows only")
 
 
 def _shell():
-    shell = Path(os.environ.get("SystemRoot", "C:/Windows")) / "System32" / "WindowsPowerShell" / "v1.0" / "powershell.exe"
+    shell = Path(os.environ.get("SystemRoot", "C:/Windows")) / "System32" / "cmd.exe"
     assert shell.is_file()
     return str(shell)
 
@@ -25,9 +25,7 @@ def test_shell_rejects_unknown_process_without_invoking_python(tmp_path, process
     source = tmp_path / "input.bin"
     source.write_bytes(b"unchanged")
     result = subprocess.run(
-        [_shell(), "-NoLogo", "-NoProfile", "-NonInteractive",
-         "-ExecutionPolicy", "Bypass", "-File",
-         str(ROOT / "windows/runner-shell.ps1"),
+        [_shell(), "/D", "/Q", "/C", str(ROOT / "windows/runner-shell.cmd"),
          sys.executable, str(ROOT / "adapters/runner.py"), process, str(source)],
         cwd=tmp_path,
         env=process_environment(tmp_path),
@@ -61,8 +59,8 @@ def test_host_shell_still_uses_native_lp_ac_and_does_not_accept_invalid_output(t
     run = host.store.create(request())
     host.busy.acquire()
     host._run(run)
-    assert Path(observed["command"][0]).name.lower() == "powershell.exe"
-    assert observed["command"][7] == str(ROOT / "windows/runner-shell.ps1")
+    assert Path(observed["command"][0]).name.lower() == "cmd.exe"
+    assert observed["command"][4] == str(ROOT / "windows/runner-shell.cmd")
     assert observed["command"][-2] == "verify"
     assert observed["command"][-1] == str(observed["kwargs"]["cwd"] / "input.bin") if isinstance(observed["kwargs"]["cwd"], Path) else str(Path(observed["kwargs"]["cwd"]) / "input.bin")
     assert observed["kwargs"]["deny_roots"] == (host.store.root,)
@@ -83,9 +81,8 @@ def test_real_shell_inside_native_lpac_returns_valid_result(tmp_path):
     work.mkdir(parents=True)
     roots = prepare_task("verify", source, work, config_root=tmp_path)
     command = [
-        _shell(), "-NoLogo", "-NoProfile", "-NonInteractive",
-        "-ExecutionPolicy", "Bypass", "-File",
-        str(ROOT / "windows/runner-shell.ps1"),
+        _shell(), "/D", "/Q", "/C",
+        str(ROOT / "windows/runner-shell.cmd"),
         sys.executable, str(ROOT / "adapters/runner.py"),
         "verify", str(work / "input.bin"),
     ]
