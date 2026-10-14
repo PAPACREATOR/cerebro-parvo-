@@ -82,6 +82,37 @@ def _request_digest(request):
     return hashlib.sha256(raw).hexdigest()
 
 
+def _natural_work_process(text):
+    """Conservative, deterministic text-only capability proposal; no authority."""
+    if not isinstance(text, str) or not text.strip() or len(text) > 12000:
+        return None
+    from nexus.frontdoor import requires_clarification
+    if requires_clarification(text):
+        return None
+    normal = re.sub(r"\s+", " ", unicodedata.normalize("NFKC", text).casefold()).strip()
+    if re.search(r"\b(?:apaga|elimina|remove|desativa|envia|publica|instala|executa|transfere)\b", normal):
+        return None
+    if re.match(r"^(?:por favor[, ]+)?(?:pesquisa|pesquisar|procura|procurar|encontra|encontrar)\s+(?:(?:na\s+)?(?:web|internet)\s+)?(?:fontes?\s+)?(?:sobre\s+|acerca\s+de\s+|para\s+)?\S", normal):
+        return "web"
+    candidate = re.match(
+        r"^(?:por favor[, ]+)?(?:cria|criar|faz|fazer|prepara|preparar|"
+        r"quero\s+(?:criar|fazer|preparar)|preciso\s+de)\s+"
+        r"(?:(?:um|uma|o|a)\s+)?"
+        r"(podcast\s+visual|podcast|v[ií]deo|curta(?:-metragem)?|m[uú]sica|can[cç][aã]o)\b",
+        normal,
+    )
+    if not candidate:
+        return None
+    family = candidate.group(1)
+    if family == "podcast visual":
+        return "visual_podcast"
+    if family == "podcast":
+        return "podcast"
+    if family in ("vídeo", "video", "curta", "curta-metragem"):
+        return "video"
+    return "music"
+
+
 def _natural_request(data, host):
     """Build one bounded request proposal. This function never executes it."""
     if not isinstance(data, dict) or set(data) != {"text", "filename", "attachment"}:
@@ -101,6 +132,9 @@ def _natural_request(data, host):
             attachment_present=bool(data["filename"] and data["attachment"]),
         )
         process = candidate.process
+    inferred = _natural_work_process(data["text"]) if not data["filename"] and not data["attachment"] else None
+    if process is None and parsed.status != "BLOCKED":
+        process = inferred
     if process is None:
         raise Blocked("Não consigo determinar com segurança essa operação. Reformula o pedido.")
 
@@ -121,9 +155,12 @@ def _natural_request(data, host):
         attachment = base64.b64decode(request["attachment"], validate=True)
     except (ValueError, TypeError) as error:
         raise Blocked("Anexo inválido.") from error
+    text_only = inferred == process and not request["filename"] and not request["attachment"]
+    if text_only:
+        attachment = request["text"].encode("utf-8")
     if not attachment or len(attachment) > host.store.policy["max_input_bytes"]:
-        raise Blocked("Junta um ficheiro até 2 MB para verificar.")
-    name = request["filename"]
+        raise Blocked("O pedido ou o ficheiro ultrapassa o limite permitido.")
+    name = request["filename"] if not text_only else "pedido"
     if not name or any(ord(char) < 32 for char in name) or "/" in name or "\\" in name:
         raise Blocked("Nome de anexo inválido.")
 
