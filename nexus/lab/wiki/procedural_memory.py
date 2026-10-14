@@ -1,0 +1,259 @@
+"""Experimental procedural learning from human feedback and verified Wiki sources.
+
+This is a suggestion index, NOT another runner, policy engine, or Store. No
+imports in production Host/Kernel. It never dispatches tools, changes contracts,
+promotes Creative, or teaches executable regexes. Learned examples remain
+revocable by loss of their Store-verified source evidence.
+"""
+from __future__ import annotations
+
+from difflib import SequenceMatcher
+import hashlib
+from pathlib import Path
+import re
+import unicodedata
+import uuid
+
+from nexus.capability_router import BUILTIN_CAPABILITIES, registered_router
+from nexus.contracts import Blocked, strict_json
+from nexus.lab.wiki.context_packet import raw_json
+from nexus.store import atomic
+
+
+# Families are hints derived from the original Folha mold, not MIME proofs.
+# All candidate process names must already exist in the signed product registry.
+FAMILY_TOOLS = {
+    "text": ("verify", "interpret", "proofread", "book", "web", "podcast",
+             "visual_podcast", "video", "music"),
+    "document": ("verify", "interpret", "proofread", "convert_pdf", "book",
+                 "web", "podcast", "visual_podcast", "video", "music"),
+    "audio": ("verify", "podcast", "visual_podcast", "music"),
+    "image": ("verify", "video", "visual_podcast"),
+    "video": ("verify", "video", "visual_podcast"),
+    "unknown": ("verify",),
+}
+
+# Initial candidates can be used before any experience. They are NOT runnable.
+INITIAL_RECIPES = {
+    "verify": ("verify",),
+    "interpret": ("verify", "interpret"),
+    "proofread": ("verify", "proofread"),
+    "convert_pdf": ("verify", "convert_pdf"),
+    "book": ("interpret", "proofread", "book"),
+    "web": ("web",),
+    "podcast": ("web", "interpret", "podcast"),
+    "visual_podcast": ("interpret", "podcast", "visual_podcast"),
+    "video": ("web", "interpret", "video"),
+    "music": ("interpret", "music"),
+}
+MAX_STEPS = 8
+MAX_EVENTS = 2048
+
+
+def _digest(value):
+    return hashlib.sha256(raw_json(value)).hexdigest()
+
+
+def _normal(text):
+    if type(text) is not str or not text.strip() or len(text) > 4000:
+        raise Blocked("Frase de aprendizagem inválida.")
+    if any(ord(ch) < 32 and ch not in "\n\r\t" for ch in text):
+        raise Blocked("Frase de aprendizagem inválida.")
+    return re.sub(r"\s+", " ", unicodedata.normalize("NFKC", text).casefold()).strip()
+
+
+def _family(molde):
+    """Check shape of a read-only mold, never treat its file suffix as fact."""
+    if not isinstance(molde, dict) or molde.get("schema") != "nexus.molde.v1":
+        raise Blocked("Molde de origem inválido.")
+    try:
+        family = molde["classification"]["family"]
+        source = molde["source"]
+        identity = molde["identity"]
+        authority = molde["process"]["authority"]
+        execution = molde["rules"]["execution"]
+        promotion = molde["rules"]["promotion"]
+        deletion = molde["rules"]["deletion"]
+    except (KeyError, TypeError):
+        raise Blocked("Molde incompleto.") from None
+    if (type(family) is not str or family not in FAMILY_TOOLS
+            or authority != "NONE" or execution != "HUMAN_CONFIRMATION"
+            or promotion != "HUMAN_APPROVAL" or deletion != "NOT_AUTHORIZED"
+            or not isinstance(source, dict) or not isinstance(identity, dict)
+            or type(source.get("sha256")) is not str
+            or not re.fullmatch(r"[0-9a-f]{64}", source["sha256"])
+            or identity.get("id") != "sha256:" + source["sha256"]):
+        raise Blocked("Molde não fiável.")
+    return family
+
+
+def _steps(family, goal, steps):
+    registered_router()  # fail if runner/policy registry no longer agrees
+    declared = {item.process for item in BUILTIN_CAPABILITIES}
+    if type(goal) is not str or goal not in declared or goal not in FAMILY_TOOLS[family]:
+        raise Blocked("Objetivo não pertence à família de capacidades.")
+    if type(steps) is not list or not 1 <= len(steps) <= MAX_STEPS:
+        raise Blocked("Passos fora dos limites.")
+    if any(type(step) is not str or step not in declared
+           or step not in FAMILY_TOOLS[family] for step in steps):
+        raise Blocked("Flow não pode inventar ferramenta ou autoridade.")
+    if steps[-1] != goal:
+        raise Blocked("O passo final tem de corresponder ao objetivo.")
+    return steps
+
+
+class ProceduralMemory:
+    """One independently auditable lab receipt per explicit operator review."""
+
+    def __init__(self, wiki_bridge):
+        self.bridge = wiki_bridge
+        self.root = Path(wiki_bridge.root) / "procedural-memory"
+        if self.root.is_symlink():
+            raise Blocked("Memória processual redirecionada.")
+        self.root.mkdir(exist_ok=True)
+
+    def _events(self):
+        entries = sorted(self.root.iterdir())
+        if len(entries) > MAX_EVENTS:
+            raise Blocked("Memória processual atingiu o limite.")
+        for folder in entries:
+            if (folder.is_symlink() or not folder.is_dir()
+                    or not re.fullmatch(r"[0-9a-f]{32}", folder.name)):
+                raise Blocked("Entrada processual desconhecida.")
+            files = [folder / "event.json", folder / "manifest.json"]
+            if any(p.is_symlink() or not p.is_file() for p in files):
+                raise Blocked("Registo de aprendizagem incompleto.")
+            try:
+                manifest = strict_json(files[1].read_bytes())
+                event = strict_json(files[0].read_bytes())
+            except (OSError, ValueError, TypeError) as error:
+                raise Blocked("Registo de aprendizagem ilegível.") from error
+            if (not isinstance(manifest, dict) or set(manifest) != {"sha256"}
+                    or manifest["sha256"] != _digest(event)):
+                raise Blocked("Registo de aprendizagem adulterado.")
+            self._validate(event)
+            yield event
+
+    def _validate(self, event):
+        required = {"version", "kind", "authority", "family", "goal", "steps",
+                    "phrase", "decision", "objective", "source_ids", "context_sha256"}
+        if not isinstance(event, dict) or set(event) != required:
+            raise Blocked("Registo processual inválido.")
+        if (type(event["version"]) is not int or event["version"] != 1
+                or event["kind"] != "LAB_HUMAN_REVIEWED_EXAMPLE"
+                or event["authority"] != "NONE"
+                or event["decision"] not in ("ACCEPT", "REJECT")
+                or event["family"] not in FAMILY_TOOLS):
+            raise Blocked("Autoridade ou versão processual inválida.")
+        _steps(event["family"], event["goal"], event["steps"])
+        _normal(event["phrase"])
+        if (type(event["objective"]) is not str or not event["objective"].strip()
+                or len(event["objective"]) > 500
+                or type(event["source_ids"]) is not list
+                or not 1 <= len(event["source_ids"]) <= 8):
+            raise Blocked("Referências processuais inválidas.")
+        if (type(event["context_sha256"]) is not str
+                or not re.fullmatch(r"[0-9a-f]{64}", event["context_sha256"])):
+            raise Blocked("Hash processual inválido.")
+        # Re-read the live canonical Store evidence; do not trust a Wiki index.
+        try:
+            packet = self.bridge.prepare(event["objective"], event["source_ids"],
+                                         include_creative=False)
+        except (ValueError, KeyError, TypeError) as error:
+            raise Blocked("Origem processual não verificável.") from error
+        if _digest(packet) != event["context_sha256"]:
+            raise Blocked("Fontes processuais mudaram.")
+
+    def review(self, molde, *, goal, steps, phrase, source_ids, objective,
+               decision, human_confirmed=False):
+        """Store feedback, NOT an execution approval. Called only in isolated lab.
+
+        human_confirmed is a local experimental assertion, not an identity
+        or signed production approval. No production path imports this module.
+        """
+        family = _family(molde)
+        _steps(family, goal, steps)
+        _normal(phrase)
+        if type(human_confirmed) is not bool or not human_confirmed:
+            raise Blocked("Revisão humana da experiência obrigatória.")
+        if decision not in ("ACCEPT", "REJECT"):
+            raise Blocked("Decisão processual inválida.")
+        if type(objective) is not str or not objective.strip() or len(objective) > 500:
+            raise Blocked("Objetivo processual inválido.")
+        packet = self.bridge.prepare(objective, source_ids, include_creative=False)
+        # Canonical is necessary evidence, not a grant to use this learned flow.
+        if any(s["authority"] != "canonical" for s in packet["sources"]):
+            raise Blocked("Só exemplos canónicos verificados podem ensinar.")
+        event = {
+            "version": 1, "kind": "LAB_HUMAN_REVIEWED_EXAMPLE", "authority": "NONE",
+            "family": family, "goal": goal, "steps": list(steps),
+            "phrase": phrase, "decision": decision, "objective": objective,
+            "source_ids": list(source_ids), "context_sha256": _digest(packet),
+        }
+        self._validate(event)
+        # On a partial write, the uncommitted receipt cannot be read as learned.
+        if len(list(self.root.iterdir())) >= MAX_EVENTS:
+            raise Blocked("Memória processual atingiu o limite.")
+        entry = self.root / uuid.uuid4().hex
+        entry.mkdir()
+        atomic(entry / "event.json", raw_json(event))
+        atomic(entry / "manifest.json", raw_json({"sha256": _digest(event)}))
+        return {"id": entry.name, "status": "LAB_RECORDED",
+                "authority": "NONE", "execution": "NOT_AUTHORIZED"}
+
+    def suggest(self, molde, *, goal, phrase=None):
+        """Rank bounded source-backed recipes and reusable initial templates."""
+        family = _family(molde)
+        if phrase is not None:
+            _normal(phrase)
+        _steps(family, goal, [goal])
+        grouped = {}
+        for event in self._events():
+            if event["family"] != family or event["goal"] != goal:
+                continue
+            key = tuple(event["steps"])
+            item = grouped.setdefault(key, {"accept": 0, "reject": 0, "refs": []})
+            item["accept" if event["decision"] == "ACCEPT" else "reject"] += 1
+            if event["decision"] == "ACCEPT":
+                item["refs"].extend(event["source_ids"])
+
+        initial = [step for step in INITIAL_RECIPES[goal] if step in FAMILY_TOOLS[family]]
+        if not initial or initial[-1] != goal:
+            initial = [goal]
+        candidates = set(grouped) | {tuple(initial)}
+        suggestions = []
+        for steps in candidates:
+            accepted = grouped.get(steps, {}).get("accept", 0)
+            rejected = grouped.get(steps, {}).get("reject", 0)
+            if rejected > accepted or (rejected and not accepted):
+                continue
+            suggestions.append({
+                "steps": list(steps), "origin": "LEARNED" if accepted else "INITIAL",
+                "positive_examples": accepted, "negative_examples": rejected,
+                "canonical_source_ids": list(dict.fromkeys(
+                    grouped.get(steps, {}).get("refs", [])))[:8],
+            })
+        suggestions.sort(key=lambda x: (-x["positive_examples"] + x["negative_examples"],
+                                        -x["positive_examples"], len(x["steps"]), x["steps"]))
+        return {"kind": "LAB_FLOW_SUGGESTIONS", "authority": "NONE",
+                "execution": "NOT_AUTHORIZED", "promotion": "NOT_AUTHORIZED",
+                "family": family, "goal": goal, "candidates": suggestions[:8],
+                "requires_human_review": True}
+
+    def recognise(self, molde, text):
+        """Tolerant candidate retrieval, never auto-dispatch or executable regex."""
+        family = _family(molde)
+        normal = _normal(text)
+        matches = {}
+        for event in self._events():
+            if event["family"] != family or event["decision"] != "ACCEPT":
+                continue
+            sample = _normal(event["phrase"])
+            ratio = SequenceMatcher(None, normal, sample, autojunk=False).ratio()
+            if ratio >= 0.78:
+                matches[event["goal"]] = max(matches.get(event["goal"], 0), ratio)
+        return {"kind": "LAB_INTENT_HINTS", "authority": "NONE",
+                "execution": "NOT_AUTHORIZED", "requires_human_review": True,
+                "candidates": [{"goal": goal, "similarity": round(score, 3)}
+                               for goal, score in sorted(matches.items(),
+                                                          key=lambda x: (-x[1], x[0]))[:5]]}
