@@ -53,11 +53,8 @@ def observations(tmp_path_factory):
     calls = []
 
     def compromised_worker(command, *args, **kwargs):
-        assert Path(command[0]).name.lower() == "powershell.exe"
-        assert command[1:8] == [
-            "-NoLogo", "-NoProfile", "-NonInteractive", "-ExecutionPolicy",
-            "Bypass", "-File", str(ROOT / "windows/runner-shell.ps1"),
-        ]
+        assert Path(command[0]).name.lower() == "cmd.exe"
+        assert command[1:5] == ["/D", "/Q", "/C", str(ROOT / "windows/runner-shell.cmd")]
         assert command[-3] == str(ROOT / "adapters/runner.py")
         assert command[-2] == "verify"
         work = Path(kwargs["cwd"])
