@@ -1,7 +1,7 @@
 {
   "app.py": "92c1b11805619e8dfc424e8bdda49296139f411f5cf81471cc87f5f4ef6687f1",
   "contracts.py": "cd1830c968c757cdad738957dce54672cb70faf33cc11602b6d68d69df50bc65",
-  "host.py": "c9802d1ec1d4a4ebc32700da51bc0c876fdbd2700f839e191aae95cb46eee654",
+  "host.py": "91adc4485ec778bf7bf7aa9acb8070c531fac224c1d0081ca6e59ac9266d0afd",
   "store.py": "b3bcea546b2bf6ce97ba5ac574601a2526ace9a432b058c46ff2c5ee11057ba5",
   "__init__.py": "b4f468051a062293cce504af2e229613a15f3d98ef90a6f9430d8e357e9f9591",
   "adapters/tools.py": "db6c0feb6beb658565a02e4feb1dea4f2c138a4a8d23cd8f27ccf3435af28de5",
@@ -23,7 +23,7 @@
   "families/multimedia/som.md": "d31057a867080291d183e9cde486b6079e686403cf7869ed749d0f005e770462",
   "families/multimedia/imagem.md": "4a321cdc18751a5d3e1dec770908aa5d992e17126e5569bbfd9045a2dc4583de",
   "instance.py": "a97ef1449ab8a2fe66dc0bcf79fe64dca93ae1b7a43bbfa296caeb90229120ac",
-  "adapters/runner.py": "9162792f4353f52877abd2f48825723f649672f538f7ab13ebbe2d52ee40fe0d",
+  "adapters/runner.py": "a8e449cad37c4d143304fb17a14a10ffc77a444470184bbda07e40c0bb1dae3f",
   "adapters/verify_direct.py": "0ed136dafad0bbccec348cb4a92d8f2153e688cee112d244fdea3f6905b6b74c",
   "mcp_client.py": "5b5a80353e768842bb3c684117f1d5d876d20069ac8c0dd1ea5061be23615f9b",
   "mcp_tools_server.py": "5578b9ecef32a1e47cb8f1b27b6f74d52229a2f4f48dae33a7783d351e1a31e6",
@@ -39,5 +39,5 @@
   "adapters/vendor/sandy/libreoffice.toml": "ba2b6eed03218996e12387899229587914731609b0805bcbbef5f5ca054bb7ec",
   "adapters/vendor/sandy/LICENSE": "71ab2a2ba35053be1bc7370f83080bab7643812351e377c8eb3fdd2ee9f34fce",
   "capability_router.py": "1affca210850606222b5d72f8db61793b7436bd898ac9740db16498f0d09c326",
-  "windows/runner-shell.ps1": "a6ca008485931d877f4e59d99a3ca1a66118e576c5587171a4295afb9ee12912"
+  "windows/runner-shell.cmd": "f9a35d8652c88fef6faa1c498704d64aef357ba4a548a6536685bae751135e04"
 }
