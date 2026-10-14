@@ -83,11 +83,16 @@ def test_real_shell_inside_native_lpac_returns_valid_result(tmp_path):
     # Diagnostic gates exercise the exact same native LPAC token and job.
     # Distinguish shell startup, reading the fixed script, and child Python
     # execution. None of these probes grants new permissions or fakes PASS.
+    direct_python_command = subprocess.list2cmdline([
+        sys.executable, "-I", str(ROOT / "adapters/runner.py"),
+        "verify", str(work / "input.bin"),
+    ])
     local_probe = work / "probe-only.cmd"
     local_probe.write_bytes(b"@echo off\r\necho NEXUS_LOCAL_BATCH_OK\r\n")
     probes = (
         ([_shell(), "/D", "/Q", "/C", "echo NEXUS_SHELL_ALIVE"], 0),
         ([_shell(), "/D", "/Q", "/C", "type", str(ROOT / "windows/runner-shell.cmd")], 0),
+        ([_shell(), "/D", "/Q", "/C", direct_python_command], 0),
         ([_shell(), "/D", "/Q", "/C", str(local_probe)], 0),
         ([_shell(), "/D", "/Q", "/C",
           str(ROOT / "windows/runner-shell.cmd"),
