@@ -21,7 +21,7 @@ def verify_integrity():
     manifest = strict_json((ROOT / "integrity.json").read_bytes())
     required = {
         "__init__.py", "app.py", "host.py", "store.py", "contracts.py", "approval_binding.py", "capability_router.py", "instance.py",
-        "windows_sandbox.py", "native_mcp.py", "frontdoor.py", "frontdoor_rules.json", "schemas/frontdoor_rules.json", "adapters/runner.py", "mcp_client.py", "mcp_tools_server.py", "adapters/verify_direct.py", "adapters/tools.py", "adapters/notebook.py",
+        "windows_sandbox.py", "native_mcp.py", "frontdoor.py", "frontdoor_rules.json", "schemas/frontdoor_rules.json", "adapters/runner.py", "windows/runner-shell.cmd", "mcp_client.py", "mcp_tools_server.py", "adapters/verify_direct.py", "adapters/tools.py", "adapters/notebook.py",
         "adapters/languagetool.py", "adapters/office.py", "adapters/writer_sandy.py",
         "adapters/vendor/sandy/libreoffice-demo.py", "adapters/vendor/sandy/libreoffice.toml",
         "adapters/vendor/sandy/LICENSE", "adapters/media_tools.py", "adapters/product_routes.py",
@@ -95,9 +95,35 @@ class Host:
                     stdout = json.dumps(envelope, ensure_ascii=False).encode("utf-8")
                     stderr = b""
                 else:
-                    command = [sys.executable, "-I", str(ROOT / "adapters/runner.py"), process, str(work / "input.bin")]
-                    with launch_confined(command, cwd=work, env=process_environment(work),
-                                         read_roots=roots, deny_roots=(self.store.root,)) as proc:
+                    # Shell is the pinned Host-owned dispatcher; it has no
+                    # permission to execute any tool or interpret Folha text.
+                    # Windows LPAC blocks CMD child creation without lpacCom,
+                    # so only the Python worker enters LPAC/Job, without COM.
+                    environment = process_environment(work)
+                    shell = Path(environment.get("SystemRoot", "C:/Windows")) / "System32" / "cmd.exe"
+                    script = ROOT / "windows" / "runner-shell.cmd"
+                    if not shell.is_file() or shell.is_symlink() or not script.is_file() or script.is_symlink():
+                        raise Blocked("Runner Shell do Windows indisponível.")
+                    # Do not let unusual installation paths become shell syntax.
+                    if any(char in str(script) for char in '&|<>^%!\r\n"'):
+                        raise Blocked("Caminho da Shell contém caracteres não autorizados.")
+                    try:
+                        dispatch = subprocess.run(
+                            [str(shell), "/D", "/Q", "/C", str(script), process],
+                            cwd=work, env=environment, capture_output=True,
+                            timeout=12, check=False, creationflags=subprocess.CREATE_NO_WINDOW,
+                        )
+                    except (OSError, subprocess.TimeoutExpired) as error:
+                        raise Blocked("A Shell autorizada não conseguiu preparar a tarefa.") from error
+                    expected = ("NEXUS_SHELL_READY:" + process).encode("ascii")
+                    if (dispatch.returncode != 0 or dispatch.stdout.strip() != expected
+                            or dispatch.stderr.strip()):
+                        raise Blocked("O despacho da Shell foi recusado.")
+                    command = [sys.executable, "-I", str(ROOT / "adapters/runner.py"),
+                               process, str(work / "input.bin")]
+                    with launch_confined(command, cwd=work, env=environment,
+                                         read_roots=roots,
+                                         deny_roots=(self.store.root,)) as proc:
                         try:
                             stdout, stderr = proc.communicate(
                                 timeout=150 if process in ("interpret", "video", "podcast", "visual_podcast") else 75

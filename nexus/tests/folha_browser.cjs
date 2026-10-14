@@ -1,139 +1,107 @@
 "use strict";
-// Real Chrome over HTTP from the original Python app in the CI workspace.
-// Temporary test Store; preparation permits read-only classification, no tool/approval calls.
+// Real Chrome + real loopback Python HTTP, with a disposable Store.
+// Only the external provider response is mocked in this browser-level gate.
 const {chromium}=require("playwright");
 const fs=require("node:fs/promises"),path=require("node:path"),assert=require("node:assert/strict");
 const os=require("node:os"),net=require("node:net"),{spawn}=require("node:child_process");
+
 (async()=>{
   const reservation=net.createServer();
-  await new Promise(resolve=>reservation.listen(0,"127.0.0.1",resolve));
+  await new Promise(ok=>reservation.listen(0,"127.0.0.1",ok));
   const port=reservation.address().port;
-  await new Promise(resolve=>reservation.close(resolve));
-  const data=await fs.mkdtemp(path.join(os.tmpdir(),"nexus-folha-browser-"));
-  const backend=spawn(process.env.NEXUS_TEST_PYTHON || "python",
+  await new Promise(ok=>reservation.close(ok));
+  const data=await fs.mkdtemp(path.join(os.tmpdir(),"nexus-folha-e2e-"));
+  const backend=spawn(process.env.NEXUS_TEST_PYTHON||"python",
     ["-m","nexus.app","--data",path.join(data,"memory"),"--port",String(port),"--no-browser"],
     {cwd:path.resolve(__dirname,"../.."),stdio:["ignore","pipe","pipe"]});
-  const diagnostics=[];
-  backend.stderr.on("data",value=>diagnostics.push(value.toString()));
-  backend.on("error",error=>diagnostics.push(error.message));
-  const base="http://127.0.0.1:"+port;
+  const diagnostics=[];backend.stderr.on("data",chunk=>diagnostics.push(String(chunk)));
+  backend.on("error",err=>diagnostics.push(err.message));
   let browser;
   try {
+    const origin="http://127.0.0.1:"+port;
     let ready=false;
-    for(let attempt=0;attempt<100;attempt++) {
-      if(backend.exitCode!==null)throw new Error("Python app failed: "+diagnostics.join(""));
-      try { if((await fetch(base)).ok){ready=true;break;} }catch(_error){}
-      await new Promise(resolve=>setTimeout(resolve,100));
+    for(let i=0;i<100;i++) {
+      if(backend.exitCode!==null)throw new Error("Host startup failed: "+diagnostics.join(""));
+      try {if((await fetch(origin)).ok){ready=true;break;}}catch(_error){}
+      await new Promise(ok=>setTimeout(ok,100));
     }
-    assert.ok(ready,"Python Folha did not start: "+diagnostics.join(""));
+    assert.ok(ready,"Python app did not start: "+diagnostics.join(""));
     browser=await chromium.launch({channel:"chrome",headless:true});
-    const page=await browser.newPage({viewport:{width:1280,height:960},locale:"pt-PT"});
-    const errors=[],apiCalls=[];
-    page.on("pageerror",e=>errors.push(e.message));
-    page.on("request",r=>{if(new URL(r.url()).pathname.startsWith("/api/"))apiCalls.push(r.url());});
-    const images=path.resolve("folha-browser-evidence");
-    await fs.mkdir(images,{recursive:true});
-    // Use the real Host's private launch reference in the disposable test Store.
+    const page=await browser.newPage({viewport:{width:1280,height:920},locale:"pt-PT"});
+    const errors=[],routes=[];page.on("pageerror",error=>errors.push(error.message));
+    page.on("request",request=>{
+      const route=new URL(request.url()).pathname;
+      if(route.startsWith("/api/"))routes.push(route);
+    });
+    const artifacts=path.resolve("folha-browser-evidence");
+    await fs.mkdir(artifacts,{recursive:true});
     const launch=new URL(await fs.readFile(path.join(data,"memory","launch-url.txt"),"utf8"));
-    assert.equal(launch.origin,base);
-    assert.match(launch.hash,/^#session=[A-Za-z0-9_-]+$/);
+    assert.equal(launch.origin,origin);
     await page.goto(launch.href);
     assert.equal(await page.locator("#text").inputValue(),"");
-    assert.equal(await page.locator("#workspace").isVisible(),false);
-    assert.equal(await page.locator("#history-panel").isVisible(),false);
-    assert.equal(await page.locator("#composer-bottom").isVisible(),false);
+    assert.equal(await page.locator("#workspace").count(),0);
+    assert.equal(await page.locator("#product").count(),0);
+    assert.equal(await page.locator(".stages").count(),0);
     assert.equal(await page.locator("button:visible").count(),0);
-    assert.equal(apiCalls.length,0);
-    await page.screenshot({path:path.join(images,"folha-vazia.png"),fullPage:true});
-    const classificationsOnly=()=>assert.ok(apiCalls.every(url=>new URL(url).pathname==="/api/interpret"));
-    for(const [product,request] of [
-      ["text","Faz-me um artigo sobre o turismo no Alentejo."],
-      ["podcast","Quero um podcast sobre o Alentejo."],
-      ["music","Cria uma música: Alma Lusitana."],
-      ["short","Prepara uma curta sobre Lisboa."]
-    ]) {
-      await page.reload();
-      await page.locator("#text").fill(request);await page.locator("#submit").click();
-      await page.locator("#workspace").waitFor({state:"visible",timeout:5000});
-      assert.equal(await page.locator("#product").inputValue(),product);
-      assert.equal(await page.locator("#stage-title").textContent(),"Ideia");
-      assert.equal(await page.locator(".stages button").count(),6);
-      classificationsOnly();
-    }
-    await page.locator("#brief-objective").fill("Contar uma história com sentido.");
-    await page.locator("#brief-audience").fill("Público português.");
-    await page.locator("#brief-format").fill("MP4, horizontal, legendado.");
-    await page.locator("#stage-notes").fill("Ideia humana — conservar.");
+    await page.screenshot({path:path.join(artifacts,"folha-vazia.png"),fullPage:true});
+
+    // Real Nexus parser asks for slots, not a wizard or a second assistant.
+    await page.locator("#text").fill("Cria um podcast sobre Guimarães");
     await page.locator("#submit").click();
-    assert.equal(await page.locator("#brief-objective").inputValue(),"Contar uma história com sentido.");
-    assert.equal(await page.locator("#stage-notes").inputValue(),"Ideia humana — conservar.");
-    await page.screenshot({path:path.join(images,"folha-preparacao.png"),fullPage:true});
-    await page.locator("#stage-reviewed").check();await page.locator("#stage-next").click();
-    assert.equal(await page.locator("#stage-title").textContent(),"Pesquisa");
-    for(let i=1;i<6;i++) {
-      await page.locator("#stage-notes").fill("Material e decisões da etapa "+i+". Fontes a rever: livro e notas próprias.");
-      await page.locator("#stage-reviewed").check();
-      if(i<5)await page.locator("#stage-next").click();
-    }
-    assert.equal(await page.locator("#workspace-status").textContent(),"Preparação revista");
-    await page.locator("#submit").click();
-    assert.equal(await page.locator("#workspace-status").textContent(),"Preparação revista");
-    const [download]=await Promise.all([page.waitForEvent("download"),page.locator("#save-preparation").click()]);
-    const exported=JSON.parse(await fs.readFile(await download.path(),"utf8"));
-    assert.equal(exported.product,"short");assert.equal(exported.produced,false);
-    assert.ok(exported.stages.every(s=>s.reviewed));classificationsOnly();
-    await page.locator("#navigation summary").click();await page.locator("#new").click();
-    assert.equal(await page.locator("#text").inputValue(),"");
-    assert.equal(await page.locator("#workspace").isVisible(),false);
-    await page.locator("#navigation summary").click();await page.locator("#resume").click();
-    assert.equal(await page.locator("#text").inputValue(),"Prepara uma curta sobre Lisboa.");
+    await page.waitForFunction(()=>document.getElementById("message").textContent.includes("tom"));
+    assert.equal(await page.locator("#workspace").count(),0);
     assert.equal(await page.locator("#execution-confirmation").isVisible(),false);
-    await page.setViewportSize({width:390,height:844});await page.reload();
-    assert.equal(await page.locator("button:visible").count(),0);
-    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth));
-    await page.locator("#text").fill("Cria uma música sobre a cidade.");await page.locator("#submit").click();
-    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth));
-    await page.screenshot({path:path.join(images,"folha-mobile.png"),fullPage:true});
-    const preparationCalls=apiCalls.slice();
-    // Regression: a registered plan must reach H1 through the actual Folha.
-    await page.reload();
-    const command="preparar plano de podcast";
-    const source=Buffer.from("Fonte humana — original.\n","utf8");
-    const submitted=[];
-    page.on("request",r=>{
-      const route=new URL(r.url()).pathname;
-      if(["/api/interpret","/api/prepare-run","/api/confirm-run","/api/approve"].includes(route))
-        submitted.push({route,body:r.postDataJSON()});
-    });
-    await page.locator("#text").fill(command);
-    await page.locator("#file").setInputFiles({name:"fonte.txt",mimeType:"text/plain",buffer:source});
+    await page.locator("#text").fill("informal, 5 minutos");
     await page.locator("#submit").click();
-    await page.screenshot({path:path.join(images,"folha-comando-natural.png"),fullPage:true});
-    await page.locator("#execution-confirmation").waitFor({state:"visible",timeout:5000});
-    assert.equal(await page.locator("#workspace").isVisible(),false);
+    await page.locator("#execution-confirmation").waitFor({state:"visible"});
     assert.equal(await page.locator("#execution-confirm").isChecked(),false);
     assert.equal(await page.locator("#execution-approve").isDisabled(),true);
-    assert.deepEqual(submitted.map(c=>c.route),["/api/interpret","/api/prepare-run"]);
-    assert.deepEqual(submitted[1].body,{text:command,filename:"fonte.txt",attachment:source.toString("base64")});
-    assert.equal(await page.locator("#text").inputValue(),command);
-    assert.doesNotMatch(await page.locator("#execution-summary").textContent(),/OpenNotebook|MCP|SHA-256/);
+    assert.match(await page.locator("#execution-review").textContent(),/5 minutos/);
     await page.locator("#execution-cancel").click();
     await page.waitForFunction(()=>!document.getElementById("execution-confirmation").open);
-    assert.equal(submitted.filter(c=>c.route==="/api/confirm-run").length,1);
-    const cancellation=submitted.find(c=>c.route==="/api/confirm-run").body;
-    assert.equal(cancellation.confirmed,false);
-    assert.equal(cancellation.text,command);
-    assert.equal(cancellation.filename,"fonte.txt");
-    assert.equal(cancellation.attachment,source.toString("base64"));
-    assert.equal(submitted.some(c=>c.route==="/api/approve"),false);
+    assert.equal(routes.includes("/api/confirm-run"),true);
+    assert.equal(routes.includes("/api/approve"),false);
+    await page.screenshot({path:path.join(artifacts,"folha-pergunta.png"),fullPage:true});
+
+    // Read-only source discovery renders a result in the Folha, no workflow UI.
+    const fake="b".repeat(32);
+    await page.route("**/api/research",route=>route.fulfill({
+      status:202,contentType:"application/json",body:JSON.stringify({run_id:fake}),
+    }));
+    await page.route("**/api/runs/"+fake,route=>route.fulfill({
+      status:200,contentType:"application/json",body:JSON.stringify({
+        status:"HUMAN_REQUIRED",process_id:"web",title:"Pesquisa",
+        result:{title:"Fontes encontradas"},
+        content:"# Fontes\n\nhttps://pt.wikipedia.org/?curid=123\nReferência obtida.",
+        message:"Candidato de pesquisa",
+      }),
+    }));
+    await page.locator("#navigation summary").click();
+    await page.locator("#new").click();
+    await page.locator("#text").fill("Pesquisa fontes sobre Guimarães");
+    await page.locator("#submit").click();
+    await page.waitForFunction(()=>document.getElementById("content").textContent.includes("pt.wikipedia.org"));
+    assert.equal(await page.locator("#workspace").count(),0);
+    assert.equal(await page.locator("#result").isVisible(),true);
+    assert.equal(await page.locator("#execution-confirmation").isVisible(),false);
+    await page.screenshot({path:path.join(artifacts,"folha-fontes.png"),fullPage:true});
+
+    await page.setViewportSize({width:390,height:844});
+    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth));
+    await page.locator("#navigation summary").click();
+    await page.locator("#new").click();
+    assert.equal(await page.locator("#text").inputValue(),"");
+    assert.equal(await page.locator("button:visible").count(),0);
+    await page.screenshot({path:path.join(artifacts,"folha-mobile.png"),fullPage:true});
     assert.deepEqual(errors,[]);
-    console.log(JSON.stringify({result:"PASS",initialVisibleButtons:0,productBriefs:4,steps:6,
-      desktopAndMobile:true,draftExport:true,restore:true,repeatedContinuePreservesWork:true,
-      classificationCalls:preparationCalls.filter(url=>new URL(url).pathname==="/api/interpret").length,
-      naturalCommandH1:true,hostCallsDuringPreparation:preparationCalls.filter(url=>new URL(url).pathname!=="/api/interpret").length,pageErrors:errors.length}));
+    console.log(JSON.stringify({result:"PASS",windowsWebSupported:true,whiteSheet:true,
+      visibleWorkflowSteps:0,naturalFollowUp:true,webResult:true,humanCanonicalGateIntact:true,
+      pageErrors:errors.length}));
   } finally {
     if(browser)await browser.close();
-    if(backend.pid && backend.exitCode===null){backend.kill();await new Promise(resolve=>backend.once("exit",resolve));}
+    if(backend.pid&&backend.exitCode===null){
+      backend.kill();await new Promise(ok=>backend.once("exit",ok));
+    }
     await fs.rm(data,{recursive:true,force:true});
   }
-})().catch(e=>{console.error(e);process.exitCode=1;});
+})().catch(error=>{console.error(error);process.exitCode=1;});

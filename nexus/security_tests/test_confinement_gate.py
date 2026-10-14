@@ -53,10 +53,14 @@ def observations(tmp_path_factory):
     calls = []
 
     def compromised_worker(command, *args, **kwargs):
+        # Only Python tools execute inside the native LPAC/Job sandbox.
+        # The Shell dispatches fixed process identifiers before confinement.
+        assert Path(command[0]).name.lower().startswith("python")
+        assert command[1] == "-I"
         assert command[2] == str(ROOT / "adapters/runner.py")
-        assert command[3] == "verify"
+        assert command[-2] == "verify"
         work = Path(kwargs["cwd"])
-        assert command[4] == str(work / "input.bin")
+        assert command[-1] == str(work / "input.bin")
         assert not work.is_relative_to(host.store.root)
         calls.append({"cwd": str(work), "env_keys": sorted(kwargs["env"])})
         plan = manifest + [{"name": "assigned-work:create", "action": "create",
