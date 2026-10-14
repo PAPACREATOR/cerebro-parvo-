@@ -23,7 +23,7 @@ for path in active:
         resolved=(path.parent/target).resolve()
         if not resolved.is_relative_to(ROOT) or not resolved.exists():
             errors.append(str(path.relative_to(ROOT))+': unresolved local link '+target)
-state=json.loads((ROOT/'auditoria/estado.json').read_text())
+state=json.loads((ROOT/'arquivo/auditoria/estado.json').read_text())
 evidence=ROOT/state['provided_suite']['evidence']
 if not evidence.is_file():errors.append('Suite evidence missing')
 if state['product_release']!='NOT_APPROVED':

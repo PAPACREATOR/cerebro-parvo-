@@ -67,4 +67,4 @@ Estados: EXISTE = artefacto localizado; PARCIAL = parte implementada/documentada
 | M1–M14 integrados | NOT RUN |
 | GitHub anterior versus baseline 26/09 | CONTRADIZ em interface/Activepieces/IA; orientação reconciliada, originais preservados |
 
-[Resultados reais](../auditoria/RESULTADOS.md) · [Pendências](PENDENCIAS.md).
+[Resultados reais](../arquivo/auditoria/RESULTADOS.md) · [Pendências](PENDENCIAS.md).
