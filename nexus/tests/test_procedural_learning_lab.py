@@ -219,3 +219,47 @@ def test_feedback_is_bounded_and_rejects_invalid_versions(lab):
     manifest_path.write_bytes(raw_json({"sha256": hashlib.sha256(raw).hexdigest()}))
     with pytest.raises(Blocked):
         memory.suggest(mold(), goal="podcast")
+
+
+def test_learned_steps_bind_to_existing_source_verified_wiki_flow(lab):
+    store, wiki, memory = lab
+    approved = create(store, "Fonte oficial a rever", approved=True)
+    before = preserved(store.root)
+    receipt = memory.review(
+        mold(), goal="proofread", steps=["interpret", "proofread"],
+        phrase="podes interpretar e rever o texto?", source_ids=[approved],
+        objective="Sequência revista manualmente", decision="ACCEPT",
+        human_confirmed=True,
+    )
+    assert receipt["execution"] == "NOT_AUTHORIZED"
+    candidate = memory.bind_wiki_candidate(
+        mold("outro.pdf", b"outro conteudo"), goal="proofread",
+        source_ids=[approved], objective="Nova proposta com contexto comprovado",
+    )
+    assert candidate["kind"] == "LAB_FLOW_CANDIDATE"
+    assert candidate["authority"] == "NONE"
+    assert candidate["steps"] == ["interpret", "proofread"]
+    assert candidate["sources"][0]["run_id"] == approved
+    assert preserved(store.root) == before
+
+
+def test_media_suggestion_cannot_bypass_wiki_v1_registry(lab):
+    store, wiki, memory = lab
+    approved = create(store, approved=True)
+    hint = memory.suggest(mold(), goal="podcast")
+    assert hint["candidates"] and hint["execution"] == "NOT_AUTHORIZED"
+    with pytest.raises(Blocked, match="não suporta"):
+        memory.bind_wiki_candidate(
+            mold(), goal="podcast", source_ids=[approved],
+            objective="Tentar ferramenta não registada na Wiki v1",
+        )
+
+
+def test_creative_wiki_source_cannot_produce_learned_plan(lab):
+    store, wiki, memory = lab
+    draft = create(store)
+    with pytest.raises(Blocked):
+        memory.bind_wiki_candidate(
+            mold(), goal="proofread", source_ids=[draft],
+            objective="Sem aprovação Canónica",
+        )
