@@ -109,7 +109,7 @@ class Host:
                         process, str(work / "input.bin"),
                     ]
                     with launch_confined(command, cwd=work, env=environment,
-                                         read_roots=roots,
+                                         read_roots=(*roots, ROOT / 'windows/runner-shell.cmd'),
                                          deny_roots=(self.store.root,)) as proc:
                         try:
                             stdout, stderr = proc.communicate(
