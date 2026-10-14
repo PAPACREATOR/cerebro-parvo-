@@ -71,26 +71,42 @@ class WikiBridge:
             raise Blocked('Limites inválidos.')
         if not self.index.is_file() or self.index.is_symlink():
             raise Blocked('Índice indisponível; reconstruir.')
+
+        # Preserve literal phrase semantics, then add bounded natural-word
+        # matching and a single prefix fallback. Operators stay literal data.
+        phrase = '"' + query.replace('"', '""') + '"'
+        expressions = [phrase]
+        words = query.strip().split()
+        plain = (0 < len(words) <= 8 and all(word.isalpha() for word in words)
+                 and not any(word.upper() in {'AND', 'OR', 'NOT', 'NEAR'} for word in words))
+        if plain and len(words) > 1:
+            expressions.append(' AND '.join('"' + word + '"' for word in words))
+        elif plain and len(words) == 1 and len(words[0]) >= 5:
+            expressions.append('"' + words[0] + '"*')
+
         found = []
+        seen = set()
         allowed = set(allowed_ids)
         with closing(sqlite3.connect(self.index)) as con:
-            rows = con.execute('SELECT run_id,hash FROM docs WHERE docs MATCH ? ORDER BY run_id',
-                               ('"' + query.replace('"', '""') + '"',))
-            for run_id, expected_hash in rows:
-                if run_id not in allowed:
-                    continue
-                try:
-                    item = self.snapshot(run_id, include_creative)
-                except Blocked:
-                    # Creative exclusion is expected; corrupt/stale allowed sources block.
-                    if self.store.state(run_id)['status'] == 'HUMAN_REQUIRED' and not include_creative:
+            for expression in expressions:
+                rows = con.execute(
+                    'SELECT run_id,hash FROM docs WHERE docs MATCH ? '
+                    'ORDER BY bm25(docs), run_id', (expression,))
+                for run_id, expected_hash in rows:
+                    if run_id in seen or run_id not in allowed:
                         continue
-                    raise
-                if item['content_sha256'] != expected_hash:
-                    raise Blocked('Índice desatualizado.')
-                found.append(item)
-                if len(found) == limit:
-                    break
+                    try:
+                        item = self.snapshot(run_id, include_creative)
+                    except Blocked:
+                        if self.store.state(run_id)['status'] == 'HUMAN_REQUIRED' and not include_creative:
+                            continue
+                        raise
+                    if item['content_sha256'] != expected_hash:
+                        raise Blocked('Índice desatualizado.')
+                    seen.add(run_id)
+                    found.append(item)
+                    if len(found) == limit:
+                        return found
         return found
 
     def prepare(self, objective, run_ids, include_creative=False):
