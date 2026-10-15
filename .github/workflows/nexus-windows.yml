@@ -70,17 +70,27 @@ jobs:
           Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value 'Suites Nexus core, blocks e practical executadas num runner Windows; regressao integral nos jobs complementares. Practical cobre apenas contratos reais ja automatizados. Nao prova a instalacao no PC de Pedro, Open Notebook/tiny, LibreOffice real, ACL da conta Nexus, homelab ou o produto completo.'
 
   regression:
-    name: Nexus Windows — standard regression partition ${{ matrix.shard }}
+    name: Nexus Windows — standard regression partition ${{ matrix.label }}
     strategy:
       fail-fast: false
       matrix:
-        shard: [0, 1, 2, 3]
+        include:
+          - {label: '0', primary: 0, slice_count: 1, slice: 0}
+          - {label: '1', primary: 1, slice_count: 1, slice: 0}
+          - {label: '2a', primary: 2, slice_count: 4, slice: 0}
+          - {label: '2b', primary: 2, slice_count: 4, slice: 1}
+          - {label: '2c', primary: 2, slice_count: 4, slice: 2}
+          - {label: '2d', primary: 2, slice_count: 4, slice: 3}
+          - {label: '3', primary: 3, slice_count: 1, slice: 0}
     runs-on: windows-latest
     timeout-minutes: 30
     env:
       PYTHONUTF8: '1'
       PYTHONIOENCODING: utf-8
-      NEXUS_REGRESSION_SHARD: ${{ matrix.shard }}
+      NEXUS_REGRESSION_PRIMARY: ${{ matrix.primary }}
+      NEXUS_REGRESSION_SLICE_COUNT: ${{ matrix.slice_count }}
+      NEXUS_REGRESSION_SLICE: ${{ matrix.slice }}
+      NEXUS_REGRESSION_LABEL: ${{ matrix.label }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -107,20 +117,74 @@ jobs:
             Where-Object { $_.Name -like 'test_*.py' -or $_.Name -like '*_test.py' } |
             ForEach-Object { [IO.Path]::GetRelativePath($PWD.Path, $_.FullName).Replace('\', '/') } |
             Where-Object { $volume -notcontains $_ } | Sort-Object)
-          $shard = [int]$env:NEXUS_REGRESSION_SHARD
-          $selected = @(for ($i = 0; $i -lt $modules.Count; $i++) {
-            if (($i % 4) -eq $shard) { $modules[$i] }
+          $primary = [int]$env:NEXUS_REGRESSION_PRIMARY
+          $sliceCount = [int]$env:NEXUS_REGRESSION_SLICE_COUNT
+          $slice = [int]$env:NEXUS_REGRESSION_SLICE
+          $label = $env:NEXUS_REGRESSION_LABEL
+          # Keep the previous four-way catalogue exactly. Only former shard 2
+          # is subdivided, so every module is selected once and only once.
+          $primaryModules = @(for ($i = 0; $i -lt $modules.Count; $i++) {
+            if (($i % 4) -eq $primary) { $modules[$i] }
           })
-          if ($selected.Count -eq 0) { throw 'Empty regression partition' }
-          Write-Output ("STANDARD_MODULES=" + $modules.Count + " PARTITION=" + $shard + " SELECTED=" + $selected.Count)
+          $selected = @(for ($i = 0; $i -lt $primaryModules.Count; $i++) {
+            if (($i % $sliceCount) -eq $slice) { $primaryModules[$i] }
+          })
+          if ($modules.Count -eq 0 -or $selected.Count -eq 0) {
+            throw 'Empty regression partition'
+          }
+
+          # Mechanical coverage proof: union equals the old catalogue and
+          # intersections are empty. This executes on Windows in every job.
+          $assigned = @{}
+          foreach ($candidatePrimary in 0..3) {
+            $candidateSlices = if ($candidatePrimary -eq 2) { 4 } else { 1 }
+            $candidateModules = @(for ($i = 0; $i -lt $modules.Count; $i++) {
+              if (($i % 4) -eq $candidatePrimary) { $modules[$i] }
+            })
+            foreach ($candidateSlice in 0..($candidateSlices - 1)) {
+              for ($i = 0; $i -lt $candidateModules.Count; $i++) {
+                if (($i % $candidateSlices) -eq $candidateSlice) {
+                  $module = $candidateModules[$i]
+                  if (-not $assigned.ContainsKey($module)) { $assigned[$module] = 0 }
+                  $assigned[$module]++
+                }
+              }
+            }
+          }
+          if ($assigned.Count -ne $modules.Count) {
+            throw "Regression coverage union mismatch: $($assigned.Count) != $($modules.Count)"
+          }
+          $duplicates = @($assigned.GetEnumerator() | Where-Object { $_.Value -ne 1 })
+          if ($duplicates.Count -ne 0) {
+            throw ('Regression coverage overlap: ' + (($duplicates | ForEach-Object { $_.Key }) -join ', '))
+          }
+
+          New-Item -ItemType Directory -Force -Path windows-regression-evidence | Out-Null
+          $progress = Join-Path windows-regression-evidence ("progress-" + $label + ".txt")
+          Set-Content -LiteralPath $progress -Value ("TOTAL=" + $modules.Count + " PRIMARY=" + $primary + " SLICE=" + $slice + "/" + $sliceCount + " SELECTED=" + $selected.Count)
+          Write-Output ("STANDARD_TOTAL_MODULES=" + $modules.Count + " PARTITION=" + $label + " SELECTED=" + $selected.Count)
           $selected | ForEach-Object { Write-Output ("STANDARD_MODULE=" + $_) }
-          python -m pytest @selected -vv -p no:cacheprovider -o pythonpath=. --durations=20 "--junitxml=windows-regression-evidence/standard-$shard.xml"
-          if ($LASTEXITCODE -ne 0) { throw 'Standard Windows regression partition failed' }
-          Write-Output ("NEXUS_SUITE_ALL_STANDARD_PARTITION_" + $shard + "=PASS")
+
+          # Execute one module at a time. If a future timeout occurs, the live
+          # log identifies the last module started instead of hiding it inside
+          # one long pytest invocation.
+          foreach ($module in $selected) {
+            $safe = ($module -replace '[^A-Za-z0-9_.-]', '_')
+            Add-Content -LiteralPath $progress -Value ("START " + $module)
+            Write-Output ("STANDARD_START=" + $module)
+            $started = Get-Date
+            python -m pytest $module -vv -p no:cacheprovider -o pythonpath=. --durations=20 ("--junitxml=windows-regression-evidence/" + $safe + ".xml")
+            $code = $LASTEXITCODE
+            $elapsed = [Math]::Round(((Get-Date) - $started).TotalSeconds, 2)
+            Add-Content -LiteralPath $progress -Value ("END " + $module + " EXIT=" + $code + " SECONDS=" + $elapsed)
+            Write-Output ("STANDARD_END=" + $module + " EXIT=" + $code + " SECONDS=" + $elapsed)
+            if ($code -ne 0) { throw ("Regression module failed: " + $module) }
+          }
+          Write-Output ("NEXUS_SUITE_ALL_STANDARD_PARTITION_" + $label + "=PASS")
       - name: Preserve complete regression evidence even on FAIL
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: windows-standard-regression-evidence-${{ matrix.shard }}
+          name: windows-standard-regression-evidence-${{ matrix.label }}
           path: windows-regression-evidence/
           if-no-files-found: error
