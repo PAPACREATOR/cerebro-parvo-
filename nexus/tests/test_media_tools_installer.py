@@ -55,3 +55,17 @@ def test_report_and_launchers_are_created():
     assert "Start-Forge-Nexus.cmd" in SCRIPT
     assert "Check-Nexus-Media-Tools.cmd" in SCRIPT
     assert "health_check_launcher" in SCRIPT
+
+
+def test_deforum_api_is_enabled_only_after_installed_pinned_extension():
+    # Deforum's preload.py registers --deforum-api only when the extension
+    # has been installed. It must not be passed to Forge's first --exit boot.
+    bootstrap = SCRIPT.index("webui.bat --exit")
+    extension = SCRIPT.index("Install-PinnedRepo -Git $git -Url $DeforumRepo")
+    flag = SCRIPT.index("$forgeSettings = $forgeSettings.Replace('--skip-version-check', '--skip-version-check --deforum-api')")
+    assert bootstrap < extension < flag
+    assert "NEXUS_DEFORUM_PRELOAD_MISSING" in SCRIPT
+    assert "NEXUS_DEFORUM_API_UNSUPPORTED" in SCRIPT
+    assert "127.0.0.1" in SCRIPT
+    assert "--listen" not in SCRIPT
+    assert "--share" not in SCRIPT
