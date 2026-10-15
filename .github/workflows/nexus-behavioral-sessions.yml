@@ -5,6 +5,10 @@ on:
     paths:
       - 'nexus/tests/test_behavioral_sessions_matrix.py'
       - 'nexus/tests/folha_dialogue_partial_smoke.cjs'
+      - 'nexus/tests/test_ace_step_candidate.py'
+      - 'nexus/tests/test_documentary_bridge_contract.py'
+      - 'nexus/windows/ace_step_candidate.py'
+      - 'nexus/windows/documentary_bridge.py'
       - 'nexus/ui/app.js'
       - '.github/workflows/nexus-behavioral-sessions.yml'
   workflow_dispatch:
@@ -35,10 +39,10 @@ jobs:
       - name: Install pinned Nexus test dependencies
         run: python -m pip install -r nexus/requirements-test.txt
       - name: Run real HTTP ticket and restart simulations
-        run: python -m pytest nexus/tests/test_behavioral_sessions_matrix.py -q -p no:cacheprovider -o pythonpath=. --durations=10
+        run: python -m pytest nexus/tests/test_behavioral_sessions_matrix.py nexus/tests/test_ace_step_candidate.py nexus/tests/test_documentary_bridge_contract.py -q -p no:cacheprovider -o pythonpath=. --durations=10
       - name: Exercise two-stage Portuguese dialogue without invented answers
         run: node nexus/tests/folha_dialogue_partial_smoke.cjs
       - name: Bound the evidence claim
         shell: bash
         run: |
-          echo 'Behavioural simulations use the real Folha HTTP, parser and tickets, with external Host.start dispatch intercepted. They do not prove physical PC installation, durable Folha editing, OpenNotebook backend, WAV/MP4 or real tool execution.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Behavioural simulations use the real Folha HTTP, parser and tickets, with external Host.start dispatch intercepted. The ACE-Step and documentary candidate tests simulate their external HTTP/media dependencies; they do not prove a physical PC, live GPU, OpenNotebook backend or real WAV/MP4 generation.' >> "$GITHUB_STEP_SUMMARY"
