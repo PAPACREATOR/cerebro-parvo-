@@ -156,9 +156,10 @@ el("form").onsubmit=async (event, classified=null)=>{
     if (pendingDialogue && !payload.filename && !payload.attachment) {
       const answer=payload.text.trim();
       if(!answer || answer.length>500)throw new Error("Escreve uma resposta até 500 caracteres.");
-      const continuation=pendingDialogue.missing.map(key=>key==="tom"?
-        "Tom: "+answer:"Duração: "+answer).join("\n");
-      payload.text=pendingDialogue.original+"\n"+continuation;
+      // Keep the human's answer literal. Never invent a missing tone or
+      // duration by assigning the same answer to both slots.
+      // The interpreter will ask again for any genuinely missing detail.
+      payload.text=pendingDialogue.original+"\n"+answer;
       el("text").value=payload.text;
       pendingDialogue=null;
     }
