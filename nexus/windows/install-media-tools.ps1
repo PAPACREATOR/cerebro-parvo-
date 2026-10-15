@@ -232,6 +232,17 @@ set "COMMANDLINE_ARGS=--api --port $ForgePort --skip-version-check"
     Invoke-Checked $forgeVenvPython @('-m','compileall','-q',(Join-Path $deforum 'scripts')) $forge
     Invoke-Checked $forgeVenvPython @('-m','pip','check') $forge
 
+    # Forge's first bootstrap happens BEFORE the extension is installed.
+    # Enable the pinned Deforum local API only AFTER preload.py is available,
+    # otherwise Forge --exit may reject this command-line argument.
+    $deforumPreload = Join-Path $deforum 'preload.py'
+    if (-not (Test-Path -LiteralPath $deforumPreload)) { throw 'NEXUS_DEFORUM_PRELOAD_MISSING' }
+    if ((Get-Content -LiteralPath $deforumPreload -Raw) -notmatch '--deforum-api') {
+        throw 'NEXUS_DEFORUM_API_UNSUPPORTED'
+    }
+    $forgeSettings = $forgeSettings.Replace('--skip-version-check', '--skip-version-check --deforum-api')
+    Set-Content -LiteralPath (Join-Path $forge 'webui.settings.bat') -Value $forgeSettings -Encoding ASCII
+
     $report.deforum = [ordered]@{
         status = 'INSTALLED_DEPENDENCIES_TESTED'
         path = $deforum
