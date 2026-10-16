@@ -46,22 +46,103 @@ def _normalise(text: str) -> str:
     return re.sub(r"\s+", " ", unicodedata.normalize("NFKC", text).casefold()).strip()
 
 
+
+# Closed operational lexicon (lemma -> attested PT-PT forms), not a general
+# Portuguese dictionary. The regex reads whole words; grammar reads their
+# clause role. This is only an intention hint, never permission or dispatch.
+_PT_VERB_FORMS = {
+    "arquivo": frozenset((
+        "guarda", "guardar", "guarde", "guardes", "guardem",
+        "arquiva", "arquivar", "arquive", "arquives", "arquivem",
+        "salva", "salvar", "salve", "salves",
+    )),
+    "web": frozenset((
+        "pesquisa", "pesquisar", "pesquise", "pesquisem", "pesquiza",
+        "procura", "procurar", "procure", "procurem",
+    )),
+    "fontes": frozenset(("encontra", "encontrar", "encontre", "encontrem")),
+    "trabalhar": frozenset((
+        "revê", "reve", "rever", "reveja", "revejam",
+        "corrige", "corrigir", "corrija", "corrijam",
+        "melhora", "melhorar", "melhore", "melhorem",
+        "reescreve", "reescrever", "reescreva", "reescrevam",
+        "trabalha", "trabalhar",
+    )),
+    "perguntar": frozenset((
+        "explica", "explicar", "explique", "expliquem",
+        "responde", "responder", "responda", "respondam",
+    )),
+    "calcular": frozenset((
+        "calcula", "calcular", "calcule", "calculem",
+        "soma", "somar", "some", "somem",
+    )),
+}
+_PT_QUESTION = re.compile(
+    r"^(?:por favor[, ]+)?(?:como\b|de que forma\b|"
+    r"qual (?:é|e) a forma de\b|"
+    r"(?:explica(?:-me)?|podes explicar|poderias explicar|"
+    r"consegues explicar|diz-me|podes dizer-me)\s+como\b)"
+)
+_PT_SEPARATE_ACTION = re.compile(
+    r"\b(?:e(?:\s+(?:também|depois|a seguir))?|"
+    r"mas\s+depois|depois|em\s+seguida)\s+"
+    r"(?:guarda|guarde|arquiva|salva|pesquisa|procura|encontra|"
+    r"corrige|rev[eê]|reescreve|melhora|calcula|soma|faz|"
+    r"tema|assunto|quero\s+falar\s+sobre)\b"
+)
+_PT_NEGATIVE_HEAD = re.compile(
+    r"^(?:por favor[, ]+)?(?:não|nao|nunca|jamais|nem|sem)\b"
+)
+_PT_VERB_HEAD = re.compile(
+    r"^(?:por favor[, ]+)?"
+    r"(?:(?:podes|poderias|pode|poderia|consegues|consegue|"
+    r"quero que|preciso que|quero|pretendo|gostaria de|"
+    r"preciso de|ajuda-me a)\s+)?"
+    r"([a-záàâãéêíóôõúç-]+)\b"
+)
+_PT_WEB_TARGET = re.compile(r"\b(?:web|internet|online|net)\b")
+_PT_SOURCE_TARGET = re.compile(r"\bfontes?\b")
+
+
+def _pt_grammar_intent(normal: str) -> str | None:
+    """Compare one Portuguese grammatical head with a small verb dictionary.
+
+    Tokens after 'como' in a method question do not become actions.
+    Negation and genuine separate instructions are never resolved here.
+    Only a single safe intent is returned, never a process ID or authority.
+    """
+    if len(normal) > 12000 or _PT_NEGATIVE_HEAD.match(normal):
+        return None
+    if _PT_QUESTION.match(normal):
+        return None if _PT_SEPARATE_ACTION.search(normal) else "perguntar"
+    head = _PT_VERB_HEAD.match(normal)
+    if head is None or _PT_SEPARATE_ACTION.search(normal):
+        return None
+    verb = head.group(1)
+    matches = []
+    for intent, forms in _PT_VERB_FORMS.items():
+        if verb not in forms:
+            continue
+        if intent == "web":
+            if _PT_SOURCE_TARGET.search(normal):
+                matches.append("fontes")
+            elif _PT_WEB_TARGET.search(normal):
+                matches.append("web")
+        elif intent == "fontes":
+            if _PT_SOURCE_TARGET.search(normal):
+                matches.append(intent)
+        else:
+            matches.append(intent)
+    return matches[0] if len(set(matches)) == 1 else None
+
+
 def _explanation_is_primary(normal: str, intents: list[str]) -> bool:
     """Portuguese main-clause hint, without execution authority.
 
     'Explica como guardar' is a question; 'explica ... e depois guarda'
     contains a separate imperative and must ask for human clarification.
     """
-    if "perguntar" not in intents or not re.match(
-        r"^(?:por favor[, ]+)?explica(?:-me)?\s+como\b", normal
-    ):
-        return False
-    second_instruction = (
-        r"\b(?:e(?:\s+depois)?|depois|em\s+seguida)\s+"
-        r"(?:guarda|arquiva|salva|pesquisa|procura|encontra|"
-        r"corrige|rev[eê]|reescreve|calcula|soma|faz)\b"
-    )
-    return re.search(second_instruction, normal) is None
+    return "perguntar" in intents and _pt_grammar_intent(normal) == "perguntar"
 
 
 def requires_clarification(text: str) -> bool:
@@ -82,8 +163,11 @@ def _natural(text: str, *, original: str | None = None, parser="eliza-rules-v1",
         if any(re.search(pattern, normal) for pattern in patterns)
     ]
     source = text if original is None else original
-    if len(matches) > 1 and _explanation_is_primary(normal, matches):
+    grammar_intent = _pt_grammar_intent(normal)
+    if len(matches) > 1 and grammar_intent == "perguntar":
         matches = ["perguntar"]
+    elif not matches and grammar_intent is not None:
+        matches = [grammar_intent]
     if not matches and not requires_clarification(source) and not requires_clarification(text):
         try:
             candidate = declared_router().recognise_command(text)
