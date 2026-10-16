@@ -156,3 +156,34 @@ def test_composed_pdf_negation_quotes_and_ambiguity_never_create_plan(tmp_path, 
         preview = call("/api/interpret", {"text": text})
         assert "composite" not in preview
         assert call("/api/runs") == []
+
+
+def test_composed_receipt_does_not_invent_history_or_execute_tools(tmp_path, monkeypatch):
+    host = Host(tmp_path)
+    def forbidden(*_args, **_kwargs):
+        pytest.fail("Read-only receipt tried to execute a tool")
+    monkeypatch.setattr(host, "start", forbidden)
+    request = {
+        "text": "Verifica este documento e converte-o em PDF",
+        "filename": "original.odt", "input_sha256": "a" * 64,
+        "verify_run_id": "b" * 32, "convert_run_id": "c" * 32,
+    }
+    with http(host) as call:
+        for altered in (
+            request,
+            {**request, "convert_run_id": request["verify_run_id"]},
+            {**request, "input_sha256": "not-a-hash"},
+            {**request, "text": "Não verifica este documento e converte-o em PDF"},
+            {**request, "filename": "../original.odt"},
+            {**request, "verify_run_id": "../../etc/passwd"},
+            {**request, "unexpected": "field"},
+        ):
+            with pytest.raises(HTTPError) as denied:
+                call("/api/flow-receipt", altered)
+            assert denied.value.code == 403
+        with pytest.raises(HTTPError) as other_session:
+            call("/api/flow-receipt", request, session="not-the-host-session")
+        assert other_session.value.code == 403
+        assert call("/api/runs") == []
+    assert not list((tmp_path / "creative").iterdir())
+    assert not list((tmp_path / "canonical").iterdir())
