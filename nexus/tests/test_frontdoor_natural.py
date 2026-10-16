@@ -184,3 +184,17 @@ def test_pt_operational_lexicon_cannot_force_an_action(original):
     assert parsed.status == "UNRESOLVED"
     assert parsed.intent is None
     assert parsed.original == original
+
+
+@pytest.mark.parametrize("original", [
+    "Responde sobre documento alfa e também pesquiza fontes sobre documento beta.",
+    "Como funciona documento alfa e também quais são as fontes de documento beta?",
+    "Como guardar uma nota e depois guarde o ficheiro.",
+    "Podes explicar como pesquisar e depois pesquise na internet.",
+    "Quero que guardes o texto e também arquive outro documento.",
+])
+def test_pt_lexicon_grammar_preserves_distinct_clauses_and_inflections(original):
+    parsed = parse(original)
+    assert parsed.status == "UNRESOLVED"
+    assert parsed.intent is None
+    assert parsed.original == original
