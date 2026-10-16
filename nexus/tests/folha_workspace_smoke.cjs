@@ -142,8 +142,13 @@ test("one white Folha request proposes and runs verify then PDF with two explici
       status:"HUMAN_REQUIRED",process_id:"verify",input_sha256:sha,result:{status:"PASS"},
     };
     if(route==="/api/runs/"+"b".repeat(32))return {
-      status:"HUMAN_REQUIRED",process_id:"convert_pdf",artifact_sha256:"b".repeat(64),
-      result:{title:"PDF verificado",status:"UNKNOWN"},content:"# PDF",
+      status:"HUMAN_REQUIRED",process_id:"convert_pdf",input_sha256:sha,
+      artifact_sha256:"b".repeat(64),result:{title:"PDF verificado",status:"UNKNOWN"},
+      content:"# PDF",
+    };
+    if(route==="/api/flow-receipt")return {
+      authority:"NONE",execution:"NOT_AUTHORIZED",receipt_sha256:"c".repeat(64),
+      product:{run_id:"b".repeat(32),sha256:"b".repeat(64)},
     };
     return [];
   }});
@@ -167,6 +172,13 @@ test("one white Folha request proposes and runs verify then PDF with two explici
   assert.equal(ui.node("execution-confirmation").open,false);
   assert.equal(ui.node("pdf").hidden,false);
   assert.equal(ui.node("result-title").textContent,"PDF verificado");
+  const receiptRequest=calls.find(v=>v.route==="/api/flow-receipt");
+  assert.ok(receiptRequest,"verified two-step receipt must be requested");
+  assert.equal(receiptRequest.body.text,original);
+  assert.equal(receiptRequest.body.input_sha256,sha);
+  assert.equal(receiptRequest.body.verify_run_id,"a".repeat(32));
+  assert.equal(receiptRequest.body.convert_run_id,"b".repeat(32));
+  assert.match(ui.node("notice").textContent,/cadeia verificada/);
 });
 test("refused first tool and edited request never prepare or execute a second tool",async()=>{
   const original="Verifica este documento e converte-o em PDF";
