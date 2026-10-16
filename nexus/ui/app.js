@@ -21,9 +21,11 @@ const session = pageStorage.getItem("nexus-session") || "";
 let current = null, ticket = null, poll = null, currentContent = "", currentProcess = "", executionTicket = null;
 let editRevision = 0, viewRevision = 0, approvalRun = null;
 let pendingDialogue = null;
+let composedFlow = null;
 const hasWorkspace = Boolean(document.querySelector?.("#workspace"));
 function invalidateExecutionProposal() {
   editRevision++;
+  composedFlow = null;
   executionTicket = null;
   ticket = null; approvalRun = null;
   if (el("approval").open) el("approval").close();
@@ -145,6 +147,52 @@ async function requestPayload() {
   }
   return {text:el("text").value,filename:file ? file.name:"",attachment};
 }
+
+// One approved request can contain two deterministic Host operations. This
+// client owns only presentation/order; Host owns both one-use tool tickets.
+function sameFolhaInput(a,b) {
+  return a.text===b.text && a.filename===b.filename && a.attachment===b.attachment;
+}
+async function prepareComposedStep(flow) {
+  const now=await requestPayload();
+  if(composedFlow!==flow || flow.revision!==editRevision || !sameFolhaInput(now,flow.original))
+    throw new Error("O pedido mudou. A sequência foi interrompida.");
+  const step=flow.steps[flow.index];
+  const request={...now,text:"& "+step.command};
+  const prepared=await api("/api/prepare-run",request);
+  if(composedFlow!==flow || flow.revision!==editRevision ||
+     prepared.process!==step.process ||
+     (flow.inputHash && flow.inputHash!==prepared.attachment_sha256))
+    throw new Error("A etapa não corresponde à sequência autorizada.");
+  flow.inputHash=prepared.attachment_sha256;
+  flow.prepared=request;
+  executionTicket=prepared.ticket;
+  el("execution-summary").textContent=step.process==="verify"?
+    "Verificar documento antes da conversão":"Converter documento verificado para PDF";
+  el("execution-review").textContent="Pedido original: "+flow.original.text+
+    "\nOperação a autorizar: "+step.command+"\nFicheiro: "+prepared.filename;
+  el("execution-confirm").checked=false;
+  el("execution-approve").disabled=true;
+  el("execution-confirmation").showModal();
+}
+async function verifyComposedFirst(runId,flow) {
+  // Do not infer success from HTTP 202; wait for the Host-verified candidate.
+  for(let attempt=0;attempt<100;attempt++) {
+    if(composedFlow!==flow || flow.revision!==editRevision)
+      throw new Error("A sequência foi interrompida.");
+    const state=await api("/api/runs/"+runId);
+    if(state.status==="RUNNING") {
+      await new Promise(resolve=>setTimeout(resolve,900));
+      continue;
+    }
+    if(state.status!=="HUMAN_REQUIRED" || state.process_id!=="verify" ||
+       state.result?.status!=="PASS" || state.input_sha256!==flow.inputHash)
+      throw new Error("A verificação do documento não foi concluída. A conversão não começou.");
+    return;
+  }
+  throw new Error("A verificação excedeu o tempo. Consulta o histórico antes de repetir.");
+}
+
 el("form").onsubmit=async (event, classified=null)=>{
   event.preventDefault(); notice(""); el("submit").disabled=true;
   try {
@@ -200,6 +248,19 @@ el("form").onsubmit=async (event, classified=null)=>{
     }
     const preview=classified ? classified.preview : await api("/api/interpret",{text:payload.text});
     if(revision!==editRevision) throw new Error("O texto ou anexo mudou durante a interpretação.");
+    if(preview.composite && payload.filename && payload.attachment) {
+      const steps=preview.composite.steps;
+      if(preview.composite.execution!=="NOT_AUTHORIZED" ||
+         preview.composite.authority!=="NONE" ||
+         !Array.isArray(steps) || steps.length!==2 ||
+         steps[0].process!=="verify" || steps[0].command!=="verificar integridade de ficheiro" ||
+         steps[1].process!=="convert_pdf" || steps[1].command!=="converter para pdf")
+        throw new Error("Receita composta não autorizada.");
+      const flow={original:payload,revision,index:0,steps,inputHash:null,prepared:null};
+      composedFlow=flow;
+      await prepareComposedStep(flow);
+      return;
+    }
     if(preview.assistant?.question && !payload.filename && !payload.attachment) {
       pendingDialogue={original:payload.text,missing:preview.assistant.missing};
       clearTimeout(poll);current=null;currentContent="";viewRevision++;
@@ -257,9 +318,10 @@ el("form").onsubmit=async (event, classified=null)=>{
 };
 el("execution-confirm").onchange=()=>{el("execution-approve").disabled=!el("execution-confirm").checked;};
 el("execution-cancel").onclick=async()=>{
-  const stale=executionTicket; executionTicket=null;
+  const stale=executionTicket, request=composedFlow?.prepared;
+  executionTicket=null;composedFlow=null;
   try {
-    if(stale) await api("/api/confirm-run",{ticket:stale,confirmed:false,...await requestPayload()});
+    if(stale) await api("/api/confirm-run",{ticket:stale,confirmed:false,...(request||await requestPayload())});
   } catch(_error) {}
   el("execution-confirmation").close(); el("submit").disabled=false;
 };
@@ -270,11 +332,31 @@ el("execution-approve").onclick=async()=>{
     if(!active || !el("execution-confirm").checked)throw new Error("A confirmação já não é válida.");
     const payload=await requestPayload();
     if(revision!==editRevision)throw new Error("O pedido mudou durante a confirmação.");
+    const flow=composedFlow;
+    if(flow) {
+      if(flow.revision!==revision || !sameFolhaInput(payload,flow.original) || !flow.prepared)
+        throw new Error("O pedido mudou durante a sequência.");
+      const response=await api("/api/confirm-run",{
+        ticket:active,confirmed:true,...flow.prepared,
+      });
+      el("execution-confirmation").close();
+      if(flow.index===0) {
+        await verifyComposedFirst(response.run_id,flow);
+        flow.index=1;
+        await prepareComposedStep(flow);
+      } else {
+        composedFlow=null;
+        await list();
+        if(revision===editRevision)await show(response.run_id);
+      }
+      return;
+    }
     const response=await api("/api/confirm-run",{ticket:active,confirmed:true,...payload});
     el("execution-confirmation").close();
     await list();
     if(revision===editRevision) await show(response.run_id);
   } catch(error) {
+    composedFlow=null;
     el("execution-confirmation").close(); notice(error.message); el("submit").disabled=false;
   }
 };
