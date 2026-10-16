@@ -384,3 +384,63 @@ def test_pt_300_pages_style_long_chapter_is_not_silently_truncated(tmp_path):
     assert hits
     assert any("sentinela" in hit["snippet"] for hit in hits)
     assert all(hit["authority"] == "NONE" for hit in hits)
+
+
+
+def test_pt_full_hunspell_markdown_fuzzy_index_is_present_and_separate():
+    from nexus.frontdoor import (
+        _PT_GENERAL_DICTIONARY, dictionary_contains, fuzzy_suggestions,
+    )
+    corpus = _PT_GENERAL_DICTIONARY
+    assert corpus.imported_entries == 44_187
+    assert corpus.word_count >= 30_000
+    assert corpus.db.execute("SELECT count(*) FROM pt_general").fetchone()[0] == corpus.word_count
+    assert dictionary_contains("guarda")
+    assert not dictionary_contains("guarrda")
+    assert fuzzy_suggestions("guarda") == ()
+    proposals = fuzzy_suggestions("guarrda", limit=10)
+    assert proposals
+    assert any(item["candidate"] == "guarda" for item in proposals)
+    for item in proposals:
+        assert 0 < item["membership"] < 1
+        assert item["edit_distance"] <= 2
+        assert item["status"] == "SUGGESTION"
+        assert item["authority"] == "NONE"
+        assert item["execution"] == "NOT_AUTHORIZED"
+
+
+def test_pt_fuzzy_does_not_autoroute_or_unnegate_human_commands():
+    from nexus.frontdoor import dictionary_contains, fuzzy_suggestions
+    assert parse("Guarrda este ficheiro.").status == "UNRESOLVED"
+    assert parse("Não guardes esta nota.").status == "UNRESOLVED"
+    assert dictionary_contains('guarda" OR word MATCH "nexus') is False
+    assert fuzzy_suggestions('guarda" OR word MATCH "nexus') == ()
+
+
+def test_pt_dictionary_manifest_and_all_parts_tamper_fail_closed(tmp_path):
+    from pathlib import Path
+    import shutil
+    import pytest
+    from nexus.contracts import Blocked
+    from nexus.frontdoor import _PT_GENERAL_MANIFEST_GIT_SHA1
+    from nexus.lingua.indexer import load_general_vocabulary
+
+    source = Path(__file__).resolve().parents[1] / "lingua" / "imports"
+    dst = tmp_path / "imports"
+    shutil.copytree(source, dst)
+    changed = dst / "pt_PT_dic_part_01.md"
+    changed.write_bytes(changed.read_bytes() + b"\nnon_authorized_word")
+    with pytest.raises(Blocked):
+        load_general_vocabulary(dst, _PT_GENERAL_MANIFEST_GIT_SHA1)
+
+
+def test_pt_dictionary_sha_manifest_is_not_a_runtime_permission():
+    from nexus.frontdoor import fuzzy_suggestions
+    for original in (
+        "Explica como guardar e depois guarda o original.",
+        "Não podes guardar esta nota.",
+        "O texto diz «guarda esta nota».",
+    ):
+        assert parse(original).status == "UNRESOLVED"
+    fuzzy = fuzzy_suggestions("guarrda")
+    assert all(x["execution"] == "NOT_AUTHORIZED" for x in fuzzy)
