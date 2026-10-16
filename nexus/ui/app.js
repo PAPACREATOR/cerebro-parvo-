@@ -175,6 +175,22 @@ async function prepareComposedStep(flow) {
   el("execution-approve").disabled=true;
   el("execution-confirmation").showModal();
 }
+async function verifyComposedProduct(runId,flow) {
+  for(let attempt=0;attempt<320;attempt++) {
+    if(composedFlow!==flow || flow.revision!==editRevision)
+      throw new Error("A sequência foi interrompida.");
+    const state=await api("/api/runs/"+runId);
+    if(state.status==="RUNNING"){
+      await new Promise(resolve=>setTimeout(resolve,900));
+      continue;
+    }
+    if(state.status!=="HUMAN_REQUIRED" || state.process_id!=="convert_pdf" ||
+       state.input_sha256!==flow.inputHash || !/^[a-f0-9]{64}$/.test(state.artifact_sha256||""))
+      throw new Error("O PDF ainda não está verificado. Consulta o histórico antes de repetir.");
+    return state;
+  }
+  throw new Error("A produção do PDF excedeu o tempo. Consulta o histórico sem repetir a tarefa.");
+}
 async function verifyComposedFirst(runId,flow) {
   // Do not infer success from HTTP 202; wait for the Host-verified candidate.
   for(let attempt=0;attempt<100;attempt++) {
@@ -342,12 +358,26 @@ el("execution-approve").onclick=async()=>{
       el("execution-confirmation").close();
       if(flow.index===0) {
         await verifyComposedFirst(response.run_id,flow);
+        flow.verifyRunId=response.run_id;
         flow.index=1;
         await prepareComposedStep(flow);
       } else {
+        await verifyComposedProduct(response.run_id,flow);
+        const receipt=await api("/api/flow-receipt",{
+          text:flow.original.text,filename:flow.original.filename,
+          input_sha256:flow.inputHash,verify_run_id:flow.verifyRunId,
+          convert_run_id:response.run_id,
+        });
+        if(receipt.authority!=="NONE" || receipt.execution!=="NOT_AUTHORIZED" ||
+           receipt.product?.run_id!==response.run_id ||
+           !/^[a-f0-9]{64}$/.test(receipt.receipt_sha256||""))
+          throw new Error("A ligação entre as ferramentas não foi verificada.");
         composedFlow=null;
         await list();
-        if(revision===editRevision)await show(response.run_id);
+        if(revision===editRevision){
+          await show(response.run_id);
+          notice("PDF produzido e cadeia verificada. Recibo: "+receipt.receipt_sha256.slice(0,12)+".");
+        }
       }
       return;
     }
