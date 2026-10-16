@@ -161,7 +161,7 @@ class LanguageIndex:
 
 def load_corpus(path: Path, expected_sha256: str) -> LanguageIndex:
     """Fail closed on tampering, invalid UTF-8 or oversized source."""
-    if (type(path) is not Path or path.is_symlink()
+    if (not isinstance(path, Path) or path.is_symlink()
             or not isinstance(expected_sha256, str)
             or not re.fullmatch("[0-9a-f]{64}", expected_sha256)):
         raise Blocked("Fonte linguística não confiável.")
