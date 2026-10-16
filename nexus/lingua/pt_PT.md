@@ -98,7 +98,7 @@ executar regressões. Um futuro dicionário geral (por exemplo Hunspell pt-PT)
 deve permanecer separado do léxico de comandos; pertencer ao dicionário
 nunca transforma uma palavra isolada em autorização de execução.
 O índice efémero reconstrói-se deste ficheiro local, não é o Store/Creative/
-Canonical e não necessita de rede, Docker, Ollama ou Java.
+Canonical e não necessita de rede, containers nem serviços de modelos obrigatórios.
 
 ## Contrato do Front Door
 
