@@ -193,3 +193,159 @@ def load_corpus(path: Path, expected_sha256: str) -> LanguageIndex:
     if markdown.count("<!-- nexus-pt-PT-v1 -->") != 1:
         raise Blocked("Versão do cofre linguístico incompatível.")
     return LanguageIndex(markdown, expected_sha256)
+
+
+
+def _git_blob_sha1(raw: bytes) -> str:
+    return hashlib.sha1(
+        b"blob " + str(len(raw)).encode("ascii") + b"\0" + raw
+    ).hexdigest()
+
+
+def _bounded_edit_distance(a: str, b: str, max_dist: int) -> int:
+    """Capped Levenshtein; determinism and speed, not execution authority."""
+    if abs(len(a) - len(b)) > max_dist:
+        return max_dist + 1
+    prior = list(range(len(b) + 1))
+    for i, ch in enumerate(a, 1):
+        curr = [i]
+        for j, other in enumerate(b, 1):
+            curr.append(min(curr[-1] + 1, prior[j] + 1,
+                            prior[j - 1] + (ch != other)))
+        if min(curr) > max_dist:
+            return max_dist + 1
+        prior = curr
+    return prior[-1]
+
+
+class GeneralVocabulary:
+    """Imported Portuguese data, separate from registered operational verbs."""
+
+    def __init__(self, root: Path, manifest_sha1: str):
+        if (not isinstance(root, Path) or root.is_symlink()
+                or not re.fullmatch(r"[0-9a-f]{40}", manifest_sha1)):
+            raise Blocked("Índice lexical geral não autorizado.")
+        try:
+            raw = (root / "pt_PT_MANIFESTO.md").read_bytes()
+        except OSError as error:
+            raise Blocked("Manifesto linguístico indisponível.") from error
+        if _git_blob_sha1(raw) != manifest_sha1:
+            raise Blocked("Manifesto linguístico foi alterado.")
+        try:
+            manifest = raw.decode("utf-8")
+        except UnicodeError as error:
+            raise Blocked("Manifesto linguístico não é UTF-8.") from error
+        table = _section(manifest, "## Ficheiros importados\n",
+                         "\nA entrada geral nunca")
+        declared = {}
+        for filename, blob, count in _table(table, columns=3):
+            if filename == "ficheiro":
+                continue
+            if (filename in declared or not re.fullmatch(
+                    r"pt_PT_dic_part_0[1-8]\.md|pt_PT_afixos\.md|pt_PT_LICENCA\.md",
+                    filename)
+                    or not re.fullmatch("[0-9a-f]{40}", blob)
+                    or not re.fullmatch("[0-9]{1,5}", count)):
+                raise Blocked("Referência lexical inválida.")
+            declared[filename] = (blob, int(count))
+        needed = {f"pt_PT_dic_part_{i:02d}.md" for i in range(1, 9)}
+        needed.update(("pt_PT_afixos.md", "pt_PT_LICENCA.md"))
+        if set(declared) != needed:
+            raise Blocked("Importação portuguesa incompleta.")
+
+        forms = set()
+        total = 0
+        for filename in sorted(needed):
+            path = root / filename
+            if path.is_symlink():
+                raise Blocked("Fonte lexical não autorizada.")
+            try:
+                data = path.read_bytes()
+            except OSError as error:
+                raise Blocked("Parte do dicionário indisponível.") from error
+            if _git_blob_sha1(data) != declared[filename][0]:
+                raise Blocked("Parte do dicionário adulterada.")
+            if not filename.startswith("pt_PT_dic_part_"):
+                continue
+            try:
+                md = data.decode("utf-8")
+            except UnicodeError as error:
+                raise Blocked("Parte lexical não está em UTF-8.") from error
+            fence = chr(96) * 3
+            block = _section(md, fence + "hunspell-dic\n", "\n" + fence)
+            records = block.strip("\n").splitlines()
+            if len(records) != declared[filename][1]:
+                raise Blocked("Dicionário português truncado.")
+            total += len(records)
+            for entry in records:
+                head = entry.split("\t", 1)[0].split("/", 1)[0].casefold()
+                if WORD.fullmatch(head):
+                    forms.add(head)
+        if total != 44_187 or len(forms) < 30_000:
+            raise Blocked("Dicionário português incompleto.")
+        self.source_blob = manifest_sha1
+        self.imported_entries = total
+        self.word_count = len(forms)
+        self.words = frozenset(forms)
+        self.by_length = {}
+        for word in sorted(forms):
+            self.by_length.setdefault(len(word), []).append(word)
+        self.lock = threading.RLock()
+        self.db = sqlite3.connect(":memory:", check_same_thread=False)
+        try:
+            self.db.execute(
+                "CREATE VIRTUAL TABLE pt_general USING fts5("
+                "word, tokenize='unicode61 remove_diacritics 0')"
+            )
+            self.db.executemany(
+                "INSERT INTO pt_general(word) VALUES (?)",
+                ((w,) for w in sorted(forms))
+            )
+        except sqlite3.Error as error:
+            self.db.close()
+            raise Blocked("FTS5 do dicionário indisponível.") from error
+
+    def contains(self, word: str) -> bool:
+        if type(word) is not str or not WORD.fullmatch(word.casefold()):
+            return False
+        term = word.casefold()
+        try:
+            with self.lock:
+                row = self.db.execute(
+                    "SELECT 1 FROM pt_general WHERE word MATCH ? AND word = ? LIMIT 1",
+                    ('"' + term + '"', term),
+                ).fetchone()
+        except sqlite3.Error as error:
+            raise Blocked("Consulta ao dicionário indisponível.") from error
+        return row is not None
+
+    def fuzzy(self, word: str, limit: int = 5) -> tuple[dict, ...]:
+        """Fuzzy membership 0..1, bounded, deterministic and advisory only."""
+        if type(word) is not str or type(limit) is not int or not 1 <= limit <= 10:
+            raise Blocked("Consulta fuzzy inválida.")
+        term = word.casefold()
+        if not WORD.fullmatch(term) or len(term) < 3 or self.contains(term):
+            return ()
+        threshold = 1 if len(term) <= 4 else 2
+        sizes = range(max(1, len(term) - threshold), len(term) + threshold + 1)
+        candidates = (candidate for size in sizes
+                      for candidate in self.by_length.get(size, ())
+                      if candidate[0] == term[0])
+        matches = []
+        for candidate in candidates:
+            distance = _bounded_edit_distance(term, candidate, threshold)
+            if distance <= threshold:
+                membership = round(1 - distance / max(len(term), len(candidate)), 4)
+                matches.append((membership, distance, candidate))
+        matches.sort(key=lambda item: (-item[0], item[1], item[2]))
+        return tuple({
+            "candidate": candidate, "membership": membership,
+            "edit_distance": distance, "source": "pt-PT-Hunspell-Markdown",
+            "source_blob": self.source_blob,
+            "status": "SUGGESTION", "authority": "NONE",
+            "execution": "NOT_AUTHORIZED",
+        } for membership, distance, candidate in matches[:limit])
+
+
+def load_general_vocabulary(root: Path, manifest_sha1: str) -> GeneralVocabulary:
+    return GeneralVocabulary(root, manifest_sha1)
