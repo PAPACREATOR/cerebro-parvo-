@@ -136,7 +136,11 @@ async function show(id) {
   else await list();
 }
 async function requestPayload() {
+  // Capture the visible input BEFORE any asynchronous file read. Never pair
+  // yesterday's attachment with another Folha's later text.
+  const text=el("text").value;
   const file=el("file").files[0];
+  const filename=file?.name || "";
   if(file && file.size>2097152) throw new Error("Escolhe um ficheiro até 2 MB.");
   let attachment="";
   if(file) {
@@ -145,7 +149,7 @@ async function requestPayload() {
     for(let i=0;i<bytes.length;i+=8192) binary+=String.fromCharCode(...bytes.subarray(i,i+8192));
     attachment=btoa(binary);
   }
-  return {text:el("text").value,filename:file ? file.name:"",attachment};
+  return {text,filename,attachment};
 }
 
 // One approved request can contain two deterministic Host operations. This
@@ -459,7 +463,7 @@ el("pdf").onclick=async()=>{
 // Server optimistic revisions prevent stale writes from replacing newer text.
 const draftSupported=typeof File==="function" && typeof DataTransfer==="function";
 let draftSlot=pageStorage.getItem("nexus-active-folha")==="b"?"b":"a";
-let draftRevision=0,draftReady=false,draftTimer=null,draftQueue=Promise.resolve();
+let draftRevision=0,draftReady=false,draftTimer=null,draftQueue=Promise.resolve(),draftTransition=false;
 function scheduleDraftSave(){
   if(!draftSupported||!draftReady)return;
   clearTimeout(draftTimer);
@@ -468,8 +472,10 @@ function scheduleDraftSave(){
 function saveDraft(){
   if(!draftSupported||!draftReady)return draftQueue;
   const slot=draftSlot;
+  // The asynchronous queue must never read a subsequent sheet's input.
+  const snapshot=requestPayload();
   draftQueue=draftQueue.catch(()=>{}).then(async()=>{
-    const payload=await requestPayload();
+    const payload=await snapshot;
     // A previous save can complete AFTER a new Folha was selected.
     // Its slot and revision are fixed before any asynchronous call.
     if(slot!==draftSlot)return;
@@ -519,20 +525,42 @@ const originalFileChange=el("file").onchange;
 el("file").onchange=()=>{originalFileChange();paintComposer();};
 const originalNewSheet=el("new").onclick;
 el("new").onclick=async()=>{
-  if(draftSupported) {
-    clearTimeout(draftTimer);
-    try {await saveDraft();}catch(error){notice(error.message);return;}
-  }
-  pendingDialogue=null;
-  originalNewSheet();
-  workingLayout(false);el("history-panel").hidden=true;
-  el("history-toggle").setAttribute("aria-expanded","false");
-  el("navigation").open=false;paintComposer();
-  if(draftSupported) {
-    draftReady=false;
-    draftSlot=draftSlot==="a"?"b":"a";
-    pageStorage.setItem("nexus-active-folha",draftSlot);
-    try {await restoreDraft(draftSlot);}catch(error){notice(error.message);}
+  if(draftTransition || (draftSupported && !draftReady))return;
+  // Lock at transition start, not after the pending queue/network awaits.
+  // The old Folha remains intact if disk CAS/save refuses the change.
+  draftTransition=true;
+  el("new").disabled=true;
+  el("text").readOnly=true;
+  el("file").disabled=true;
+  const oldSlot=draftSlot;
+  try {
+    if(draftSupported) {
+      clearTimeout(draftTimer);
+      await saveDraft();
+    }
+    pendingDialogue=null;
+    originalNewSheet();
+    workingLayout(false);el("history-panel").hidden=true;
+    el("history-toggle").setAttribute("aria-expanded","false");
+    el("navigation").open=false;paintComposer();
+    if(draftSupported) {
+      draftReady=false;
+      draftSlot=oldSlot==="a"?"b":"a";
+      pageStorage.setItem("nexus-active-folha",draftSlot);
+      await restoreDraft(draftSlot);
+    }
+  } catch(error) {
+    if(draftSupported && draftSlot!==oldSlot) {
+      draftSlot=oldSlot;
+      pageStorage.setItem("nexus-active-folha",oldSlot);
+      try {await restoreDraft(oldSlot);}catch(restoreError){notice(restoreError.message);}
+    }
+    notice(error.message);
+  } finally {
+    el("file").disabled=false;
+    el("text").readOnly=false;
+    el("new").disabled=false;
+    draftTransition=false;
   }
 };
 el("browse-file").onclick=()=>{el("navigation").open=false;el("file").click();};
