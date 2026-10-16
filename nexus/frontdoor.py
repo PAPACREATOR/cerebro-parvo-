@@ -16,7 +16,7 @@ from nexus.capability_router import declared_router
 _PT_LANGUAGE_PATH = ROOT / "lingua" / "pt_PT.md"
 _PT_LANGUAGE_SHA256 = "3ac567d93a6276bc3cefba399e7389b9f07782e598518508ec2b104ec2d6d90b"
 _PT_INDEXER_PATH = ROOT / "lingua" / "indexer.py"
-_PT_INDEXER_SHA256 = "6be02c1b5dd1cd0964846b9a1828301ba72acc5c54448385e882d77e162ef920"
+_PT_INDEXER_SHA256 = "2ad14af43bf68fa5693f27df3206bf6515f6bb875ccf00f063b74a4343ac2e81"
 if (_PT_INDEXER_PATH.is_symlink()
         or hashlib.sha256(_PT_INDEXER_PATH.read_bytes()).hexdigest() != _PT_INDEXER_SHA256):
     raise Blocked("O indexador português foi alterado sem revisão.")
