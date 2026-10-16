@@ -16,14 +16,18 @@ from nexus.capability_router import declared_router
 _PT_LANGUAGE_PATH = ROOT / "lingua" / "pt_PT.md"
 _PT_LANGUAGE_SHA256 = "3ac567d93a6276bc3cefba399e7389b9f07782e598518508ec2b104ec2d6d90b"
 _PT_INDEXER_PATH = ROOT / "lingua" / "indexer.py"
-_PT_INDEXER_SHA256 = "2ad14af43bf68fa5693f27df3206bf6515f6bb875ccf00f063b74a4343ac2e81"
+_PT_INDEXER_SHA256 = "03edd3c0ec7d4548f4eea9d1e2b543c81bd1a8d128cd1930c0c4d8768f369a26"
 if (_PT_INDEXER_PATH.is_symlink()
         or hashlib.sha256(_PT_INDEXER_PATH.read_bytes()).hexdigest() != _PT_INDEXER_SHA256):
     raise Blocked("O indexador português foi alterado sem revisão.")
 
-from nexus.lingua.indexer import load_corpus
+from nexus.lingua.indexer import load_corpus, load_general_vocabulary
 
 _PT_CORPUS = load_corpus(_PT_LANGUAGE_PATH, _PT_LANGUAGE_SHA256)
+_PT_GENERAL_MANIFEST_GIT_SHA1 = "4362184863c431b43cdeadf167fe82ddbbb13a94"
+_PT_GENERAL_DICTIONARY = load_general_vocabulary(
+    ROOT / "lingua" / "imports", _PT_GENERAL_MANIFEST_GIT_SHA1
+)
 _LEGACY_RULES = validate("frontdoor_rules", strict_json(
     (ROOT / "frontdoor_rules.json").read_bytes()
 ))
@@ -259,3 +263,13 @@ def parse_with_languagetool(text: str, raw) -> ParsedInput:
         parser="languagetool-shadow+eliza-v1",
         shadow=shadow,
     )
+
+
+def fuzzy_suggestions(word: str, *, limit: int = 5) -> tuple[dict, ...]:
+    """Consultative fuzzy matches; never used to dispatch a process."""
+    return _PT_GENERAL_DICTIONARY.fuzzy(word, limit)
+
+
+def dictionary_contains(word: str) -> bool:
+    """Exact lookup of imported pt-PT spelling dictionary, not intent."""
+    return _PT_GENERAL_DICTIONARY.contains(word)
