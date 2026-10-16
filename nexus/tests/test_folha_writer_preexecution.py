@@ -4,6 +4,7 @@ No real Writer launches here; live Windows LPAC and PDF assertions are in
 test_native_writer_route_real.py. These cases prove product HTTP authority.
 """
 import base64
+import hashlib
 import io
 import struct
 import zipfile
@@ -273,13 +274,17 @@ def test_corrupted_folha_draft_blocks_restoration_without_repair_or_execution(tm
     assert saved.read_bytes() == preserved
 
 
-def test_pending_human_clarification_survives_restart_without_running_tools(tmp_path):
+@pytest.mark.parametrize("with_attachment", [False, True])
+def test_pending_human_clarification_survives_restart_without_running_tools(tmp_path, with_attachment):
     folder = tmp_path / "runtime"
     original = "Cria um podcast sobre Guimarães"
     question = "Que tom pretendes e quanto deve durar?"
     draft = {"slot": "a", "expected_revision": 0, "text": "Informal, 5",
              "filename": "", "attachment": "",
              "dialogue": {"original": original, "question": question}}
+    binary = bytes([0, 1, 2, 10, 13, 255, 128, 65, 0])
+    if with_attachment:
+        draft.update(filename="ação.bin", attachment=base64.b64encode(binary).decode("ascii"))
     with http(Host(folder)) as call:
         saved = call("/api/folha-draft", draft)
         assert saved["dialogue"] == draft["dialogue"]
@@ -289,6 +294,11 @@ def test_pending_human_clarification_survives_restart_without_running_tools(tmp_
         assert resumed["text"] == "Informal, 5"
         assert resumed["dialogue"] == draft["dialogue"]
         assert resumed["revision"] == 1
+        assert resumed["filename"] == draft["filename"]
+        assert resumed["attachment"] == draft["attachment"]
+        if with_attachment:
+            assert base64.b64decode(resumed["attachment"]) == binary
+            assert resumed["input_sha256"] == hashlib.sha256(binary).hexdigest()
         assert call("/api/runs") == []
     for area in ("runs", "creative", "canonical"):
         assert not list((folder / area).iterdir())

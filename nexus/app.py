@@ -320,8 +320,7 @@ def make_server(host, port=0, *, allow_direct_run=False):
                     or len(dialogue["original"]) > 12000
                     or type(dialogue["question"]) is not str
                     or not dialogue["question"].strip()
-                    or len(dialogue["question"]) > 250
-                    or bool(filename) or bool(attachment)):
+                    or len(dialogue["question"]) > 250):
                 raise Blocked("Contexto de esclarecimento inválido.")
         try:
             raw = base64.b64decode(attachment, validate=True) if attachment else text.encode("utf-8")

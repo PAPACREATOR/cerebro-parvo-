@@ -224,16 +224,20 @@ async function verifyComposedFirst(runId,flow) {
 }
 
 el("form").onsubmit=async (event, classified=null)=>{
-  event.preventDefault(); notice(""); el("submit").disabled=true;
+  event.preventDefault();
+  if(draftTransition || (draftSupported && !draftReady))return;
+  notice(""); el("submit").disabled=true;
   try {
     const revision=classified ? classified.revision : editRevision;
     if(classified && (revision!==editRevision || el("text").value!==classified.text ||
        classified.preview.original!==classified.text))
       throw new Error("O pedido mudou durante a interpretação. Revê o pedido.");
     const payload=await requestPayload();
-    if (pendingDialogue && !payload.filename && !payload.attachment) {
-      const answer=payload.text.trim();
-      if(!answer || answer.length>500)throw new Error("Escreve uma resposta até 500 caracteres.");
+    if(revision!==editRevision)
+      throw new Error("O texto ou anexo mudou durante a preparação. Revê o pedido.");
+    if (pendingDialogue) {
+      const answer=payload.text;
+      if(!answer.trim() || answer.length>500)throw new Error("Escreve uma resposta até 500 caracteres.");
       // The answer continues the original request; it is not an autonomous command.
       payload.text=pendingDialogue.original+"\n"+answer;
       el("text").value=payload.text;
@@ -339,7 +343,8 @@ el("form").onsubmit=async (event, classified=null)=>{
     el("execution-approve").disabled=true;
     el("execution-confirmation").showModal();
   } catch(error) {notice(error.message);}
-  finally {if(!el("execution-confirmation").open)el("submit").disabled=false;}
+  finally {if(!el("execution-confirmation").open && !draftTransition &&
+    (!draftSupported || draftReady))el("submit").disabled=false;}
 };
 el("execution-confirm").onchange=()=>{el("execution-approve").disabled=!el("execution-confirm").checked;};
 el("execution-cancel").onclick=async()=>{
@@ -407,6 +412,7 @@ if(surface){
   surface.addEventListener("dragover",event=>event.preventDefault());
   surface.addEventListener("drop",event=>{
     event.preventDefault();
+    if(draftTransition || (draftSupported && !draftReady))return;
     const files=event.dataTransfer?.files;
     if(!files?.length)return;
     if(files.length!==1){notice("Junta um ficheiro de cada vez.");return;}
@@ -469,6 +475,14 @@ el("pdf").onclick=async()=>{
 const draftSupported=typeof File==="function" && typeof DataTransfer==="function";
 let draftSlot=pageStorage.getItem("nexus-active-folha")==="b"?"b":"a";
 let draftRevision=0,draftReady=false,draftTimer=null,draftQueue=Promise.resolve(),draftTransition=false;
+function lockDraftInput(locked){
+  draftTransition=locked;
+  el("new").disabled=locked;
+  el("text").readOnly=locked;
+  el("file").disabled=locked;
+  el("browse-file").disabled=locked;
+  el("submit").disabled=locked;
+}
 function scheduleDraftSave(){
   if(!draftSupported||!draftReady)return;
   clearTimeout(draftTimer);
@@ -498,8 +512,8 @@ async function restoreDraft(slot){
   if(slot!==draftSlot)return;
   draftRevision=saved.revision;
   if(revision!==editRevision){
-    // Never erase text already typed while awaiting disk/network.
-    draftReady=true;scheduleDraftSave();return;
+    // A restore conflict never overwrites fields that were not shown.
+    throw new Error("O pedido mudou durante a recuperação. Reabre a Folha antes de continuar.");
   }
   if(saved.attachment){
     const binary=atob(saved.attachment);
@@ -534,10 +548,7 @@ el("new").onclick=async()=>{
   if(draftTransition || (draftSupported && !draftReady))return;
   // Lock at transition start, not after the pending queue/network awaits.
   // The old Folha remains intact if disk CAS/save refuses the change.
-  draftTransition=true;
-  el("new").disabled=true;
-  el("text").readOnly=true;
-  el("file").disabled=true;
+  lockDraftInput(true);
   const oldSlot=draftSlot;
   try {
     if(draftSupported) {
@@ -563,10 +574,7 @@ el("new").onclick=async()=>{
     }
     notice(error.message);
   } finally {
-    el("file").disabled=false;
-    el("text").readOnly=false;
-    el("new").disabled=false;
-    draftTransition=false;
+    lockDraftInput(draftSupported && !draftReady);
   }
 };
 el("browse-file").onclick=()=>{el("navigation").open=false;el("file").click();};
@@ -579,4 +587,9 @@ el("history-toggle").onclick=async()=>{
   }
 };
 paintComposer();
-if(draftSupported)restoreDraft(draftSlot).catch(error=>notice(error.message));
+if(draftSupported){
+  lockDraftInput(true);
+  restoreDraft(draftSlot).catch(error=>notice(error.message)).finally(()=>{
+    if(draftReady)lockDraftInput(false);
+  });
+}

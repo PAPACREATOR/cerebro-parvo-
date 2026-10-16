@@ -144,6 +144,45 @@ const os=require("node:os"),net=require("node:net"),{spawn}=require("node:child_
       const res=await fetch("/api/folha-draft/b",{headers:{"X-Nexus-Session":session}});
       return res.ok&&(await res.json()).text==="Segunda Folha, texto independente";
     },null,{timeout:15000});
+    // Delay the real authenticated GET; never substitute its stored data.
+    async function reloadHoldingDraft(slot,text,filename="",question="") {
+      const pattern="**/api/folha-draft/"+slot;
+      let release,held=false;
+      const gate=new Promise(resolve=>{release=resolve;});
+      const handler=async route=>{
+        if(!held && route.request().method()==="GET") {held=true;await gate;}
+        await route.continue();
+      };
+      await page.route(pattern,handler);
+      try {
+        const seen=page.waitForRequest(request=>request.method()==="GET" &&
+          new URL(request.url()).pathname==="/api/folha-draft/"+slot);
+        await page.reload();await seen;
+        assert.equal(await page.locator("#text").evaluate(el=>el.readOnly),true);
+        for(const id of ["file","submit","new"])
+          assert.equal(await page.locator("#"+id).isDisabled(),true);
+        const before=routes.length;
+        await page.locator("#text").focus();
+        await page.keyboard.insertText("edição antes do restauro");
+        await page.keyboard.press("Control+Enter");
+        await page.evaluate(()=>{
+          const dt=new DataTransfer();dt.items.add(new File(["early drop"],"early.bin"));
+          document.querySelector(".sheet").dispatchEvent(new DragEvent("drop",{dataTransfer:dt,bubbles:true,cancelable:true}));
+        });
+        assert.equal(await page.locator("#text").inputValue(),"");
+        assert.equal(await page.locator("#file").evaluate(el=>el.files.length),0);
+        assert.ok(!routes.slice(before).some(value=>value!=="/api/folha-draft/"+slot));
+        const restored=page.waitForResponse(response=>response.request().method()==="GET" &&
+          new URL(response.url()).pathname==="/api/folha-draft/"+slot);
+        release();assert.equal((await restored).status(),200);
+        await page.waitForFunction(expected=>{
+          const file=document.getElementById("file").files[0];
+          return document.getElementById("text").value===expected.text &&
+            (file?.name||"")===expected.filename &&
+            (!expected.question || document.getElementById("message").textContent===expected.question);
+        },{text,filename,question});
+      } finally {release();await page.unroute(pattern,handler);}
+    }
     const reloadStart=routes.filter(route=>route==="/api/folha-draft/b").length;
     await page.reload();
     const restoredByHost=await page.evaluate(async()=>{
@@ -176,6 +215,9 @@ const os=require("node:os"),net=require("node:net"),{spawn}=require("node:child_
     const restoredBytes=await page.locator("#file").evaluate(
       async el=>Array.from(new Uint8Array(await el.files[0].arrayBuffer())));
     assert.deepEqual(restoredBytes,Array.from(draftBinary));
+    await reloadHoldingDraft("a","Primeira Folha persistente","draft-ação.bin");
+    assert.deepEqual(await page.locator("#file").evaluate(
+      async el=>Array.from(new Uint8Array(await el.files[0].arrayBuffer()))),Array.from(draftBinary));
 
     // The human question and partial response belong to B and must survive
     // a reload without generating a ticket, run or Canonical promotion.
@@ -206,7 +248,7 @@ const os=require("node:os"),net=require("node:net"),{spawn}=require("node:child_
     const restoredQuestion=page.waitForResponse(response=>
       response.request().method()==="GET" &&
       new URL(response.url()).pathname==="/api/folha-draft/b");
-    await page.reload();
+    await reloadHoldingDraft("b","informal, 5","",acknowledged.dialogue.question);
     const restoredResponse=await restoredQuestion;
     assert.equal(restoredResponse.status(),200,"The Host must return the saved B question");
     const savedQuestion=await restoredResponse.json();
@@ -235,6 +277,61 @@ const os=require("node:os"),net=require("node:net"),{spawn}=require("node:child_
       /Cria um podcast sobre Guimarães[\s\S]*informal, 5 minutos/);
     await page.locator("#execution-cancel").click();
     await page.waitForFunction(()=>!document.getElementById("execution-confirmation").open);
+    // A newly attached source remains with the pending original/question.
+    await page.locator("#text").fill("Cria um podcast sobre Guimarães");
+    await page.locator("#submit").click();
+    await page.waitForFunction(()=>document.getElementById("message").textContent.includes("tom"));
+    const attachedSave=page.waitForResponse(response=>response.request().method()==="POST" &&
+      new URL(response.url()).pathname==="/api/folha-draft" &&
+      response.request().postDataJSON()?.text==="  informal  " &&
+      response.request().postDataJSON()?.filename==="draft-ação.bin");
+    await page.locator("#text").fill("  informal  ");
+    await page.locator("#file").setInputFiles(draftPath);
+    const attachedAck=await attachedSave;
+    assert.equal(attachedAck.status(),200);
+    const attached=await attachedAck.json();
+    assert.equal(attached.dialogue.original,"Cria um podcast sobre Guimarães");
+    assert.equal(attached.text,"  informal  ");
+    assert.equal(attached.attachment,draftBinary.toString("base64"));
+    await reloadHoldingDraft("b","  informal  ","draft-ação.bin",attached.dialogue.question);
+    assert.deepEqual(await page.locator("#file").evaluate(
+      async el=>Array.from(new Uint8Array(await el.files[0].arrayBuffer()))),Array.from(draftBinary));
+    // An edit while Continue reads the attachment must remain the latest draft.
+    const beforeRead=routes.length;
+    await page.evaluate(()=>{
+      const read=File.prototype.arrayBuffer;
+      File.prototype.arrayBuffer=function(){
+        File.prototype.arrayBuffer=read;
+        return read.call(this).then(bytes=>new Promise(resolve=>{
+          window.nexusQaReleaseRead=()=>resolve(bytes);
+        }));
+      };
+    });
+    await page.locator("#submit").click();
+    await page.waitForFunction(()=>Boolean(window.nexusQaReleaseRead));
+    const correctedSave=page.waitForResponse(response=>response.request().method()==="POST" &&
+      new URL(response.url()).pathname==="/api/folha-draft" &&
+      response.request().postDataJSON()?.text==="resposta corrigida");
+    await page.locator("#text").fill("resposta corrigida");
+    await page.evaluate(()=>window.nexusQaReleaseRead());
+    const correctedAck=await correctedSave;
+    assert.equal(correctedAck.status(),200);
+    const corrected=await correctedAck.json();
+    await page.waitForFunction(()=>document.getElementById("notice").textContent.includes("mudou"));
+    assert.equal(await page.locator("#text").inputValue(),"resposta corrigida");
+    assert.equal(corrected.dialogue.original,"Cria um podcast sobre Guimarães");
+    assert.equal(corrected.attachment,draftBinary.toString("base64"));
+    assert.ok(!routes.slice(beforeRead).includes("/api/interpret"));
+    const literalSave=page.waitForResponse(response=>response.request().method()==="POST" &&
+      new URL(response.url()).pathname==="/api/folha-draft" &&
+      response.request().postDataJSON()?.text==="  informal  ");
+    await page.locator("#text").fill("  informal  ");
+    assert.equal((await literalSave).status(),200);
+    // Read-only interpretation must receive original + literal answer once.
+    const interpreted=page.waitForRequest(request=>request.method()==="POST" &&
+      new URL(request.url()).pathname==="/api/interpret");
+    await page.locator("#submit").click();
+    assert.equal((await interpreted).postDataJSON().text,"Cria um podcast sobre Guimarães\n  informal  ");
     assert.deepEqual(errors,[]);
     console.log(JSON.stringify({result:"PASS",windowsWebSupported:true,whiteSheet:true,
       visibleWorkflowSteps:0,naturalFollowUp:true,webResult:true,humanCanonicalGateIntact:true,
