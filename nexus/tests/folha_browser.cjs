@@ -1,6 +1,6 @@
 "use strict";
 // Real Chrome + real loopback Python HTTP, with a disposable Store.
-// Only the external provider response is mocked in this browser-level gate.
+// Research presentation uses mocked research/run responses; parsing and drafts use the real Host.
 const {chromium}=require("playwright");
 const fs=require("node:fs/promises"),path=require("node:path"),assert=require("node:assert/strict");
 const os=require("node:os"),net=require("node:net"),{spawn}=require("node:child_process");
@@ -37,13 +37,43 @@ const os=require("node:os"),net=require("node:net"),{spawn}=require("node:child_
     await fs.mkdir(artifacts,{recursive:true});
     const launch=new URL(await fs.readFile(path.join(data,"memory","launch-url.txt"),"utf8"));
     assert.equal(launch.origin,origin);
+    const initialDraft=page.waitForResponse(response=>
+      response.request().method()==="GET" &&
+      new URL(response.url()).pathname==="/api/folha-draft/a");
     await page.goto(launch.href);
+    assert.equal((await (await initialDraft).json()).text,"");
+    // A click does not await an async onclick. Check the destination response
+    // and the restored fields before editing either of the two durable slots.
+    async function switchSheet(slot,text,filename="") {
+      const restored=page.waitForResponse(response=>
+        response.request().method()==="GET" &&
+        new URL(response.url()).pathname==="/api/folha-draft/"+slot);
+      await page.locator("#navigation summary").click();
+      await page.locator("#new").click();
+      const response=await restored;
+      assert.equal(response.ok(),true);
+      const saved=await response.json();
+      assert.equal(saved.text,text);
+      assert.equal(saved.filename,filename);
+      await page.waitForFunction(({slot,text,filename})=>
+        sessionStorage.getItem("nexus-active-folha")===slot &&
+        !document.getElementById("navigation").open &&
+        document.getElementById("text").value===text &&
+        (document.getElementById("file").files[0]?.name||"")===filename,
+        {slot,text,filename});
+    }
     assert.equal(await page.locator("#text").inputValue(),"");
     assert.equal(await page.locator("#workspace").count(),0);
     assert.equal(await page.locator("#product").count(),0);
     assert.equal(await page.locator(".stages").count(),0);
     assert.equal(await page.locator("button:visible").count(),0);
     await page.screenshot({path:path.join(artifacts,"folha-vazia.png"),fullPage:true});
+    await page.setViewportSize({width:390,height:844});
+    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth));
+    assert.equal(await page.locator("#text").inputValue(),"");
+    assert.equal(await page.locator("button:visible").count(),0);
+    await page.screenshot({path:path.join(artifacts,"folha-mobile.png"),fullPage:true});
+    await page.setViewportSize({width:1280,height:920});
 
     // Real Nexus parser asks for slots, not a wizard or a second assistant.
     await page.locator("#text").fill("Cria um podcast sobre Guimarães");
@@ -76,8 +106,7 @@ const os=require("node:os"),net=require("node:net"),{spawn}=require("node:child_
         message:"Candidato de pesquisa",
       }),
     }));
-    await page.locator("#navigation summary").click();
-    await page.locator("#new").click();
+    await switchSheet("b","");
     await page.locator("#text").fill("Pesquisa fontes sobre Guimarães");
     await page.locator("#submit").click();
     await page.waitForFunction(()=>document.getElementById("content").textContent.includes("pt.wikipedia.org"));
@@ -88,11 +117,9 @@ const os=require("node:os"),net=require("node:net"),{spawn}=require("node:child_
 
     await page.setViewportSize({width:390,height:844});
     assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth));
-    await page.locator("#navigation summary").click();
-    await page.locator("#new").click();
-    assert.equal(await page.locator("#text").inputValue(),"");
-    assert.equal(await page.locator("button:visible").count(),0);
-    await page.screenshot({path:path.join(artifacts,"folha-mobile.png"),fullPage:true});
+    await switchSheet("a","Cria um podcast sobre Guimarães\ninformal, 5 minutos");
+    assert.equal(await page.locator("#workspace").count(),0);
+    assert.equal(await page.locator("#result").isVisible(),false);
     // Durable two-Folha scratch: save a binary attachment and switch sheets.
     // Chrome uses the REAL loopback Host. No Store run, ticket or Canonical
     // promotion is created by a draft or by reloading the browser.
@@ -101,11 +128,9 @@ const os=require("node:os"),net=require("node:net"),{spawn}=require("node:child_
     await fs.writeFile(draftPath,draftBinary);
     await page.locator("#file").setInputFiles(draftPath);
     await page.locator("#text").fill("Primeira Folha persistente");
-    await page.locator("#navigation summary").click();
-    await page.locator("#new").click();
-    await page.waitForFunction(
-      ()=>document.getElementById("text").value==="" &&
-         document.getElementById("file").files.length===0);
+    // B was used for research above; switching must restore that draft.
+    await switchSheet("b","Pesquisa fontes sobre Guimarães");
+    assert.equal(await page.locator("#file").evaluate(el=>el.files.length),0);
     await page.locator("#text").fill("Segunda Folha, texto independente");
     await page.waitForFunction(async()=>{
       const session=sessionStorage.getItem("nexus-session");
@@ -115,10 +140,7 @@ const os=require("node:os"),net=require("node:net"),{spawn}=require("node:child_
     await page.reload();
     await page.waitForFunction(
       ()=>document.getElementById("text").value==="Segunda Folha, texto independente");
-    await page.locator("#navigation summary").click();
-    await page.locator("#new").click();
-    await page.waitForFunction(
-      ()=>document.getElementById("text").value==="Primeira Folha persistente");
+    await switchSheet("a","Primeira Folha persistente","draft-ação.bin");
     assert.equal(await page.locator("#file").evaluate(el=>el.files[0]?.name),"draft-ação.bin");
     const restoredBytes=await page.locator("#file").evaluate(
       async el=>Array.from(new Uint8Array(await el.files[0].arrayBuffer())));
