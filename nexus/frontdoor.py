@@ -4,6 +4,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 import re
 import unicodedata
+import hashlib
+import sqlite3
+import threading
 
 from nexus.contracts import ROOT, Blocked, strict_json, validate
 from nexus.adapters.languagetool import correction_shadow
@@ -47,60 +50,133 @@ def _normalise(text: str) -> str:
 
 
 
-# Closed operational lexicon (lemma -> attested PT-PT forms), not a general
-# Portuguese dictionary. The regex reads whole words; grammar reads their
-# clause role. This is only an intention hint, never permission or dispatch.
-_PT_VERB_FORMS = {
-    "arquivo": frozenset((
-        "guarda", "guardar", "guarde", "guardes", "guardem",
-        "arquiva", "arquivar", "arquive", "arquives", "arquivem",
-        "salva", "salvar", "salve", "salves",
-    )),
-    "web": frozenset((
-        "pesquisa", "pesquisar", "pesquise", "pesquisem", "pesquiza",
-        "procura", "procurar", "procure", "procurem",
-    )),
-    "fontes": frozenset(("encontra", "encontrar", "encontre", "encontrem")),
-    "trabalhar": frozenset((
-        "revê", "reve", "rever", "reveja", "revejam",
-        "corrige", "corrigir", "corrija", "corrijam",
-        "melhora", "melhorar", "melhore", "melhorem",
-        "reescreve", "reescrever", "reescreva", "reescrevam",
-        "trabalha", "trabalhar",
-    )),
-    "perguntar": frozenset((
-        "explica", "explicar", "explique", "expliquem",
-        "responde", "responder", "responda", "respondam",
-    )),
-    "calcular": frozenset((
-        "calcula", "calcular", "calcule", "calculem",
-        "soma", "somar", "some", "somem",
-    )),
-}
-_PT_QUESTION = re.compile(
-    r"^(?:por favor[, ]+)?(?:como\b|de que forma\b|"
-    r"qual (?:é|e) a forma de\b|"
-    r"(?:explica(?:-me)?|podes explicar|poderias explicar|"
-    r"consegues explicar|diz-me|podes dizer-me)\s+como\b)"
+# The Markdown file is the local linguistic source of truth. Its digest is pinned
+# inside this Host-sealed module: changing language rules requires review.
+_PT_LANGUAGE_PATH = ROOT / "lingua" / "pt_PT.md"
+_PT_LANGUAGE_SHA256 = "ff206eefcffa64c2d80e9d911f43abbc41f3704b920d4658e8306babcd95381f"
+_PT_LANGUAGE_LOCK = threading.RLock()
+_PT_ALLOWED_INTENTS = frozenset(
+    ("arquivo", "web", "fontes", "trabalhar", "perguntar", "calcular")
 )
-# The grammar uses the SAME dictionary for the second action, so a new
-# inflection cannot silently escape the two-commands ambiguity gate.
+
+
+def _pt_language_tables():
+    raw = _PT_LANGUAGE_PATH.read_bytes()
+    if hashlib.sha256(raw).hexdigest() != _PT_LANGUAGE_SHA256:
+        raise Blocked("O dicionário ou a gramática portuguesa foram alterados.")
+    markdown = raw.decode("utf-8")
+    if markdown.count("<!-- nexus-pt-PT-v1 -->") != 1:
+        raise Blocked("Fonte linguística incompatível.")
+    try:
+        lexicon = markdown.split("## Dicionário operacional\n", 1)[1].split(
+            "\n## Gramática de cláusulas", 1
+        )[0]
+        grammar = markdown.split("<!-- nexus-pt-grammar-v1 -->", 1)[1].split(
+            "<!-- /nexus-pt-grammar-v1 -->", 1
+        )[0]
+    except IndexError as error:
+        raise Blocked("Tabelas linguísticas ausentes.") from error
+
+    forms = {}
+    entries = []
+    for line in lexicon.splitlines():
+        if not line.startswith("|"):
+            continue
+        values = [value.strip() for value in line.strip().strip("|").split("|")]
+        if values[0] in {"forma", "---"}:
+            continue
+        if (len(values) != 3 or values[2] not in _PT_ALLOWED_INTENTS
+                or not all(re.fullmatch(r"[a-záàâãéêíóôõúç]+", v) for v in values[:2])
+                or values[0] in forms):
+            raise Blocked("Entrada de dicionário inválida ou repetida.")
+        forms[values[0]] = values[2]
+        entries.append(tuple(values))
+    if not 10 <= len(entries) <= 2000:
+        raise Blocked("Dicionário operacional vazio ou excessivo.")
+
+    grammar_map = {}
+    for line in grammar.splitlines():
+        if not line.startswith("|"):
+            continue
+        values = [value.strip() for value in line.strip().strip("|").split("|")]
+        if values[0] in {"regra", "---"}:
+            continue
+        if len(values) != 2 or values[0] in grammar_map:
+            raise Blocked("Regra de gramática portuguesa inválida.")
+        expressions = tuple(part.strip() for part in values[1].split(";"))
+        if (not expressions or any(not re.fullmatch(
+                r"[a-záàâãéêíóôõúç ]{1,40}", part) for part in expressions)
+                or len(set(expressions)) != len(expressions)):
+            raise Blocked("Marcadores gramaticais inválidos.")
+        grammar_map[values[0]] = expressions
+    required = {"pergunta_inicio", "negacao_inicio", "segunda_acao", "segunda_clausula"}
+    if set(grammar_map) != required:
+        raise Blocked("Gramática portuguesa incompleta.")
+
+    connection = sqlite3.connect(":memory:", check_same_thread=False)
+    try:
+        connection.execute(
+            "CREATE VIRTUAL TABLE pt_operational USING fts5("
+            "form, lemma UNINDEXED, intent UNINDEXED, "
+            "tokenize='unicode61 remove_diacritics 0')"
+        )
+        connection.executemany(
+            "INSERT INTO pt_operational(form, lemma, intent) VALUES (?, ?, ?)", entries
+        )
+    except sqlite3.Error as error:
+        connection.close()
+        raise Blocked("Índice SQLite FTS5 português indisponível.") from error
+    return connection, forms, grammar_map
+
+
+_PT_LANGUAGE_DB, _PT_FORM_INTENTS, _PT_GRAMMAR = _pt_language_tables()
+_PT_VERB_FORMS = {
+    intent: frozenset(word for word, group in _PT_FORM_INTENTS.items()
+                      if group == intent)
+    for intent in _PT_ALLOWED_INTENTS
+}
+
+
+def _pt_lookup(word: str) -> tuple[str, ...]:
+    """Exact FTS5 lookup. Vocabulary never grants a capability or permission."""
+    if not re.fullmatch(r"[a-záàâãéêíóôõúç]{1,40}", word):
+        return ()
+    with _PT_LANGUAGE_LOCK:
+        return tuple(row[0] for row in _PT_LANGUAGE_DB.execute(
+            "SELECT DISTINCT intent FROM pt_operational "
+            "WHERE form MATCH ? AND form = ?",
+            ('"' + word + '"', word),
+        ))
+
+
+def _pt_markers(values: tuple[str, ...]) -> str:
+    return "|".join(re.escape(value).replace(r"\ ", r"\s+")
+                    for value in sorted(values, key=lambda item: (-len(item), item)))
+
+
+_PT_QUESTION = re.compile(
+    r"^(?:por favor[, ]+)?(?:"
+    + "(?:" + _pt_markers(_PT_GRAMMAR["pergunta_inicio"]) + r")\b"
+    + r"|(?:explica(?:-me)?|podes explicar|poderias explicar|"
+      r"consegues explicar|diz-me|podes dizer-me)\s+como\b)"
+)
 _PT_ACTION_FORMS = sorted(
-    {word for forms in _PT_VERB_FORMS.values() for word in forms}
-    | {"tema", "assunto"}, key=lambda word: (-len(word), word)
+    set(_PT_FORM_INTENTS) | {"tema", "assunto"},
+    key=lambda word: (-len(word), word)
 )
 _PT_SEPARATE_ACTION = re.compile(
-    r"\b(?:e(?:\s+(?:também|depois|a seguir))?|"
-    r"mas\s+depois|depois|em\s+seguida)\s+(?:"
+    r"\b(?:" + _pt_markers(_PT_GRAMMAR["segunda_acao"]) + r")\s+(?:"
     + "|".join(re.escape(word) for word in _PT_ACTION_FORMS)
     + r"|quero\s+falar\s+sobre)\b"
 )
 _PT_SECOND_CLAUSE = re.compile(
-    r"\b(?:e\s+(?:também|depois|a seguir)|mas\s+depois|em\s+seguida)\b"
+    r"\b(?:" + _pt_markers(_PT_GRAMMAR["segunda_clausula"]) + r")\b"
 )
 _PT_NEGATIVE_HEAD = re.compile(
-    r"^(?:por favor[, ]+)?(?:não|nao|nunca|jamais|nem|sem)\b"
+    r"^(?:por favor[, ]+)?(?:"
+    + _pt_markers(_PT_GRAMMAR["negacao_inicio"]) + r")\b"
 )
+
 _PT_VERB_HEAD = re.compile(
     r"^(?:por favor[, ]+)?"
     r"(?:(?:podes|poderias|pode|poderia|consegues|consegue|"
@@ -130,9 +206,7 @@ def _pt_grammar_intent(normal: str) -> str | None:
         return None
     verb = head.group(1)
     matches = []
-    for intent, forms in _PT_VERB_FORMS.items():
-        if verb not in forms:
-            continue
+    for intent in _pt_lookup(verb):
         if intent == "web":
             if _PT_SOURCE_TARGET.search(normal):
                 matches.append("fontes")
