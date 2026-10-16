@@ -244,3 +244,35 @@ def test_pt_regex_plus_fts5_vs_command_head_baseline(text, expected):
 ])
 def test_pt_fts5_presence_never_overrides_negation_or_two_actions(text):
     assert parse(text).status == "UNRESOLVED"
+
+
+def test_ab_1400_regex_only_misses_pt_forms_that_fts5_and_grammar_recognise():
+    """Fixed A/B contrast, not a population-wide accuracy claim."""
+    import re
+    from nexus.frontdoor import NATURAL_RULES, _normalise
+
+    cases = [
+        ("Guarde este ficheiro", "arquivo"),
+        ("Quero que guardes esta nota", "arquivo"),
+        ("Procure fontes sobre história", "fontes"),
+        ("Encontre fontes sobre geografia", "fontes"),
+        ("Corrija este parágrafo", "trabalhar"),
+        ("Reveja esta passagem", "trabalhar"),
+        ("Explique este assunto", "perguntar"),
+        ("Calcule este valor", "calcular"),
+    ]
+    improvements = 0
+    for i in range(1400):
+        command, expected = cases[i % len(cases)]
+        text = command + " teste-" + str(i)
+        original_regex_hits = [
+            intent for intent, patterns in NATURAL_RULES.items()
+            if any(re.search(pattern, _normalise(text)) for pattern in patterns)
+        ]
+        assert original_regex_hits == [], (i, text, original_regex_hits)
+        parsed = parse(text)
+        assert parsed.status == "RESOLVED", (i, text, parsed)
+        assert parsed.intent == expected, (i, text, parsed)
+        assert parsed.original == text
+        improvements += 1
+    assert improvements == 1400
