@@ -383,6 +383,79 @@ def make_server(host, port=0, *, allow_direct_run=False):
         }
         return mold
 
+    def compose_receipt(data, session):
+        """Verify two already-executed Host results; never start or approve work.
+
+        This is an ephemeral reconstruction, NOT a memory/permission grant.
+        The original free-text intent is provided by the Folha; the two tool
+        requests and their actual inputs/results are checked against Store.
+        """
+        required = {"text", "filename", "input_sha256", "verify_run_id", "convert_run_id"}
+        if not isinstance(data, dict) or set(data) != required:
+            raise Blocked("Recibo de processo inválido.")
+        if not all(type(data[key]) is str for key in required):
+            raise Blocked("Recibo de processo inválido.")
+        plan = _composite_plan(data["text"])
+        if (plan is None or not data["filename"] or not re.fullmatch(r"[0-9a-f]{64}", data["input_sha256"])
+                or data["verify_run_id"] == data["convert_run_id"]):
+            raise Blocked("A cadeia não corresponde a um pedido composto autorizado.")
+        host.authorize(session)
+        steps = []
+        for expected, run_id in zip(("verify", "convert_pdf"),
+                                    (data["verify_run_id"], data["convert_run_id"])):
+            # Host.detail enforces the original input, Creative/Canonical packet
+            # integrity and run validity. Host may refuse unfinished results.
+            state = host.detail(run_id, session)
+            if (state["process_id"] != expected
+                    or state["status"] not in ("HUMAN_REQUIRED", "PASS")
+                    or state["input_sha256"] != data["input_sha256"]
+                    or state["title"] != data["filename"]):
+                raise Blocked("Etapa da cadeia não corresponde à fonte verificada.")
+            request = validate("request", strict_json(
+                host.store.checked_bytes("runs", run_id, "request.json")))
+            if request["filename"] != data["filename"]:
+                raise Blocked("Nome do documento alterado entre ferramentas.")
+            if request["text"] != "& " + next(
+                    step["command"] for step in plan["steps"] if step["process"] == expected):
+                raise Blocked("A execução não corresponde ao plano autorizado.")
+            if expected == "verify":
+                if state["result"]["status"] != "PASS":
+                    raise Blocked("Verificação de integridade sem sucesso.")
+            else:
+                if not state.get("artifact_sha256"):
+                    raise Blocked("PDF final ausente.")
+                # Validate the real PDF bytes, not merely a hash claimed by
+                # a request or by the browser.
+                source = host.store.path("creative", run_id)
+                host.store.verify_artifact(state, source)
+            steps.append({
+                "process": expected,
+                "run_id": run_id,
+                "status": state["status"],
+                "input_sha256": state["input_sha256"],
+                "request_sha256": state["request_sha256"],
+                "process_sha256": state["process_sha256"],
+                "result_sha256": state["result_sha256"],
+                "candidate_sha256": state["candidate_sha256"],
+                "artifact_sha256": state.get("artifact_sha256"),
+            })
+        receipt = {
+            "authority": "NONE",
+            "execution": "NOT_AUTHORIZED",
+            "original_text_sha256": hashlib.sha256(data["text"].encode("utf-8")).hexdigest(),
+            "filename": data["filename"],
+            "input_sha256": data["input_sha256"],
+            "steps": steps,
+            "product": {
+                "name": "resultado.pdf",
+                "sha256": steps[1]["artifact_sha256"],
+                "run_id": steps[1]["run_id"],
+            },
+            "human_approval_required": steps[1]["status"] != "PASS",
+        }
+        receipt["receipt_sha256"] = _request_digest(receipt)
+        return receipt
+
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *_):
             pass
@@ -443,6 +516,8 @@ def make_server(host, port=0, *, allow_direct_run=False):
                 path = urlsplit(self.path).path
                 if path == "/api/search":
                     return self.reply(200, search_memory(data, session))
+                if path == "/api/flow-receipt":
+                    return self.reply(200, compose_receipt(data, session))
                 if path == "/api/interpret":
                     # Read-only Folha interpretation. Parsing never executes,
                     # creates Store records, or grants any tool permission.
