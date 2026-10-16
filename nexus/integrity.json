@@ -31,7 +31,7 @@
   "windows_sandbox.py": "2ce5e47c207259adb75e371fc6064f7d49d4f22ff7e9d620598280edef46370c",
   "native_mcp.py": "c55c0497697f61469b6bde21e0a279847db7cb4bfd84f39a1c94ecbfacc090ac",
   "adapters/product_routes.py": "35d6b94e751eab2d2e8a1455c18a21599f8068bc6797157b6229056236674480",
-  "frontdoor.py": "a6aeac7cf7a8c421577352d723746e78e95992e20c8372f4f68eb8abc80b052f",
+  "frontdoor.py": "cb8da7f1437533ff40c9cf46d9c3f7fb03d104cdb4b0806581527fc5d7b70e4f",
   "frontdoor_rules.json": "fced73c2838c26e511d76da8eb3ca6170a38fe851453eec9e765e291f887646c",
   "schemas/frontdoor_rules.json": "f717d8274d6e3fbec2c8901d405a88d0a4e243c17ef11604358a0bd29f2f1494",
   "adapters/writer_sandy.py": "0018d1367348ae404c200fbf1d753446ca4de44be868b16244503609c19ffdc2",
