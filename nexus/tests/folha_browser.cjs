@@ -176,6 +176,34 @@ const os=require("node:os"),net=require("node:net"),{spawn}=require("node:child_
     const restoredBytes=await page.locator("#file").evaluate(
       async el=>Array.from(new Uint8Array(await el.files[0].arrayBuffer())));
     assert.deepEqual(restoredBytes,Array.from(draftBinary));
+
+    // The human question and partial response belong to B and must survive
+    // a reload without generating a ticket, run or Canonical promotion.
+    await switchSheet("b","Segunda Folha, texto independente");
+    await page.locator("#text").fill("Cria um podcast sobre Guimarães");
+    await page.locator("#submit").click();
+    await page.waitForFunction(()=>document.getElementById("message").textContent.includes("tom"));
+    await page.locator("#text").fill("informal, 5");
+    await page.waitForFunction(async()=>{
+      const s=sessionStorage.getItem("nexus-session");
+      const r=await fetch("/api/folha-draft/b",{headers:{"X-Nexus-Session":s}});
+      if(!r.ok)return false;
+      const saved=await r.json();
+      return saved.text==="informal, 5" &&
+        saved.dialogue?.original==="Cria um podcast sobre Guimarães" &&
+        saved.dialogue?.question.includes("tom");
+    },null,{timeout:15000});
+    await page.reload();
+    await page.waitForFunction(()=>
+      document.getElementById("text").value==="informal, 5" &&
+      document.getElementById("message").textContent.includes("tom"));
+    await page.locator("#text").fill("informal, 5 minutos");
+    await page.locator("#submit").click();
+    await page.locator("#execution-confirmation").waitFor({state:"visible"});
+    assert.match(await page.locator("#execution-review").textContent(),
+      /Cria um podcast sobre Guimarães[\s\S]*informal, 5 minutos/);
+    await page.locator("#execution-cancel").click();
+    await page.waitForFunction(()=>!document.getElementById("execution-confirmation").open);
     assert.deepEqual(errors,[]);
     console.log(JSON.stringify({result:"PASS",windowsWebSupported:true,whiteSheet:true,
       visibleWorkflowSteps:0,naturalFollowUp:true,webResult:true,humanCanonicalGateIntact:true,
