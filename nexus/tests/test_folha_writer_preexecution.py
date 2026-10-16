@@ -271,3 +271,64 @@ def test_corrupted_folha_draft_blocks_restoration_without_repair_or_execution(tm
         assert refused.value.code == 403
         assert call("/api/runs") == []
     assert saved.read_bytes() == preserved
+
+
+def test_pending_human_clarification_survives_restart_without_running_tools(tmp_path):
+    folder = tmp_path / "runtime"
+    original = "Cria um podcast sobre Guimarães"
+    question = "Que tom pretendes e quanto deve durar?"
+    draft = {"slot": "a", "expected_revision": 0, "text": "Informal, 5",
+             "filename": "", "attachment": "",
+             "dialogue": {"original": original, "question": question}}
+    with http(Host(folder)) as call:
+        saved = call("/api/folha-draft", draft)
+        assert saved["dialogue"] == draft["dialogue"]
+        assert call("/api/runs") == []
+    with http(Host(folder)) as call:
+        resumed = call("/api/folha-draft/a")
+        assert resumed["text"] == "Informal, 5"
+        assert resumed["dialogue"] == draft["dialogue"]
+        assert resumed["revision"] == 1
+        assert call("/api/runs") == []
+    for area in ("runs", "creative", "canonical"):
+        assert not list((folder / area).iterdir())
+
+
+@pytest.mark.parametrize("invalid", [
+    {"original": "", "question": "Qual o tom?"},
+    {"original": "Pedido", "question": ""},
+    {"original": "Pedido", "question": "Pergunta", "ticket": "secret"},
+    {"original": "Pedido", "question": "?" * 251},
+    ["Pedido", "Pergunta"],
+    "texto",
+    True,
+])
+def test_dialogue_scratch_rejects_invalid_authority_fields(tmp_path, invalid):
+    with http(Host(tmp_path / "runtime")) as call:
+        with pytest.raises(HTTPError) as refused:
+            call("/api/folha-draft", {
+                "slot": "a", "expected_revision": 0, "text": "Resposta",
+                "filename": "", "attachment": "", "dialogue": invalid,
+            })
+        assert refused.value.code == 403
+        assert call("/api/runs") == []
+
+
+def test_dialogue_draft_tampering_is_rejected_without_side_effects(tmp_path):
+    import json
+    folder = tmp_path / "runtime"
+    with http(Host(folder)) as call:
+        call("/api/folha-draft", {
+            "slot": "a", "expected_revision": 0, "text": "5 minutos",
+            "filename": "", "attachment": "",
+            "dialogue": {"original": "Cria um podcast", "question": "Que tom?"},
+        })
+    target = tmp_path / "runtime-folha-drafts" / "a.json"
+    contents = json.loads(target.read_text("utf-8"))
+    contents["dialogue"]["original"] = "Pedido falsificado"
+    target.write_text(json.dumps(contents), encoding="utf-8")
+    with http(Host(folder)) as call:
+        with pytest.raises(HTTPError) as refused:
+            call("/api/folha-draft/a")
+        assert refused.value.code == 403
+        assert call("/api/runs") == []
