@@ -162,7 +162,7 @@ class LanguageIndex:
         try:
             with self.lock:
                 rows = self.connection.execute(
-                    "SELECT title, substr(body,1,400) FROM pt_passages "
+                    "SELECT title, snippet(pt_passages,1,'','', '...',32) FROM pt_passages "
                     "WHERE pt_passages MATCH ? ORDER BY bm25(pt_passages) LIMIT ?",
                     (expression, limit)
                 ).fetchall()
