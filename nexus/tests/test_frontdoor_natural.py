@@ -111,3 +111,34 @@ def test_natural_parser_never_changes_original_bytes():
     value = "  Explica ação 日本語 ç  "
     parsed = parse(value)
     assert parsed.original.encode("utf-8") == value.encode("utf-8")
+
+
+@pytest.mark.parametrize("original", [
+    "Explica como guardar um ficheiro.",
+    "Explica como pesquisar na web.",
+    "Explica como calcular o custo.",
+    "Por favor, explica como arquivar uma nota.",
+    "Explica-me como guardar este documento.",
+])
+def test_portuguese_question_clause_not_subordinate_command(original):
+    parsed = parse(original)
+    assert parsed.status == "RESOLVED"
+    assert parsed.intent == "perguntar"
+    assert parsed.original == original
+    assert parsed.explicit is False
+    assert "process" not in parsed.as_dict()
+
+
+@pytest.mark.parametrize("original", [
+    "Explica como guardar e depois guarda a nota.",
+    "Explica como pesquisar na web e depois pesquisa na web.",
+    "Explica como calcular e calcula o resultado.",
+    "Explica como guardar e depois corrige o documento.",
+    "Não expliques como guardar esta nota.",
+    'O texto diz «explica como guardar a nota».',
+])
+def test_portuguese_clause_does_not_mask_second_action_or_negation(original):
+    parsed = parse(original)
+    assert parsed.status == "UNRESOLVED"
+    assert parsed.intent is None
+    assert parsed.original == original
