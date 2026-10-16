@@ -193,10 +193,31 @@ const os=require("node:os"),net=require("node:net"),{spawn}=require("node:child_
         saved.dialogue?.original==="Cria um podcast sobre Guimarães" &&
         saved.dialogue?.question.includes("tom");
     },null,{timeout:15000});
+    const restoredQuestion=page.waitForResponse(response=>
+      response.request().method()==="GET" &&
+      new URL(response.url()).pathname==="/api/folha-draft/b");
     await page.reload();
-    await page.waitForFunction(()=>
-      document.getElementById("text").value==="informal, 5" &&
-      document.getElementById("message").textContent.includes("tom"));
+    const restoredResponse=await restoredQuestion;
+    assert.equal(restoredResponse.status(),200,"The Host must return the saved B question");
+    const savedQuestion=await restoredResponse.json();
+    assert.equal(savedQuestion.text,"informal, 5","No partial answer may be lost on reload");
+    assert.equal(savedQuestion.dialogue?.original,"Cria um podcast sobre Guimarães");
+    assert.match(savedQuestion.dialogue.question,/tom/);
+    try {
+      await page.waitForFunction(()=>
+        document.getElementById("text").value==="informal, 5" &&
+        document.getElementById("message").textContent.includes("tom"));
+    } catch(error) {
+      const state=await page.evaluate(()=>({
+        text:document.getElementById("text").value,
+        question:document.getElementById("message").textContent,
+        notice:document.getElementById("notice").textContent,
+        activeSlot:sessionStorage.getItem("nexus-active-folha"),
+        hasSession:Boolean(sessionStorage.getItem("nexus-session")),
+      }));
+      console.error("DIALOGUE_RELOAD_DIAGNOSIS:",JSON.stringify({state,pageErrors:errors}));
+      throw error;
+    }
     await page.locator("#text").fill("informal, 5 minutos");
     await page.locator("#submit").click();
     await page.locator("#execution-confirmation").waitFor({state:"visible"});
