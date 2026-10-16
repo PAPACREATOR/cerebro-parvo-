@@ -298,6 +298,84 @@ def make_server(host, port=0, *, allow_direct_run=False):
     memory_lock = threading.Lock()
     memory_state = {"bridge": None, "revision": None, "graph_revision": None}
 
+    # Scratch Folhas are never Store/Creative/Canonical objects. Two fixed
+    # slots prevent caller-chosen paths and preserve bytes without tool grants.
+    draft_root = host.store.root.parent / (host.store.root.name + "-folha-drafts")
+    draft_lock = threading.RLock()
+
+    def draft_payload(slot, revision, text, filename, attachment):
+        if (slot not in ("a", "b") or type(revision) is not int or revision < 0
+                or type(text) is not str or len(text) > 12000
+                or type(filename) is not str or len(filename) > 255
+                or type(attachment) is not str
+                or bool(filename) != bool(attachment)
+                or any(ord(ch) < 32 for ch in filename)
+                or "/" in filename or "\\" in filename):
+            raise Blocked("Rascunho da Folha inválido.")
+        try:
+            raw = base64.b64decode(attachment, validate=True) if attachment else text.encode("utf-8")
+        except (ValueError, UnicodeError) as error:
+            raise Blocked("Ficheiro ou texto do rascunho inválido.") from error
+        if len(raw) > host.store.policy["max_input_bytes"]:
+            raise Blocked("Rascunho acima do limite permitido.")
+        return {
+            "slot": slot, "revision": revision, "text": text,
+            "filename": filename, "attachment": attachment,
+            "input_sha256": hashlib.sha256(raw).hexdigest(),
+        }
+
+    def draft_file(slot):
+        if slot not in ("a", "b"):
+            raise Blocked("Referência de Folha inválida.")
+        if draft_root.is_symlink() or draft_root.is_junction():
+            raise Blocked("Cofre de rascunhos redirecionado.")
+        target = draft_root / (slot + ".json")
+        if target.is_symlink() or target.is_junction():
+            raise Blocked("Rascunho redirecionado.")
+        return target
+
+    def load_draft(slot, session):
+        host.authorize(session)
+        with draft_lock:
+            target = draft_file(slot)
+            if not target.exists():
+                return draft_payload(slot, 0, "", "", "")
+            try:
+                value = strict_json(target.read_bytes())
+                required = {"slot", "revision", "text", "filename",
+                            "attachment", "input_sha256", "record_sha256"}
+                if not isinstance(value, dict) or set(value) != required:
+                    raise Blocked("Rascunho alterado ou incompleto.")
+                payload = draft_payload(value["slot"], value["revision"],
+                                        value["text"], value["filename"], value["attachment"])
+                if (payload != {key: value[key] for key in payload}
+                        or not secrets.compare_digest(
+                            _request_digest(payload), value["record_sha256"])
+                        or value["slot"] != slot):
+                    raise Blocked("Rascunho alterado; preservado para revisão.")
+                return payload
+            except (OSError, ValueError, KeyError, TypeError) as error:
+                raise Blocked("Rascunho ilegível; preservado para revisão.") from error
+
+    def save_draft(data, session):
+        if (not isinstance(data, dict)
+                or set(data) != {"slot", "expected_revision", "text", "filename", "attachment"}
+                or type(data["expected_revision"]) is not int
+                or data["expected_revision"] < 0):
+            raise Blocked("Alteração de Folha inválida.")
+        payload = draft_payload(data["slot"], data["expected_revision"] + 1,
+                                data["text"], data["filename"], data["attachment"])
+        host.authorize(session)
+        with draft_lock:
+            previous = load_draft(data["slot"], session)
+            if previous["revision"] != data["expected_revision"]:
+                raise Blocked("A Folha mudou noutra sessão; conteúdo conservado.")
+            target = draft_file(data["slot"])
+            draft_root.mkdir(exist_ok=True)
+            record = dict(payload, record_sha256=_request_digest(payload))
+            atomic(target, record)
+            return payload
+
     def search_memory(data, session):
         # Exact schema, no tool execution, no approval or Store mutation.
         if not isinstance(data, dict) or set(data) != {"query", "include_creative", "limit"}:
@@ -492,6 +570,8 @@ def make_server(host, port=0, *, allow_direct_run=False):
                 host.authorize(session)
                 if path == "/api/runs":
                     return self.reply(200, host.list_runs(session))
+                if path in ("/api/folha-draft/a", "/api/folha-draft/b"):
+                    return self.reply(200, load_draft(path.rsplit("/", 1)[-1], session))
                 if path.startswith("/api/pdf/"):
                     return self.reply(200, host.artifact(path.split("/")[-1], session), "application/pdf")
                 if path.startswith("/api/runs/"):
@@ -516,6 +596,8 @@ def make_server(host, port=0, *, allow_direct_run=False):
                 path = urlsplit(self.path).path
                 if path == "/api/search":
                     return self.reply(200, search_memory(data, session))
+                if path == "/api/folha-draft":
+                    return self.reply(200, save_draft(data, session))
                 if path == "/api/flow-receipt":
                     return self.reply(200, compose_receipt(data, session))
                 if path == "/api/interpret":
