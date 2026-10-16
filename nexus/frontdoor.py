@@ -46,12 +46,32 @@ def _normalise(text: str) -> str:
     return re.sub(r"\s+", " ", unicodedata.normalize("NFKC", text).casefold()).strip()
 
 
+def _explanation_is_primary(normal: str, intents: list[str]) -> bool:
+    """Portuguese main-clause hint, without execution authority.
+
+    'Explica como guardar' is a question; 'explica ... e depois guarda'
+    contains a separate imperative and must ask for human clarification.
+    """
+    if "perguntar" not in intents or not re.match(
+        r"^(?:por favor[, ]+)?explica(?:-me)?\s+como\b", normal
+    ):
+        return False
+    second_instruction = (
+        r"\b(?:e(?:\s+depois)?|depois|em\s+seguida)\s+"
+        r"(?:guarda|arquiva|salva|pesquisa|procura|encontra|"
+        r"corrige|rev[eê]|reescreve|calcula|soma|faz)\b"
+    )
+    return re.search(second_instruction, normal) is None
+
+
 def requires_clarification(text: str) -> bool:
-    """Keep refusals, quoted instructions and conflicting intents with humans."""
+    """Refusals, citations and separate main actions remain with the human."""
     normal = _normalise(text)
-    return (any(re.search(pattern, normal) for pattern in CLARIFICATION_PATTERNS)
-            or sum(any(re.search(pattern, normal) for pattern in patterns)
-                   for patterns in NATURAL_RULES.values()) > 1)
+    if any(re.search(pattern, normal) for pattern in CLARIFICATION_PATTERNS):
+        return True
+    intents = [intent for intent, patterns in NATURAL_RULES.items()
+               if any(re.search(pattern, normal) for pattern in patterns)]
+    return len(intents) > 1 and not _explanation_is_primary(normal, intents)
 
 
 def _natural(text: str, *, original: str | None = None, parser="eliza-rules-v1",
@@ -62,6 +82,8 @@ def _natural(text: str, *, original: str | None = None, parser="eliza-rules-v1",
         if any(re.search(pattern, normal) for pattern in patterns)
     ]
     source = text if original is None else original
+    if len(matches) > 1 and _explanation_is_primary(normal, matches):
+        matches = ["perguntar"]
     if not matches and not requires_clarification(source) and not requires_clarification(text):
         try:
             candidate = declared_router().recognise_command(text)
