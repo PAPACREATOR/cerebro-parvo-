@@ -122,3 +122,37 @@ def test_edit_after_review_and_cancel_cannot_execute_writer(tmp_path, monkeypatc
         assert call("/api/runs") == []
     for root in ("runs", "creative", "canonical"):
         assert not list((tmp_path / root).iterdir())
+
+
+@pytest.mark.parametrize("text", [
+    "Verifica este documento e converte-o em PDF",
+    "& verificar integridade de ficheiro e converter para pdf",
+])
+def test_composed_pdf_proposal_is_read_only_and_does_not_bypass_host_gates(tmp_path, text):
+    host = Host(tmp_path)
+    with http(host) as call:
+        advice = call("/api/interpret", {"text": text})
+        assert advice["execution"] == "NOT_AUTHORIZED"
+        assert advice["composite"]["authority"] == "NONE"
+        assert advice["composite"]["execution"] == "NOT_AUTHORIZED"
+        assert advice["composite"]["requires_human_confirmation"] is True
+        assert [step["process"] for step in advice["composite"]["steps"]] == ["verify", "convert_pdf"]
+        with pytest.raises(HTTPError):
+            call("/api/prepare-run", proposal(text=text))
+        assert call("/api/runs") == []
+    assert not list((tmp_path / "creative").iterdir())
+    assert not list((tmp_path / "canonical").iterdir())
+
+
+@pytest.mark.parametrize("text", [
+    "Não verifica este documento e converte-o em PDF",
+    "Verifica este documento e converte-o em PDF e publica-o",
+    "O título é: verifica este documento e converte-o em PDF",
+    "Verifica este documento ou converte-o em PDF",
+])
+def test_composed_pdf_negation_quotes_and_ambiguity_never_create_plan(tmp_path, text):
+    host = Host(tmp_path)
+    with http(host) as call:
+        preview = call("/api/interpret", {"text": text})
+        assert "composite" not in preview
+        assert call("/api/runs") == []
