@@ -161,6 +161,10 @@ def test_two_real_tools_verify_then_writer_each_with_own_human_gates(tmp_path, m
     validated into Creative, then independently promoted to Canonical.
     """
     from urllib.error import HTTPError
+    from nexus.adapters.constitutional import build_molde
+    from nexus.contracts import Blocked
+    from nexus.lab.wiki.kernel_bridge import WikiBridge
+    from nexus.lab.wiki.procedural_memory import ProceduralMemory
 
     data = tmp_path / "two-tools"
     data.mkdir()
@@ -216,12 +220,77 @@ def test_two_real_tools_verify_then_writer_each_with_own_human_gates(tmp_path, m
         pdf = (data / "canonical" / writer_run / "resultado.pdf").read_bytes()
         assert pdf.startswith(b"%PDF-") and b"%%EOF" in pdf[-1024:]
         assert len(call("/api/runs")) == 2
+        assert host.store.state(verify_run)["process_id"] == "verify"
+        assert host.store.state(writer_run)["process_id"] == "convert_pdf"
+        assert host.store.state(verify_run)["input_sha256"] == host.store.state(writer_run)["input_sha256"]
+        assert hashlib.sha256(pdf).hexdigest() == host.store.state(writer_run)["artifact_sha256"]
+        host.store.check_commit(host.store.state(verify_run))
+        host.store.check_commit(host.store.state(writer_run))
+
+        # Observe two independently executed, verified tools. Learning remains
+        # advisory and cannot execute or approve a future tool call.
+        learning_root = tmp_path / "learning"
+        learner = ProceduralMemory(WikiBridge(host.store, learning_root))
+        first_mold = build_molde("& converter para pdf", "source.odt", encoded, intent="trabalhar")
+        review = dict(
+            goal="convert_pdf", steps=["verify", "convert_pdf"],
+            phrase="verifica este ODT e converte para PDF",
+            source_ids=[verify_run, writer_run],
+            objective="Sequencia real verificada de ODT para PDF",
+            decision="ACCEPT",
+        )
+        with pytest.raises(Blocked, match="Revisão humana"):
+            learner.review(first_mold, **review, human_confirmed=False)
+        assert not list(learner.root.iterdir())
+        receipt = learner.review(first_mold, **review, human_confirmed=True)
+        assert receipt["execution"] == "NOT_AUTHORIZED"
+        assert receipt["authority"] == "NONE"
+
+        # Completely new source: same document type, different bytes and text.
+        stream = io.BytesIO()
+        with zipfile.ZipFile(io.BytesIO(raw)) as source, zipfile.ZipFile(stream, "w") as output:
+            for info in source.infolist():
+                member = source.read(info.filename)
+                if info.filename == "content.xml":
+                    needle = "Lisboa recebeu 12 caixas.".encode("utf-8")
+                    assert member.count(needle) == 1
+                    member = member.replace(needle, "Porto recebeu 13 caixas.".encode("utf-8"))
+                output.writestr(info, member)
+        raw2 = stream.getvalue()
+        assert hashlib.sha256(raw2).hexdigest() != hashlib.sha256(raw).hexdigest()
+        raw = raw2
+        encoded = base64.b64encode(raw).decode("ascii")
+        original = {"filename": "new-source.odt", "attachment": encoded}
+
+        independent = build_molde("& converter para pdf", "new-source.odt",
+                                   encoded, intent="trabalhar")
+        recovered_learner = ProceduralMemory(WikiBridge(host.store, learning_root))
+        proposed = recovered_learner.suggest(independent, goal="convert_pdf")
+        assert proposed["execution"] == "NOT_AUTHORIZED"
+        assert proposed["requires_human_review"] is True
+        assert proposed["candidates"][0]["origin"] == "LEARNED"
+        assert proposed["candidates"][0]["steps"] == ["verify", "convert_pdf"]
+        assert set(proposed["candidates"][0]["canonical_source_ids"]) == {
+            verify_run, writer_run,
+        }
+
+        # These are two NEW real Host executions with their own user-gate
+        # tickets, not a call from procedural memory or a replay.
+        verify_second = finish(call, "& verificar integridade de ficheiro")
+        writer_second = finish(call, "& converter para pdf")
+        assert len({verify_run, writer_run, verify_second, writer_second}) == 4
+        assert host.store.state(verify_second)["input_sha256"] == host.store.state(writer_second)["input_sha256"]
+        assert host.store.state(verify_second)["input_sha256"] != host.store.state(verify_run)["input_sha256"]
+        other_pdf = (data / "canonical" / writer_second / "resultado.pdf").read_bytes()
+        assert other_pdf.startswith(b"%PDF-") and b"%%EOF" in other_pdf[-1024:]
+        assert hashlib.sha256(other_pdf).hexdigest() == host.store.state(writer_second)["artifact_sha256"]
+        assert len(call("/api/runs")) == 4
 
     def no_repeat(*_args, **_kwargs):
         pytest.fail("Reopening must not re-execute either capability")
     monkeypatch.setattr("nexus.host.launch_confined", no_repeat)
     monkeypatch.setattr("nexus.adapters.writer_sandy.convert", no_repeat)
     restored = Host(data)
-    for run_id in (verify_run, writer_run):
+    for run_id in (verify_run, writer_run, verify_second, writer_second):
         restored.store.check_commit(restored.store.state(run_id))
         assert restored.store.state(run_id)["status"] == "PASS"
