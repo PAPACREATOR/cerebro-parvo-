@@ -468,7 +468,7 @@ function scheduleDraftSave(){
 function saveDraft(){
   if(!draftSupported||!draftReady)return draftQueue;
   const slot=draftSlot;
-  draftQueue=draftQueue.then(async()=>{
+  draftQueue=draftQueue.catch(()=>{}).then(async()=>{
     const payload=await requestPayload();
     // A previous save can complete AFTER a new Folha was selected.
     // Its slot and revision are fixed before any asynchronous call.
