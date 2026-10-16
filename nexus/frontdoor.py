@@ -14,7 +14,7 @@ from nexus.capability_router import declared_router
 # Only a pinned Python parser may interpret the pinned Markdown corpus.
 # Both digests live in this Host-sealed module. Fail closed on tampering.
 _PT_LANGUAGE_PATH = ROOT / "lingua" / "pt_PT.md"
-_PT_LANGUAGE_SHA256 = "3ac567d93a6276bc3cefba399e7389b9f07782e598518508ec2b104ec2d6d90b"
+_PT_LANGUAGE_SHA256 = "2aba7a4ba48f72140655cce0a819e76b53ba749ab4ae82aef2c500ef8ba9f036"
 _PT_INDEXER_PATH = ROOT / "lingua" / "indexer.py"
 _PT_INDEXER_SHA256 = "c6f1baf27519d9ef45b563810109252ede04df1bda06cddcdaa4a5196d2922cc"
 if (_PT_INDEXER_PATH.is_symlink()
