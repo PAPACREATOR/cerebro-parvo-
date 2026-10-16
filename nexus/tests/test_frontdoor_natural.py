@@ -198,3 +198,49 @@ def test_pt_lexicon_grammar_preserves_distinct_clauses_and_inflections(original)
     assert parsed.status == "UNRESOLVED"
     assert parsed.intent is None
     assert parsed.original == original
+
+
+def test_pt_markdown_fts5_lexicon_grammar_is_local_and_read_only():
+    from nexus.frontdoor import _PT_LANGUAGE_DB, _PT_GRAMMAR, _PT_FORM_INTENTS, _pt_lookup
+    assert len(_PT_FORM_INTENTS) >= 60
+    assert "pergunta_inicio" in _PT_GRAMMAR
+    assert "segunda_acao" in _PT_GRAMMAR
+    assert _PT_LANGUAGE_DB.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='pt_operational'"
+    ).fetchone() is not None
+    assert _pt_lookup("guarde") == ("arquivo",)
+    assert _pt_lookup("pesquise") == ("web",)
+    assert _pt_lookup("revê") == ("trabalhar",)
+    assert _pt_lookup('guarde" OR 1=1 --') == ()
+    assert _pt_lookup("canonico") == ()
+
+
+def test_pt_markdown_is_digest_bound_to_the_host_sealed_frontdoor():
+    import hashlib
+    from nexus.frontdoor import _PT_LANGUAGE_PATH, _PT_LANGUAGE_SHA256
+    assert hashlib.sha256(_PT_LANGUAGE_PATH.read_bytes()).hexdigest() == _PT_LANGUAGE_SHA256
+
+
+@pytest.mark.parametrize(("text", "expected"), [
+    ("Guarde este ficheiro.", "arquivo"),
+    ("Como posso guardar esta nota?", "perguntar"),
+    ("De que forma posso calcular o preço?", "perguntar"),
+    ("Poderias pesquisar na internet?", "web"),
+    ("Encontre fontes de história.", "fontes"),
+    ("Corrija esta frase.", "trabalhar"),
+])
+def test_pt_regex_plus_fts5_vs_command_head_baseline(text, expected):
+    parsed = parse(text)
+    assert parsed.status == "RESOLVED"
+    assert parsed.intent == expected
+    assert parsed.original == text
+
+
+@pytest.mark.parametrize("text", [
+    "Não podes guardar esta nota.",
+    "Explica como guardar e depois guarda o original.",
+    "Como guardar e também pesquisa na web.",
+    'A palavra "guarde" aparece na frase.',
+])
+def test_pt_fts5_presence_never_overrides_negation_or_two_actions(text):
+    assert parse(text).status == "UNRESOLVED"
