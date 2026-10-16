@@ -303,7 +303,7 @@ def make_server(host, port=0, *, allow_direct_run=False):
     draft_root = host.store.root.parent / (host.store.root.name + "-folha-drafts")
     draft_lock = threading.RLock()
 
-    def draft_payload(slot, revision, text, filename, attachment):
+    def draft_payload(slot, revision, text, filename, attachment, dialogue=None):
         if (slot not in ("a", "b") or type(revision) is not int or revision < 0
                 or type(text) is not str or len(text) > 12000
                 or type(filename) is not str or len(filename) > 255
@@ -312,6 +312,17 @@ def make_server(host, port=0, *, allow_direct_run=False):
                 or any(ord(ch) < 32 for ch in filename)
                 or "/" in filename or "\\" in filename):
             raise Blocked("Rascunho da Folha inválido.")
+        # Only context for a human clarification, never a grant or a ticket.
+        if dialogue is not None:
+            if (type(dialogue) is not dict or set(dialogue) != {"original", "question"}
+                    or type(dialogue["original"]) is not str
+                    or not dialogue["original"].strip()
+                    or len(dialogue["original"]) > 12000
+                    or type(dialogue["question"]) is not str
+                    or not dialogue["question"].strip()
+                    or len(dialogue["question"]) > 250
+                    or bool(filename) or bool(attachment)):
+                raise Blocked("Contexto de esclarecimento inválido.")
         try:
             raw = base64.b64decode(attachment, validate=True) if attachment else text.encode("utf-8")
         except (ValueError, UnicodeError) as error:
@@ -322,6 +333,7 @@ def make_server(host, port=0, *, allow_direct_run=False):
             "slot": slot, "revision": revision, "text": text,
             "filename": filename, "attachment": attachment,
             "input_sha256": hashlib.sha256(raw).hexdigest(),
+            "dialogue": dialogue,
         }
 
     def draft_file(slot):
@@ -344,13 +356,18 @@ def make_server(host, port=0, *, allow_direct_run=False):
                 value = strict_json(target.read_bytes())
                 required = {"slot", "revision", "text", "filename",
                             "attachment", "input_sha256", "record_sha256"}
-                if not isinstance(value, dict) or set(value) != required:
+                # Accept older drafts after verifying their original record
+                # digest; normalize only AFTER that verification.
+                if (not isinstance(value, dict)
+                        or set(value) not in (required, required | {"dialogue"})):
                     raise Blocked("Rascunho alterado ou incompleto.")
                 payload = draft_payload(value["slot"], value["revision"],
-                                        value["text"], value["filename"], value["attachment"])
-                if (payload != {key: value[key] for key in payload}
+                                        value["text"], value["filename"],
+                                        value["attachment"], value.get("dialogue"))
+                signed_payload = {key: payload[key] for key in payload if key in value}
+                if (signed_payload != {key: value[key] for key in signed_payload}
                         or not secrets.compare_digest(
-                            _request_digest(payload), value["record_sha256"])
+                            _request_digest(signed_payload), value["record_sha256"])
                         or value["slot"] != slot):
                     raise Blocked("Rascunho alterado; preservado para revisão.")
                 return payload
@@ -358,13 +375,15 @@ def make_server(host, port=0, *, allow_direct_run=False):
                 raise Blocked("Rascunho ilegível; preservado para revisão.") from error
 
     def save_draft(data, session):
+        required = {"slot", "expected_revision", "text", "filename", "attachment"}
         if (not isinstance(data, dict)
-                or set(data) != {"slot", "expected_revision", "text", "filename", "attachment"}
+                or set(data) not in (required, required | {"dialogue"})
                 or type(data["expected_revision"]) is not int
                 or data["expected_revision"] < 0):
             raise Blocked("Alteração de Folha inválida.")
         payload = draft_payload(data["slot"], data["expected_revision"] + 1,
-                                data["text"], data["filename"], data["attachment"])
+                                data["text"], data["filename"], data["attachment"],
+                                data.get("dialogue"))
         host.authorize(session)
         with draft_lock:
             previous = load_draft(data["slot"], session)
