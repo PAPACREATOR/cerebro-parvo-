@@ -111,7 +111,12 @@ jobs:
           - {label: '0', primary: 0, slice_count: 1, slice: 0}
           - {label: '1', primary: 1, slice_count: 1, slice: 0}
           - {label: '2a', primary: 2, slice_count: 4, slice: 0}
-          - {label: '2b', primary: 2, slice_count: 4, slice: 1}
+          - {label: '2b0', primary: 2, slice_count: 4, slice: 1}
+          - {label: '2b1', primary: 2, slice_count: 4, slice: 1}
+          - {label: '2b2', primary: 2, slice_count: 4, slice: 1}
+          - {label: '2b3', primary: 2, slice_count: 4, slice: 1}
+          - {label: '2b4', primary: 2, slice_count: 4, slice: 1}
+          - {label: '2b5', primary: 2, slice_count: 4, slice: 1}
           - {label: '2c', primary: 2, slice_count: 4, slice: 2}
           - {label: '2d', primary: 2, slice_count: 4, slice: 3}
           - {label: '3', primary: 3, slice_count: 1, slice: 0}
@@ -158,6 +163,11 @@ jobs:
           $selected = @(for ($i = 0; $i -lt $primaryModules.Count; $i++) {
             if (($i % $sliceCount) -eq $slice) { $primaryModules[$i] }
           })
+          # Split only original 2b, preserving its six modules without skipping tests.
+          if ($label -match '^2b([0-5])$') {
+            if ($selected.Count -ne 6) { throw '2b module count changed; revalidate the matrix' }
+            $selected = @($selected[[int]$Matches[1]])
+          }
           if ($modules.Count -eq 0 -or $selected.Count -eq 0) {
             throw 'Empty regression partition'
           }
