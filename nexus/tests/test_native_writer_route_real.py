@@ -237,6 +237,28 @@ def test_two_real_tools_verify_then_writer_each_with_own_human_gates(tmp_path, m
         host.store.check_commit(host.store.state(verify_run))
         host.store.check_commit(host.store.state(writer_run))
 
+        # Read-only composite receipt binds the original Folha intent to two
+        # actually approved Host runs, input hashes and the physical PDF.
+        def retrieve_receipt(first, last, original_name, original_sha):
+            return call("/api/flow-receipt", {
+                "text": "Verifica este documento e converte-o em PDF",
+                "filename": original_name, "input_sha256": original_sha,
+                "verify_run_id": first, "convert_run_id": last,
+            })
+        combined = retrieve_receipt(verify_run, writer_run, original["filename"],
+                                    hashlib.sha256(raw).hexdigest())
+        assert combined["authority"] == "NONE"
+        assert combined["execution"] == "NOT_AUTHORIZED"
+        assert combined["human_approval_required"] is False
+        assert combined["product"]["sha256"] == hashlib.sha256(pdf).hexdigest()
+        assert [item["run_id"] for item in combined["steps"]] == [verify_run, writer_run]
+        assert all(item["result_sha256"] and item["request_sha256"]
+                   and item["process_sha256"] for item in combined["steps"])
+        with pytest.raises(HTTPError):
+            retrieve_receipt(writer_run, verify_run, original["filename"], hashlib.sha256(raw).hexdigest())
+        with pytest.raises(HTTPError):
+            retrieve_receipt(verify_run, writer_run, original["filename"], "0" * 64)
+
         # Observe two independently executed, verified tools. Learning remains
         # advisory and cannot execute or approve a future tool call.
         learning_root = tmp_path / "learning"
@@ -245,7 +267,7 @@ def test_two_real_tools_verify_then_writer_each_with_own_human_gates(tmp_path, m
         review = dict(
             goal="convert_pdf", steps=["verify", "convert_pdf"],
             phrase="verifica este ODT e converte para PDF",
-            source_ids=[verify_run, writer_run],
+            source_ids=[step["run_id"] for step in combined["steps"]],
             objective="Sequencia real verificada de ODT para PDF",
             decision="ACCEPT",
         )
@@ -294,6 +316,10 @@ def test_two_real_tools_verify_then_writer_each_with_own_human_gates(tmp_path, m
         other_pdf = (data / "canonical" / writer_second / "resultado.pdf").read_bytes()
         assert other_pdf.startswith(b"%PDF-") and b"%%EOF" in other_pdf[-1024:]
         assert hashlib.sha256(other_pdf).hexdigest() == host.store.state(writer_second)["artifact_sha256"]
+        second_receipt = retrieve_receipt(verify_second, writer_second, original["filename"],
+                                          hashlib.sha256(raw).hexdigest())
+        assert second_receipt["product"]["sha256"] == hashlib.sha256(other_pdf).hexdigest()
+        assert second_receipt["receipt_sha256"] != combined["receipt_sha256"]
         assert len(call("/api/runs")) == 4
 
     def no_repeat(*_args, **_kwargs):
@@ -304,3 +330,10 @@ def test_two_real_tools_verify_then_writer_each_with_own_human_gates(tmp_path, m
     for run_id in (verify_run, writer_run, verify_second, writer_second):
         restored.store.check_commit(restored.store.state(run_id))
         assert restored.store.state(run_id)["status"] == "PASS"
+    with http(restored) as call:
+        recovered = call("/api/flow-receipt", {
+            "text": "Verifica este documento e converte-o em PDF",
+            "filename": "source.odt", "input_sha256": combined["input_sha256"],
+            "verify_run_id": verify_run, "convert_run_id": writer_run,
+        })
+        assert recovered["receipt_sha256"] == combined["receipt_sha256"]
