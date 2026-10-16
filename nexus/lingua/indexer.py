@@ -83,20 +83,35 @@ class LanguageIndex:
         self.rules = strict_json(raw_contract)
         if not isinstance(self.rules, dict):
             raise Blocked("Contrato linguístico inválido.")
-        # Chapters are for search only; never convert a passage into a command.
+        # Every byte of large chapters remains searchable. Split at a word
+        # boundary where possible; never silently drop the last pages.
         chapters = []
         chapter = None
+
+        def add_chapter(part):
+            if part is None:
+                return
+            content = "\n".join(part[1])
+            start = 0
+            while start < len(content):
+                end = min(start + 16_000, len(content))
+                if end < len(content):
+                    boundary = max(content.rfind(" ", start, end),
+                                   content.rfind("\n", start, end))
+                    if boundary > start + 8_000:
+                        end = boundary + 1
+                chapters.append((part[0], content[start:end]))
+                start = end
+
         for line in markdown.splitlines():
             if line.startswith("## "):
-                if chapter:
-                    chapters.append((chapter[0], "\n".join(chapter[1])[:300_000]))
+                add_chapter(chapter)
                 chapter = (line[3:].strip(), [])
             elif chapter and not line.startswith("<!-- "):
                 chapter[1].append(line)
-        if chapter:
-            chapters.append((chapter[0], "\n".join(chapter[1])[:300_000]))
+        add_chapter(chapter)
         if len(chapters) > 2000:
-            raise Blocked("Demasiados capítulos no cofre linguístico.")
+            raise Blocked("Demasiados blocos no cofre linguístico.")
 
         self.lock = threading.RLock()
         self.connection = sqlite3.connect(":memory:", check_same_thread=False)
