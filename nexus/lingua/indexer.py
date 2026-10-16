@@ -19,9 +19,12 @@ MARKER = re.compile(r"[a-záàâãéêíóôõúç\- ]{1,60}\Z")
 
 
 def _section(markdown: str, start: str, end: str) -> str:
-    if markdown.count(start) != 1 or markdown.count(end) != 1:
+    if markdown.count(start) != 1:
         raise Blocked("Secção do cofre linguístico ausente ou ambígua.")
-    body = markdown.split(start, 1)[1].split(end, 1)[0]
+    tail = markdown.split(start, 1)[1]
+    if tail.count(end) != 1:
+        raise Blocked("Fecho da secção linguística ausente ou ambíguo.")
+    body = tail.split(end, 1)[0]
     if not body.strip():
         raise Blocked("Secção linguística vazia.")
     return body
