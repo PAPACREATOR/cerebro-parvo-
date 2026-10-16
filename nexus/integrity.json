@@ -16,7 +16,7 @@
   "schemas/languagetool.json": "f3310c0f0d70e86ab80aa22f8deb5331ddb5ccd49bae84be0926010d2ec27afa",
   "adapters/office.py": "75e9d58152b9b2929ea056d0934207922afbf4dfdba290b38c99c629a5ef06c5",
   "ui/index.html": "c75d4a81d61422c305bc24015354b332b7c525b25661f93cfad23abd98f922d6",
-  "ui/app.js": "765fd4b77e6c3b0bd2640a0bf4f60c608a8e3a85165db2bb86729fea0e70c422",
+  "ui/app.js": "48de6c0b9e50ddeb224c31b723212b66788c3ee33d6f554a1c3596237e69c0c3",
   "ui/style.css": "64cf291a11b9827cece4d4c318b114d8a16de76b52e91a60b37fa9744745139e",
   "adapters/constitutional.py": "fee4899633ab9efa6b66bfe2672b0fcb75235a252d0d59b190f4ef94ed7fb0fd",
   "schemas/multimedia.json": "ea20b02da3c33557d42475c84e111f98a1f7048708af0e434dde4aca53154e01",
