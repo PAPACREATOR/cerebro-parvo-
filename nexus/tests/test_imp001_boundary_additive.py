@@ -84,8 +84,8 @@ def test_invalid_or_oversized_attachment_never_creates_run(tmp_path, attachment)
     request["attachment"] = attachment
     with pytest.raises(Blocked):
         store.create(request)
-    assert not any((tmp_path / area).iterdir()
-                   for area in ("runs", "creative", "canonical"))
+    assert all(not any((tmp_path / area).iterdir())
+               for area in ("runs", "creative", "canonical"))
 
 
 def test_folha_refuses_empty_upload_without_side_effects(tmp_path):
