@@ -79,6 +79,16 @@ function resultText(content,process) {
 function workingLayout(active) {
   document.querySelector?.(".sheet")?.classList?.toggle("has-work",active);
 }
+function showQuestion(question) {
+  clearTimeout(poll);current=null;currentContent="";viewRevision++;
+  workingLayout(true);
+  el("empty").hidden=true;el("result").hidden=false;
+  el("status").textContent="Nexus";
+  el("result-title").textContent="Uma pergunta";
+  el("message").textContent=question;
+  el("content").textContent="";
+  el("actions").hidden=true;el("pdf").hidden=true;
+}
 function showInterpretation(preview) {
   // An interpretation is never an execution or a Creative candidate.
   current=null;
@@ -224,12 +234,12 @@ el("form").onsubmit=async (event, classified=null)=>{
     if (pendingDialogue && !payload.filename && !payload.attachment) {
       const answer=payload.text.trim();
       if(!answer || answer.length>500)throw new Error("Escreve uma resposta até 500 caracteres.");
-      // Keep the human's answer literal. Never invent a missing tone or
-      // duration by assigning the same answer to both slots.
-      // The interpreter will ask again for any genuinely missing detail.
+      // The answer continues the original request; it is not an autonomous command.
       payload.text=pendingDialogue.original+"\n"+answer;
       el("text").value=payload.text;
       pendingDialogue=null;
+      clearTimeout(draftTimer);
+      await saveDraft();
     }
     if (revision!==editRevision || classified && payload.text!==classified.text)
       throw new Error("O texto ou anexo mudou durante a preparação. Revê o pedido.");
@@ -282,16 +292,11 @@ el("form").onsubmit=async (event, classified=null)=>{
       return;
     }
     if(preview.assistant?.question && !payload.filename && !payload.attachment) {
-      pendingDialogue={original:payload.text,missing:preview.assistant.missing};
-      clearTimeout(poll);current=null;currentContent="";viewRevision++;
-      workingLayout(true);
-      el("empty").hidden=true;el("result").hidden=false;
-      el("status").textContent="Nexus";
-      el("result-title").textContent="Uma pergunta";
-      el("message").textContent=preview.assistant.question;
-      el("content").textContent="";
-      el("actions").hidden=true;el("pdf").hidden=true;
-      el("text").value="";el("text").focus();
+      pendingDialogue={original:payload.text,question:preview.assistant.question};
+      showQuestion(pendingDialogue.question);
+      el("text").value="";paintComposer();el("text").focus();
+      clearTimeout(draftTimer);
+      await saveDraft();
       return;
     }
     if(preview.assistant?.process==="web" && !payload.filename && !payload.attachment) {
@@ -472,14 +477,14 @@ function scheduleDraftSave(){
 function saveDraft(){
   if(!draftSupported||!draftReady)return draftQueue;
   const slot=draftSlot, inputVersion=editRevision;
-  // Version and snapshot are captured BEFORE queue/network awaits.
-  // A stale timer cannot overwrite a newer user edit using the latest CAS.
+  const dialogue=pendingDialogue ? {...pendingDialogue}:null;
+  // Version, input and human clarification are captured BEFORE network awaits.
   const snapshot=requestPayload();
   draftQueue=draftQueue.catch(()=>{}).then(async()=>{
     const payload=await snapshot;
     if(slot!==draftSlot || inputVersion!==editRevision)return;
     const reply=await api("/api/folha-draft",{
-      slot,expected_revision:draftRevision,...payload,
+      slot,expected_revision:draftRevision,...payload,dialogue,
     });
     if(slot===draftSlot)draftRevision=reply.revision;
   });
@@ -505,6 +510,8 @@ async function restoreDraft(slot){
     el("file-label").textContent=saved.filename;
   }
   el("text").value=saved.text;
+  pendingDialogue=saved.dialogue || null;
+  if(pendingDialogue)showQuestion(pendingDialogue.question);
   draftReady=true;
   paintComposer();
 }
