@@ -365,3 +365,22 @@ def test_pt_markdown_cannot_promote_quotes_negations_or_multiple_actions(text):
     parsed = parse(text)
     assert parsed.status == "UNRESOLVED"
     assert parsed.intent is None
+
+
+
+def test_pt_300_pages_style_long_chapter_is_not_silently_truncated(tmp_path):
+    import hashlib
+    from nexus.frontdoor import _PT_LANGUAGE_PATH
+    from nexus.lingua.indexer import load_corpus
+
+    text = (_PT_LANGUAGE_PATH.read_text("utf-8")
+            + "\n## Manual português prolongado\n"
+            + ("explicação lexical de uma passagem extensa\n" * 9000)
+            + "sentinela final de integridade da indexação\n")
+    path = tmp_path / "pt_PT.md"
+    path.write_text(text, encoding="utf-8")
+    index = load_corpus(path, hashlib.sha256(text.encode("utf-8")).hexdigest())
+    hits = index.search("sentinela")
+    assert hits
+    assert any("sentinela" in hit["snippet"] for hit in hits)
+    assert all(hit["authority"] == "NONE" for hit in hits)
