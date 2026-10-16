@@ -278,9 +278,24 @@ const os=require("node:os"),net=require("node:net"),{spawn}=require("node:child_
     await page.locator("#execution-cancel").click();
     await page.waitForFunction(()=>!document.getElementById("execution-confirmation").open);
     // A newly attached source remains with the pending original/question.
+    // The prior question remains rendered after cancelling a confirmation.
+    // Its visible "tom" is NOT evidence that a second clarification was
+    // obtained. Wait for a NEW server-acknowledged dialogue before attaching.
+    const secondQuestionSaved=page.waitForResponse(response=>
+      response.request().method()==="POST" &&
+      new URL(response.url()).pathname==="/api/folha-draft" &&
+      response.request().postDataJSON()?.slot==="b" &&
+      response.request().postDataJSON()?.text==="" &&
+      response.request().postDataJSON()?.dialogue?.original==="Cria um podcast sobre Guimarães");
     await page.locator("#text").fill("Cria um podcast sobre Guimarães");
     await page.locator("#submit").click();
-    await page.waitForFunction(()=>document.getElementById("message").textContent.includes("tom"));
+    const secondQuestionAck=await secondQuestionSaved;
+    assert.equal(secondQuestionAck.status(),200);
+    const freshDialogue=await secondQuestionAck.json();
+    assert.equal(freshDialogue.dialogue?.original,"Cria um podcast sobre Guimarães");
+    assert.match(freshDialogue.dialogue.question,/tom/);
+    await page.waitForFunction(()=>document.getElementById("text").value==="" &&
+      document.getElementById("message").textContent.includes("tom"));
     const attachedSave=page.waitForResponse(response=>response.request().method()==="POST" &&
       new URL(response.url()).pathname==="/api/folha-draft" &&
       response.request().postDataJSON()?.text==="  informal  " &&
