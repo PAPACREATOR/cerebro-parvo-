@@ -119,3 +119,80 @@ test("unknown tasks do not invent tool execution",async()=>{
   assert.equal(ui.node("execution-confirmation").open,false);
   assert.equal(ui.node("result").hidden,false);
 });
+
+test("one white Folha request proposes and runs verify then PDF with two explicit Host tickets",async()=>{
+  const original="Verifica este documento e converte-o em PDF";
+  const sha="f".repeat(64);
+  const calls=[];
+  const ui=sheet({handler:async(route,body)=>{
+    calls.push({route,body});
+    if(route==="/api/interpret")return {
+      status:"UNRESOLVED",original:body.text,execution:"NOT_AUTHORIZED",
+      composite:{authority:"NONE",execution:"NOT_AUTHORIZED",requires_human_confirmation:true,
+        steps:[{process:"verify",command:"verificar integridade de ficheiro"},
+               {process:"convert_pdf",command:"converter para pdf"}]},
+    };
+    if(route==="/api/prepare-run"){
+      const first=body.text.includes("integridade");
+      return {ticket:first?"verify-ticket":"writer-ticket",process:first?"verify":"convert_pdf",
+              filename:body.filename,attachment_sha256:sha};
+    }
+    if(route==="/api/confirm-run")return {run_id:body.text.includes("integridade")?"a".repeat(32):"b".repeat(32)};
+    if(route==="/api/runs/"+"a".repeat(32))return {
+      status:"HUMAN_REQUIRED",process_id:"verify",input_sha256:sha,result:{status:"PASS"},
+    };
+    if(route==="/api/runs/"+"b".repeat(32))return {
+      status:"HUMAN_REQUIRED",process_id:"convert_pdf",artifact_sha256:"b".repeat(64),
+      result:{title:"PDF verificado",status:"UNKNOWN"},content:"# PDF",
+    };
+    return [];
+  }});
+  ui.node("file").files=[{name:"source.odt",size:3,arrayBuffer:async()=>Uint8Array.from([1,2,3]).buffer}];
+  await ui.submit(original);
+  assert.equal(ui.node("execution-confirmation").open,true);
+  assert.match(ui.node("execution-review").textContent,/Pedido original: Verifica este documento/);
+  assert.deepEqual(calls.filter(v=>v.route==="/api/prepare-run").map(v=>v.body.text),
+    ["& verificar integridade de ficheiro"]);
+  assert.equal(calls.filter(v=>v.route==="/api/confirm-run").length,0);
+  ui.node("execution-confirm").checked=true;
+  await ui.node("execution-approve").onclick();
+  assert.equal(ui.node("execution-confirmation").open,true);
+  assert.deepEqual(calls.filter(v=>v.route==="/api/prepare-run").map(v=>v.body.text),
+    ["& verificar integridade de ficheiro","& converter para pdf"]);
+  assert.equal(calls.filter(v=>v.route==="/api/confirm-run").length,1);
+  ui.node("execution-confirm").checked=true;
+  await ui.node("execution-approve").onclick();
+  assert.deepEqual(calls.filter(v=>v.route==="/api/confirm-run").map(v=>v.body.text),
+    ["& verificar integridade de ficheiro","& converter para pdf"]);
+  assert.equal(ui.node("execution-confirmation").open,false);
+  assert.equal(ui.node("pdf").hidden,false);
+  assert.equal(ui.node("result-title").textContent,"PDF verificado");
+});
+test("refused first tool and edited request never prepare or execute a second tool",async()=>{
+  const original="Verifica este documento e converte-o em PDF";
+  const cases=["failed","edited"];
+  for(const scenario of cases){
+    const ui=sheet({handler:async(route,body)=>{
+      if(route==="/api/interpret")return {status:"UNRESOLVED",original:body.text,
+        composite:{authority:"NONE",execution:"NOT_AUTHORIZED",
+          steps:[{process:"verify",command:"verificar integridade de ficheiro"},
+                 {process:"convert_pdf",command:"converter para pdf"}]}};
+      if(route==="/api/prepare-run")return {
+        ticket:"verify-ticket",process:"verify",attachment_sha256:"a".repeat(64),filename:"source.odt"};
+      if(route==="/api/confirm-run")return {run_id:"a".repeat(32)};
+      if(route.startsWith("/api/runs/"))return {
+        status:"HUMAN_REQUIRED",process_id:"verify",input_sha256:"a".repeat(64),
+        result:{status:"FAIL"}};
+      return [];
+    }});
+    ui.node("file").files=[{name:"source.odt",size:3,arrayBuffer:async()=>Uint8Array.from([1,2,3]).buffer}];
+    await ui.submit(original);
+    if(scenario==="edited")ui.input("text",original+" agora");
+    else {
+      ui.node("execution-confirm").checked=true;
+      await ui.node("execution-approve").onclick();
+    }
+    assert.equal(ui.calls.filter(x=>x.route==="/api/prepare-run").length,1);
+    assert.equal(ui.calls.filter(x=>x.route==="/api/confirm-run").length,scenario==="failed"?1:0);
+  }
+});
