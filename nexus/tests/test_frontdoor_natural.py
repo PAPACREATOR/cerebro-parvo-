@@ -142,3 +142,45 @@ def test_portuguese_clause_does_not_mask_second_action_or_negation(original):
     assert parsed.status == "UNRESOLVED"
     assert parsed.intent is None
     assert parsed.original == original
+
+
+@pytest.mark.parametrize(("original", "intent"), [
+    ("Podes guardar este documento?", "arquivo"),
+    ("Guarde este ficheiro.", "arquivo"),
+    ("Quero que guardes esta nota.", "arquivo"),
+    ("Por favor, arquive este original.", "arquivo"),
+    ("Poderias pesquisar na internet?", "web"),
+    ("Gostaria de pesquisar na net.", "web"),
+    ("Procure fontes sobre geografia.", "fontes"),
+    ("Encontre fontes de história.", "fontes"),
+    ("Reveja este parágrafo.", "trabalhar"),
+    ("Corrija esta frase.", "trabalhar"),
+    ("Explique este conceito.", "perguntar"),
+    ("Calcule o total.", "calcular"),
+    ("Como posso pesquisar na web?", "perguntar"),
+    ("Podes explicar como guardar este ficheiro?", "perguntar"),
+    ("De que forma posso calcular o valor?", "perguntar"),
+])
+def test_pt_operational_lexicon_and_clause_grammar(original, intent):
+    parsed = parse(original)
+    assert parsed.status == "RESOLVED"
+    assert parsed.intent == intent
+    assert parsed.original.encode("utf-8") == original.encode("utf-8")
+    assert parsed.explicit is False
+    assert "process" not in parsed.as_dict()
+
+
+@pytest.mark.parametrize("original", [
+    "Não podes guardar esta nota.",
+    "Nunca guardes esta nota.",
+    "Explica como guardar e depois guarda o documento.",
+    "Como guardar e também tema astronomia.",
+    "Podes explicar como pesquisar e depois pesquisa na web.",
+    "O texto diz «guarde o ficheiro».",
+    "A palavra guarde surge na frase.",
+])
+def test_pt_operational_lexicon_cannot_force_an_action(original):
+    parsed = parse(original)
+    assert parsed.status == "UNRESOLVED"
+    assert parsed.intent is None
+    assert parsed.original == original
