@@ -187,3 +187,87 @@ def test_composed_receipt_does_not_invent_history_or_execute_tools(tmp_path, mon
         assert call("/api/runs") == []
     assert not list((tmp_path / "creative").iterdir())
     assert not list((tmp_path / "canonical").iterdir())
+
+
+def test_two_independent_folha_drafts_survive_host_restart(tmp_path):
+    import base64
+    import hashlib
+    from nexus.tests.test_reverse_flow import http
+    folder = tmp_path / "runtime"
+    host = Host(folder)
+    raw = bytes(range(256)) * 5 + "Oliveira do Hospital".encode("utf-8")
+    payload = {
+        "slot": "a", "expected_revision": 0,
+        "text": "Verifica este documento depois", "filename": "documento_ação.bin",
+        "attachment": base64.b64encode(raw).decode("ascii"),
+    }
+    with http(host) as call:
+        assert call("/api/folha-draft/a")["revision"] == 0
+        first = call("/api/folha-draft", payload)
+        assert first["revision"] == 1
+        assert first["input_sha256"] == hashlib.sha256(raw).hexdigest()
+        other = call("/api/folha-draft", {
+            "slot": "b", "expected_revision": 0,
+            "text": "Outra Folha para estudar", "filename": "", "attachment": "",
+        })
+        assert other["revision"] == 1
+        assert call("/api/runs") == []
+        with pytest.raises(HTTPError) as lost_update:
+            call("/api/folha-draft", payload)
+        assert lost_update.value.code == 403
+        with pytest.raises(HTTPError) as not_owner:
+            call("/api/folha-draft/a", session="other-session")
+        assert not_owner.value.code == 403
+    # Host session changes at restart but durable local scratch is recoverable
+    # through the NEW session only. No external tool was invoked.
+    restored = Host(folder)
+    with http(restored) as call:
+        loaded = call("/api/folha-draft/a")
+        assert loaded["text"] == payload["text"]
+        assert loaded["filename"] == payload["filename"]
+        assert base64.b64decode(loaded["attachment"], validate=True) == raw
+        assert loaded["revision"] == 1
+        assert call("/api/folha-draft/b")["text"] == "Outra Folha para estudar"
+        assert call("/api/runs") == []
+    for area in ("runs", "creative", "canonical"):
+        assert not list((folder / area).iterdir())
+
+
+@pytest.mark.parametrize("change", [
+    {"slot": "c", "expected_revision": 0, "text": "ok", "filename": "", "attachment": ""},
+    {"slot": "../a", "expected_revision": 0, "text": "ok", "filename": "", "attachment": ""},
+    {"slot": "a", "expected_revision": True, "text": "ok", "filename": "", "attachment": ""},
+    {"slot": "a", "expected_revision": 0, "text": "ok", "filename": "x.bin", "attachment": ""},
+    {"slot": "a", "expected_revision": 0, "text": "ok", "filename": "", "attachment": "YWJj"},
+    {"slot": "a", "expected_revision": 0, "text": "ok", "filename": "sub/file", "attachment": "YWJj"},
+    {"slot": "a", "expected_revision": 0, "text": "ok", "filename": "data.bin", "attachment": "**invalid**"},
+    {"slot": "a", "expected_revision": 0, "text": "x" * 12001, "filename": "", "attachment": ""},
+])
+def test_folha_draft_refuses_invalid_data_without_execution(tmp_path, change):
+    host = Host(tmp_path / "runtime")
+    with http(host) as call:
+        with pytest.raises(HTTPError) as rejected:
+            call("/api/folha-draft", change)
+        assert rejected.value.code == 403
+        assert call("/api/runs") == []
+
+
+def test_corrupted_folha_draft_blocks_restoration_without_repair_or_execution(tmp_path):
+    import json
+    host = Host(tmp_path / "runtime")
+    with http(host) as call:
+        call("/api/folha-draft", {
+            "slot": "a", "expected_revision": 0,
+            "text": "Original", "filename": "", "attachment": "",
+        })
+    saved = tmp_path / "runtime-folha-drafts" / "a.json"
+    corrupt = json.loads(saved.read_bytes())
+    corrupt["text"] = "Adulterado"
+    saved.write_text(json.dumps(corrupt), encoding="utf-8")
+    preserved = saved.read_bytes()
+    with http(Host(tmp_path / "runtime")) as call:
+        with pytest.raises(HTTPError) as refused:
+            call("/api/folha-draft/a")
+        assert refused.value.code == 403
+        assert call("/api/runs") == []
+    assert saved.read_bytes() == preserved
