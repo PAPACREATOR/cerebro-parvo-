@@ -183,7 +183,17 @@ const os=require("node:os"),net=require("node:net"),{spawn}=require("node:child_
     await page.locator("#text").fill("Cria um podcast sobre Guimarães");
     await page.locator("#submit").click();
     await page.waitForFunction(()=>document.getElementById("message").textContent.includes("tom"));
+    const partialSave=page.waitForResponse(response=>
+      response.request().method()==="POST" &&
+      new URL(response.url()).pathname==="/api/folha-draft" &&
+      response.request().postDataJSON()?.slot==="b" &&
+      response.request().postDataJSON()?.text==="informal, 5");
     await page.locator("#text").fill("informal, 5");
+    const partialAck=await partialSave;
+    assert.equal(partialAck.status(),200,"The Host must ACK the exact partial answer");
+    const acknowledged=await partialAck.json();
+    assert.equal(acknowledged.text,"informal, 5");
+    assert.equal(acknowledged.dialogue?.original,"Cria um podcast sobre Guimarães");
     await page.waitForFunction(async()=>{
       const s=sessionStorage.getItem("nexus-session");
       const r=await fetch("/api/folha-draft/b",{headers:{"X-Nexus-Session":s}});
