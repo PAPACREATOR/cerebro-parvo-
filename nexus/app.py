@@ -82,6 +82,36 @@ def _request_digest(request):
     return hashlib.sha256(raw).hexdigest()
 
 
+def _composite_plan(text):
+    """Read-only, bounded multi-capability proposal. No grant or dispatch."""
+    if type(text) is not str or not text.strip() or len(text) > 12000:
+        return None
+    normal = re.sub(r"\s+", " ", unicodedata.normalize("NFKC", text).casefold()).strip()
+    if normal.startswith("& "):
+        normal = normal[2:].strip()
+    normal = normal.strip(" .!?")
+    if normal not in {
+        "verifica este documento e converte-o em pdf",
+        "verifica a integridade deste documento e converte para pdf",
+        "verificar integridade de ficheiro e converter para pdf",
+    }:
+        return None
+    router = declared_router()
+    first = router.recognise_command("verificar integridade de ficheiro")
+    second = router.recognise_command("converter para pdf")
+    if first is None or second is None or (first.process, second.process) != ("verify", "convert_pdf"):
+        raise Blocked("Receita composta não corresponde ao registo fechado.")
+    return {
+        "authority": "NONE",
+        "execution": "NOT_AUTHORIZED",
+        "requires_human_confirmation": True,
+        "steps": [
+            {"process": first.process, "command": first.command},
+            {"process": second.process, "command": second.command},
+        ],
+    }
+
+
 def _natural_work_process(text):
     """Deterministic process proposal for bounded natural text, never authority."""
     if not isinstance(text, str) or not text.strip() or len(text) > 12000:
@@ -421,7 +451,8 @@ def make_server(host, port=0, *, allow_direct_run=False):
                     parsed = parse(data["text"])
                     command = (declared_router().recognise_command(parsed.content)
                                if parsed.status == "RESOLVED" else None)
-                    return self.reply(200, {
+                    composite = _composite_plan(data["text"])
+                    preview = {
                         "status": parsed.status,
                         "intent": parsed.intent,
                         "original": parsed.original,
@@ -432,7 +463,10 @@ def make_server(host, port=0, *, allow_direct_run=False):
                         "assistant": _natural_assistant(data["text"]) if parsed.status != "BLOCKED" else {"process": None, "question": None, "missing": []},
                         "molde": build_molde(data["text"], intent=parsed.intent if parsed.status == "RESOLVED" else None)
                                  if data["text"] else None,
-                    })
+                    }
+                    if composite is not None:
+                        preview["composite"] = composite
+                    return self.reply(200, preview)
                 if path == "/api/research":
                     # Read-only web discovery is an authorized natural user
                     # request, not Canonical promotion and never an arbitrary
