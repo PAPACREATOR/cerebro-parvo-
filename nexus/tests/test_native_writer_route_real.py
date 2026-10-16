@@ -202,7 +202,17 @@ def test_two_real_tools_verify_then_writer_each_with_own_human_gates(tmp_path, m
         return run
 
     with http(host) as call:
-        verify_run = finish(call, "& verificar integridade de ficheiro")
+        # The ONE free-text request must originate the bounded, read-only
+        # Shell plan. The ordinary user-gated client performs each declared
+        # operation; neither plan nor memory can start or approve any step.
+        original_intent = call("/api/interpret", {
+            "text": "Verifica este documento e converte-o em PDF",
+        })
+        plan = original_intent["composite"]
+        assert plan["execution"] == "NOT_AUTHORIZED"
+        assert [step["process"] for step in plan["steps"]] == ["verify", "convert_pdf"]
+        assert call("/api/runs") == []
+        verify_run = finish(call, "& " + plan["steps"][0]["command"])
         assert not (data / "creative" / verify_run / "resultado.pdf").exists()
 
         writer_proposal = {"text": "& converter para pdf", **original}
@@ -215,7 +225,7 @@ def test_two_real_tools_verify_then_writer_each_with_own_human_gates(tmp_path, m
         }) == {"status": "CANCELLED"}
         assert len(call("/api/runs")) == 1
 
-        writer_run = finish(call, "& converter para pdf")
+        writer_run = finish(call, "& " + plan["steps"][1]["command"])
         assert writer_run != verify_run
         pdf = (data / "canonical" / writer_run / "resultado.pdf").read_bytes()
         assert pdf.startswith(b"%PDF-") and b"%%EOF" in pdf[-1024:]
@@ -276,8 +286,8 @@ def test_two_real_tools_verify_then_writer_each_with_own_human_gates(tmp_path, m
 
         # These are two NEW real Host executions with their own user-gate
         # tickets, not a call from procedural memory or a replay.
-        verify_second = finish(call, "& verificar integridade de ficheiro")
-        writer_second = finish(call, "& converter para pdf")
+        verify_second = finish(call, "& " + plan["steps"][0]["command"])
+        writer_second = finish(call, "& " + plan["steps"][1]["command"])
         assert len({verify_run, writer_run, verify_second, writer_second}) == 4
         assert host.store.state(verify_second)["input_sha256"] == host.store.state(writer_second)["input_sha256"]
         assert host.store.state(verify_second)["input_sha256"] != host.store.state(verify_run)["input_sha256"]
