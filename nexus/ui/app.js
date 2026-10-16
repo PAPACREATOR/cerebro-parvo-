@@ -390,8 +390,8 @@ el("execution-approve").onclick=async()=>{
     el("execution-confirmation").close(); notice(error.message); el("submit").disabled=false;
   }
 };
-el("text").addEventListener("input",()=>{invalidateExecutionProposal();paintComposer();});
-el("file").onchange=()=>{invalidateExecutionProposal();el("file-label").textContent=el("file").files[0]?.name || "Até 2 MB · um ficheiro de cada vez";};
+el("text").addEventListener("input",()=>{invalidateExecutionProposal();paintComposer();scheduleDraftSave();});
+el("file").onchange=()=>{invalidateExecutionProposal();el("file-label").textContent=el("file").files[0]?.name || "Até 2 MB · um ficheiro de cada vez";scheduleDraftSave();};
 // Drag-and-drop is an input convenience, not an authorization or execution.
 const surface=document.querySelector?.(".sheet");
 if(surface){
@@ -454,6 +454,56 @@ el("pdf").onclick=async()=>{
 };
 
 
+// Two scratch Folhas live beside (never inside) the sovereign Store.
+// No execution tickets, Host sessions or Canonical approvals are persisted.
+// Server optimistic revisions prevent stale writes from replacing newer text.
+const draftSupported=typeof File==="function" && typeof DataTransfer==="function";
+let draftSlot=pageStorage.getItem("nexus-active-folha")==="b"?"b":"a";
+let draftRevision=0,draftReady=false,draftTimer=null,draftQueue=Promise.resolve();
+function scheduleDraftSave(){
+  if(!draftSupported||!draftReady)return;
+  clearTimeout(draftTimer);
+  draftTimer=setTimeout(()=>{saveDraft().catch(e=>notice(e.message));},350);
+}
+function saveDraft(){
+  if(!draftSupported||!draftReady)return draftQueue;
+  const slot=draftSlot;
+  draftQueue=draftQueue.then(async()=>{
+    const payload=await requestPayload();
+    // A previous save can complete AFTER a new Folha was selected.
+    // Its slot and revision are fixed before any asynchronous call.
+    if(slot!==draftSlot)return;
+    const reply=await api("/api/folha-draft",{
+      slot,expected_revision:draftRevision,...payload,
+    });
+    if(slot===draftSlot)draftRevision=reply.revision;
+  });
+  return draftQueue;
+}
+async function restoreDraft(slot){
+  if(!draftSupported)return;
+  draftReady=false;
+  const revision=editRevision;
+  const saved=await api("/api/folha-draft/"+slot);
+  if(slot!==draftSlot)return;
+  draftRevision=saved.revision;
+  if(revision!==editRevision){
+    // Never erase text already typed while awaiting disk/network.
+    draftReady=true;scheduleDraftSave();return;
+  }
+  if(saved.attachment){
+    const binary=atob(saved.attachment);
+    const bytes=Uint8Array.from(binary,c=>c.charCodeAt(0));
+    const dt=new DataTransfer();
+    dt.items.add(new File([bytes],saved.filename,{type:"application/octet-stream"}));
+    el("file").files=dt.files;
+    el("file-label").textContent=saved.filename;
+  }
+  el("text").value=saved.text;
+  draftReady=true;
+  paintComposer();
+}
+
 // The Nexus assistant handles processes internally. No stage wizard or
 // product selector is presented: the Folha stays one editable white surface.
 function paintComposer() {
@@ -468,12 +518,22 @@ el("text").addEventListener("keydown",event=>{
 const originalFileChange=el("file").onchange;
 el("file").onchange=()=>{originalFileChange();paintComposer();};
 const originalNewSheet=el("new").onclick;
-el("new").onclick=()=>{
+el("new").onclick=async()=>{
+  if(draftSupported) {
+    clearTimeout(draftTimer);
+    try {await saveDraft();}catch(error){notice(error.message);return;}
+  }
   pendingDialogue=null;
   originalNewSheet();
   workingLayout(false);el("history-panel").hidden=true;
   el("history-toggle").setAttribute("aria-expanded","false");
   el("navigation").open=false;paintComposer();
+  if(draftSupported) {
+    draftReady=false;
+    draftSlot=draftSlot==="a"?"b":"a";
+    pageStorage.setItem("nexus-active-folha",draftSlot);
+    try {await restoreDraft(draftSlot);}catch(error){notice(error.message);}
+  }
 };
 el("browse-file").onclick=()=>{el("navigation").open=false;el("file").click();};
 el("history-toggle").onclick=async()=>{
@@ -485,3 +545,4 @@ el("history-toggle").onclick=async()=>{
   }
 };
 paintComposer();
+if(draftSupported)restoreDraft(draftSlot).catch(error=>notice(error.message));
