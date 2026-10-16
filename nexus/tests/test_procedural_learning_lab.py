@@ -263,3 +263,115 @@ def test_creative_wiki_source_cannot_produce_learned_plan(lab):
             mold(), goal="proofread", source_ids=[draft],
             objective="Sem aprovação Canónica",
         )
+
+
+@pytest.mark.skipif(__import__("os").name != "nt", reason="Native Host/Shell/LPAC requires Windows")
+def test_real_folha_executes_learns_verified_one_step_and_reexecutes_on_new_input(tmp_path, monkeypatch):
+    """Product gate: real Folha HTTP -> Host -> Windows LPAC -> verified product,
+    then reviewed non-authoritative procedural suggestion -> new real execution.
+
+    Human confirmations are TEST INPUTS, not an actual person's approval.
+    Learning never has execution authority. This deliberately proves only the
+    existing 'verify' product, NOT a multi-tool flow, PDF, podcast or media.
+    """
+    import hashlib
+    import time
+
+    from nexus.capability_router import BUILTIN_CAPABILITIES
+    from nexus.host import Host
+    from nexus.tests.test_reverse_flow import http
+
+    host = Host(tmp_path / "runtime")
+    cap = next(item for item in BUILTIN_CAPABILITIES if item.process == "verify")
+
+    def verified_execution(raw, filename):
+        request = {
+            "text": "& " + cap.command,
+            "filename": filename,
+            "attachment": base64.b64encode(raw).decode("ascii"),
+        }
+        with http(host) as call:
+            proposed = call("/api/prepare-run", request)
+            assert proposed["process"] == "verify"
+            assert proposed["attachment_sha256"] == hashlib.sha256(raw).hexdigest()
+            run_id = call("/api/confirm-run", {
+                **request, "ticket": proposed["ticket"], "confirmed": True,
+            })["run_id"]
+            deadline = time.monotonic() + 90
+            state = call("/api/runs/" + run_id)
+            while state["status"] == "RUNNING" and time.monotonic() < deadline:
+                time.sleep(0.1)
+                state = call("/api/runs/" + run_id)
+            assert state["status"] == "HUMAN_REQUIRED", state
+            assert state["result"]["status"] == "PASS"
+            assert state["result"]["ai_calls"] == 0
+            assert not host.store.path("canonical", run_id).exists()
+            assert (host.store.path("runs", run_id) / "input.bin").read_bytes() == raw
+            ticket = call("/api/prepare", {"run_id": run_id})["ticket"]
+            decision = call("/api/approve", {
+                "run_id": run_id, "ticket": ticket, "confirmed": True,
+            })
+            assert decision["status"] == "PASS"
+
+        state = host.store.state(run_id)
+        host.store.check_commit(state)
+        assert state["input_sha256"] == hashlib.sha256(raw).hexdigest()
+        assert host.store.path("canonical", run_id).joinpath("content.md").is_file()
+        return run_id
+
+    first_raw = "Primeira fonte portuguesa — ação.\n".encode("utf-8")
+    first = verified_execution(first_raw, "primeiro.txt")
+
+    bridge = WikiBridge(host.store, tmp_path / "learning")
+    learner = ProceduralMemory(bridge)
+    original = build_molde("& " + cap.command, "primeiro.txt",
+                           base64.b64encode(first_raw).decode("ascii"), intent="trabalhar")
+    initial = learner.suggest(original, goal="verify")
+    assert initial["candidates"][0]["origin"] == "INITIAL"
+
+    # An observed Store result cannot confer authority to learn on its own.
+    kwargs = {
+        "goal": "verify", "steps": ["verify"],
+        "phrase": "verifica a integridade deste ficheiro",
+        "source_ids": [first], "objective": "Produto real verificado",
+        "decision": "ACCEPT",
+    }
+    with pytest.raises(Blocked, match="Revisão humana"):
+        learner.review(original, **kwargs, human_confirmed=False)
+    assert not list(learner.root.iterdir())
+
+    # Simulated explicit human review: stores a hint, never an executable grant.
+    receipt = learner.review(original, **kwargs, human_confirmed=True)
+    assert receipt["authority"] == "NONE"
+    assert receipt["execution"] == "NOT_AUTHORIZED"
+
+    second_raw = b"Another independent input\\x00\\xff\n"
+    new_mold = build_molde("& " + cap.command, "outro.txt",
+                           base64.b64encode(second_raw).decode("ascii"), intent="trabalhar")
+    reopened = ProceduralMemory(WikiBridge(host.store, bridge.root))
+    advice = reopened.suggest(new_mold, goal="verify")
+    assert advice["authority"] == "NONE"
+    assert advice["execution"] == "NOT_AUTHORIZED"
+    assert advice["requires_human_review"] is True
+    assert advice["candidates"][0]["origin"] == "LEARNED"
+    assert advice["candidates"][0]["positive_examples"] == 1
+    assert advice["candidates"][0]["steps"] == ["verify"]
+    assert advice["candidates"][0]["canonical_source_ids"] == [first]
+
+    # The suggestion is NOT executed. Select the declared capability, then
+    # use the normal Folha pre-execution ticket and real Windows Shell again.
+    assert cap.process == advice["candidates"][0]["steps"][-1]
+    second = verified_execution(second_raw, "outro.txt")
+    assert first != second
+    assert host.store.state(first)["input_sha256"] != host.store.state(second)["input_sha256"]
+    host.store.check_commit(host.store.state(second))
+
+    # Memory is not necessary to read/recover products. Never replay provider.
+    def no_replay(*_args, **_kwargs):
+        pytest.fail("Recovery of verified result must not re-execute Windows tool")
+
+    monkeypatch.setattr("nexus.host.launch_confined", no_replay)
+    restored = Host(host.store.root)
+    for run_id in (first, second):
+        assert restored.detail(run_id, restored.session)["status"] == "PASS"
+        restored.store.check_commit(restored.store.state(run_id))
