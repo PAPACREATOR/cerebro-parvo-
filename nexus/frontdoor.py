@@ -5,15 +5,31 @@ from dataclasses import dataclass
 import re
 import unicodedata
 import hashlib
-import sqlite3
-import threading
 
 from nexus.contracts import ROOT, Blocked, strict_json, validate
 from nexus.adapters.languagetool import correction_shadow
 from nexus.capability_router import declared_router
 
 
-_RULES = validate("frontdoor_rules", strict_json((ROOT / "frontdoor_rules.json").read_bytes()))
+# Only a pinned Python parser may interpret the pinned Markdown corpus.
+# Both digests live in this Host-sealed module. Fail closed on tampering.
+_PT_LANGUAGE_PATH = ROOT / "lingua" / "pt_PT.md"
+_PT_LANGUAGE_SHA256 = "3ac567d93a6276bc3cefba399e7389b9f07782e598518508ec2b104ec2d6d90b"
+_PT_INDEXER_PATH = ROOT / "lingua" / "indexer.py"
+_PT_INDEXER_SHA256 = "7db69ad421d8de1b4e6334e783923865506a3ddb52e6f2de7995d8130372250a"
+if (_PT_INDEXER_PATH.is_symlink()
+        or hashlib.sha256(_PT_INDEXER_PATH.read_bytes()).hexdigest() != _PT_INDEXER_SHA256):
+    raise Blocked("O indexador português foi alterado sem revisão.")
+
+from nexus.lingua.indexer import load_corpus
+
+_PT_CORPUS = load_corpus(_PT_LANGUAGE_PATH, _PT_LANGUAGE_SHA256)
+_LEGACY_RULES = validate("frontdoor_rules", strict_json(
+    (ROOT / "frontdoor_rules.json").read_bytes()
+))
+_RULES = validate("frontdoor_rules", _PT_CORPUS.rules)
+if _RULES != _LEGACY_RULES:
+    raise Blocked("Regras Markdown e contrato histórico divergem.")
 PREFIXES = tuple((item[0], item[1]) for item in _RULES["prefixes"])
 NATURAL_RULES = _RULES["natural_rules"]
 CLARIFICATION_PATTERNS = _RULES["clarification_patterns"]
@@ -50,103 +66,18 @@ def _normalise(text: str) -> str:
 
 
 
-# The Markdown file is the local linguistic source of truth. Its digest is pinned
-# inside this Host-sealed module: changing language rules requires review.
-_PT_LANGUAGE_PATH = ROOT / "lingua" / "pt_PT.md"
-_PT_LANGUAGE_SHA256 = "ff206eefcffa64c2d80e9d911f43abbc41f3704b920d4658e8306babcd95381f"
-_PT_LANGUAGE_LOCK = threading.RLock()
-_PT_ALLOWED_INTENTS = frozenset(
-    ("arquivo", "web", "fontes", "trabalhar", "perguntar", "calcular")
-)
-
-
-def _pt_language_tables():
-    raw = _PT_LANGUAGE_PATH.read_bytes()
-    if hashlib.sha256(raw).hexdigest() != _PT_LANGUAGE_SHA256:
-        raise Blocked("O dicionário ou a gramática portuguesa foram alterados.")
-    markdown = raw.decode("utf-8")
-    if markdown.count("<!-- nexus-pt-PT-v1 -->") != 1:
-        raise Blocked("Fonte linguística incompatível.")
-    try:
-        lexicon = markdown.split("## Dicionário operacional\n", 1)[1].split(
-            "\n## Gramática de cláusulas", 1
-        )[0]
-        grammar = markdown.split("<!-- nexus-pt-grammar-v1 -->", 1)[1].split(
-            "<!-- /nexus-pt-grammar-v1 -->", 1
-        )[0]
-    except IndexError as error:
-        raise Blocked("Tabelas linguísticas ausentes.") from error
-
-    forms = {}
-    entries = []
-    for line in lexicon.splitlines():
-        if not line.startswith("|"):
-            continue
-        values = [value.strip() for value in line.strip().strip("|").split("|")]
-        if values[0] in {"forma", "---"}:
-            continue
-        if (len(values) != 3 or values[2] not in _PT_ALLOWED_INTENTS
-                or not all(re.fullmatch(r"[a-záàâãéêíóôõúç]+", v) for v in values[:2])
-                or values[0] in forms):
-            raise Blocked("Entrada de dicionário inválida ou repetida.")
-        forms[values[0]] = values[2]
-        entries.append(tuple(values))
-    if not 10 <= len(entries) <= 2000:
-        raise Blocked("Dicionário operacional vazio ou excessivo.")
-
-    grammar_map = {}
-    for line in grammar.splitlines():
-        if not line.startswith("|"):
-            continue
-        values = [value.strip() for value in line.strip().strip("|").split("|")]
-        if values[0] in {"regra", "---"}:
-            continue
-        if len(values) != 2 or values[0] in grammar_map:
-            raise Blocked("Regra de gramática portuguesa inválida.")
-        expressions = tuple(part.strip() for part in values[1].split(";"))
-        if (not expressions or any(not re.fullmatch(
-                r"[a-záàâãéêíóôõúç ]{1,40}", part) for part in expressions)
-                or len(set(expressions)) != len(expressions)):
-            raise Blocked("Marcadores gramaticais inválidos.")
-        grammar_map[values[0]] = expressions
-    required = {"pergunta_inicio", "negacao_inicio", "segunda_acao", "segunda_clausula"}
-    if set(grammar_map) != required:
-        raise Blocked("Gramática portuguesa incompleta.")
-
-    connection = sqlite3.connect(":memory:", check_same_thread=False)
-    try:
-        connection.execute(
-            "CREATE VIRTUAL TABLE pt_operational USING fts5("
-            "form, lemma UNINDEXED, intent UNINDEXED, "
-            "tokenize='unicode61 remove_diacritics 0')"
-        )
-        connection.executemany(
-            "INSERT INTO pt_operational(form, lemma, intent) VALUES (?, ?, ?)", entries
-        )
-    except sqlite3.Error as error:
-        connection.close()
-        raise Blocked("Índice SQLite FTS5 português indisponível.") from error
-    return connection, forms, grammar_map
-
-
-_PT_LANGUAGE_DB, _PT_FORM_INTENTS, _PT_GRAMMAR = _pt_language_tables()
+# All lexical forms, clause markers, prefixes, and natural rules are loaded
+# from the same reviewed Markdown. This is advisory interpretation only.
+_PT_LANGUAGE_DB = _PT_CORPUS.connection
+_PT_FORM_INTENTS = _PT_CORPUS.forms
+_PT_GRAMMAR = _PT_CORPUS.grammar
 _PT_VERB_FORMS = {
-    intent: frozenset(word for word, group in _PT_FORM_INTENTS.items()
+    intent: frozenset(form for form, group in _PT_FORM_INTENTS.items()
                       if group == intent)
-    for intent in _PT_ALLOWED_INTENTS
+    for intent in ("arquivo", "web", "fontes", "trabalhar", "perguntar", "calcular")
 }
-
-
-def _pt_lookup(word: str) -> tuple[str, ...]:
-    """Exact FTS5 lookup. Vocabulary never grants a capability or permission."""
-    if not re.fullmatch(r"[a-záàâãéêíóôõúç]{1,40}", word):
-        return ()
-    with _PT_LANGUAGE_LOCK:
-        return tuple(row[0] for row in _PT_LANGUAGE_DB.execute(
-            "SELECT DISTINCT intent FROM pt_operational "
-            "WHERE form MATCH ? AND form = ?",
-            ('"' + word + '"', word),
-        ))
+_pt_lookup = _PT_CORPUS.lookup
+_pt_search = _PT_CORPUS.search
 
 
 def _pt_markers(values: tuple[str, ...]) -> str:
@@ -157,12 +88,10 @@ def _pt_markers(values: tuple[str, ...]) -> str:
 _PT_QUESTION = re.compile(
     r"^(?:por favor[, ]+)?(?:"
     + "(?:" + _pt_markers(_PT_GRAMMAR["pergunta_inicio"]) + r")\b"
-    + r"|(?:explica(?:-me)?|podes explicar|poderias explicar|"
-      r"consegues explicar|diz-me|podes dizer-me)\s+como\b)"
+    + "|(?:" + _pt_markers(_PT_GRAMMAR["pergunta_modal"]) + r")\s+como\b)"
 )
 _PT_ACTION_FORMS = sorted(
-    set(_PT_FORM_INTENTS) | {"tema", "assunto"},
-    key=lambda word: (-len(word), word)
+    set(_PT_FORM_INTENTS) | {"tema", "assunto"}, key=lambda w: (-len(w), w)
 )
 _PT_SEPARATE_ACTION = re.compile(
     r"\b(?:" + _pt_markers(_PT_GRAMMAR["segunda_acao"]) + r")\s+(?:"
@@ -176,16 +105,17 @@ _PT_NEGATIVE_HEAD = re.compile(
     r"^(?:por favor[, ]+)?(?:"
     + _pt_markers(_PT_GRAMMAR["negacao_inicio"]) + r")\b"
 )
-
 _PT_VERB_HEAD = re.compile(
     r"^(?:por favor[, ]+)?"
-    r"(?:(?:podes|poderias|pode|poderia|consegues|consegue|"
-    r"quero que|preciso que|quero|pretendo|gostaria de|"
-    r"preciso de|ajuda-me a)\s+)?"
+    r"(?:(?:" + _pt_markers(_PT_GRAMMAR["pedido_modal"]) + r")\s+)?"
     r"([a-záàâãéêíóôõúç-]+)\b"
 )
-_PT_WEB_TARGET = re.compile(r"\b(?:web|internet|online|net)\b")
-_PT_SOURCE_TARGET = re.compile(r"\bfontes?\b")
+_PT_WEB_TARGET = re.compile(
+    r"\b(?:" + _pt_markers(_PT_GRAMMAR["contexto_web"]) + r")\b"
+)
+_PT_SOURCE_TARGET = re.compile(
+    r"\b(?:" + _pt_markers(_PT_GRAMMAR["contexto_fontes"]) + r")\b"
+)
 
 
 def _pt_grammar_intent(normal: str) -> str | None:
