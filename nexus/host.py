@@ -85,7 +85,6 @@ class Host:
             with tempfile.TemporaryDirectory(prefix=".nexus-task-", dir=self.store.root.parent) as temporary:
                 work = Path(temporary) / "runs" / run_id
                 work.mkdir(parents=True)
-                roots = prepare_task(process, directory / "input.bin", work, config_root=self.store.root)
                 # One fixed Shell gate for ALL registered processes, including
                 # Writer/Sandy. Only the Host may request a process dispatch.
                 # Shell does not execute tools, parse Folha, or bypass LPAC.
@@ -109,6 +108,9 @@ class Host:
                         or dispatch.stderr.strip()):
                     raise Blocked("O despacho da Shell foi recusado.")
 
+                # No external adapter preparation, web request or Writer launch
+                # may happen until the ONE Shell dispatcher has accepted the ID.
+                roots = prepare_task(process, directory / "input.bin", work, config_root=self.store.root)
                 if process in ("book", "convert_pdf"):
                     # Writer must use Sandy's special native LPAC/Job boundary:
                     # the common Shell gate is mandatory, not a replacement
