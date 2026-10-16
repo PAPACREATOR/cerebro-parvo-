@@ -276,3 +276,92 @@ def test_ab_1400_regex_only_misses_pt_forms_that_fts5_and_grammar_recognise():
         assert parsed.original == text
         improvements += 1
     assert improvements == 1400
+
+
+
+def test_pt_markdown_is_single_source_for_all_frontdoor_rules():
+    """The signed legacy JSON can only mirror the canonical Markdown rules."""
+    from nexus.frontdoor import _PT_CORPUS, _RULES, _PT_GRAMMAR, _PT_LANGUAGE_DB
+    from nexus.contracts import ROOT, strict_json
+    assert _PT_CORPUS.rules == _RULES
+    assert _RULES == strict_json((ROOT / "frontdoor_rules.json").read_bytes())
+    assert len(_PT_GRAMMAR) == 8
+    assert _PT_LANGUAGE_DB.execute(
+        "SELECT count(*) FROM pt_operational"
+    ).fetchone()[0] == 62
+
+
+def test_pt_fts5_search_is_advisory_not_instruction():
+    from nexus.frontdoor import _pt_search, _PT_LANGUAGE_SHA256
+    hits = _pt_search("gramática")
+    assert hits
+    assert all(item["authority"] == "NONE" for item in hits)
+    assert all(item["execution"] == "NOT_AUTHORIZED" for item in hits)
+    assert all(item["source_sha256"] == _PT_LANGUAGE_SHA256 for item in hits)
+    assert _pt_search('gramática" OR form MATCH "guardar') == ()
+
+
+def test_pt_markdown_index_rejects_changed_bytes_and_duplicate_vocabulary(tmp_path):
+    import hashlib
+    import pytest
+    from nexus.contracts import Blocked
+    from nexus.frontdoor import _PT_LANGUAGE_PATH, _PT_LANGUAGE_SHA256
+    from nexus.lingua.indexer import load_corpus
+
+    md = _PT_LANGUAGE_PATH.read_bytes()
+    tampered = tmp_path / "pt_PT.md"
+    tampered.write_bytes(md + b"\nNova regra sem autorizacao")
+    with pytest.raises(Blocked):
+        load_corpus(tampered, _PT_LANGUAGE_SHA256)
+    edited = md.decode("utf-8").replace(
+        "| guarda | guardar | arquivo |",
+        "| guarda | guardar | arquivo |\n| guarda | guardar | arquivo |",
+        1
+    )
+    tampered.write_text(edited, encoding="utf-8")
+    with pytest.raises(Blocked):
+        load_corpus(tampered, hashlib.sha256(edited.encode("utf-8")).hexdigest())
+
+
+def test_pt_markdown_index_rejects_malformed_grammar_and_json(tmp_path):
+    import hashlib
+    import pytest
+    from nexus.contracts import Blocked
+    from nexus.frontdoor import _PT_LANGUAGE_PATH
+    from nexus.lingua.indexer import load_corpus
+    original = _PT_LANGUAGE_PATH.read_text("utf-8")
+    for corrupted in (
+        original.replace("| contexto_web | web", "| contexto_desconhecido | web", 1),
+        original.replace("~~~json", "~~~yaml", 1),
+    ):
+        path = tmp_path / "pt_PT.md"
+        path.write_text(corrupted, encoding="utf-8")
+        with pytest.raises(Blocked):
+            load_corpus(path, hashlib.sha256(corrupted.encode("utf-8")).hexdigest())
+
+
+@pytest.mark.parametrize("text,expected", [
+    ("Explica como guardar um ficheiro.", "perguntar"),
+    ("Como posso calcular a conta?", "perguntar"),
+    ("Por favor, guarde a nota.", "arquivo"),
+    ("Poderias pesquisar na internet?", "web"),
+    ("Procure fontes sobre história.", "fontes"),
+])
+def test_pt_markdown_rules_retained_for_real_user_inputs(text, expected):
+    parsed = parse(text)
+    assert parsed.status == "RESOLVED"
+    assert parsed.intent == expected
+    assert parsed.original == text
+
+
+@pytest.mark.parametrize("text", [
+    "Não podes guardar esta nota.",
+    "Nunca guardes esse documento.",
+    "Explica como guardar e depois guarda a nota.",
+    "Como pesquisar e também corrige o texto.",
+    'A palavra "guarda" está no documento.',
+])
+def test_pt_markdown_cannot_promote_quotes_negations_or_multiple_actions(text):
+    parsed = parse(text)
+    assert parsed.status == "UNRESOLVED"
+    assert parsed.intent is None
