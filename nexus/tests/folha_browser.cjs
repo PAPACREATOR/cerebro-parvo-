@@ -131,21 +131,33 @@ const os=require("node:os"),net=require("node:net"),{spawn}=require("node:child_
     // B was used for research above; switching must restore that draft.
     await switchSheet("b","Pesquisa fontes sobre Guimarães");
     assert.equal(await page.locator("#file").evaluate(el=>el.files.length),0);
+    const freshSave=page.waitForResponse(response=>
+      response.request().method()==="POST" &&
+      new URL(response.url()).pathname==="/api/folha-draft" &&
+      response.request().postDataJSON()?.text==="Segunda Folha, texto independente");
     await page.locator("#text").fill("Segunda Folha, texto independente");
+    const freshAck=await freshSave;
+    assert.equal(freshAck.status(),200,"The exact new B draft must be acknowledged");
+    assert.equal((await freshAck.json()).text,"Segunda Folha, texto independente");
     await page.waitForFunction(async()=>{
       const session=sessionStorage.getItem("nexus-session");
       const res=await fetch("/api/folha-draft/b",{headers:{"X-Nexus-Session":session}});
       return res.ok&&(await res.json()).text==="Segunda Folha, texto independente";
     },null,{timeout:15000});
-    const reloaded=page.waitForResponse(response=>
-      response.request().method()==="GET" &&
-      new URL(response.url()).pathname==="/api/folha-draft/b");
+    const reloadStart=routes.filter(route=>route==="/api/folha-draft/b").length;
     await page.reload();
-    const reloadedResponse=await reloaded;
-    assert.equal(reloadedResponse.status(),200,"Reload must recover via authenticated Host");
-    const reloadedDraft=await reloadedResponse.json();
-    assert.equal(reloadedDraft.text,"Segunda Folha, texto independente");
+    const restoredByHost=await page.evaluate(async()=>{
+      const session=sessionStorage.getItem("nexus-session");
+      const response=await fetch("/api/folha-draft/b",{
+        headers:{"X-Nexus-Session":session}
+      });
+      return {status:response.status,data:await response.json()};
+    });
+    assert.equal(restoredByHost.status,200,"Reload must retain the authenticated Host session");
+    assert.equal(restoredByHost.data.text,"Segunda Folha, texto independente");
     assert.equal(await page.evaluate(()=>sessionStorage.getItem("nexus-active-folha")),"b");
+    assert.ok(routes.filter(route=>route==="/api/folha-draft/b").length>reloadStart,
+      "Reload must request the active B slot");
     try {
       await page.waitForFunction(
         ()=>document.getElementById("text").value==="Segunda Folha, texto independente");
