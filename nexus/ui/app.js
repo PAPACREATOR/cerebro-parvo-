@@ -471,14 +471,13 @@ function scheduleDraftSave(){
 }
 function saveDraft(){
   if(!draftSupported||!draftReady)return draftQueue;
-  const slot=draftSlot;
-  // The asynchronous queue must never read a subsequent sheet's input.
+  const slot=draftSlot, inputVersion=editRevision;
+  // Version and snapshot are captured BEFORE queue/network awaits.
+  // A stale timer cannot overwrite a newer user edit using the latest CAS.
   const snapshot=requestPayload();
   draftQueue=draftQueue.catch(()=>{}).then(async()=>{
     const payload=await snapshot;
-    // A previous save can complete AFTER a new Folha was selected.
-    // Its slot and revision are fixed before any asynchronous call.
-    if(slot!==draftSlot)return;
+    if(slot!==draftSlot || inputVersion!==editRevision)return;
     const reply=await api("/api/folha-draft",{
       slot,expected_revision:draftRevision,...payload,
     });
