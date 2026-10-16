@@ -378,8 +378,10 @@ def test_pt_300_pages_style_long_chapter_is_not_silently_truncated(tmp_path):
             + ("explicação lexical de uma passagem extensa\n" * 9000)
             + "sentinela final de integridade da indexação\n")
     path = tmp_path / "pt_PT.md"
-    path.write_text(text, encoding="utf-8")
-    index = load_corpus(path, hashlib.sha256(text.encode("utf-8")).hexdigest())
+    # Write exact bytes: Windows text mode changes LF to CRLF and invalidates the digest.
+    encoded = text.encode("utf-8")
+    path.write_bytes(encoded)
+    index = load_corpus(path, hashlib.sha256(encoded).hexdigest())
     hits = index.search("sentinela")
     assert hits
     assert any("sentinela" in hit["snippet"] for hit in hits)
