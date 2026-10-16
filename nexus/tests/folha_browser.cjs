@@ -93,6 +93,34 @@ const os=require("node:os"),net=require("node:net"),{spawn}=require("node:child_
     assert.equal(await page.locator("#text").inputValue(),"");
     assert.equal(await page.locator("button:visible").count(),0);
     await page.screenshot({path:path.join(artifacts,"folha-mobile.png"),fullPage:true});
+    // Durable two-Folha scratch: save a binary attachment and switch sheets.
+    // Chrome uses the REAL loopback Host. No Store run, ticket or Canonical
+    // promotion is created by a draft or by reloading the browser.
+    const draftBinary=Buffer.from([0,1,2,10,13,255,128,65,0]);
+    const draftPath=path.join(data,"draft-ação.bin");
+    await fs.writeFile(draftPath,draftBinary);
+    await page.locator("#file").setInputFiles(draftPath);
+    await page.locator("#text").fill("Primeira Folha persistente");
+    await page.locator("#navigation summary").click();
+    await page.locator("#new").click();
+    assert.equal(await page.locator("#text").inputValue(),"");
+    await page.locator("#text").fill("Segunda Folha, texto independente");
+    await page.waitForFunction(async()=>{
+      const session=sessionStorage.getItem("nexus-session");
+      const res=await fetch("/api/folha-draft/b",{headers:{"X-Nexus-Session":session}});
+      return res.ok&&(await res.json()).text==="Segunda Folha, texto independente";
+    },null,{timeout:15000});
+    await page.reload();
+    await page.waitForFunction(
+      ()=>document.getElementById("text").value==="Segunda Folha, texto independente");
+    await page.locator("#navigation summary").click();
+    await page.locator("#new").click();
+    await page.waitForFunction(
+      ()=>document.getElementById("text").value==="Primeira Folha persistente");
+    assert.equal(await page.locator("#file").evaluate(el=>el.files[0]?.name),"draft-ação.bin");
+    const restoredBytes=await page.locator("#file").evaluate(
+      async el=>Array.from(new Uint8Array(await el.files[0].arrayBuffer())));
+    assert.deepEqual(restoredBytes,Array.from(draftBinary));
     assert.deepEqual(errors,[]);
     console.log(JSON.stringify({result:"PASS",windowsWebSupported:true,whiteSheet:true,
       visibleWorkflowSteps:0,naturalFollowUp:true,webResult:true,humanCanonicalGateIntact:true,
