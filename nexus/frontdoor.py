@@ -83,12 +83,20 @@ _PT_QUESTION = re.compile(
     r"(?:explica(?:-me)?|podes explicar|poderias explicar|"
     r"consegues explicar|diz-me|podes dizer-me)\s+como\b)"
 )
+# The grammar uses the SAME dictionary for the second action, so a new
+# inflection cannot silently escape the two-commands ambiguity gate.
+_PT_ACTION_FORMS = sorted(
+    {word for forms in _PT_VERB_FORMS.values() for word in forms}
+    | {"tema", "assunto"}, key=lambda word: (-len(word), word)
+)
 _PT_SEPARATE_ACTION = re.compile(
     r"\b(?:e(?:\s+(?:também|depois|a seguir))?|"
-    r"mas\s+depois|depois|em\s+seguida)\s+"
-    r"(?:guarda|guarde|arquiva|salva|pesquisa|procura|encontra|"
-    r"corrige|rev[eê]|reescreve|melhora|calcula|soma|faz|"
-    r"tema|assunto|quero\s+falar\s+sobre)\b"
+    r"mas\s+depois|depois|em\s+seguida)\s+(?:"
+    + "|".join(re.escape(word) for word in _PT_ACTION_FORMS)
+    + r"|quero\s+falar\s+sobre)\b"
+)
+_PT_SECOND_CLAUSE = re.compile(
+    r"\b(?:e\s+(?:também|depois|a seguir)|mas\s+depois|em\s+seguida)\b"
 )
 _PT_NEGATIVE_HEAD = re.compile(
     r"^(?:por favor[, ]+)?(?:não|nao|nunca|jamais|nem|sem)\b"
@@ -114,9 +122,11 @@ def _pt_grammar_intent(normal: str) -> str | None:
     if len(normal) > 12000 or _PT_NEGATIVE_HEAD.match(normal):
         return None
     if _PT_QUESTION.match(normal):
-        return None if _PT_SEPARATE_ACTION.search(normal) else "perguntar"
+        return ("perguntar" if not _PT_SEPARATE_ACTION.search(normal)
+                and not _PT_SECOND_CLAUSE.search(normal) else None)
     head = _PT_VERB_HEAD.match(normal)
-    if head is None or _PT_SEPARATE_ACTION.search(normal):
+    if (head is None or _PT_SEPARATE_ACTION.search(normal)
+            or _PT_SECOND_CLAUSE.search(normal)):
         return None
     verb = head.group(1)
     matches = []
@@ -142,7 +152,8 @@ def _explanation_is_primary(normal: str, intents: list[str]) -> bool:
     'Explica como guardar' is a question; 'explica ... e depois guarda'
     contains a separate imperative and must ask for human clarification.
     """
-    return "perguntar" in intents and _pt_grammar_intent(normal) == "perguntar"
+    return ("perguntar" in intents and _PT_QUESTION.match(normal) is not None
+            and _pt_grammar_intent(normal) == "perguntar")
 
 
 def requires_clarification(text: str) -> bool:
@@ -164,7 +175,7 @@ def _natural(text: str, *, original: str | None = None, parser="eliza-rules-v1",
     ]
     source = text if original is None else original
     grammar_intent = _pt_grammar_intent(normal)
-    if len(matches) > 1 and grammar_intent == "perguntar":
+    if grammar_intent == "perguntar" and _PT_QUESTION.match(normal):
         matches = ["perguntar"]
     elif not matches and grammar_intent is not None:
         matches = [grammar_intent]
