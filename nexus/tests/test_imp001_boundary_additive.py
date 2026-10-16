@@ -77,7 +77,7 @@ def test_store_preserves_exact_attachment_bytes_on_restart_and_distinct_receipts
 @pytest.mark.parametrize("attachment", [
     "*invalid-base64*",
     base64.b64encode(b"x" * (2097152 + 1)).decode("ascii"),
-])
+], ids=("invalid-base64", "oversized-one-byte"))
 def test_invalid_or_oversized_attachment_never_creates_run(tmp_path, attachment):
     store = Store(tmp_path)
     request = _input(b"valid")
