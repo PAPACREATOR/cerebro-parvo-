@@ -137,9 +137,28 @@ const os=require("node:os"),net=require("node:net"),{spawn}=require("node:child_
       const res=await fetch("/api/folha-draft/b",{headers:{"X-Nexus-Session":session}});
       return res.ok&&(await res.json()).text==="Segunda Folha, texto independente";
     },null,{timeout:15000});
+    const reloaded=page.waitForResponse(response=>
+      response.request().method()==="GET" &&
+      new URL(response.url()).pathname==="/api/folha-draft/b");
     await page.reload();
-    await page.waitForFunction(
-      ()=>document.getElementById("text").value==="Segunda Folha, texto independente");
+    const reloadedResponse=await reloaded;
+    assert.equal(reloadedResponse.status(),200,"Reload must recover via authenticated Host");
+    const reloadedDraft=await reloadedResponse.json();
+    assert.equal(reloadedDraft.text,"Segunda Folha, texto independente");
+    assert.equal(await page.evaluate(()=>sessionStorage.getItem("nexus-active-folha")),"b");
+    try {
+      await page.waitForFunction(
+        ()=>document.getElementById("text").value==="Segunda Folha, texto independente");
+    } catch(error) {
+      const state=await page.evaluate(()=>({
+        text:document.getElementById("text")?.value,
+        notice:document.getElementById("notice")?.textContent,
+        slot:sessionStorage.getItem("nexus-active-folha"),
+        session:!!sessionStorage.getItem("nexus-session"),
+      }));
+      console.error("Reload diagnosis:",JSON.stringify({state,pageErrors:errors}));
+      throw error;
+    }
     await switchSheet("a","Primeira Folha persistente","draft-ação.bin");
     assert.equal(await page.locator("#file").evaluate(el=>el.files[0]?.name),"draft-ação.bin");
     const restoredBytes=await page.locator("#file").evaluate(
