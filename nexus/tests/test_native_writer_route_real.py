@@ -122,7 +122,11 @@ def test_installed_writer_is_confined_and_returns_only_a_human_approved_candidat
         assert call("/api/runs") == []
         run = call("/api/confirm-run", {"ticket": prepared["ticket"],
                                       "confirmed": True, **proposal})["run_id"]
-        deadline = time.monotonic() + 90
+        # The Host bounds the Sandy subprocess to 135s; authenticated binary
+        # tree copying, SHA checks, DACL reconciliation and Windows startup
+        # happen outside that subprocess timeout. Poll for its FINAL state
+        # rather than treating a still-running, safety-bounded job as a fail.
+        deadline = time.monotonic() + 240
         state = call("/api/runs/" + run)
         while state["status"] == "RUNNING" and time.monotonic() < deadline:
             time.sleep(0.1)
@@ -187,7 +191,11 @@ def test_two_real_tools_verify_then_writer_each_with_own_human_gates(tmp_path, m
         run = call("/api/confirm-run", {
             "ticket": prepared["ticket"], "confirmed": True, **proposal,
         })["run_id"]
-        deadline = time.monotonic() + 90
+        # The Host bounds the Sandy subprocess to 135s; authenticated binary
+        # tree copying, SHA checks, DACL reconciliation and Windows startup
+        # happen outside that subprocess timeout. Poll for its FINAL state
+        # rather than treating a still-running, safety-bounded job as a fail.
+        deadline = time.monotonic() + 240
         state = call("/api/runs/" + run)
         while state["status"] == "RUNNING" and time.monotonic() < deadline:
             time.sleep(0.1)
