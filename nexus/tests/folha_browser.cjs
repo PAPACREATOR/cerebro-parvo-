@@ -103,7 +103,9 @@ const os=require("node:os"),net=require("node:net"),{spawn}=require("node:child_
     await page.locator("#text").fill("Primeira Folha persistente");
     await page.locator("#navigation summary").click();
     await page.locator("#new").click();
-    assert.equal(await page.locator("#text").inputValue(),"");
+    await page.waitForFunction(
+      ()=>document.getElementById("text").value==="" &&
+         document.getElementById("file").files.length===0);
     await page.locator("#text").fill("Segunda Folha, texto independente");
     await page.waitForFunction(async()=>{
       const session=sessionStorage.getItem("nexus-session");
