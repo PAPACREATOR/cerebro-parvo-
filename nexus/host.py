@@ -86,39 +86,40 @@ class Host:
                 work = Path(temporary) / "runs" / run_id
                 work.mkdir(parents=True)
                 roots = prepare_task(process, directory / "input.bin", work, config_root=self.store.root)
+                # One fixed Shell gate for ALL registered processes, including
+                # Writer/Sandy. Only the Host may request a process dispatch.
+                # Shell does not execute tools, parse Folha, or bypass LPAC.
+                environment = process_environment(work)
+                shell = Path(environment.get("SystemRoot", "C:/Windows")) / "System32" / "cmd.exe"
+                script = ROOT / "windows" / "runner-shell.cmd"
+                if not shell.is_file() or shell.is_symlink() or not script.is_file() or script.is_symlink():
+                    raise Blocked("Runner Shell do Windows indisponível.")
+                if any(char in str(script) for char in '&|<>^%!\r\n"'):
+                    raise Blocked("Caminho da Shell contém caracteres não autorizados.")
+                try:
+                    dispatch = subprocess.run(
+                        [str(shell), "/D", "/Q", "/C", str(script), process],
+                        cwd=work, env=environment, capture_output=True,
+                        timeout=12, check=False, creationflags=subprocess.CREATE_NO_WINDOW,
+                    )
+                except (OSError, subprocess.TimeoutExpired) as error:
+                    raise Blocked("A Shell autorizada não conseguiu preparar a tarefa.") from error
+                expected = ("NEXUS_SHELL_READY:" + process).encode("ascii")
+                if (dispatch.returncode != 0 or dispatch.stdout.strip() != expected
+                        or dispatch.stderr.strip()):
+                    raise Blocked("O despacho da Shell foi recusado.")
+
                 if process in ("book", "convert_pdf"):
-                    # Necessary exception: Office's named pipe cannot be created
-                    # in the original LPAC runner. A pinned Sandy launcher owns
-                    # the Writer-only LPAC/Job; the Host remains the sole authority.
+                    # Writer must use Sandy's special native LPAC/Job boundary:
+                    # the common Shell gate is mandatory, not a replacement
+                    # for the Writer sandbox or for the Host's human gates.
                     from nexus.adapters.writer_sandy import convert as writer_convert
                     envelope = writer_convert(process, work)
                     stdout = json.dumps(envelope, ensure_ascii=False).encode("utf-8")
                     stderr = b""
                 else:
-                    # Shell is the pinned Host-owned dispatcher; it has no
-                    # permission to execute any tool or interpret Folha text.
-                    # Windows LPAC blocks CMD child creation without lpacCom,
-                    # so only the Python worker enters LPAC/Job, without COM.
-                    environment = process_environment(work)
-                    shell = Path(environment.get("SystemRoot", "C:/Windows")) / "System32" / "cmd.exe"
-                    script = ROOT / "windows" / "runner-shell.cmd"
-                    if not shell.is_file() or shell.is_symlink() or not script.is_file() or script.is_symlink():
-                        raise Blocked("Runner Shell do Windows indisponível.")
-                    # Do not let unusual installation paths become shell syntax.
-                    if any(char in str(script) for char in '&|<>^%!\r\n"'):
-                        raise Blocked("Caminho da Shell contém caracteres não autorizados.")
-                    try:
-                        dispatch = subprocess.run(
-                            [str(shell), "/D", "/Q", "/C", str(script), process],
-                            cwd=work, env=environment, capture_output=True,
-                            timeout=12, check=False, creationflags=subprocess.CREATE_NO_WINDOW,
-                        )
-                    except (OSError, subprocess.TimeoutExpired) as error:
-                        raise Blocked("A Shell autorizada não conseguiu preparar a tarefa.") from error
-                    expected = ("NEXUS_SHELL_READY:" + process).encode("ascii")
-                    if (dispatch.returncode != 0 or dispatch.stdout.strip() != expected
-                            or dispatch.stderr.strip()):
-                        raise Blocked("O despacho da Shell foi recusado.")
+                    # Python workers remain confined in native LPAC/Job.
+                    # CMD child creation is not permitted inside that boundary.
                     command = [sys.executable, "-I", str(ROOT / "adapters/runner.py"),
                                process, str(work / "input.bin")]
                     with launch_confined(command, cwd=work, env=environment,
