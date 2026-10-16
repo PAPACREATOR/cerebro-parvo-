@@ -97,17 +97,29 @@ jobs:
           Write-Output 'LOCAL_BOOTSTRAP_PARSE=PASS'
       - name: Block F — ACE-Step and Forge bounded local MCP health
         run: python -m pytest nexus/tests/test_media_tools.py nexus/tests/test_media_tools_mcp.py nexus/tests/test_media_tools_checker.py -q -p no:cacheprovider -o pythonpath=.
-      - name: Block G — coverage delegated to four independent complete-regression shards
+      - name: Block G — coverage delegated to disjoint complete-regression jobs
         shell: pwsh
         run: |
-          Write-Output 'BLOCK_G_DELEGATED_TO_REGRESSION_MATRIX=4'
+          Write-Output 'BLOCK_G_DELEGATED_TO_REGRESSION_JOBS=7 PRIMARY_PARTITIONS=4'
 
   regression:
-    name: Nexus full regression G partition ${{ matrix.shard }}
+    name: Nexus full regression G partition ${{ matrix.label }}
     strategy:
       fail-fast: false
       matrix:
-        shard: [0, 1, 2, 3]
+        include:
+          - {label: '0', primary: 0, slice_count: 1, slice: 0}
+          - {label: '1', primary: 1, slice_count: 1, slice: 0}
+          - {label: '2a', primary: 2, slice_count: 4, slice: 0}
+          - {label: '2b0', primary: 2, slice_count: 4, slice: 1}
+          - {label: '2b1', primary: 2, slice_count: 4, slice: 1}
+          - {label: '2b2', primary: 2, slice_count: 4, slice: 1}
+          - {label: '2b3', primary: 2, slice_count: 4, slice: 1}
+          - {label: '2b4', primary: 2, slice_count: 4, slice: 1}
+          - {label: '2b5', primary: 2, slice_count: 4, slice: 1}
+          - {label: '2c', primary: 2, slice_count: 4, slice: 2}
+          - {label: '2d', primary: 2, slice_count: 4, slice: 3}
+          - {label: '3', primary: 3, slice_count: 1, slice: 0}
     runs-on: windows-latest
     timeout-minutes: 45
     env:
@@ -123,7 +135,7 @@ jobs:
           python-version: '3.12'
       - name: Install pinned Nexus test dependencies
         run: python -m pip install -r nexus/requirements-test.txt
-      - name: Block G — full regression coverage partition ${{ matrix.shard }}
+      - name: Block G — full regression coverage partition ${{ matrix.label }}
         shell: pwsh
         run: |
           # Preserve the old Block G collection: every test module except its
@@ -139,24 +151,80 @@ jobs:
             Where-Object { $_.Name -like 'test_*.py' -or $_.Name -like '*_test.py' } |
             ForEach-Object { [IO.Path]::GetRelativePath($PWD.Path, $_.FullName).Replace('\', '/') } |
             Where-Object { $volume -notcontains $_ } | Sort-Object)
-          $shard = [int]'${{ matrix.shard }}'
-          $selected = @(for ($i = 0; $i -lt $modules.Count; $i++) {
-            if (($i % 4) -eq $shard) { $modules[$i] }
+          $primary = [int]'${{ matrix.primary }}'
+          $sliceCount = [int]'${{ matrix.slice_count }}'
+          $slice = [int]'${{ matrix.slice }}'
+          $label = '${{ matrix.label }}'
+          # Keep the previous four-way catalogue exactly. Only former shard 2
+          # is subdivided, so every module is selected once and only once.
+          $primaryModules = @(for ($i = 0; $i -lt $modules.Count; $i++) {
+            if (($i % 4) -eq $primary) { $modules[$i] }
           })
-          if ($modules.Count -eq 0 -or $selected.Count -eq 0) {
-            throw 'Empty full-regression shard'
+          $selected = @(for ($i = 0; $i -lt $primaryModules.Count; $i++) {
+            if (($i % $sliceCount) -eq $slice) { $primaryModules[$i] }
+          })
+          # Split only original 2b, preserving its six modules without skipping tests.
+          if ($label -match '^2b([0-5])$') {
+            if ($selected.Count -ne 6) { throw '2b module count changed; revalidate the matrix' }
+            $selected = @($selected[[int]$Matches[1]])
           }
-          Write-Output ("BLOCK_G_TOTAL_MODULES=" + $modules.Count + " SHARD=" + $shard + " SELECTED=" + $selected.Count)
-          $selected | ForEach-Object { Write-Output ("BLOCK_G_MODULE=" + $_) }
+          if ($modules.Count -eq 0 -or $selected.Count -eq 0) {
+            throw 'Empty regression partition'
+          }
+
+          # Mechanical coverage proof: union equals the old catalogue and
+          # intersections are empty. This executes on Windows in every job.
+          $assigned = @{}
+          foreach ($candidatePrimary in 0..3) {
+            $candidateSlices = if ($candidatePrimary -eq 2) { 4 } else { 1 }
+            $candidateModules = @(for ($i = 0; $i -lt $modules.Count; $i++) {
+              if (($i % 4) -eq $candidatePrimary) { $modules[$i] }
+            })
+            foreach ($candidateSlice in 0..($candidateSlices - 1)) {
+              for ($i = 0; $i -lt $candidateModules.Count; $i++) {
+                if (($i % $candidateSlices) -eq $candidateSlice) {
+                  $module = $candidateModules[$i]
+                  if (-not $assigned.ContainsKey($module)) { $assigned[$module] = 0 }
+                  $assigned[$module]++
+                }
+              }
+            }
+          }
+          if ($assigned.Count -ne $modules.Count) {
+            throw "Regression coverage union mismatch: $($assigned.Count) != $($modules.Count)"
+          }
+          $duplicates = @($assigned.GetEnumerator() | Where-Object { $_.Value -ne 1 })
+          if ($duplicates.Count -ne 0) {
+            throw ('Regression coverage overlap: ' + (($duplicates | ForEach-Object { $_.Key }) -join ', '))
+          }
+
           New-Item -ItemType Directory -Force -Path regression-evidence | Out-Null
-          python -m pytest @selected -q -p no:cacheprovider -o pythonpath=. --durations=15 "--junitxml=regression-evidence/block-g-$shard.xml"
-          if ($LASTEXITCODE -ne 0) { throw "Block G partition $shard failed" }
-          Write-Output ("NEXUS_BLOCK_G_PARTITION_" + $shard + "=PASS")
+          $progress = Join-Path regression-evidence ("progress-" + $label + ".txt")
+          Set-Content -LiteralPath $progress -Value ("TOTAL=" + $modules.Count + " PRIMARY=" + $primary + " SLICE=" + $slice + "/" + $sliceCount + " SELECTED=" + $selected.Count)
+          Write-Output ("BLOCK_G_TOTAL_MODULES=" + $modules.Count + " PARTITION=" + $label + " SELECTED=" + $selected.Count)
+          $selected | ForEach-Object { Write-Output ("BLOCK_G_MODULE=" + $_) }
+
+          # Execute one module at a time. If a future timeout occurs, the live
+          # log identifies the last module started instead of hiding it inside
+          # one long pytest invocation.
+          foreach ($module in $selected) {
+            $safe = ($module -replace '[^A-Za-z0-9_.-]', '_')
+            Add-Content -LiteralPath $progress -Value ("START " + $module)
+            Write-Output ("BLOCK_G_START=" + $module)
+            $started = Get-Date
+            python -m pytest $module -vv -p no:cacheprovider -o pythonpath=. --durations=20 ("--junitxml=regression-evidence/" + $safe + ".xml")
+            $code = $LASTEXITCODE
+            $elapsed = [Math]::Round(((Get-Date) - $started).TotalSeconds, 2)
+            Add-Content -LiteralPath $progress -Value ("END " + $module + " EXIT=" + $code + " SECONDS=" + $elapsed)
+            Write-Output ("BLOCK_G_END=" + $module + " EXIT=" + $code + " SECONDS=" + $elapsed)
+            if ($code -ne 0) { throw ("Regression module failed: " + $module) }
+          }
+          Write-Output ("NEXUS_BLOCK_G_PARTITION_" + $label + "=PASS")
       - name: Preserve regression evidence on failure
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: nexus-block-g-evidence-${{ matrix.shard }}
+          name: nexus-block-g-evidence-${{ matrix.label }}
           path: regression-evidence/
           if-no-files-found: error
 

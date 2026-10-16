@@ -54,14 +54,12 @@ def _optional_gateway_installed():
     it exercises the Python authority independently. The dedicated gateway
     workflow runs the full test on both Windows and Linux after npm install.
     """
-    node = shutil.which("node")
-    if node is None:
-        return False
-    probe = subprocess.run(
-        [node, "-e", "require.resolve('express')"],
-        cwd=REPO, capture_output=True, timeout=10, check=False,
-    )
-    return probe.returncode == 0
+    # A collection-time Node subprocess can block on Windows and abort the
+    # entire Python regression. Verify the package is locally installed;
+    # dedicated gateway E2E still launches Node and checks its real behavior.
+    return shutil.which("node") is not None and (
+        REPO / "node_modules" / "express" / "package.json"
+    ).is_file()
 
 
 @pytest.mark.skipif(

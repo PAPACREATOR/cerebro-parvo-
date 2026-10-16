@@ -50,9 +50,22 @@ def _opener():
     return urllib.request.build_opener(urllib.request.ProxyHandler({}), NoRedirect())
 
 
-def get_local_json(url: str, timeout: int = 5):
-    if not (url.startswith(OPEN_NOTEBOOK_BASE) or url.startswith(FORGE_BASE)):
+def _ensure_local_url(url: str) -> None:
+    """Match the exact local origin, not a deceptive startswith() hostname."""
+    import urllib.parse
+    if not isinstance(url, str):
         raise BridgeError("Non-local network endpoint is forbidden")
+    parsed = urllib.parse.urlsplit(url)
+    if (parsed.scheme != "http" or parsed.netloc not in
+            {"127.0.0.1:5055", "127.0.0.1:7861"}
+            or not parsed.path.startswith("/") or parsed.path.startswith("//")
+            or parsed.username is not None or parsed.password is not None
+            or parsed.fragment):
+        raise BridgeError("Non-local network endpoint is forbidden")
+
+
+def get_local_json(url: str, timeout: int = 5):
+    _ensure_local_url(url)
     request = urllib.request.Request(url, headers={"Accept": "application/json"})
     try:
         with _opener().open(request, timeout=timeout) as response:
@@ -70,8 +83,7 @@ def get_local_json(url: str, timeout: int = 5):
 
 
 def post_local_json(url: str, payload: dict, *, bearer: str = "", timeout: int = 120):
-    if not (url.startswith(OPEN_NOTEBOOK_BASE) or url.startswith(FORGE_BASE)):
-        raise BridgeError("Non-local network endpoint is forbidden")
+    _ensure_local_url(url)
     headers = {"Content-Type": "application/json", "Accept": "application/json"}
     if bearer:
         headers["Authorization"] = "Bearer " + bearer
