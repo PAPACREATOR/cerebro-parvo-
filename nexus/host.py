@@ -67,7 +67,19 @@ class Host:
         except Exception:
             self.busy.release()
             raise
-        threading.Thread(target=self._run, args=(run_id,), daemon=True).start()
+        try:
+            threading.Thread(target=self._run, args=(run_id,), daemon=True).start()
+        except Exception:
+            # Startup failed before the worker took ownership. Never leave a
+            # phantom RUNNING job or a permanently busy Host. Do not retry.
+            try:
+                self.store.update(
+                    run_id, status="FAIL",
+                    message="Não foi possível iniciar a execução. O pedido foi conservado.",
+                )
+            finally:
+                self.busy.release()
+            raise
         return {"run_id": run_id}
 
     def _run(self, run_id):

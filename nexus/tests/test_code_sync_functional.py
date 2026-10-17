@@ -114,3 +114,56 @@ def test_dirty_checkout_refuses_remote_update_without_losing_local_bytes(tmp_pat
     assert git(checkout, "rev-parse", "HEAD").stdout.strip() == target_v2
     assert (checkout / "state.bin").read_bytes() == local
     assert git(checkout, "status", "--porcelain").stdout.strip()
+
+
+def test_untracked_personal_file_blocks_sync_without_losing_original_bytes(tmp_path):
+    """Untracked local files must survive even a clean tracked checkout."""
+    _remote, seed, checkout = setup_repositories(tmp_path)
+    starting_head = git(checkout, "rev-parse", "HEAD").stdout.strip()
+    original = b"LOCAL-FOLHA-\x00\xff-utf8-\xc3\xa7\n"
+    private = checkout / "folha-local-nao-registada.bin"
+    private.write_bytes(original)
+    advance(seed, "v2")
+
+    result = invoke_sync(checkout)
+
+    assert result.returncode != 0
+    assert "NEXUS_DIRTY_TREE" in (result.stdout + result.stderr)
+    assert git(checkout, "rev-parse", "HEAD").stdout.strip() == starting_head
+    assert private.read_bytes() == original
+    assert (checkout / "state.bin").read_bytes() == b"v1\x00\n"
+
+
+def test_expected_remote_sha_drift_blocks_update(tmp_path):
+    """Even a clean checkout cannot accept a different remote SHA."""
+    _remote, seed, checkout = setup_repositories(tmp_path)
+    old_head = git(checkout, "rev-parse", "HEAD").stdout.strip()
+    new_head = advance(seed, "v2")
+    assert old_head != new_head
+
+    result = run(
+        "powershell.exe", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass",
+        "-File", SCRIPT, "-RepoRoot", checkout, "-Branch", BRANCH,
+        "-ExpectedHead", old_head, cwd=checkout, check=False,
+    )
+
+    assert result.returncode != 0
+    assert "NEXUS_HEAD_NOT_ACCEPTED" in (result.stdout + result.stderr)
+    assert git(checkout, "rev-parse", "HEAD").stdout.strip() == old_head
+    assert (checkout / "state.bin").read_bytes() == b"v1\x00\n"
+
+
+def test_wrong_origin_never_updates_existing_checkout(tmp_path):
+    """An unrecognised origin cannot be treated as the official Nexus repo."""
+    _remote, seed, checkout = setup_repositories(tmp_path)
+    old_data = (checkout / "state.bin").read_bytes()
+    starting_head = git(checkout, "rev-parse", "HEAD").stdout.strip()
+    git(checkout, "remote", "set-url", "origin", "https://github.com/other/untrusted.git")
+    advance(seed, "v2")
+
+    result = invoke_sync(checkout)
+
+    assert result.returncode != 0
+    assert "NEXUS_REPOSITORY_NOT_FOUND" in (result.stdout + result.stderr)
+    assert git(checkout, "rev-parse", "HEAD").stdout.strip() == starting_head
+    assert (checkout / "state.bin").read_bytes() == old_data

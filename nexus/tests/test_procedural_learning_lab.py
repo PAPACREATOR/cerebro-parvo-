@@ -117,6 +117,156 @@ def test_feedback_rejection_disfavours_candidate_instead_of_learning_it(lab):
     assert proposal["candidates"][0]["origin"] == "INITIAL"
 
 
+def test_rejected_learned_recipe_cannot_survive_as_fuzzy_hint(lab):
+    """OpenAdapt lesson: negative human feedback suspends a recipe everywhere."""
+    store, _, memory = lab
+    accepted = create(store, "Fonte aceite", approved=True)
+    rejected = create(store, "Fonte rejeitada", approved=True)
+    phrase = "faz um podcast com esta fonte"
+    review(memory, accepted, phrase=phrase)
+    before = memory.recognise(mold("nova.pdf"), "faz um podcst com esta fonte")
+    assert before["candidates"][0]["goal"] == "podcast"
+
+    review(memory, rejected, decision="REJECT", phrase=phrase)
+    ranked = memory.suggest(mold("outra.pdf"), goal="podcast")
+    assert all(item["steps"] != ["verify", "podcast"] for item in ranked["candidates"])
+    hints = memory.recognise(mold("outra.pdf"), "faz um podcst com esta fonte")
+    assert hints["candidates"] == []
+    assert hints["authority"] == "NONE"
+    assert hints["execution"] == "NOT_AUTHORIZED"
+
+
+def test_new_reviewed_positive_evidence_restores_only_non_authoritative_hint(lab):
+    """Two approvals beat one rejection, but no learned recipe executes."""
+    store, _, memory = lab
+    a = create(store, "Fonte A", approved=True)
+    b = create(store, "Fonte B", approved=True)
+    c = create(store, "Fonte C", approved=True)
+    phrase = "faz um podcast com esta fonte"
+    review(memory, a, phrase=phrase)
+    review(memory, b, decision="REJECT", phrase=phrase)
+    review(memory, c, phrase=phrase)
+    ranked = memory.suggest(mold("independente.pdf"), goal="podcast")
+    candidate = next(item for item in ranked["candidates"]
+                     if item["steps"] == ["verify", "podcast"])
+    assert candidate["positive_examples"] == 2
+    assert candidate["negative_examples"] == 1
+    assert ranked["authority"] == "NONE"
+    assert ranked["execution"] == "NOT_AUTHORIZED"
+    hint = memory.recognise(mold("independente.pdf"), "faz um podcst com esta fonte")
+    assert hint["candidates"][0]["goal"] == "podcast"
+    assert hint["requires_human_review"] is True
+    assert hint["execution"] == "NOT_AUTHORIZED"
+
+
+def _observed_failure(store):
+    """Synthetic FAILED run with authentic Store input/identity for CI."""
+    from nexus.tests.test_store import request
+    run = store.create(request())
+    store.update(run, status="FAIL", message="Falha sintética; sem efeito afirmado")
+    return run
+
+
+def test_openadapt_supervised_correction_requires_real_store_evidence(lab, monkeypatch):
+    store, wiki, learner = lab
+    failed = _observed_failure(store)
+    success = create(store, "Artefacto de teste verificado", approved=True)
+    original_store = preserved(store.root)
+
+    # A read-only proposal cannot actuate anything or approve itself.
+    import subprocess
+    monkeypatch.setattr(subprocess, "Popen", lambda *a, **k: pytest.fail("Dispatched tool"))
+    args = dict(goal="verify", steps=["verify"], failed_run_id=failed,
+                verified_run_ids=[success],
+                original_phrase="verefica a integridade",
+                corrected_phrase="verifica a integridade",
+                objective="Correção humana de compreensão de pedido")
+    proposed = learner.propose_correction(mold(), **args)
+    assert proposed["evidence_scope"] == "PER_STEP_ONLY"
+    assert proposed["execution"] == "NOT_AUTHORIZED"
+    assert proposed["authority"] == "NONE"
+    assert preserved(store.root) == original_store
+    with pytest.raises(Blocked, match="Confirmação humana"):
+        learner.review_correction(mold(), proposed, human_confirmed="yes")
+    assert learner.review_correction(mold(), proposed)["status"] == "REVIEW_REQUIRED"
+    assert not list(learner.root.iterdir())
+
+    accepted = learner.review_correction(mold(), proposed, human_confirmed=True)
+    assert accepted["status"] == "LAB_RECORDED"
+    assert accepted["execution"] == "NOT_AUTHORIZED"
+    assert accepted["evidence_scope"] == "PER_STEP_ONLY"
+    reopened = ProceduralMemory(WikiBridge(store, wiki.root))
+    hints = reopened.recognise(mold("novo.pdf"), "verifica a integridade")
+    assert hints["authority"] == "NONE"
+    assert hints["execution"] == "NOT_AUTHORIZED"
+    assert hints["candidates"][0]["goal"] == "verify"
+    assert preserved(store.root) == original_store
+
+
+@pytest.mark.parametrize("kind", ["unfailed", "mismatch", "duplicate", "negation",
+                                  "changed_process", "wrong_goal", "unknown_tool"])
+def test_openadapt_supervised_correction_adversarial_refusals(lab, kind):
+    store, _, learner = lab
+    failure = _observed_failure(store)
+    success = create(store, approved=True)
+    args = dict(goal="verify", steps=["verify"], failed_run_id=failure,
+                verified_run_ids=[success], original_phrase="verefica o ficheiro",
+                corrected_phrase="verifica o ficheiro", objective="Revisão de execução")
+    if kind == "unfailed":
+        args["failed_run_id"] = store.create(__import__(
+            "nexus.tests.test_store", fromlist=["request"]).request())
+    elif kind == "mismatch":
+        args["verified_run_ids"] = [failure]
+    elif kind == "duplicate":
+        args["verified_run_ids"] = [success, success]
+    elif kind == "negation":
+        args["corrected_phrase"] = "não verifica o ficheiro"
+    elif kind == "changed_process":
+        args["steps"] = ["verify", "interpret"]
+        args["goal"] = "interpret"
+    elif kind == "wrong_goal":
+        args["goal"] = "music"
+        args["steps"] = ["music"]
+    elif kind == "unknown_tool":
+        args["steps"] = ["shell"]
+    with pytest.raises(Blocked):
+        learner.propose_correction(mold(), **args)
+    assert not list(learner.root.iterdir())
+
+
+def test_openadapt_correction_is_bound_to_live_evidence_and_exact_candidate(lab):
+    store, _, learner = lab
+    failed = _observed_failure(store)
+    success = create(store, approved=True)
+    proposal = learner.propose_correction(
+        mold(), goal="verify", steps=["verify"], failed_run_id=failed,
+        verified_run_ids=[success], original_phrase="verefica o ficheiro",
+        corrected_phrase="verifica o ficheiro", objective="Correção verificada")
+    altered = dict(proposal, corrected_phrase="faz o que quiseres")
+    with pytest.raises(Blocked):
+        learner.review_correction(mold(), altered, human_confirmed=True)
+    assert not list(learner.root.iterdir())
+    # Even an honestly recomputed hash never overrides Store provenance.
+    store.update(failed, message="Novo estado depois do candidato")
+    with pytest.raises(Blocked, match="mudaram"):
+        learner.review_correction(mold(), proposal, human_confirmed=True)
+    assert not list(learner.root.iterdir())
+
+
+def test_openadapt_correction_refuses_modified_canonical_source(lab):
+    store, _, learner = lab
+    failed = _observed_failure(store)
+    approved = create(store, approved=True)
+    proposal = learner.propose_correction(
+        mold(), goal="verify", steps=["verify"], failed_run_id=failed,
+        verified_run_ids=[approved], original_phrase="verefica texto",
+        corrected_phrase="verifica texto", objective="Verificação da fonte")
+    (store.path("canonical", approved) / "content.md").write_bytes(b"alterado")
+    with pytest.raises(Blocked):
+        learner.review_correction(mold(), proposal, human_confirmed=True)
+    assert not list(learner.root.iterdir())
+
+
 def test_creative_unapproved_result_cannot_be_a_learning_source(lab):
     store, _, memory = lab
     draft = create(store, approved=False)
