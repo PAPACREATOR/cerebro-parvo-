@@ -1,4 +1,11 @@
 """Contract for the no-install, no-deploy Windows BAT and its evidence runner."""
+import os
+from pathlib import Path
+import shutil
+import subprocess
+
+import pytest
+
 from nexus.contracts import ROOT
 
 REPO = ROOT.parent
@@ -35,3 +42,27 @@ def test_runner_distinguishes_physical_execution_from_mocks_and_unproved_product
     ):
         assert expected in PS1
     assert "exit 2" in PS1
+
+
+@pytest.mark.skipif(os.name != "nt", reason="PowerShell syntax proof runs on Windows CI")
+def test_windows_powershell_parser_accepts_real_launcher():
+    powershell = shutil.which("powershell.exe")
+    assert powershell, "Required Windows parser not found"
+    filename = str(Path(ROOT) / "windows" / "test-real-bidirectional.ps1").replace("'", "''")
+    command = (
+        "$t=$null;$e=$null;"
+        "[System.Management.Automation.Language.Parser]::ParseFile('"
+        + filename + "',[ref]$t,[ref]$e)|Out-Null;"
+        "if($e.Count -ne 0){$e|Out-String|Write-Error;exit 1}"
+    )
+    completed = subprocess.run(
+        [powershell, "-NoProfile", "-NonInteractive", "-Command", command],
+        capture_output=True, text=True, timeout=20, check=False,
+    )
+    assert completed.returncode == 0, completed.stdout + completed.stderr
+
+
+def test_chrome_evidence_cannot_pollute_installed_source_checkout():
+    assert "[string]$WorkingDirectory" in PS1
+    assert "'' $folder" in PS1
+    assert "Join-Path $repo 'nexus/tests/folha_real_writer_browser.cjs'" in PS1

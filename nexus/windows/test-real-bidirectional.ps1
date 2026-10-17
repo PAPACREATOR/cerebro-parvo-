@@ -48,12 +48,13 @@ function Record-Stage([string]$Name,[string]$Kind,[string]$Status,[string]$Detai
     Save-Report
     Write-Host ('NEXUS ' + $Name + ' = ' + $Status + ' ' + $Detail)
 }
-function Run-Command([string]$Name,[string]$Kind,[string]$Executable,[string[]]$Args,[string]$JUnit='') {
+function Run-Command([string]$Name,[string]$Kind,[string]$Executable,[string[]]$Arguments,[string]$JUnit='', [string]$WorkingDirectory='') {
     $log = Join-Path $folder ($Name + '.log')
     try {
-        Push-Location -LiteralPath $repo
+        $cwd = if ($WorkingDirectory) { $WorkingDirectory } else { $repo }
+        Push-Location -LiteralPath $cwd
         try {
-            & $Executable @Args 2>&1 | Out-File -LiteralPath $log -Encoding UTF8
+            & $Executable @Arguments 2>&1 | Out-File -LiteralPath $log -Encoding UTF8
             $code = $LASTEXITCODE
         } finally { Pop-Location }
         if ($null -eq $code -or $code -ne 0) {
@@ -85,8 +86,8 @@ function Run-Command([string]$Name,[string]$Kind,[string]$Executable,[string[]]$
 }
 function Pytest([string]$Name,[string]$Kind,[string[]]$Targets) {
     $xml = Join-Path $folder ($Name + '.xml')
-    $args = @('-m','pytest') + $Targets + @('-q','--color=no','-p','no:cacheprovider','-o','pythonpath=.',('--junitxml=' + $xml))
-    return Run-Command $Name $Kind $python $args $xml
+    $pytestArguments = @('-m','pytest') + $Targets + @('-q','--color=no','-p','no:cacheprovider','-o','pythonpath=.',('--junitxml=' + $xml))
+    return Run-Command $Name $Kind $python $pytestArguments $xml
 }
 function Has-FileEnv([string]$Name) {
     $value = [Environment]::GetEnvironmentVariable($Name,'Process')
@@ -117,7 +118,7 @@ try {
                 $null = Pytest 'real-writer-chain' 'REAL_WINDOWS_PDF' @('nexus/tests/test_writer_real_libreoffice.py','nexus/tests/test_native_writer_route_real.py')
                 $node = Get-Command node.exe -CommandType Application -ErrorAction SilentlyContinue
                 if ($node -and (Test-Path -LiteralPath (Join-Path $repo 'node_modules\playwright'))) {
-                    $null = Run-Command 'real-chrome-pdf' 'REAL_CHROME_HOST_PDF' $node.Source @('nexus/tests/folha_real_writer_browser.cjs')
+                    $null = Run-Command 'real-chrome-pdf' 'REAL_CHROME_HOST_PDF' $node.Source @((Join-Path $repo 'nexus/tests/folha_real_writer_browser.cjs')) '' $folder
                 } else {
                     Record-Stage 'real-chrome-pdf' 'REAL_CHROME_HOST_PDF' 'BLOCKED' 'Node/Playwright/Chrome not ready' ''
                 }
