@@ -229,6 +229,99 @@ class ProceduralMemory:
         return {"id": entry.name, "status": "LAB_RECORDED",
                 "authority": "NONE", "execution": "NOT_AUTHORIZED"}
 
+    def propose_correction(self, molde, *, goal, steps, failed_run_id,
+                           verified_run_ids, original_phrase, corrected_phrase,
+                           objective):
+        """Observe a failed Store run and propose a NON-executable correction.
+
+        This is not a repair of Host tools. Verified sources prove individual
+        steps, NOT that a multi-step sequence has executed successfully.
+        """
+        family = _family(molde)
+        _steps(family, goal, steps)
+        if len(set(steps)) != len(steps):
+            raise Blocked("Receita corrigida contém passos repetidos.")
+        original = _normal(original_phrase)
+        corrected = _normal(corrected_phrase)
+        if original == corrected or _unsafe_hint_pair(original, corrected):
+            raise Blocked("Correção de linguagem ambígua ou contraditória.")
+        if type(objective) is not str or not objective.strip() or len(objective) > 500:
+            raise Blocked("Objetivo de correção inválido.")
+        if type(verified_run_ids) is not list or len(verified_run_ids) != len(steps):
+            raise Blocked("Cada passo exige uma fonte canónica independente.")
+        store = self.bridge.store
+        failed = store.state(failed_run_id)
+        store.check_input(failed)
+        if (failed.get("status") not in ("FAIL", "BLOCKED")
+                or failed.get("process_id") != goal
+                or store.path("canonical", failed_run_id).exists()
+                or failed_run_id in verified_run_ids):
+            raise Blocked("A falha não é uma execução independente comprovada.")
+        packet = self.bridge.prepare(objective, verified_run_ids, include_creative=False)
+        if (len(packet["sources"]) != len(steps)
+                or any(source["authority"] != "canonical"
+                       or source["process_id"] != step
+                       for source, step in zip(packet["sources"], steps))):
+            raise Blocked("Os resultados não comprovam cada capacidade proposta.")
+        candidate = {
+            "version": 1, "kind": "LAB_CORRECTION_CANDIDATE",
+            "authority": "NONE", "execution": "NOT_AUTHORIZED",
+            "evidence_scope": "PER_STEP_ONLY",
+            "goal": goal, "steps": list(steps),
+            "original_phrase": original_phrase, "corrected_phrase": corrected_phrase,
+            "objective": objective, "failed_run_id": failed_run_id,
+            "failed_state_sha256": _digest(failed),
+            "verified_run_ids": list(verified_run_ids),
+            "verified_context_sha256": _digest(packet),
+        }
+        candidate["candidate_sha256"] = _digest(candidate)
+        return candidate
+
+    def review_correction(self, molde, candidate, *, human_confirmed=False):
+        """Re-check live evidence, then record ONLY a human-reviewed hint.
+
+        Never executes/retries a failed run, repairs a tool or grants a gate.
+        """
+        expected_keys = {"version", "kind", "authority", "execution",
+                         "evidence_scope", "goal", "steps", "original_phrase",
+                         "corrected_phrase", "objective", "failed_run_id",
+                         "failed_state_sha256", "verified_run_ids",
+                         "verified_context_sha256", "candidate_sha256"}
+        if not isinstance(candidate, dict) or set(candidate) != expected_keys:
+            raise Blocked("Proposta de correção inválida.")
+        if (type(candidate["version"]) is not int or candidate["version"] != 1
+                or candidate["kind"] != "LAB_CORRECTION_CANDIDATE"
+                or candidate["authority"] != "NONE"
+                or candidate["execution"] != "NOT_AUTHORIZED"
+                or candidate["evidence_scope"] != "PER_STEP_ONLY"
+                or candidate["candidate_sha256"] != _digest({
+                    k: v for k, v in candidate.items() if k != "candidate_sha256"
+                })):
+            raise Blocked("Identidade de correção alterada.")
+        fresh = self.propose_correction(
+            molde, goal=candidate["goal"], steps=candidate["steps"],
+            failed_run_id=candidate["failed_run_id"],
+            verified_run_ids=candidate["verified_run_ids"],
+            original_phrase=candidate["original_phrase"],
+            corrected_phrase=candidate["corrected_phrase"],
+            objective=candidate["objective"],
+        )
+        if fresh != candidate:
+            raise Blocked("Evidências da correção mudaram.")
+        if type(human_confirmed) is not bool:
+            raise Blocked("Confirmação humana inválida.")
+        if not human_confirmed:
+            return {"status": "REVIEW_REQUIRED", "authority": "NONE",
+                    "execution": "NOT_AUTHORIZED", "candidate_sha256": candidate["candidate_sha256"]}
+        record = self.review(
+            molde, goal=candidate["goal"], steps=candidate["steps"],
+            phrase=candidate["corrected_phrase"],
+            source_ids=candidate["verified_run_ids"], objective=candidate["objective"],
+            decision="ACCEPT", human_confirmed=True,
+        )
+        return dict(record, evidence_scope="PER_STEP_ONLY",
+                    candidate_sha256=candidate["candidate_sha256"])
+
     def suggest(self, molde, *, goal, phrase=None):
         """Rank bounded source-backed recipes and reusable initial templates."""
         family = _family(molde)
