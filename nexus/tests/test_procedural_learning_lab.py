@@ -117,6 +117,48 @@ def test_feedback_rejection_disfavours_candidate_instead_of_learning_it(lab):
     assert proposal["candidates"][0]["origin"] == "INITIAL"
 
 
+def test_rejected_learned_recipe_cannot_survive_as_fuzzy_hint(lab):
+    """OpenAdapt lesson: negative human feedback suspends a recipe everywhere."""
+    store, _, memory = lab
+    accepted = create(store, "Fonte aceite", approved=True)
+    rejected = create(store, "Fonte rejeitada", approved=True)
+    phrase = "faz um podcast com esta fonte"
+    review(memory, accepted, phrase=phrase)
+    before = memory.recognise(mold("nova.pdf"), "faz um podcst com esta fonte")
+    assert before["candidates"][0]["goal"] == "podcast"
+
+    review(memory, rejected, decision="REJECT", phrase=phrase)
+    ranked = memory.suggest(mold("outra.pdf"), goal="podcast")
+    assert all(item["steps"] != ["verify", "podcast"] for item in ranked["candidates"])
+    hints = memory.recognise(mold("outra.pdf"), "faz um podcst com esta fonte")
+    assert hints["candidates"] == []
+    assert hints["authority"] == "NONE"
+    assert hints["execution"] == "NOT_AUTHORIZED"
+
+
+def test_new_reviewed_positive_evidence_restores_only_non_authoritative_hint(lab):
+    """Two approvals beat one rejection, but no learned recipe executes."""
+    store, _, memory = lab
+    a = create(store, "Fonte A", approved=True)
+    b = create(store, "Fonte B", approved=True)
+    c = create(store, "Fonte C", approved=True)
+    phrase = "faz um podcast com esta fonte"
+    review(memory, a, phrase=phrase)
+    review(memory, b, decision="REJECT", phrase=phrase)
+    review(memory, c, phrase=phrase)
+    ranked = memory.suggest(mold("independente.pdf"), goal="podcast")
+    candidate = next(item for item in ranked["candidates"]
+                     if item["steps"] == ["verify", "podcast"])
+    assert candidate["positive_examples"] == 2
+    assert candidate["negative_examples"] == 1
+    assert ranked["authority"] == "NONE"
+    assert ranked["execution"] == "NOT_AUTHORIZED"
+    hint = memory.recognise(mold("independente.pdf"), "faz um podcst com esta fonte")
+    assert hint["candidates"][0]["goal"] == "podcast"
+    assert hint["requires_human_review"] is True
+    assert hint["execution"] == "NOT_AUTHORIZED"
+
+
 def test_creative_unapproved_result_cannot_be_a_learning_source(lab):
     store, _, memory = lab
     draft = create(store, approved=False)
