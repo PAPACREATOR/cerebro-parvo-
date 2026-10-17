@@ -110,8 +110,11 @@ try {
         if (Run-Command 'integrity' 'PREFLIGHT' $python @('-c',"from nexus.host import verify_integrity;verify_integrity();print('PASS')")) {
             $null = Pytest 'native-folha-shell' 'REAL_WINDOWS_HOST' @('nexus/tests/test_folha_shell_bidirectional_e2e.py','nexus/tests/test_reverse_flow.py','nexus/tests/test_imp001_boundary_additive.py')
             $null = Pytest 'composed-adversarial-learning' 'CONTRACT_AND_NATIVE_LAB' @('nexus/tests/test_folha_tool_composition.py','nexus/tests/test_folha_writer_preexecution.py','nexus/tests/test_procedural_learning_lab.py','nexus/tests/test_frontdoor_adversarial.py')
-            $null = Pytest 'notebook-web-boundaries' 'SIMULATED_PROVIDER_NOT_REAL' @('nexus/tests/test_open_notebook_kernel_e2e.py','nexus/tests/test_folha_web_research_e2e.py')
-            $null = Pytest 'media-security' 'MOCKED_SERVICE_CONTRACTS' @('nexus/tests/test_media_tools.py','nexus/tests/test_ace_step_candidate.py')
+            # Mock peers bind fixed ports (OpenNotebook 5055, ACE-Step 8001,
+            # Forge 7861); never launch them against an owner's live apps.
+            # Their adversarial and SSRF regressions stay in the GitHub CI.
+            Record-Stage 'notebook-web-boundaries' 'CONTRACT_CI_ONLY' 'NOT_RUN' 'Mock-peer tests reserved for isolated CI' ''
+            Record-Stage 'media-security' 'CONTRACT_CI_ONLY' 'NOT_RUN' 'Mock ports reserved for isolated CI' ''
             $null = Run-Command 'ace-forge-local-health' 'REAL_MCP_HEALTH_NOT_RENDER' $python @('nexus/windows/check_media_tools.py','--wait-seconds','0')
             if ((Has-FileEnv 'LIBREOFFICE_EXE') -and (Has-FileEnv 'SANDY_EXE')) {
                 $env:NEXUS_REAL_WRITER = '1'

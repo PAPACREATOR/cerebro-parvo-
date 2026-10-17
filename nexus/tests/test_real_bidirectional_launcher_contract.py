@@ -32,11 +32,11 @@ def test_runner_distinguishes_physical_execution_from_mocks_and_unproved_product
         "test_native_writer_route_real.py",
         "folha_real_writer_browser.cjs",
         "test_native_languagetool_route_real.py",
-        "test_open_notebook_kernel_e2e.py",
         "check_media_tools.py",
         "test_procedural_learning_lab.py",
-        "SIMULATED_PROVIDER_NOT_REAL",
         "REAL_MCP_HEALTH_NOT_RENDER",
+        "CONTRACT_CI_ONLY",
+        "Mock ports reserved for isolated CI",
         "PARTIAL_NOT_PROVEN",
         "NEXUS_REAL_WRITER",
     ):
@@ -66,3 +66,9 @@ def test_chrome_evidence_cannot_pollute_installed_source_checkout():
     assert "[string]$WorkingDirectory" in PS1
     assert "'' $folder" in PS1
     assert "Join-Path $repo 'nexus/tests/folha_real_writer_browser.cjs'" in PS1
+
+
+def test_native_pc_runner_does_not_bind_mock_peers_over_live_services():
+    for mocked in ("test_open_notebook_kernel_e2e.py", "test_media_tools.py"):
+        assert mocked not in PS1
+    assert "CONTRACT_CI_ONLY" in PS1
