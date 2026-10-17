@@ -148,6 +148,8 @@ test("one white Folha request proposes and runs verify then PDF with two explici
     };
     if(route==="/api/flow-receipt")return {
       authority:"NONE",execution:"NOT_AUTHORIZED",receipt_sha256:"c".repeat(64),
+      steps:[{process:"verify",run_id:"a".repeat(32)},
+             {process:"convert_pdf",run_id:"b".repeat(32)}],
       product:{run_id:"b".repeat(32),sha256:"b".repeat(64)},
     };
     return [];

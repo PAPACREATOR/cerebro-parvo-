@@ -8,6 +8,7 @@ from copy import deepcopy
 import hashlib
 import io
 import json
+from pathlib import Path
 
 import pytest
 
@@ -89,7 +90,10 @@ def test_fabricated_or_incomplete_diagnostic_never_becomes_validated_review(chan
 
 
 class SyntheticStore:
-    def __init__(self):
+    def __init__(self, root):
+        # The product HTTP server expects a Store root for disposable Folha drafts.
+        # This fixture only exposes its location; receipt verification never writes.
+        self.root = Path(root)
         self.checked = []
         self.requests = {run: {"process": process, "text": "& " + command, "filename": "texto.txt",
                                "attachment": base64.b64encode(SOURCE).decode("ascii")}
@@ -103,8 +107,8 @@ class SyntheticStore:
 
 
 class SyntheticHost:
-    def __init__(self):
-        self.store = SyntheticStore()
+    def __init__(self, root):
+        self.store = SyntheticStore(root)
         verify = {"status": "PASS", "outcome": "agreement", "title": "Integridade",
                   "markdown": "As duas verificações sintéticas concordam.", "ai_calls": 0,
                   "evidence": [{"capability": "fixture.hash", "status": "PASS", "value": INPUT_SHA}]}
@@ -150,8 +154,8 @@ def receipt_request():
             "verify_run_id": "a"*32, "proofread_run_id": "b"*32}
 
 
-def test_existing_receipt_checks_both_saved_requests_without_execution_or_approval(monkeypatch):
-    host = SyntheticHost()
+def test_existing_receipt_checks_both_saved_requests_without_execution_or_approval(monkeypatch, tmp_path):
+    host = SyntheticHost(tmp_path / "store")
     before = deepcopy(host.store.requests)
     status, receipt = receipt_call(monkeypatch, host, receipt_request())
     assert status == 200
@@ -166,8 +170,8 @@ def test_existing_receipt_checks_both_saved_requests_without_execution_or_approv
 
 
 @pytest.mark.parametrize("change", ["source", "input-hash", "operation", "verify-UNKNOWN", "same-run", "authority"])
-def test_receipt_refuses_changed_source_operation_or_missing_prerequisite(monkeypatch, change):
-    host, data = SyntheticHost(), receipt_request()
+def test_receipt_refuses_changed_source_operation_or_missing_prerequisite(monkeypatch, tmp_path, change):
+    host, data = SyntheticHost(tmp_path / "store"), receipt_request()
     if change == "source":
         host.store.requests["b"*32]["attachment"] = base64.b64encode(b"changed").decode()
     elif change == "input-hash":

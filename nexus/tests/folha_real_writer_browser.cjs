@@ -77,7 +77,8 @@ const {spawn,spawnSync}=require("node:child_process");
     await page.locator("#text").fill("Verifica este documento e converte-o em PDF");
     await page.locator("#submit").click();
     await page.locator("#execution-confirmation").waitFor({state:"visible"});
-    assert.match(await page.locator("#execution-summary").textContent(),/Verificar documento/);
+    assert.equal(await page.locator("#execution-summary").textContent(),
+      "Verificar o original antes da etapa seguinte");
     assert.equal(await page.locator("#execution-approve").isDisabled(),true);
     assert.equal(requests.includes("/api/confirm-run"),false);
     await page.locator("#execution-confirm").check();
