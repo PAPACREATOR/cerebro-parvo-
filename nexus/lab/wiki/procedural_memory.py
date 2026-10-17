@@ -253,7 +253,7 @@ class ProceduralMemory:
         for steps in candidates:
             accepted = grouped.get(steps, {}).get("accept", 0)
             rejected = grouped.get(steps, {}).get("reject", 0)
-            if rejected > accepted or (rejected and not accepted):
+            if rejected and rejected >= accepted:
                 continue
             suggestions.append({
                 "steps": list(steps), "origin": "LEARNED" if accepted else "INITIAL",
@@ -290,16 +290,30 @@ class ProceduralMemory:
         """Tolerant candidate retrieval, never auto-dispatch or executable regex."""
         family = _family(molde)
         normal = _normal(text)
-        matches = {}
+        # A human-rejected recipe cannot survive solely through a fuzzy hint.
+        # Keep evidence grouped by the exact registered process sequence.
+        groups = {}
         for event in self._events():
-            if event["family"] != family or event["decision"] != "ACCEPT":
+            if event["family"] != family:
                 continue
-            sample = _normal(event["phrase"])
-            if _unsafe_hint_pair(normal, sample):
+            key = (event["goal"], tuple(event["steps"]))
+            group = groups.setdefault(key, {"accepted": [], "rejected": 0})
+            if event["decision"] == "REJECT":
+                group["rejected"] += 1
+            else:
+                group["accepted"].append(_normal(event["phrase"]))
+        matches = {}
+        for (goal, _steps), group in groups.items():
+            accepted = group["accepted"]
+            # Disagreement is unresolved; the human must review new evidence.
+            if group["rejected"] >= len(accepted):
                 continue
-            ratio = SequenceMatcher(None, normal, sample, autojunk=False).ratio()
-            if ratio >= 0.78:
-                matches[event["goal"]] = max(matches.get(event["goal"], 0), ratio)
+            for sample in accepted:
+                if _unsafe_hint_pair(normal, sample):
+                    continue
+                ratio = SequenceMatcher(None, normal, sample, autojunk=False).ratio()
+                if ratio >= 0.78:
+                    matches[goal] = max(matches.get(goal, 0), ratio)
         return {"kind": "LAB_INTENT_HINTS", "authority": "NONE",
                 "execution": "NOT_AUTHORIZED", "requires_human_review": True,
                 "candidates": [{"goal": goal, "similarity": round(score, 3)}
