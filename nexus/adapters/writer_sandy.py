@@ -28,11 +28,8 @@ VENDOR = Path(__file__).resolve().parent / "vendor" / "sandy"
 
 
 def digest_file(path):
-    h = hashlib.sha256()
     with Path(path).open("rb") as stream:
-        for block in iter(lambda: stream.read(1024 * 1024), b""):
-            h.update(block)
-    return h.hexdigest()
+        return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
 def _native_dacl(path):
