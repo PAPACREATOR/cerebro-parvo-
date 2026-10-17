@@ -196,7 +196,7 @@ def test_openadapt_supervised_correction_requires_real_store_evidence(lab, monke
     assert accepted["execution"] == "NOT_AUTHORIZED"
     assert accepted["evidence_scope"] == "PER_STEP_ONLY"
     reopened = ProceduralMemory(WikiBridge(store, wiki.root))
-    hints = reopened.recognise(mold("novo.txt"), "verifica a integridade")
+    hints = reopened.recognise(mold("novo.pdf"), "verifica a integridade")
     assert hints["authority"] == "NONE"
     assert hints["execution"] == "NOT_AUTHORIZED"
     assert hints["candidates"][0]["goal"] == "verify"
