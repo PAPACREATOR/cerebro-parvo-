@@ -90,16 +90,21 @@ def _composite_plan(text):
     if normal.startswith("& "):
         normal = normal[2:].strip()
     normal = normal.strip(" .!?")
-    if normal not in {
-        "verifica este documento e converte-o em pdf",
-        "verifica a integridade deste documento e converte para pdf",
-        "verificar integridade de ficheiro e converter para pdf",
-    }:
+    recipes = {
+        "verifica este documento e converte-o em pdf": ("convert_pdf", "converter para pdf"),
+        "verifica a integridade deste documento e converte para pdf": ("convert_pdf", "converter para pdf"),
+        "verificar integridade de ficheiro e converter para pdf": ("convert_pdf", "converter para pdf"),
+        "verifica este texto e revê o português": ("proofread", "rever texto"),
+        "verifica a integridade deste texto e revê o português": ("proofread", "rever texto"),
+        "verificar integridade de ficheiro e rever texto": ("proofread", "rever texto"),
+    }
+    target = recipes.get(normal)
+    if target is None:
         return None
     router = declared_router()
     first = router.recognise_command("verificar integridade de ficheiro")
-    second = router.recognise_command("converter para pdf")
-    if first is None or second is None or (first.process, second.process) != ("verify", "convert_pdf"):
+    second = router.recognise_command(target[1])
+    if first is None or second is None or (first.process, second.process) != ("verify", target[0]):
         raise Blocked("Receita composta não corresponde ao registo fechado.")
     return {
         "authority": "NONE",
@@ -109,6 +114,46 @@ def _composite_plan(text):
             {"process": first.process, "command": first.command},
             {"process": second.process, "command": second.command},
         ],
+    }
+
+
+def _proofread_input(raw):
+    """Same UTF-8 limit as the existing reviewer, without rewriting the source."""
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeError as error:
+        raise Blocked("A revisão aceita texto UTF-8 até 6000 caracteres.") from error
+    if not text.strip() or len(text) > 6000 or "\x00" in text:
+        raise Blocked("A revisão aceita texto UTF-8 até 6000 caracteres.")
+    return text
+
+
+def _proofread_comparison(result, raw):
+    """Check the durable tool evidence; UNKNOWN is never linguistic correctness."""
+    _proofread_input(raw)
+    validate("result", result)
+    if result["status"] != "UNKNOWN" or result["outcome"] != "candidate" or result["ai_calls"] != 0:
+        raise Blocked("A revisão linguística não pode afirmar correção ou aprovação.")
+    evidence = result["evidence"]
+    if (len(evidence) != 1 or evidence[0]["capability"] != "languagetool.cli.pt-PT"
+            or evidence[0]["status"] != "UNKNOWN" or type(evidence[0]["value"]) is not str):
+        raise Blocked("Falta o diagnóstico linguístico verificável.")
+    metadata = strict_json(evidence[0]["value"])
+    if type(metadata) is not dict or set(metadata) != {"version", "matches", "diagnostic"}:
+        raise Blocked("Diagnóstico linguístico incompleto.")
+    diagnostic = validate("languagetool", metadata["diagnostic"])
+    if (diagnostic["warnings"]["incompleteResults"]
+            or type(metadata["matches"]) is not int
+            or metadata["matches"] != len(diagnostic["matches"])
+            or metadata["version"] != diagnostic["software"]["version"]):
+        raise Blocked("O diagnóstico linguístico não corresponde ao resultado.")
+    return {
+        "input_sha256": hashlib.sha256(raw).hexdigest(),
+        "original_preserved": True,
+        "integrity": "PASS",
+        "proofreading": "UNKNOWN",
+        "alerts": metadata["matches"],
+        "text_correctness": "NOT_ESTABLISHED",
     }
 
 
@@ -239,6 +284,8 @@ def _natural_request(data, host):
     if not name or any(ord(char) < 32 for char in name) or "/" in name or "\\" in name:
         raise Blocked("Nome de anexo inválido.")
 
+    if process == "proofread":
+        _proofread_input(attachment)
     if process in ("convert_pdf", "book"):
         # A conversion proposal may never interpret arbitrary file bytes,
         # scripts, macros, external objects, or an extension/MIME mismatch.
@@ -486,21 +533,27 @@ def make_server(host, port=0, *, allow_direct_run=False):
         The original free-text intent is provided by the Folha; the two tool
         requests and their actual inputs/results are checked against Store.
         """
-        required = {"text", "filename", "input_sha256", "verify_run_id", "convert_run_id"}
-        if not isinstance(data, dict) or set(data) != required:
+        common = {"text", "filename", "input_sha256", "verify_run_id"}
+        forms = (common | {"convert_run_id"}, common | {"proofread_run_id"})
+        if not isinstance(data, dict) or set(data) not in forms:
             raise Blocked("Recibo de processo inválido.")
-        if not all(type(data[key]) is str for key in required):
+        if not all(type(value) is str for value in data.values()):
             raise Blocked("Recibo de processo inválido.")
         plan = _composite_plan(data["text"])
-        if (plan is None or not data["filename"] or not re.fullmatch(r"[0-9a-f]{64}", data["input_sha256"])
-                or data["verify_run_id"] == data["convert_run_id"]):
+        if plan is None:
             raise Blocked("A cadeia não corresponde a um pedido composto autorizado.")
+        final_process = plan["steps"][1]["process"]
+        final_key = "proofread_run_id" if final_process == "proofread" else "convert_run_id"
+        if (set(data) != common | {final_key} or not data["filename"]
+                or not re.fullmatch(r"[0-9a-f]{64}", data["input_sha256"])
+                or data["verify_run_id"] == data[final_key]):
+            raise Blocked("A cadeia não corresponde ao pedido composto autorizado.")
         host.authorize(session)
         steps = []
-        for expected, run_id in zip(("verify", "convert_pdf"),
-                                    (data["verify_run_id"], data["convert_run_id"])):
-            # Host.detail enforces the original input, Creative/Canonical packet
-            # integrity and run validity. Host may refuse unfinished results.
+        comparison = None
+        for step, run_id in zip(plan["steps"], (data["verify_run_id"], data[final_key])):
+            expected = step["process"]
+            # Detail checks original input and Creative/Canonical result integrity.
             state = host.detail(run_id, session)
             if (state["process_id"] != expected
                     or state["status"] not in ("HUMAN_REQUIRED", "PASS")
@@ -509,19 +562,23 @@ def make_server(host, port=0, *, allow_direct_run=False):
                 raise Blocked("Etapa da cadeia não corresponde à fonte verificada.")
             request = validate("request", strict_json(
                 host.store.checked_bytes("runs", run_id, "request.json")))
-            if request["filename"] != data["filename"]:
-                raise Blocked("Nome do documento alterado entre ferramentas.")
-            if request["text"] != "& " + next(
-                    step["command"] for step in plan["steps"] if step["process"] == expected):
+            if (request["process"] != expected or request["filename"] != data["filename"]
+                    or request["text"] != "& " + step["command"]):
                 raise Blocked("A execução não corresponde ao plano autorizado.")
+            try:
+                original = base64.b64decode(request["attachment"], validate=True)
+            except (ValueError, TypeError) as error:
+                raise Blocked("Fonte da cadeia inválida.") from error
+            if hashlib.sha256(original).hexdigest() != state["input_sha256"]:
+                raise Blocked("O original mudou entre ferramentas.")
             if expected == "verify":
                 if state["result"]["status"] != "PASS":
                     raise Blocked("Verificação de integridade sem sucesso.")
+            elif expected == "proofread":
+                comparison = _proofread_comparison(state["result"], original)
             else:
                 if not state.get("artifact_sha256"):
                     raise Blocked("PDF final ausente.")
-                # Validate the real PDF bytes, not merely a hash claimed by
-                # a request or by the browser.
                 source = host.store.path("creative", run_id)
                 host.store.verify_artifact(state, source)
             steps.append({
@@ -542,13 +599,16 @@ def make_server(host, port=0, *, allow_direct_run=False):
             "filename": data["filename"],
             "input_sha256": data["input_sha256"],
             "steps": steps,
-            "product": {
+            "human_approval_required": steps[1]["status"] != "PASS",
+        }
+        if final_process == "proofread":
+            receipt["comparison"] = comparison
+        else:
+            receipt["product"] = {
                 "name": "resultado.pdf",
                 "sha256": steps[1]["artifact_sha256"],
                 "run_id": steps[1]["run_id"],
-            },
-            "human_approval_required": steps[1]["status"] != "PASS",
-        }
+            }
         receipt["receipt_sha256"] = _request_digest(receipt)
         return receipt
 

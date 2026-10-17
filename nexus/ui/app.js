@@ -162,8 +162,24 @@ async function requestPayload() {
   return {text,filename,attachment};
 }
 
-// One approved request can contain two deterministic Host operations. This
-// client owns only presentation/order; Host owns both one-use tool tickets.
+// A bounded original request can propose two existing Host operations.
+// Each operation needs its own one-use H1; H2 promotion remains separate.
+// Explicit input hand-off adapts Pinokio Script.buildStartRequest (MIT),
+// pinokiocomputer/pinokiod add4a674ad1ba95bb62ec427fce519fe5bf0e9bf,
+// kernel/api/script/index.js. See nexus/third_party/pinokio/NOTICE.md.
+function composedStepRequest(input, step) {
+  // Pinokio merges request params into a fresh next request. Here the input
+  // is the captured Folha source and the target is a closed registry command.
+  return Object.assign({}, input, {text:"& "+step.command});
+}
+function checkComposedText(input) {
+  const bytes=Uint8Array.from(atob(input.attachment),value=>value.charCodeAt(0));
+  let text;
+  try { text=new TextDecoder("utf-8",{fatal:true}).decode(bytes); }
+  catch(_error) { throw new Error("Junta texto UTF-8 até 6000 caracteres para revisão."); }
+  if(!text.trim() || Array.from(text).length>6000 || text.includes("\0"))
+    throw new Error("Junta texto UTF-8 até 6000 caracteres para revisão.");
+}
 function sameFolhaInput(a,b) {
   return a.text===b.text && a.filename===b.filename && a.attachment===b.attachment;
 }
@@ -172,7 +188,8 @@ async function prepareComposedStep(flow) {
   if(composedFlow!==flow || flow.revision!==editRevision || !sameFolhaInput(now,flow.original))
     throw new Error("O pedido mudou. A sequência foi interrompida.");
   const step=flow.steps[flow.index];
-  const request={...now,text:"& "+step.command};
+  if(flow.steps[1].process==="proofread")checkComposedText(now);
+  const request=composedStepRequest(now,step);
   const prepared=await api("/api/prepare-run",request);
   if(composedFlow!==flow || flow.revision!==editRevision ||
      prepared.process!==step.process ||
@@ -182,7 +199,8 @@ async function prepareComposedStep(flow) {
   flow.prepared=request;
   executionTicket=prepared.ticket;
   el("execution-summary").textContent=step.process==="verify"?
-    "Verificar documento antes da conversão":"Converter documento verificado para PDF";
+    "Verificar o original antes da etapa seguinte":
+    (step.process==="proofread"?"Rever português do mesmo original":"Converter documento verificado para PDF");
   el("execution-review").textContent="Pedido original: "+flow.original.text+
     "\nOperação a autorizar: "+step.command+"\nFicheiro: "+prepared.filename;
   el("execution-confirm").checked=false;
@@ -190,7 +208,9 @@ async function prepareComposedStep(flow) {
   el("execution-confirmation").showModal();
 }
 async function verifyComposedProduct(runId,flow) {
-  for(let attempt=0;attempt<320;attempt++) {
+  const process=flow.steps[1].process;
+  const attempts=process==="proofread"?100:320;
+  for(let attempt=0;attempt<attempts;attempt++) {
     if(composedFlow!==flow || flow.revision!==editRevision)
       throw new Error("A sequência foi interrompida.");
     const state=await api("/api/runs/"+runId);
@@ -198,12 +218,14 @@ async function verifyComposedProduct(runId,flow) {
       await new Promise(resolve=>setTimeout(resolve,900));
       continue;
     }
-    if(state.status!=="HUMAN_REQUIRED" || state.process_id!=="convert_pdf" ||
-       state.input_sha256!==flow.inputHash || !/^[a-f0-9]{64}$/.test(state.artifact_sha256||""))
-      throw new Error("O PDF ainda não está verificado. Consulta o histórico antes de repetir.");
+    if(state.status!=="HUMAN_REQUIRED" || state.process_id!==process ||
+       state.input_sha256!==flow.inputHash ||
+       (process==="convert_pdf" && !/^[a-f0-9]{64}$/.test(state.artifact_sha256||"")) ||
+       (process==="proofread" && (state.result?.status!=="UNKNOWN" || state.result?.outcome!=="candidate")))
+      throw new Error("A etapa ainda não está verificada. Consulta o histórico antes de repetir.");
     return state;
   }
-  throw new Error("A produção do PDF excedeu o tempo. Consulta o histórico sem repetir a tarefa.");
+  throw new Error("A etapa excedeu o tempo. Consulta o histórico sem repetir a tarefa.");
 }
 async function verifyComposedFirst(runId,flow) {
   // Do not infer success from HTTP 202; wait for the Host-verified candidate.
@@ -217,7 +239,7 @@ async function verifyComposedFirst(runId,flow) {
     }
     if(state.status!=="HUMAN_REQUIRED" || state.process_id!=="verify" ||
        state.result?.status!=="PASS" || state.input_sha256!==flow.inputHash)
-      throw new Error("A verificação do documento não foi concluída. A conversão não começou.");
+      throw new Error("A integridade não foi confirmada. A etapa seguinte não começou.");
     return;
   }
   throw new Error("A verificação excedeu o tempo. Consulta o histórico antes de repetir.");
@@ -288,7 +310,8 @@ el("form").onsubmit=async (event, classified=null)=>{
          preview.composite.authority!=="NONE" ||
          !Array.isArray(steps) || steps.length!==2 ||
          steps[0].process!=="verify" || steps[0].command!=="verificar integridade de ficheiro" ||
-         steps[1].process!=="convert_pdf" || steps[1].command!=="converter para pdf")
+         !((steps[1].process==="convert_pdf" && steps[1].command==="converter para pdf") ||
+           (steps[1].process==="proofread" && steps[1].command==="rever texto")))
         throw new Error("Receita composta não autorizada.");
       const flow={original:payload,revision,index:0,steps,inputHash:null,prepared:null};
       composedFlow=flow;
@@ -380,17 +403,25 @@ el("execution-approve").onclick=async()=>{
         const receipt=await api("/api/flow-receipt",{
           text:flow.original.text,filename:flow.original.filename,
           input_sha256:flow.inputHash,verify_run_id:flow.verifyRunId,
-          convert_run_id:response.run_id,
+          [flow.steps[1].process==="proofread"?"proofread_run_id":"convert_run_id"]:response.run_id,
         });
         if(receipt.authority!=="NONE" || receipt.execution!=="NOT_AUTHORIZED" ||
-           receipt.product?.run_id!==response.run_id ||
+           receipt.steps?.[1]?.run_id!==response.run_id ||
+           (flow.steps[1].process==="convert_pdf" && receipt.product?.run_id!==response.run_id) ||
+           (flow.steps[1].process==="proofread" &&
+             (receipt.comparison?.proofreading!=="UNKNOWN" ||
+              receipt.comparison?.integrity!=="PASS" ||
+              receipt.comparison?.original_preserved!==true ||
+              receipt.comparison?.text_correctness!=="NOT_ESTABLISHED")) ||
            !/^[a-f0-9]{64}$/.test(receipt.receipt_sha256||""))
           throw new Error("A ligação entre as ferramentas não foi verificada.");
         composedFlow=null;
         await list();
         if(revision===editRevision){
           await show(response.run_id);
-          notice("PDF produzido e cadeia verificada. Recibo: "+receipt.receipt_sha256.slice(0,12)+".");
+          notice(flow.steps[1].process==="proofread"?
+            "Original verificado e revisão ligada à mesma fonte. As sugestões não garantem correção; a aprovação continua pendente.":
+            "PDF produzido e cadeia verificada. Recibo: "+receipt.receipt_sha256.slice(0,12)+".");
         }
       }
       return;

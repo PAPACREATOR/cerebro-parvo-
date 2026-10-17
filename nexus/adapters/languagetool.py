@@ -49,6 +49,16 @@ def normalize(raw):
     if value["warnings"]["incompleteResults"]:
         raise Blocked("A revisão linguística ficou incompleta.")
     matches = value["matches"]
+    # The task directory is temporary: keep the complete validated diagnostic
+    # inside the existing Store-bound result, not a dangling filename.
+    diagnostic = json.dumps(
+        {"version": value["software"]["version"], "matches": len(matches),
+         "diagnostic": value},
+        ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False,
+    )
+    # Existing result.evidence[].value contract; never truncate a diagnostic.
+    if len(diagnostic) > 100_000:
+        raise Blocked("O diagnóstico completo excede o limite de evidência Nexus.")
     lines = ["# Revisão de português", "", "Sugestões locais. O original não foi alterado.", ""]
     if not matches:
         lines.append("A ferramenta não encontrou alertas. Isso não garante que o texto esteja correto.")
@@ -58,13 +68,18 @@ def normalize(raw):
         if suggestions:
             lines.append("  Sugestões: " + suggestions)
     if len(matches) > 30:
-        lines.append("Apresentados os primeiros 30 alertas; o diagnóstico completo foi conservado.")
-    return {"status": "UNKNOWN", "outcome": "candidate", "title": "Revisão de português",
-            "markdown": "\n".join(lines), "ai_calls": 0,
-            "evidence": [{"capability": "languagetool.cli.pt-PT", "status": "UNKNOWN",
-                          "value": json.dumps({"version": value["software"]["version"],
-                                               "matches": len(matches),
-                                               "diagnostic": "languagetool-output.json"})}]}
+        lines.append("Apresentados os primeiros 30 alertas; o diagnóstico completo foi conservado neste resultado.")
+    result = {"status": "UNKNOWN", "outcome": "candidate", "title": "Revisão de português",
+              "markdown": "\n".join(lines), "ai_calls": 0,
+              "evidence": [{"capability": "languagetool.cli.pt-PT", "status": "UNKNOWN",
+                            "value": diagnostic}]}
+    validate("result", result)
+    # Match runner._direct_result's existing compact UTF-8 result budget.
+    encoded = json.dumps(result, ensure_ascii=False, sort_keys=True,
+                         separators=(",", ":"), allow_nan=False).encode("utf-8")
+    if len(encoded) > 1_000_000:
+        raise Blocked("O relatório completo excede o limite de resposta Nexus.")
+    return result
 
 
 def run(input_path):

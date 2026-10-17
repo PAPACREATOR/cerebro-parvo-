@@ -80,3 +80,67 @@ def test_tool_failure_rejected(tmp_path, monkeypatch):
     monkeypatch.setattr(subprocess, "run", failed)
     with pytest.raises(Blocked):
         run(source)
+
+
+def test_complete_diagnostic_retains_matches_beyond_display_limit():
+    matches = [{"message": "Alerta " + str(index),
+                "context": {"text": "trecho " + str(index)},
+                "replacements": [{"value": "opção " + str(index)}],
+                "offset": index, "length": 1,
+                "rule": {"id": "RULE_" + str(index)}} for index in range(31)]
+    original = response(matches)
+    result = normalize(json.dumps(original))
+    validate("result", result)
+    stored = json.loads(result["evidence"][0]["value"])
+    assert stored["version"] == "test"
+    assert stored["matches"] == 31
+    assert stored["diagnostic"] == original
+    assert "- Alerta 30" not in result["markdown"]
+    assert "diagnóstico completo foi conservado neste resultado" in result["markdown"]
+    assert result["status"] == result["evidence"][0]["status"] == "UNKNOWN"
+    assert result["outcome"] == "candidate" and result["ai_calls"] == 0
+
+
+def test_complete_diagnostic_survives_result_json_round_trip():
+    original = response([{"message": 'Aspas " e barra \\ — ação 😀',
+                          "context": {"text": "linha 1\nlinha 2"},
+                          "replacements": [{"value": "exemplo"}, {"value": "alternativa"}],
+                          "offset": 0, "length": 2}])
+    original["software"]["buildDate"] = "synthetic-build"
+    original["language"]["detectedLanguage"] = {"code": "pt-PT", "confidence": 0.9}
+    original["sentenceRanges"] = [[0, 12]]
+    raw = json.dumps(original, ensure_ascii=False)
+    result = normalize(raw)
+    encoded = json.dumps(result, ensure_ascii=False, sort_keys=True,
+                         separators=(",", ":"), allow_nan=False).encode("utf-8")
+    restored = json.loads(encoded)
+    assert json.loads(restored["evidence"][0]["value"])["diagnostic"] == original
+    assert len(encoded) <= 1_000_000
+    assert restored["evidence"][0]["capability"] == "languagetool.cli.pt-PT"
+
+
+def test_complete_diagnostic_accepts_evidence_contract_boundary():
+    original = response()
+    original["extra"] = ""
+    wrapper = {"version": "test", "matches": 0, "diagnostic": original}
+    overhead = len(json.dumps(wrapper, ensure_ascii=False, sort_keys=True,
+                              separators=(",", ":"), allow_nan=False))
+    original["extra"] = "x" * (100_000 - overhead)
+    result = normalize(json.dumps(original))
+    assert len(result["evidence"][0]["value"]) == 100_000
+    assert json.loads(result["evidence"][0]["value"])["diagnostic"] == original
+    validate("result", result)
+
+
+def test_complete_diagnostic_rejects_excess_without_silent_truncation():
+    original = response()
+    original["extra"] = ""
+    wrapper = {"version": "test", "matches": 0, "diagnostic": original}
+    overhead = len(json.dumps(wrapper, ensure_ascii=False, sort_keys=True,
+                              separators=(",", ":"), allow_nan=False))
+    original["extra"] = "x" * (100_001 - overhead)
+    raw = json.dumps(original)
+    with pytest.raises(Blocked, match="diagnóstico completo excede"):
+        normalize(raw)
+    assert json.loads(raw) == original
+
