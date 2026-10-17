@@ -82,6 +82,81 @@ def _request_digest(request):
     return hashlib.sha256(raw).hexdigest()
 
 
+def _composite_plan(text):
+    """Read-only, bounded multi-capability proposal. No grant or dispatch."""
+    if type(text) is not str or not text.strip() or len(text) > 12000:
+        return None
+    normal = re.sub(r"\s+", " ", unicodedata.normalize("NFKC", text).casefold()).strip()
+    if normal.startswith("& "):
+        normal = normal[2:].strip()
+    normal = normal.strip(" .!?")
+    recipes = {
+        "verifica este documento e converte-o em pdf": ("convert_pdf", "converter para pdf"),
+        "verifica a integridade deste documento e converte para pdf": ("convert_pdf", "converter para pdf"),
+        "verificar integridade de ficheiro e converter para pdf": ("convert_pdf", "converter para pdf"),
+        "verifica este texto e revê o português": ("proofread", "rever texto"),
+        "verifica a integridade deste texto e revê o português": ("proofread", "rever texto"),
+        "verificar integridade de ficheiro e rever texto": ("proofread", "rever texto"),
+    }
+    target = recipes.get(normal)
+    if target is None:
+        return None
+    router = declared_router()
+    first = router.recognise_command("verificar integridade de ficheiro")
+    second = router.recognise_command(target[1])
+    if first is None or second is None or (first.process, second.process) != ("verify", target[0]):
+        raise Blocked("Receita composta não corresponde ao registo fechado.")
+    return {
+        "authority": "NONE",
+        "execution": "NOT_AUTHORIZED",
+        "requires_human_confirmation": True,
+        "steps": [
+            {"process": first.process, "command": first.command},
+            {"process": second.process, "command": second.command},
+        ],
+    }
+
+
+def _proofread_input(raw):
+    """Same UTF-8 limit as the existing reviewer, without rewriting the source."""
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeError as error:
+        raise Blocked("A revisão aceita texto UTF-8 até 6000 caracteres.") from error
+    if not text.strip() or len(text) > 6000 or "\x00" in text:
+        raise Blocked("A revisão aceita texto UTF-8 até 6000 caracteres.")
+    return text
+
+
+def _proofread_comparison(result, raw):
+    """Check the durable tool evidence; UNKNOWN is never linguistic correctness."""
+    _proofread_input(raw)
+    validate("result", result)
+    if result["status"] != "UNKNOWN" or result["outcome"] != "candidate" or result["ai_calls"] != 0:
+        raise Blocked("A revisão linguística não pode afirmar correção ou aprovação.")
+    evidence = result["evidence"]
+    if (len(evidence) != 1 or evidence[0]["capability"] != "languagetool.cli.pt-PT"
+            or evidence[0]["status"] != "UNKNOWN" or type(evidence[0]["value"]) is not str):
+        raise Blocked("Falta o diagnóstico linguístico verificável.")
+    metadata = strict_json(evidence[0]["value"])
+    if type(metadata) is not dict or set(metadata) != {"version", "matches", "diagnostic"}:
+        raise Blocked("Diagnóstico linguístico incompleto.")
+    diagnostic = validate("languagetool", metadata["diagnostic"])
+    if (diagnostic["warnings"]["incompleteResults"]
+            or type(metadata["matches"]) is not int
+            or metadata["matches"] != len(diagnostic["matches"])
+            or metadata["version"] != diagnostic["software"]["version"]):
+        raise Blocked("O diagnóstico linguístico não corresponde ao resultado.")
+    return {
+        "input_sha256": hashlib.sha256(raw).hexdigest(),
+        "original_preserved": True,
+        "integrity": "PASS",
+        "proofreading": "UNKNOWN",
+        "alerts": metadata["matches"],
+        "text_correctness": "NOT_ESTABLISHED",
+    }
+
+
 def _natural_work_process(text):
     """Deterministic process proposal for bounded natural text, never authority."""
     if not isinstance(text, str) or not text.strip() or len(text) > 12000:
@@ -209,6 +284,8 @@ def _natural_request(data, host):
     if not name or any(ord(char) < 32 for char in name) or "/" in name or "\\" in name:
         raise Blocked("Nome de anexo inválido.")
 
+    if process == "proofread":
+        _proofread_input(attachment)
     if process in ("convert_pdf", "book"):
         # A conversion proposal may never interpret arbitrary file bytes,
         # scripts, macros, external objects, or an extension/MIME mismatch.
@@ -267,6 +344,102 @@ def make_server(host, port=0, *, allow_direct_run=False):
     preexecution_lock = threading.Lock()
     memory_lock = threading.Lock()
     memory_state = {"bridge": None, "revision": None, "graph_revision": None}
+
+    # Scratch Folhas are never Store/Creative/Canonical objects. Two fixed
+    # slots prevent caller-chosen paths and preserve bytes without tool grants.
+    draft_root = host.store.root.parent / (host.store.root.name + "-folha-drafts")
+    draft_lock = threading.RLock()
+
+    def draft_payload(slot, revision, text, filename, attachment, dialogue=None):
+        if (slot not in ("a", "b") or type(revision) is not int or revision < 0
+                or type(text) is not str or len(text) > 12000
+                or type(filename) is not str or len(filename) > 255
+                or type(attachment) is not str
+                or bool(filename) != bool(attachment)
+                or any(ord(ch) < 32 for ch in filename)
+                or "/" in filename or "\\" in filename):
+            raise Blocked("Rascunho da Folha inválido.")
+        # Only context for a human clarification, never a grant or a ticket.
+        if dialogue is not None:
+            if (type(dialogue) is not dict or set(dialogue) != {"original", "question"}
+                    or type(dialogue["original"]) is not str
+                    or not dialogue["original"].strip()
+                    or len(dialogue["original"]) > 12000
+                    or type(dialogue["question"]) is not str
+                    or not dialogue["question"].strip()
+                    or len(dialogue["question"]) > 250):
+                raise Blocked("Contexto de esclarecimento inválido.")
+        try:
+            raw = base64.b64decode(attachment, validate=True) if attachment else text.encode("utf-8")
+        except (ValueError, UnicodeError) as error:
+            raise Blocked("Ficheiro ou texto do rascunho inválido.") from error
+        if len(raw) > host.store.policy["max_input_bytes"]:
+            raise Blocked("Rascunho acima do limite permitido.")
+        return {
+            "slot": slot, "revision": revision, "text": text,
+            "filename": filename, "attachment": attachment,
+            "input_sha256": hashlib.sha256(raw).hexdigest(),
+            "dialogue": dialogue,
+        }
+
+    def draft_file(slot):
+        if slot not in ("a", "b"):
+            raise Blocked("Referência de Folha inválida.")
+        if draft_root.is_symlink() or draft_root.is_junction():
+            raise Blocked("Cofre de rascunhos redirecionado.")
+        target = draft_root / (slot + ".json")
+        if target.is_symlink() or target.is_junction():
+            raise Blocked("Rascunho redirecionado.")
+        return target
+
+    def load_draft(slot, session):
+        host.authorize(session)
+        with draft_lock:
+            target = draft_file(slot)
+            if not target.exists():
+                return draft_payload(slot, 0, "", "", "")
+            try:
+                value = strict_json(target.read_bytes())
+                required = {"slot", "revision", "text", "filename",
+                            "attachment", "input_sha256", "record_sha256"}
+                # Accept older drafts after verifying their original record
+                # digest; normalize only AFTER that verification.
+                if (not isinstance(value, dict)
+                        or set(value) not in (required, required | {"dialogue"})):
+                    raise Blocked("Rascunho alterado ou incompleto.")
+                payload = draft_payload(value["slot"], value["revision"],
+                                        value["text"], value["filename"],
+                                        value["attachment"], value.get("dialogue"))
+                signed_payload = {key: payload[key] for key in payload if key in value}
+                if (signed_payload != {key: value[key] for key in signed_payload}
+                        or not secrets.compare_digest(
+                            _request_digest(signed_payload), value["record_sha256"])
+                        or value["slot"] != slot):
+                    raise Blocked("Rascunho alterado; preservado para revisão.")
+                return payload
+            except (OSError, ValueError, KeyError, TypeError) as error:
+                raise Blocked("Rascunho ilegível; preservado para revisão.") from error
+
+    def save_draft(data, session):
+        required = {"slot", "expected_revision", "text", "filename", "attachment"}
+        if (not isinstance(data, dict)
+                or set(data) not in (required, required | {"dialogue"})
+                or type(data["expected_revision"]) is not int
+                or data["expected_revision"] < 0):
+            raise Blocked("Alteração de Folha inválida.")
+        payload = draft_payload(data["slot"], data["expected_revision"] + 1,
+                                data["text"], data["filename"], data["attachment"],
+                                data.get("dialogue"))
+        host.authorize(session)
+        with draft_lock:
+            previous = load_draft(data["slot"], session)
+            if previous["revision"] != data["expected_revision"]:
+                raise Blocked("A Folha mudou noutra sessão; conteúdo conservado.")
+            target = draft_file(data["slot"])
+            draft_root.mkdir(exist_ok=True)
+            record = dict(payload, record_sha256=_request_digest(payload))
+            atomic(target, record)
+            return payload
 
     def search_memory(data, session):
         # Exact schema, no tool execution, no approval or Store mutation.
@@ -353,6 +526,92 @@ def make_server(host, port=0, *, allow_direct_run=False):
         }
         return mold
 
+    def compose_receipt(data, session):
+        """Verify two already-executed Host results; never start or approve work.
+
+        This is an ephemeral reconstruction, NOT a memory/permission grant.
+        The original free-text intent is provided by the Folha; the two tool
+        requests and their actual inputs/results are checked against Store.
+        """
+        common = {"text", "filename", "input_sha256", "verify_run_id"}
+        forms = (common | {"convert_run_id"}, common | {"proofread_run_id"})
+        if not isinstance(data, dict) or set(data) not in forms:
+            raise Blocked("Recibo de processo inválido.")
+        if not all(type(value) is str for value in data.values()):
+            raise Blocked("Recibo de processo inválido.")
+        plan = _composite_plan(data["text"])
+        if plan is None:
+            raise Blocked("A cadeia não corresponde a um pedido composto autorizado.")
+        final_process = plan["steps"][1]["process"]
+        final_key = "proofread_run_id" if final_process == "proofread" else "convert_run_id"
+        if (set(data) != common | {final_key} or not data["filename"]
+                or not re.fullmatch(r"[0-9a-f]{64}", data["input_sha256"])
+                or data["verify_run_id"] == data[final_key]):
+            raise Blocked("A cadeia não corresponde ao pedido composto autorizado.")
+        host.authorize(session)
+        steps = []
+        comparison = None
+        for step, run_id in zip(plan["steps"], (data["verify_run_id"], data[final_key])):
+            expected = step["process"]
+            # Detail checks original input and Creative/Canonical result integrity.
+            state = host.detail(run_id, session)
+            if (state["process_id"] != expected
+                    or state["status"] not in ("HUMAN_REQUIRED", "PASS")
+                    or state["input_sha256"] != data["input_sha256"]
+                    or state["title"] != data["filename"]):
+                raise Blocked("Etapa da cadeia não corresponde à fonte verificada.")
+            request = validate("request", strict_json(
+                host.store.checked_bytes("runs", run_id, "request.json")))
+            if (request["process"] != expected or request["filename"] != data["filename"]
+                    or request["text"] != "& " + step["command"]):
+                raise Blocked("A execução não corresponde ao plano autorizado.")
+            try:
+                original = base64.b64decode(request["attachment"], validate=True)
+            except (ValueError, TypeError) as error:
+                raise Blocked("Fonte da cadeia inválida.") from error
+            if hashlib.sha256(original).hexdigest() != state["input_sha256"]:
+                raise Blocked("O original mudou entre ferramentas.")
+            if expected == "verify":
+                if state["result"]["status"] != "PASS":
+                    raise Blocked("Verificação de integridade sem sucesso.")
+            elif expected == "proofread":
+                comparison = _proofread_comparison(state["result"], original)
+            else:
+                if not state.get("artifact_sha256"):
+                    raise Blocked("PDF final ausente.")
+                source = host.store.path("creative", run_id)
+                host.store.verify_artifact(state, source)
+            steps.append({
+                "process": expected,
+                "run_id": run_id,
+                "status": state["status"],
+                "input_sha256": state["input_sha256"],
+                "request_sha256": state["request_sha256"],
+                "process_sha256": state["process_sha256"],
+                "result_sha256": state["result_sha256"],
+                "candidate_sha256": state["candidate_sha256"],
+                "artifact_sha256": state.get("artifact_sha256"),
+            })
+        receipt = {
+            "authority": "NONE",
+            "execution": "NOT_AUTHORIZED",
+            "original_text_sha256": hashlib.sha256(data["text"].encode("utf-8")).hexdigest(),
+            "filename": data["filename"],
+            "input_sha256": data["input_sha256"],
+            "steps": steps,
+            "human_approval_required": steps[1]["status"] != "PASS",
+        }
+        if final_process == "proofread":
+            receipt["comparison"] = comparison
+        else:
+            receipt["product"] = {
+                "name": "resultado.pdf",
+                "sha256": steps[1]["artifact_sha256"],
+                "run_id": steps[1]["run_id"],
+            }
+        receipt["receipt_sha256"] = _request_digest(receipt)
+        return receipt
+
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *_):
             pass
@@ -389,6 +648,8 @@ def make_server(host, port=0, *, allow_direct_run=False):
                 host.authorize(session)
                 if path == "/api/runs":
                     return self.reply(200, host.list_runs(session))
+                if path in ("/api/folha-draft/a", "/api/folha-draft/b"):
+                    return self.reply(200, load_draft(path.rsplit("/", 1)[-1], session))
                 if path.startswith("/api/pdf/"):
                     return self.reply(200, host.artifact(path.split("/")[-1], session), "application/pdf")
                 if path.startswith("/api/runs/"):
@@ -413,6 +674,10 @@ def make_server(host, port=0, *, allow_direct_run=False):
                 path = urlsplit(self.path).path
                 if path == "/api/search":
                     return self.reply(200, search_memory(data, session))
+                if path == "/api/folha-draft":
+                    return self.reply(200, save_draft(data, session))
+                if path == "/api/flow-receipt":
+                    return self.reply(200, compose_receipt(data, session))
                 if path == "/api/interpret":
                     # Read-only Folha interpretation. Parsing never executes,
                     # creates Store records, or grants any tool permission.
@@ -421,7 +686,8 @@ def make_server(host, port=0, *, allow_direct_run=False):
                     parsed = parse(data["text"])
                     command = (declared_router().recognise_command(parsed.content)
                                if parsed.status == "RESOLVED" else None)
-                    return self.reply(200, {
+                    composite = _composite_plan(data["text"])
+                    preview = {
                         "status": parsed.status,
                         "intent": parsed.intent,
                         "original": parsed.original,
@@ -432,7 +698,10 @@ def make_server(host, port=0, *, allow_direct_run=False):
                         "assistant": _natural_assistant(data["text"]) if parsed.status != "BLOCKED" else {"process": None, "question": None, "missing": []},
                         "molde": build_molde(data["text"], intent=parsed.intent if parsed.status == "RESOLVED" else None)
                                  if data["text"] else None,
-                    })
+                    }
+                    if composite is not None:
+                        preview["composite"] = composite
+                    return self.reply(200, preview)
                 if path == "/api/research":
                     # Read-only web discovery is an authorized natural user
                     # request, not Canonical promotion and never an arbitrary

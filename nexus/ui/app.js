@@ -21,9 +21,11 @@ const session = pageStorage.getItem("nexus-session") || "";
 let current = null, ticket = null, poll = null, currentContent = "", currentProcess = "", executionTicket = null;
 let editRevision = 0, viewRevision = 0, approvalRun = null;
 let pendingDialogue = null;
+let composedFlow = null;
 const hasWorkspace = Boolean(document.querySelector?.("#workspace"));
 function invalidateExecutionProposal() {
   editRevision++;
+  composedFlow = null;
   executionTicket = null;
   ticket = null; approvalRun = null;
   if (el("approval").open) el("approval").close();
@@ -76,6 +78,16 @@ function resultText(content,process) {
 }
 function workingLayout(active) {
   document.querySelector?.(".sheet")?.classList?.toggle("has-work",active);
+}
+function showQuestion(question) {
+  clearTimeout(poll);current=null;currentContent="";viewRevision++;
+  workingLayout(true);
+  el("empty").hidden=true;el("result").hidden=false;
+  el("status").textContent="Nexus";
+  el("result-title").textContent="Uma pergunta";
+  el("message").textContent=question;
+  el("content").textContent="";
+  el("actions").hidden=true;el("pdf").hidden=true;
 }
 function showInterpretation(preview) {
   // An interpretation is never an execution or a Creative candidate.
@@ -134,7 +146,11 @@ async function show(id) {
   else await list();
 }
 async function requestPayload() {
+  // Capture the visible input BEFORE any asynchronous file read. Never pair
+  // yesterday's attachment with another Folha's later text.
+  const text=el("text").value;
   const file=el("file").files[0];
+  const filename=file?.name || "";
   if(file && file.size>2097152) throw new Error("Escolhe um ficheiro até 2 MB.");
   let attachment="";
   if(file) {
@@ -143,25 +159,113 @@ async function requestPayload() {
     for(let i=0;i<bytes.length;i+=8192) binary+=String.fromCharCode(...bytes.subarray(i,i+8192));
     attachment=btoa(binary);
   }
-  return {text:el("text").value,filename:file ? file.name:"",attachment};
+  return {text,filename,attachment};
 }
+
+// A bounded original request can propose two existing Host operations.
+// Each operation needs its own one-use H1; H2 promotion remains separate.
+// Explicit input hand-off adapts Pinokio Script.buildStartRequest (MIT),
+// pinokiocomputer/pinokiod add4a674ad1ba95bb62ec427fce519fe5bf0e9bf,
+// kernel/api/script/index.js. See nexus/third_party/pinokio/NOTICE.md.
+function composedStepRequest(input, step) {
+  // Pinokio merges request params into a fresh next request. Here the input
+  // is the captured Folha source and the target is a closed registry command.
+  return Object.assign({}, input, {text:"& "+step.command});
+}
+function checkComposedText(input) {
+  const bytes=Uint8Array.from(atob(input.attachment),value=>value.charCodeAt(0));
+  let text;
+  try { text=new TextDecoder("utf-8",{fatal:true}).decode(bytes); }
+  catch(_error) { throw new Error("Junta texto UTF-8 até 6000 caracteres para revisão."); }
+  if(!text.trim() || Array.from(text).length>6000 || text.includes("\0"))
+    throw new Error("Junta texto UTF-8 até 6000 caracteres para revisão.");
+}
+function sameFolhaInput(a,b) {
+  return a.text===b.text && a.filename===b.filename && a.attachment===b.attachment;
+}
+async function prepareComposedStep(flow) {
+  const now=await requestPayload();
+  if(composedFlow!==flow || flow.revision!==editRevision || !sameFolhaInput(now,flow.original))
+    throw new Error("O pedido mudou. A sequência foi interrompida.");
+  const step=flow.steps[flow.index];
+  if(flow.steps[1].process==="proofread")checkComposedText(now);
+  const request=composedStepRequest(now,step);
+  const prepared=await api("/api/prepare-run",request);
+  if(composedFlow!==flow || flow.revision!==editRevision ||
+     prepared.process!==step.process ||
+     (flow.inputHash && flow.inputHash!==prepared.attachment_sha256))
+    throw new Error("A etapa não corresponde à sequência autorizada.");
+  flow.inputHash=prepared.attachment_sha256;
+  flow.prepared=request;
+  executionTicket=prepared.ticket;
+  el("execution-summary").textContent=step.process==="verify"?
+    "Verificar o original antes da etapa seguinte":
+    (step.process==="proofread"?"Rever português do mesmo original":"Converter documento verificado para PDF");
+  el("execution-review").textContent="Pedido original: "+flow.original.text+
+    "\nOperação a autorizar: "+step.command+"\nFicheiro: "+prepared.filename;
+  el("execution-confirm").checked=false;
+  el("execution-approve").disabled=true;
+  el("execution-confirmation").showModal();
+}
+async function verifyComposedProduct(runId,flow) {
+  const process=flow.steps[1].process;
+  const attempts=process==="proofread"?100:320;
+  for(let attempt=0;attempt<attempts;attempt++) {
+    if(composedFlow!==flow || flow.revision!==editRevision)
+      throw new Error("A sequência foi interrompida.");
+    const state=await api("/api/runs/"+runId);
+    if(state.status==="RUNNING"){
+      await new Promise(resolve=>setTimeout(resolve,900));
+      continue;
+    }
+    if(state.status!=="HUMAN_REQUIRED" || state.process_id!==process ||
+       state.input_sha256!==flow.inputHash ||
+       (process==="convert_pdf" && !/^[a-f0-9]{64}$/.test(state.artifact_sha256||"")) ||
+       (process==="proofread" && (state.result?.status!=="UNKNOWN" || state.result?.outcome!=="candidate")))
+      throw new Error("A etapa ainda não está verificada. Consulta o histórico antes de repetir.");
+    return state;
+  }
+  throw new Error("A etapa excedeu o tempo. Consulta o histórico sem repetir a tarefa.");
+}
+async function verifyComposedFirst(runId,flow) {
+  // Do not infer success from HTTP 202; wait for the Host-verified candidate.
+  for(let attempt=0;attempt<100;attempt++) {
+    if(composedFlow!==flow || flow.revision!==editRevision)
+      throw new Error("A sequência foi interrompida.");
+    const state=await api("/api/runs/"+runId);
+    if(state.status==="RUNNING") {
+      await new Promise(resolve=>setTimeout(resolve,900));
+      continue;
+    }
+    if(state.status!=="HUMAN_REQUIRED" || state.process_id!=="verify" ||
+       state.result?.status!=="PASS" || state.input_sha256!==flow.inputHash)
+      throw new Error("A integridade não foi confirmada. A etapa seguinte não começou.");
+    return;
+  }
+  throw new Error("A verificação excedeu o tempo. Consulta o histórico antes de repetir.");
+}
+
 el("form").onsubmit=async (event, classified=null)=>{
-  event.preventDefault(); notice(""); el("submit").disabled=true;
+  event.preventDefault();
+  if(draftTransition || (draftSupported && !draftReady))return;
+  notice(""); el("submit").disabled=true;
   try {
     const revision=classified ? classified.revision : editRevision;
     if(classified && (revision!==editRevision || el("text").value!==classified.text ||
        classified.preview.original!==classified.text))
       throw new Error("O pedido mudou durante a interpretação. Revê o pedido.");
     const payload=await requestPayload();
-    if (pendingDialogue && !payload.filename && !payload.attachment) {
-      const answer=payload.text.trim();
-      if(!answer || answer.length>500)throw new Error("Escreve uma resposta até 500 caracteres.");
-      // Keep the human's answer literal. Never invent a missing tone or
-      // duration by assigning the same answer to both slots.
-      // The interpreter will ask again for any genuinely missing detail.
+    if(revision!==editRevision)
+      throw new Error("O texto ou anexo mudou durante a preparação. Revê o pedido.");
+    if (pendingDialogue) {
+      const answer=payload.text;
+      if(!answer.trim() || answer.length>500)throw new Error("Escreve uma resposta até 500 caracteres.");
+      // The answer continues the original request; it is not an autonomous command.
       payload.text=pendingDialogue.original+"\n"+answer;
       el("text").value=payload.text;
       pendingDialogue=null;
+      clearTimeout(draftTimer);
+      await saveDraft();
     }
     if (revision!==editRevision || classified && payload.text!==classified.text)
       throw new Error("O texto ou anexo mudou durante a preparação. Revê o pedido.");
@@ -200,17 +304,26 @@ el("form").onsubmit=async (event, classified=null)=>{
     }
     const preview=classified ? classified.preview : await api("/api/interpret",{text:payload.text});
     if(revision!==editRevision) throw new Error("O texto ou anexo mudou durante a interpretação.");
+    if(preview.composite && payload.filename && payload.attachment) {
+      const steps=preview.composite.steps;
+      if(preview.composite.execution!=="NOT_AUTHORIZED" ||
+         preview.composite.authority!=="NONE" ||
+         !Array.isArray(steps) || steps.length!==2 ||
+         steps[0].process!=="verify" || steps[0].command!=="verificar integridade de ficheiro" ||
+         !((steps[1].process==="convert_pdf" && steps[1].command==="converter para pdf") ||
+           (steps[1].process==="proofread" && steps[1].command==="rever texto")))
+        throw new Error("Receita composta não autorizada.");
+      const flow={original:payload,revision,index:0,steps,inputHash:null,prepared:null};
+      composedFlow=flow;
+      await prepareComposedStep(flow);
+      return;
+    }
     if(preview.assistant?.question && !payload.filename && !payload.attachment) {
-      pendingDialogue={original:payload.text,missing:preview.assistant.missing};
-      clearTimeout(poll);current=null;currentContent="";viewRevision++;
-      workingLayout(true);
-      el("empty").hidden=true;el("result").hidden=false;
-      el("status").textContent="Nexus";
-      el("result-title").textContent="Uma pergunta";
-      el("message").textContent=preview.assistant.question;
-      el("content").textContent="";
-      el("actions").hidden=true;el("pdf").hidden=true;
-      el("text").value="";el("text").focus();
+      pendingDialogue={original:payload.text,question:preview.assistant.question};
+      showQuestion(pendingDialogue.question);
+      el("text").value="";paintComposer();el("text").focus();
+      clearTimeout(draftTimer);
+      await saveDraft();
       return;
     }
     if(preview.assistant?.process==="web" && !payload.filename && !payload.attachment) {
@@ -253,13 +366,15 @@ el("form").onsubmit=async (event, classified=null)=>{
     el("execution-approve").disabled=true;
     el("execution-confirmation").showModal();
   } catch(error) {notice(error.message);}
-  finally {if(!el("execution-confirmation").open)el("submit").disabled=false;}
+  finally {if(!el("execution-confirmation").open && !draftTransition &&
+    (!draftSupported || draftReady))el("submit").disabled=false;}
 };
 el("execution-confirm").onchange=()=>{el("execution-approve").disabled=!el("execution-confirm").checked;};
 el("execution-cancel").onclick=async()=>{
-  const stale=executionTicket; executionTicket=null;
+  const stale=executionTicket, request=composedFlow?.prepared;
+  executionTicket=null;composedFlow=null;
   try {
-    if(stale) await api("/api/confirm-run",{ticket:stale,confirmed:false,...await requestPayload()});
+    if(stale) await api("/api/confirm-run",{ticket:stale,confirmed:false,...(request||await requestPayload())});
   } catch(_error) {}
   el("execution-confirmation").close(); el("submit").disabled=false;
 };
@@ -270,22 +385,65 @@ el("execution-approve").onclick=async()=>{
     if(!active || !el("execution-confirm").checked)throw new Error("A confirmação já não é válida.");
     const payload=await requestPayload();
     if(revision!==editRevision)throw new Error("O pedido mudou durante a confirmação.");
+    const flow=composedFlow;
+    if(flow) {
+      if(flow.revision!==revision || !sameFolhaInput(payload,flow.original) || !flow.prepared)
+        throw new Error("O pedido mudou durante a sequência.");
+      const response=await api("/api/confirm-run",{
+        ticket:active,confirmed:true,...flow.prepared,
+      });
+      el("execution-confirmation").close();
+      if(flow.index===0) {
+        await verifyComposedFirst(response.run_id,flow);
+        flow.verifyRunId=response.run_id;
+        flow.index=1;
+        await prepareComposedStep(flow);
+      } else {
+        await verifyComposedProduct(response.run_id,flow);
+        const receipt=await api("/api/flow-receipt",{
+          text:flow.original.text,filename:flow.original.filename,
+          input_sha256:flow.inputHash,verify_run_id:flow.verifyRunId,
+          [flow.steps[1].process==="proofread"?"proofread_run_id":"convert_run_id"]:response.run_id,
+        });
+        if(receipt.authority!=="NONE" || receipt.execution!=="NOT_AUTHORIZED" ||
+           receipt.steps?.[1]?.run_id!==response.run_id ||
+           (flow.steps[1].process==="convert_pdf" && receipt.product?.run_id!==response.run_id) ||
+           (flow.steps[1].process==="proofread" &&
+             (receipt.comparison?.proofreading!=="UNKNOWN" ||
+              receipt.comparison?.integrity!=="PASS" ||
+              receipt.comparison?.original_preserved!==true ||
+              receipt.comparison?.text_correctness!=="NOT_ESTABLISHED")) ||
+           !/^[a-f0-9]{64}$/.test(receipt.receipt_sha256||""))
+          throw new Error("A ligação entre as ferramentas não foi verificada.");
+        composedFlow=null;
+        await list();
+        if(revision===editRevision){
+          await show(response.run_id);
+          notice(flow.steps[1].process==="proofread"?
+            "Original verificado e revisão ligada à mesma fonte. As sugestões não garantem correção; a aprovação continua pendente.":
+            "PDF produzido e cadeia verificada. Recibo: "+receipt.receipt_sha256.slice(0,12)+".");
+        }
+      }
+      return;
+    }
     const response=await api("/api/confirm-run",{ticket:active,confirmed:true,...payload});
     el("execution-confirmation").close();
     await list();
     if(revision===editRevision) await show(response.run_id);
   } catch(error) {
+    composedFlow=null;
     el("execution-confirmation").close(); notice(error.message); el("submit").disabled=false;
   }
 };
-el("text").addEventListener("input",()=>{invalidateExecutionProposal();paintComposer();});
-el("file").onchange=()=>{invalidateExecutionProposal();el("file-label").textContent=el("file").files[0]?.name || "Até 2 MB · um ficheiro de cada vez";};
+el("text").addEventListener("input",()=>{invalidateExecutionProposal();paintComposer();scheduleDraftSave();});
+el("file").onchange=()=>{invalidateExecutionProposal();el("file-label").textContent=el("file").files[0]?.name || "Até 2 MB · um ficheiro de cada vez";scheduleDraftSave();};
 // Drag-and-drop is an input convenience, not an authorization or execution.
 const surface=document.querySelector?.(".sheet");
 if(surface){
   surface.addEventListener("dragover",event=>event.preventDefault());
   surface.addEventListener("drop",event=>{
     event.preventDefault();
+    if(draftTransition || (draftSupported && !draftReady))return;
     const files=event.dataTransfer?.files;
     if(!files?.length)return;
     if(files.length!==1){notice("Junta um ficheiro de cada vez.");return;}
@@ -342,6 +500,67 @@ el("pdf").onclick=async()=>{
 };
 
 
+// Two scratch Folhas live beside (never inside) the sovereign Store.
+// No execution tickets, Host sessions or Canonical approvals are persisted.
+// Server optimistic revisions prevent stale writes from replacing newer text.
+const draftSupported=typeof File==="function" && typeof DataTransfer==="function";
+let draftSlot=pageStorage.getItem("nexus-active-folha")==="b"?"b":"a";
+let draftRevision=0,draftReady=false,draftTimer=null,draftQueue=Promise.resolve(),draftTransition=false;
+function lockDraftInput(locked){
+  draftTransition=locked;
+  el("new").disabled=locked;
+  el("text").readOnly=locked;
+  el("file").disabled=locked;
+  el("browse-file").disabled=locked;
+  el("submit").disabled=locked;
+}
+function scheduleDraftSave(){
+  if(!draftSupported||!draftReady)return;
+  clearTimeout(draftTimer);
+  draftTimer=setTimeout(()=>{saveDraft().catch(e=>notice(e.message));},350);
+}
+function saveDraft(){
+  if(!draftSupported||!draftReady)return draftQueue;
+  const slot=draftSlot, inputVersion=editRevision;
+  const dialogue=pendingDialogue ? {...pendingDialogue}:null;
+  // Version, input and human clarification are captured BEFORE network awaits.
+  const snapshot=requestPayload();
+  draftQueue=draftQueue.catch(()=>{}).then(async()=>{
+    const payload=await snapshot;
+    if(slot!==draftSlot || inputVersion!==editRevision)return;
+    const reply=await api("/api/folha-draft",{
+      slot,expected_revision:draftRevision,...payload,dialogue,
+    });
+    if(slot===draftSlot)draftRevision=reply.revision;
+  });
+  return draftQueue;
+}
+async function restoreDraft(slot){
+  if(!draftSupported)return;
+  draftReady=false;
+  const revision=editRevision;
+  const saved=await api("/api/folha-draft/"+slot);
+  if(slot!==draftSlot)return;
+  draftRevision=saved.revision;
+  if(revision!==editRevision){
+    // A restore conflict never overwrites fields that were not shown.
+    throw new Error("O pedido mudou durante a recuperação. Reabre a Folha antes de continuar.");
+  }
+  if(saved.attachment){
+    const binary=atob(saved.attachment);
+    const bytes=Uint8Array.from(binary,c=>c.charCodeAt(0));
+    const dt=new DataTransfer();
+    dt.items.add(new File([bytes],saved.filename,{type:"application/octet-stream"}));
+    el("file").files=dt.files;
+    el("file-label").textContent=saved.filename;
+  }
+  el("text").value=saved.text;
+  pendingDialogue=saved.dialogue || null;
+  if(pendingDialogue)showQuestion(pendingDialogue.question);
+  draftReady=true;
+  paintComposer();
+}
+
 // The Nexus assistant handles processes internally. No stage wizard or
 // product selector is presented: the Folha stays one editable white surface.
 function paintComposer() {
@@ -356,12 +575,38 @@ el("text").addEventListener("keydown",event=>{
 const originalFileChange=el("file").onchange;
 el("file").onchange=()=>{originalFileChange();paintComposer();};
 const originalNewSheet=el("new").onclick;
-el("new").onclick=()=>{
-  pendingDialogue=null;
-  originalNewSheet();
-  workingLayout(false);el("history-panel").hidden=true;
-  el("history-toggle").setAttribute("aria-expanded","false");
-  el("navigation").open=false;paintComposer();
+el("new").onclick=async()=>{
+  if(draftTransition || (draftSupported && !draftReady))return;
+  // Lock at transition start, not after the pending queue/network awaits.
+  // The old Folha remains intact if disk CAS/save refuses the change.
+  lockDraftInput(true);
+  const oldSlot=draftSlot;
+  try {
+    if(draftSupported) {
+      clearTimeout(draftTimer);
+      await saveDraft();
+    }
+    pendingDialogue=null;
+    originalNewSheet();
+    workingLayout(false);el("history-panel").hidden=true;
+    el("history-toggle").setAttribute("aria-expanded","false");
+    el("navigation").open=false;paintComposer();
+    if(draftSupported) {
+      draftReady=false;
+      draftSlot=oldSlot==="a"?"b":"a";
+      pageStorage.setItem("nexus-active-folha",draftSlot);
+      await restoreDraft(draftSlot);
+    }
+  } catch(error) {
+    if(draftSupported && draftSlot!==oldSlot) {
+      draftSlot=oldSlot;
+      pageStorage.setItem("nexus-active-folha",oldSlot);
+      try {await restoreDraft(oldSlot);}catch(restoreError){notice(restoreError.message);}
+    }
+    notice(error.message);
+  } finally {
+    lockDraftInput(draftSupported && !draftReady);
+  }
 };
 el("browse-file").onclick=()=>{el("navigation").open=false;el("file").click();};
 el("history-toggle").onclick=async()=>{
@@ -373,3 +618,9 @@ el("history-toggle").onclick=async()=>{
   }
 };
 paintComposer();
+if(draftSupported){
+  lockDraftInput(true);
+  restoreDraft(draftSlot).catch(error=>notice(error.message)).finally(()=>{
+    if(draftReady)lockDraftInput(false);
+  });
+}

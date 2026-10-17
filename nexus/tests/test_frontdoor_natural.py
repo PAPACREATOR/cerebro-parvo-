@@ -111,3 +111,338 @@ def test_natural_parser_never_changes_original_bytes():
     value = "  Explica ação 日本語 ç  "
     parsed = parse(value)
     assert parsed.original.encode("utf-8") == value.encode("utf-8")
+
+
+@pytest.mark.parametrize("original", [
+    "Explica como guardar um ficheiro.",
+    "Explica como pesquisar na web.",
+    "Explica como calcular o custo.",
+    "Por favor, explica como arquivar uma nota.",
+    "Explica-me como guardar este documento.",
+])
+def test_portuguese_question_clause_not_subordinate_command(original):
+    parsed = parse(original)
+    assert parsed.status == "RESOLVED"
+    assert parsed.intent == "perguntar"
+    assert parsed.original == original
+    assert parsed.explicit is False
+    assert "process" not in parsed.as_dict()
+
+
+@pytest.mark.parametrize("original", [
+    "Explica como guardar e depois guarda a nota.",
+    "Explica como pesquisar na web e depois pesquisa na web.",
+    "Explica como calcular e calcula o resultado.",
+    "Explica como guardar e depois corrige o documento.",
+    "Não expliques como guardar esta nota.",
+    'O texto diz «explica como guardar a nota».',
+])
+def test_portuguese_clause_does_not_mask_second_action_or_negation(original):
+    parsed = parse(original)
+    assert parsed.status == "UNRESOLVED"
+    assert parsed.intent is None
+    assert parsed.original == original
+
+
+@pytest.mark.parametrize(("original", "intent"), [
+    ("Podes guardar este documento?", "arquivo"),
+    ("Guarde este ficheiro.", "arquivo"),
+    ("Quero que guardes esta nota.", "arquivo"),
+    ("Por favor, arquive este original.", "arquivo"),
+    ("Poderias pesquisar na internet?", "web"),
+    ("Gostaria de pesquisar na net.", "web"),
+    ("Procure fontes sobre geografia.", "fontes"),
+    ("Encontre fontes de história.", "fontes"),
+    ("Reveja este parágrafo.", "trabalhar"),
+    ("Corrija esta frase.", "trabalhar"),
+    ("Explique este conceito.", "perguntar"),
+    ("Calcule o total.", "calcular"),
+    ("Como posso pesquisar na web?", "perguntar"),
+    ("Podes explicar como guardar este ficheiro?", "perguntar"),
+    ("De que forma posso calcular o valor?", "perguntar"),
+])
+def test_pt_operational_lexicon_and_clause_grammar(original, intent):
+    parsed = parse(original)
+    assert parsed.status == "RESOLVED"
+    assert parsed.intent == intent
+    assert parsed.original.encode("utf-8") == original.encode("utf-8")
+    assert parsed.explicit is False
+    assert "process" not in parsed.as_dict()
+
+
+@pytest.mark.parametrize("original", [
+    "Não podes guardar esta nota.",
+    "Nunca guardes esta nota.",
+    "Explica como guardar e depois guarda o documento.",
+    "Como guardar e também tema astronomia.",
+    "Podes explicar como pesquisar e depois pesquisa na web.",
+    "O texto diz «guarde o ficheiro».",
+    "A palavra guarde surge na frase.",
+])
+def test_pt_operational_lexicon_cannot_force_an_action(original):
+    parsed = parse(original)
+    assert parsed.status == "UNRESOLVED"
+    assert parsed.intent is None
+    assert parsed.original == original
+
+
+@pytest.mark.parametrize("original", [
+    "Responde sobre documento alfa e também pesquiza fontes sobre documento beta.",
+    "Como funciona documento alfa e também quais são as fontes de documento beta?",
+    "Como guardar uma nota e depois guarde o ficheiro.",
+    "Podes explicar como pesquisar e depois pesquise na internet.",
+    "Quero que guardes o texto e também arquive outro documento.",
+])
+def test_pt_lexicon_grammar_preserves_distinct_clauses_and_inflections(original):
+    parsed = parse(original)
+    assert parsed.status == "UNRESOLVED"
+    assert parsed.intent is None
+    assert parsed.original == original
+
+
+def test_pt_markdown_fts5_lexicon_grammar_is_local_and_read_only():
+    from nexus.frontdoor import _PT_LANGUAGE_DB, _PT_GRAMMAR, _PT_FORM_INTENTS, _pt_lookup
+    assert len(_PT_FORM_INTENTS) >= 60
+    assert "pergunta_inicio" in _PT_GRAMMAR
+    assert "segunda_acao" in _PT_GRAMMAR
+    assert _PT_LANGUAGE_DB.execute(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name='pt_operational'"
+    ).fetchone() is not None
+    assert _pt_lookup("guarde") == ("arquivo",)
+    assert _pt_lookup("pesquise") == ("web",)
+    assert _pt_lookup("revê") == ("trabalhar",)
+    assert _pt_lookup('guarde" OR 1=1 --') == ()
+    assert _pt_lookup("canonico") == ()
+
+
+def test_pt_markdown_is_digest_bound_to_the_host_sealed_frontdoor():
+    import hashlib
+    from nexus.frontdoor import _PT_LANGUAGE_PATH, _PT_LANGUAGE_SHA256
+    assert hashlib.sha256(_PT_LANGUAGE_PATH.read_bytes()).hexdigest() == _PT_LANGUAGE_SHA256
+
+
+@pytest.mark.parametrize(("text", "expected"), [
+    ("Guarde este ficheiro.", "arquivo"),
+    ("Como posso guardar esta nota?", "perguntar"),
+    ("De que forma posso calcular o preço?", "perguntar"),
+    ("Poderias pesquisar na internet?", "web"),
+    ("Encontre fontes de história.", "fontes"),
+    ("Corrija esta frase.", "trabalhar"),
+])
+def test_pt_regex_plus_fts5_vs_command_head_baseline(text, expected):
+    parsed = parse(text)
+    assert parsed.status == "RESOLVED"
+    assert parsed.intent == expected
+    assert parsed.original == text
+
+
+@pytest.mark.parametrize("text", [
+    "Não podes guardar esta nota.",
+    "Explica como guardar e depois guarda o original.",
+    "Como guardar e também pesquisa na web.",
+    'A palavra "guarde" aparece na frase.',
+])
+def test_pt_fts5_presence_never_overrides_negation_or_two_actions(text):
+    assert parse(text).status == "UNRESOLVED"
+
+
+def test_ab_1400_regex_only_misses_pt_forms_that_fts5_and_grammar_recognise():
+    """Fixed A/B contrast, not a population-wide accuracy claim."""
+    import re
+    from nexus.frontdoor import NATURAL_RULES, _normalise
+
+    cases = [
+        ("Guarde este ficheiro", "arquivo"),
+        ("Quero que guardes esta nota", "arquivo"),
+        ("Procure fontes sobre história", "fontes"),
+        ("Encontre fontes sobre geografia", "fontes"),
+        ("Corrija este parágrafo", "trabalhar"),
+        ("Reveja esta passagem", "trabalhar"),
+        ("Explique este assunto", "perguntar"),
+        ("Calcule este valor", "calcular"),
+    ]
+    improvements = 0
+    for i in range(1400):
+        command, expected = cases[i % len(cases)]
+        text = command + " teste-" + str(i)
+        original_regex_hits = [
+            intent for intent, patterns in NATURAL_RULES.items()
+            if any(re.search(pattern, _normalise(text)) for pattern in patterns)
+        ]
+        assert original_regex_hits == [], (i, text, original_regex_hits)
+        parsed = parse(text)
+        assert parsed.status == "RESOLVED", (i, text, parsed)
+        assert parsed.intent == expected, (i, text, parsed)
+        assert parsed.original == text
+        improvements += 1
+    assert improvements == 1400
+
+
+
+def test_pt_markdown_is_single_source_for_all_frontdoor_rules():
+    """The signed legacy JSON can only mirror the canonical Markdown rules."""
+    from nexus.frontdoor import _PT_CORPUS, _RULES, _PT_GRAMMAR, _PT_LANGUAGE_DB
+    from nexus.contracts import ROOT, strict_json
+    assert _PT_CORPUS.rules == _RULES
+    assert _RULES == strict_json((ROOT / "frontdoor_rules.json").read_bytes())
+    assert len(_PT_GRAMMAR) == 8
+    assert _PT_LANGUAGE_DB.execute(
+        "SELECT count(*) FROM pt_operational"
+    ).fetchone()[0] == 62
+
+
+def test_pt_fts5_search_is_advisory_not_instruction():
+    from nexus.frontdoor import _pt_search, _PT_LANGUAGE_SHA256
+    hits = _pt_search("gramática")
+    assert hits
+    assert all(item["authority"] == "NONE" for item in hits)
+    assert all(item["execution"] == "NOT_AUTHORIZED" for item in hits)
+    assert all(item["source_sha256"] == _PT_LANGUAGE_SHA256 for item in hits)
+    assert _pt_search('gramática" OR form MATCH "guardar') == ()
+
+
+def test_pt_markdown_index_rejects_changed_bytes_and_duplicate_vocabulary(tmp_path):
+    import hashlib
+    import pytest
+    from nexus.contracts import Blocked
+    from nexus.frontdoor import _PT_LANGUAGE_PATH, _PT_LANGUAGE_SHA256
+    from nexus.lingua.indexer import load_corpus
+
+    md = _PT_LANGUAGE_PATH.read_bytes()
+    tampered = tmp_path / "pt_PT.md"
+    tampered.write_bytes(md + b"\nNova regra sem autorizacao")
+    with pytest.raises(Blocked):
+        load_corpus(tampered, _PT_LANGUAGE_SHA256)
+    edited = md.decode("utf-8").replace(
+        "| guarda | guardar | arquivo |",
+        "| guarda | guardar | arquivo |\n| guarda | guardar | arquivo |",
+        1
+    )
+    tampered.write_text(edited, encoding="utf-8")
+    with pytest.raises(Blocked):
+        load_corpus(tampered, hashlib.sha256(edited.encode("utf-8")).hexdigest())
+
+
+def test_pt_markdown_index_rejects_malformed_grammar_and_json(tmp_path):
+    import hashlib
+    import pytest
+    from nexus.contracts import Blocked
+    from nexus.frontdoor import _PT_LANGUAGE_PATH
+    from nexus.lingua.indexer import load_corpus
+    original = _PT_LANGUAGE_PATH.read_text("utf-8")
+    for corrupted in (
+        original.replace("| contexto_web | web", "| contexto_desconhecido | web", 1),
+        original.replace("~~~json", "~~~yaml", 1),
+    ):
+        path = tmp_path / "pt_PT.md"
+        path.write_text(corrupted, encoding="utf-8")
+        with pytest.raises(Blocked):
+            load_corpus(path, hashlib.sha256(corrupted.encode("utf-8")).hexdigest())
+
+
+@pytest.mark.parametrize("text,expected", [
+    ("Explica como guardar um ficheiro.", "perguntar"),
+    ("Como posso calcular a conta?", "perguntar"),
+    ("Por favor, guarde a nota.", "arquivo"),
+    ("Poderias pesquisar na internet?", "web"),
+    ("Procure fontes sobre história.", "fontes"),
+])
+def test_pt_markdown_rules_retained_for_real_user_inputs(text, expected):
+    parsed = parse(text)
+    assert parsed.status == "RESOLVED"
+    assert parsed.intent == expected
+    assert parsed.original == text
+
+
+@pytest.mark.parametrize("text", [
+    "Não podes guardar esta nota.",
+    "Nunca guardes esse documento.",
+    "Explica como guardar e depois guarda a nota.",
+    "Como pesquisar e também corrige o texto.",
+    'A palavra "guarda" está no documento.',
+])
+def test_pt_markdown_cannot_promote_quotes_negations_or_multiple_actions(text):
+    parsed = parse(text)
+    assert parsed.status == "UNRESOLVED"
+    assert parsed.intent is None
+
+
+
+def test_pt_300_pages_style_long_chapter_is_not_silently_truncated(tmp_path):
+    import hashlib
+    from nexus.frontdoor import _PT_LANGUAGE_PATH
+    from nexus.lingua.indexer import load_corpus
+
+    text = (_PT_LANGUAGE_PATH.read_text("utf-8")
+            + "\n## Manual português prolongado\n"
+            + ("explicação lexical de uma passagem extensa\n" * 9000)
+            + "sentinela final de integridade da indexação\n")
+    path = tmp_path / "pt_PT.md"
+    # Write exact bytes: Windows text mode changes LF to CRLF and invalidates the digest.
+    encoded = text.encode("utf-8")
+    path.write_bytes(encoded)
+    index = load_corpus(path, hashlib.sha256(encoded).hexdigest())
+    hits = index.search("sentinela")
+    assert hits
+    assert any("sentinela" in hit["snippet"] for hit in hits)
+    assert all(hit["authority"] == "NONE" for hit in hits)
+
+
+
+def test_pt_full_hunspell_markdown_fuzzy_index_is_present_and_separate():
+    from nexus.frontdoor import (
+        _PT_GENERAL_DICTIONARY, dictionary_contains, fuzzy_suggestions,
+    )
+    corpus = _PT_GENERAL_DICTIONARY
+    assert corpus.imported_entries == 44_187
+    assert corpus.word_count >= 30_000
+    assert corpus.db.execute("SELECT count(*) FROM pt_general").fetchone()[0] == corpus.word_count
+    assert dictionary_contains("guarda")
+    assert not dictionary_contains("guarrda")
+    assert fuzzy_suggestions("guarda") == ()
+    proposals = fuzzy_suggestions("guarrda", limit=10)
+    assert proposals
+    assert any(item["candidate"] == "guarda" for item in proposals)
+    for item in proposals:
+        assert 0 < item["membership"] < 1
+        assert item["edit_distance"] <= 2
+        assert item["status"] == "SUGGESTION"
+        assert item["authority"] == "NONE"
+        assert item["execution"] == "NOT_AUTHORIZED"
+
+
+def test_pt_fuzzy_does_not_autoroute_or_unnegate_human_commands():
+    from nexus.frontdoor import dictionary_contains, fuzzy_suggestions
+    assert parse("Guarrda este ficheiro.").status == "UNRESOLVED"
+    assert parse("Não guardes esta nota.").status == "UNRESOLVED"
+    assert dictionary_contains('guarda" OR word MATCH "nexus') is False
+    assert fuzzy_suggestions('guarda" OR word MATCH "nexus') == ()
+
+
+def test_pt_dictionary_manifest_and_all_parts_tamper_fail_closed(tmp_path):
+    from pathlib import Path
+    import shutil
+    import pytest
+    from nexus.contracts import Blocked
+    from nexus.frontdoor import _PT_GENERAL_MANIFEST_GIT_SHA1
+    from nexus.lingua.indexer import load_general_vocabulary
+
+    source = Path(__file__).resolve().parents[1] / "lingua" / "imports"
+    dst = tmp_path / "imports"
+    shutil.copytree(source, dst)
+    changed = dst / "pt_PT_dic_part_01.md"
+    changed.write_bytes(changed.read_bytes() + b"\nnon_authorized_word")
+    with pytest.raises(Blocked):
+        load_general_vocabulary(dst, _PT_GENERAL_MANIFEST_GIT_SHA1)
+
+
+def test_pt_dictionary_sha_manifest_is_not_a_runtime_permission():
+    from nexus.frontdoor import fuzzy_suggestions
+    for original in (
+        "Explica como guardar e depois guarda o original.",
+        "Não podes guardar esta nota.",
+        "O texto diz «guarda esta nota».",
+    ):
+        assert parse(original).status == "UNRESOLVED"
+    fuzzy = fuzzy_suggestions("guarrda")
+    assert all(x["execution"] == "NOT_AUTHORIZED" for x in fuzzy)

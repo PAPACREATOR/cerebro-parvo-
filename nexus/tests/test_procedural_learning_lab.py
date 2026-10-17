@@ -88,6 +88,26 @@ def test_typo_pattern_is_retrieved_as_hint_but_never_as_authority(lab):
     assert memory.recognise(mold("novo.pdf"), "elimina tudo")["candidates"] == []
 
 
+@pytest.mark.parametrize("message", [
+    "não faz um podcast com esta fonte",
+    "Nao faz um podcast com esta fonte",
+    "nunca faz um podcast com esta fonte",
+    "faz uma música com esta fonte",
+    "faz um vídeo com esta fonte",
+])
+def test_learning_hints_refuse_negation_or_different_products(lab, message):
+    store, _, memory = lab
+    source = create(store, approved=True)
+    review(memory, source, phrase="faz um podcast com esta fonte")
+    hints = memory.recognise(mold("independente.pdf"), message)
+    assert hints["kind"] == "LAB_INTENT_HINTS"
+    assert hints["authority"] == "NONE"
+    assert hints["execution"] == "NOT_AUTHORIZED"
+    assert hints["candidates"] == []
+    assert memory.recognise(mold("independente.pdf"),
+                            "faz um podcst com esta fonte")["candidates"][0]["goal"] == "podcast"
+
+
 def test_feedback_rejection_disfavours_candidate_instead_of_learning_it(lab):
     store, _, memory = lab
     accepted = create(store, approved=True)

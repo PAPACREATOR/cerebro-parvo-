@@ -122,7 +122,11 @@ def test_installed_writer_is_confined_and_returns_only_a_human_approved_candidat
         assert call("/api/runs") == []
         run = call("/api/confirm-run", {"ticket": prepared["ticket"],
                                       "confirmed": True, **proposal})["run_id"]
-        deadline = time.monotonic() + 90
+        # The Host bounds the Sandy subprocess to 135s; authenticated binary
+        # tree copying, SHA checks, DACL reconciliation and Windows startup
+        # happen outside that subprocess timeout. Poll for its FINAL state
+        # rather than treating a still-running, safety-bounded job as a fail.
+        deadline = time.monotonic() + 240
         state = call("/api/runs/" + run)
         while state["status"] == "RUNNING" and time.monotonic() < deadline:
             time.sleep(0.1)
@@ -161,6 +165,10 @@ def test_two_real_tools_verify_then_writer_each_with_own_human_gates(tmp_path, m
     validated into Creative, then independently promoted to Canonical.
     """
     from urllib.error import HTTPError
+    from nexus.adapters.constitutional import build_molde
+    from nexus.contracts import Blocked
+    from nexus.lab.wiki.kernel_bridge import WikiBridge
+    from nexus.lab.wiki.procedural_memory import ProceduralMemory
 
     data = tmp_path / "two-tools"
     data.mkdir()
@@ -183,7 +191,11 @@ def test_two_real_tools_verify_then_writer_each_with_own_human_gates(tmp_path, m
         run = call("/api/confirm-run", {
             "ticket": prepared["ticket"], "confirmed": True, **proposal,
         })["run_id"]
-        deadline = time.monotonic() + 90
+        # The Host bounds the Sandy subprocess to 135s; authenticated binary
+        # tree copying, SHA checks, DACL reconciliation and Windows startup
+        # happen outside that subprocess timeout. Poll for its FINAL state
+        # rather than treating a still-running, safety-bounded job as a fail.
+        deadline = time.monotonic() + 240
         state = call("/api/runs/" + run)
         while state["status"] == "RUNNING" and time.monotonic() < deadline:
             time.sleep(0.1)
@@ -198,7 +210,17 @@ def test_two_real_tools_verify_then_writer_each_with_own_human_gates(tmp_path, m
         return run
 
     with http(host) as call:
-        verify_run = finish(call, "& verificar integridade de ficheiro")
+        # The ONE free-text request must originate the bounded, read-only
+        # Shell plan. The ordinary user-gated client performs each declared
+        # operation; neither plan nor memory can start or approve any step.
+        original_intent = call("/api/interpret", {
+            "text": "Verifica este documento e converte-o em PDF",
+        })
+        plan = original_intent["composite"]
+        assert plan["execution"] == "NOT_AUTHORIZED"
+        assert [step["process"] for step in plan["steps"]] == ["verify", "convert_pdf"]
+        assert call("/api/runs") == []
+        verify_run = finish(call, "& " + plan["steps"][0]["command"])
         assert not (data / "creative" / verify_run / "resultado.pdf").exists()
 
         writer_proposal = {"text": "& converter para pdf", **original}
@@ -211,17 +233,115 @@ def test_two_real_tools_verify_then_writer_each_with_own_human_gates(tmp_path, m
         }) == {"status": "CANCELLED"}
         assert len(call("/api/runs")) == 1
 
-        writer_run = finish(call, "& converter para pdf")
+        writer_run = finish(call, "& " + plan["steps"][1]["command"])
         assert writer_run != verify_run
         pdf = (data / "canonical" / writer_run / "resultado.pdf").read_bytes()
         assert pdf.startswith(b"%PDF-") and b"%%EOF" in pdf[-1024:]
         assert len(call("/api/runs")) == 2
+        assert host.store.state(verify_run)["process_id"] == "verify"
+        assert host.store.state(writer_run)["process_id"] == "convert_pdf"
+        assert host.store.state(verify_run)["input_sha256"] == host.store.state(writer_run)["input_sha256"]
+        assert hashlib.sha256(pdf).hexdigest() == host.store.state(writer_run)["artifact_sha256"]
+        host.store.check_commit(host.store.state(verify_run))
+        host.store.check_commit(host.store.state(writer_run))
+
+        # Read-only composite receipt binds the original Folha intent to two
+        # actually approved Host runs, input hashes and the physical PDF.
+        def retrieve_receipt(first, last, original_name, original_sha):
+            return call("/api/flow-receipt", {
+                "text": "Verifica este documento e converte-o em PDF",
+                "filename": original_name, "input_sha256": original_sha,
+                "verify_run_id": first, "convert_run_id": last,
+            })
+        combined = retrieve_receipt(verify_run, writer_run, original["filename"],
+                                    hashlib.sha256(raw).hexdigest())
+        assert combined["authority"] == "NONE"
+        assert combined["execution"] == "NOT_AUTHORIZED"
+        assert combined["human_approval_required"] is False
+        assert combined["product"]["sha256"] == hashlib.sha256(pdf).hexdigest()
+        assert [item["run_id"] for item in combined["steps"]] == [verify_run, writer_run]
+        assert all(item["result_sha256"] and item["request_sha256"]
+                   and item["process_sha256"] for item in combined["steps"])
+        with pytest.raises(HTTPError):
+            retrieve_receipt(writer_run, verify_run, original["filename"], hashlib.sha256(raw).hexdigest())
+        with pytest.raises(HTTPError):
+            retrieve_receipt(verify_run, writer_run, original["filename"], "0" * 64)
+
+        # Observe two independently executed, verified tools. Learning remains
+        # advisory and cannot execute or approve a future tool call.
+        learning_root = tmp_path / "learning"
+        learner = ProceduralMemory(WikiBridge(host.store, learning_root))
+        first_mold = build_molde("& converter para pdf", "source.odt", encoded, intent="trabalhar")
+        review = dict(
+            goal="convert_pdf", steps=["verify", "convert_pdf"],
+            phrase="verifica este ODT e converte para PDF",
+            source_ids=[step["run_id"] for step in combined["steps"]],
+            objective="Sequencia real verificada de ODT para PDF",
+            decision="ACCEPT",
+        )
+        with pytest.raises(Blocked, match="Revisão humana"):
+            learner.review(first_mold, **review, human_confirmed=False)
+        assert not list(learner.root.iterdir())
+        receipt = learner.review(first_mold, **review, human_confirmed=True)
+        assert receipt["execution"] == "NOT_AUTHORIZED"
+        assert receipt["authority"] == "NONE"
+
+        # Completely new source: same document type, different bytes and text.
+        stream = io.BytesIO()
+        with zipfile.ZipFile(io.BytesIO(raw)) as source, zipfile.ZipFile(stream, "w") as output:
+            for info in source.infolist():
+                member = source.read(info.filename)
+                if info.filename == "content.xml":
+                    needle = "Lisboa recebeu 12 caixas.".encode("utf-8")
+                    assert member.count(needle) == 1
+                    member = member.replace(needle, "Porto recebeu 13 caixas.".encode("utf-8"))
+                output.writestr(info, member)
+        raw2 = stream.getvalue()
+        assert hashlib.sha256(raw2).hexdigest() != hashlib.sha256(raw).hexdigest()
+        raw = raw2
+        encoded = base64.b64encode(raw).decode("ascii")
+        original = {"filename": "new-source.odt", "attachment": encoded}
+
+        independent = build_molde("& converter para pdf", "new-source.odt",
+                                   encoded, intent="trabalhar")
+        recovered_learner = ProceduralMemory(WikiBridge(host.store, learning_root))
+        proposed = recovered_learner.suggest(independent, goal="convert_pdf")
+        assert proposed["execution"] == "NOT_AUTHORIZED"
+        assert proposed["requires_human_review"] is True
+        assert proposed["candidates"][0]["origin"] == "LEARNED"
+        assert proposed["candidates"][0]["steps"] == ["verify", "convert_pdf"]
+        assert set(proposed["candidates"][0]["canonical_source_ids"]) == {
+            verify_run, writer_run,
+        }
+
+        # These are two NEW real Host executions with their own user-gate
+        # tickets, not a call from procedural memory or a replay.
+        verify_second = finish(call, "& " + plan["steps"][0]["command"])
+        writer_second = finish(call, "& " + plan["steps"][1]["command"])
+        assert len({verify_run, writer_run, verify_second, writer_second}) == 4
+        assert host.store.state(verify_second)["input_sha256"] == host.store.state(writer_second)["input_sha256"]
+        assert host.store.state(verify_second)["input_sha256"] != host.store.state(verify_run)["input_sha256"]
+        other_pdf = (data / "canonical" / writer_second / "resultado.pdf").read_bytes()
+        assert other_pdf.startswith(b"%PDF-") and b"%%EOF" in other_pdf[-1024:]
+        assert hashlib.sha256(other_pdf).hexdigest() == host.store.state(writer_second)["artifact_sha256"]
+        second_receipt = retrieve_receipt(verify_second, writer_second, original["filename"],
+                                          hashlib.sha256(raw).hexdigest())
+        assert second_receipt["product"]["sha256"] == hashlib.sha256(other_pdf).hexdigest()
+        assert second_receipt["receipt_sha256"] != combined["receipt_sha256"]
+        assert len(call("/api/runs")) == 4
 
     def no_repeat(*_args, **_kwargs):
         pytest.fail("Reopening must not re-execute either capability")
     monkeypatch.setattr("nexus.host.launch_confined", no_repeat)
     monkeypatch.setattr("nexus.adapters.writer_sandy.convert", no_repeat)
     restored = Host(data)
-    for run_id in (verify_run, writer_run):
+    for run_id in (verify_run, writer_run, verify_second, writer_second):
         restored.store.check_commit(restored.store.state(run_id))
         assert restored.store.state(run_id)["status"] == "PASS"
+    with http(restored) as call:
+        recovered = call("/api/flow-receipt", {
+            "text": "Verifica este documento e converte-o em PDF",
+            "filename": "source.odt", "input_sha256": combined["input_sha256"],
+            "verify_run_id": verify_run, "convert_run_id": writer_run,
+        })
+        assert recovered["receipt_sha256"] == combined["receipt_sha256"]

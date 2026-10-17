@@ -102,6 +102,34 @@ def _steps(family, goal, steps):
     return steps
 
 
+def _product_terms(text):
+    """Explicitly named product families only; never infer a capability."""
+    labels = {
+        "podcast": r"\bpodcasts?\b",
+        "music": r"\b(?:m[uú]sicas?|can[cç][oõ]es?|can[cç][aã]o)\b",
+        "video": r"\b(?:v[ií]deos?|filmes?|curtas?)\b",
+        "book": r"\b(?:livros?|manuscritos?)\b",
+        "pdf": r"\bpdf\b",
+    }
+    return {name for name, pattern in labels.items() if re.search(pattern, text)}
+
+
+def _unsafe_hint_pair(requested, example):
+    """Fail closed on negation or conflicting named deliverable.
+
+    Similarity may correct 'podcst' but must never turn 'não fazer' into
+    'fazer', or music into podcast. This guard changes hints ONLY and grants
+    no authority to commands or tool execution.
+    """
+    negated = r"\b(?:n[aã]o|nunca|jamais|nem)\b"
+    if re.search(negated, requested) or re.search(negated, example):
+        return True
+    requested_products = _product_terms(requested)
+    example_products = _product_terms(example)
+    return bool(requested_products and example_products
+                and requested_products.isdisjoint(example_products))
+
+
 class ProceduralMemory:
     """One independently auditable lab receipt per explicit operator review."""
 
@@ -267,6 +295,8 @@ class ProceduralMemory:
             if event["family"] != family or event["decision"] != "ACCEPT":
                 continue
             sample = _normal(event["phrase"])
+            if _unsafe_hint_pair(normal, sample):
+                continue
             ratio = SequenceMatcher(None, normal, sample, autojunk=False).ratio()
             if ratio >= 0.78:
                 matches[event["goal"]] = max(matches.get(event["goal"], 0), ratio)

@@ -4,13 +4,36 @@ from __future__ import annotations
 from dataclasses import dataclass
 import re
 import unicodedata
+import hashlib
 
 from nexus.contracts import ROOT, Blocked, strict_json, validate
 from nexus.adapters.languagetool import correction_shadow
 from nexus.capability_router import declared_router
 
 
-_RULES = validate("frontdoor_rules", strict_json((ROOT / "frontdoor_rules.json").read_bytes()))
+# Only a pinned Python parser may interpret the pinned Markdown corpus.
+# Both digests live in this Host-sealed module. Fail closed on tampering.
+_PT_LANGUAGE_PATH = ROOT / "lingua" / "pt_PT.md"
+_PT_LANGUAGE_SHA256 = "2aba7a4ba48f72140655cce0a819e76b53ba749ab4ae82aef2c500ef8ba9f036"
+_PT_INDEXER_PATH = ROOT / "lingua" / "indexer.py"
+_PT_INDEXER_SHA256 = "c6f1baf27519d9ef45b563810109252ede04df1bda06cddcdaa4a5196d2922cc"
+if (_PT_INDEXER_PATH.is_symlink()
+        or hashlib.sha256(_PT_INDEXER_PATH.read_bytes()).hexdigest() != _PT_INDEXER_SHA256):
+    raise Blocked("O indexador português foi alterado sem revisão.")
+
+from nexus.lingua.indexer import load_corpus, load_general_vocabulary
+
+_PT_CORPUS = load_corpus(_PT_LANGUAGE_PATH, _PT_LANGUAGE_SHA256)
+_PT_GENERAL_MANIFEST_GIT_SHA1 = "4362184863c431b43cdeadf167fe82ddbbb13a94"
+_PT_GENERAL_DICTIONARY = load_general_vocabulary(
+    ROOT / "lingua" / "imports", _PT_GENERAL_MANIFEST_GIT_SHA1
+)
+_LEGACY_RULES = validate("frontdoor_rules", strict_json(
+    (ROOT / "frontdoor_rules.json").read_bytes()
+))
+_RULES = validate("frontdoor_rules", _PT_CORPUS.rules)
+if _RULES != _LEGACY_RULES:
+    raise Blocked("Regras Markdown e contrato histórico divergem.")
 PREFIXES = tuple((item[0], item[1]) for item in _RULES["prefixes"])
 NATURAL_RULES = _RULES["natural_rules"]
 CLARIFICATION_PATTERNS = _RULES["clarification_patterns"]
@@ -46,12 +69,109 @@ def _normalise(text: str) -> str:
     return re.sub(r"\s+", " ", unicodedata.normalize("NFKC", text).casefold()).strip()
 
 
+
+# All lexical forms, clause markers, prefixes, and natural rules are loaded
+# from the same reviewed Markdown. This is advisory interpretation only.
+_PT_LANGUAGE_DB = _PT_CORPUS.connection
+_PT_FORM_INTENTS = _PT_CORPUS.forms
+_PT_GRAMMAR = _PT_CORPUS.grammar
+_PT_VERB_FORMS = {
+    intent: frozenset(form for form, group in _PT_FORM_INTENTS.items()
+                      if group == intent)
+    for intent in ("arquivo", "web", "fontes", "trabalhar", "perguntar", "calcular")
+}
+_pt_lookup = _PT_CORPUS.lookup
+_pt_search = _PT_CORPUS.search
+
+
+def _pt_markers(values: tuple[str, ...]) -> str:
+    return "|".join(re.escape(value).replace(r"\ ", r"\s+")
+                    for value in sorted(values, key=lambda item: (-len(item), item)))
+
+
+_PT_QUESTION = re.compile(
+    r"^(?:por favor[, ]+)?(?:"
+    + "(?:" + _pt_markers(_PT_GRAMMAR["pergunta_inicio"]) + r")\b"
+    + "|(?:" + _pt_markers(_PT_GRAMMAR["pergunta_modal"]) + r")\s+como\b)"
+)
+_PT_ACTION_FORMS = sorted(
+    set(_PT_FORM_INTENTS) | {"tema", "assunto"}, key=lambda w: (-len(w), w)
+)
+_PT_SEPARATE_ACTION = re.compile(
+    r"\b(?:" + _pt_markers(_PT_GRAMMAR["segunda_acao"]) + r")\s+(?:"
+    + "|".join(re.escape(word) for word in _PT_ACTION_FORMS)
+    + r"|quero\s+falar\s+sobre)\b"
+)
+_PT_SECOND_CLAUSE = re.compile(
+    r"\b(?:" + _pt_markers(_PT_GRAMMAR["segunda_clausula"]) + r")\b"
+)
+_PT_NEGATIVE_HEAD = re.compile(
+    r"^(?:por favor[, ]+)?(?:"
+    + _pt_markers(_PT_GRAMMAR["negacao_inicio"]) + r")\b"
+)
+_PT_VERB_HEAD = re.compile(
+    r"^(?:por favor[, ]+)?"
+    r"(?:(?:" + _pt_markers(_PT_GRAMMAR["pedido_modal"]) + r")\s+)?"
+    r"([a-záàâãéêíóôõúç-]+)\b"
+)
+_PT_WEB_TARGET = re.compile(
+    r"\b(?:" + _pt_markers(_PT_GRAMMAR["contexto_web"]) + r")\b"
+)
+_PT_SOURCE_TARGET = re.compile(
+    r"\b(?:" + _pt_markers(_PT_GRAMMAR["contexto_fontes"]) + r")\b"
+)
+
+
+def _pt_grammar_intent(normal: str) -> str | None:
+    """Compare one Portuguese grammatical head with a small verb dictionary.
+
+    Tokens after 'como' in a method question do not become actions.
+    Negation and genuine separate instructions are never resolved here.
+    Only a single safe intent is returned, never a process ID or authority.
+    """
+    if len(normal) > 12000 or _PT_NEGATIVE_HEAD.match(normal):
+        return None
+    if _PT_QUESTION.match(normal):
+        return ("perguntar" if not _PT_SEPARATE_ACTION.search(normal)
+                and not _PT_SECOND_CLAUSE.search(normal) else None)
+    head = _PT_VERB_HEAD.match(normal)
+    if (head is None or _PT_SEPARATE_ACTION.search(normal)
+            or _PT_SECOND_CLAUSE.search(normal)):
+        return None
+    verb = head.group(1)
+    matches = []
+    for intent in _pt_lookup(verb):
+        if intent == "web":
+            if _PT_SOURCE_TARGET.search(normal):
+                matches.append("fontes")
+            elif _PT_WEB_TARGET.search(normal):
+                matches.append("web")
+        elif intent == "fontes":
+            if _PT_SOURCE_TARGET.search(normal):
+                matches.append(intent)
+        else:
+            matches.append(intent)
+    return matches[0] if len(set(matches)) == 1 else None
+
+
+def _explanation_is_primary(normal: str, intents: list[str]) -> bool:
+    """Portuguese main-clause hint, without execution authority.
+
+    'Explica como guardar' is a question; 'explica ... e depois guarda'
+    contains a separate imperative and must ask for human clarification.
+    """
+    return ("perguntar" in intents and _PT_QUESTION.match(normal) is not None
+            and _pt_grammar_intent(normal) == "perguntar")
+
+
 def requires_clarification(text: str) -> bool:
-    """Keep refusals, quoted instructions and conflicting intents with humans."""
+    """Refusals, citations and separate main actions remain with the human."""
     normal = _normalise(text)
-    return (any(re.search(pattern, normal) for pattern in CLARIFICATION_PATTERNS)
-            or sum(any(re.search(pattern, normal) for pattern in patterns)
-                   for patterns in NATURAL_RULES.values()) > 1)
+    if any(re.search(pattern, normal) for pattern in CLARIFICATION_PATTERNS):
+        return True
+    intents = [intent for intent, patterns in NATURAL_RULES.items()
+               if any(re.search(pattern, normal) for pattern in patterns)]
+    return len(intents) > 1 and not _explanation_is_primary(normal, intents)
 
 
 def _natural(text: str, *, original: str | None = None, parser="eliza-rules-v1",
@@ -62,6 +182,11 @@ def _natural(text: str, *, original: str | None = None, parser="eliza-rules-v1",
         if any(re.search(pattern, normal) for pattern in patterns)
     ]
     source = text if original is None else original
+    grammar_intent = _pt_grammar_intent(normal)
+    if grammar_intent == "perguntar" and _PT_QUESTION.match(normal):
+        matches = ["perguntar"]
+    elif not matches and grammar_intent is not None:
+        matches = [grammar_intent]
     if not matches and not requires_clarification(source) and not requires_clarification(text):
         try:
             candidate = declared_router().recognise_command(text)
@@ -138,3 +263,13 @@ def parse_with_languagetool(text: str, raw) -> ParsedInput:
         parser="languagetool-shadow+eliza-v1",
         shadow=shadow,
     )
+
+
+def fuzzy_suggestions(word: str, *, limit: int = 5) -> tuple[dict, ...]:
+    """Consultative fuzzy matches; never used to dispatch a process."""
+    return _PT_GENERAL_DICTIONARY.fuzzy(word, limit)
+
+
+def dictionary_contains(word: str) -> bool:
+    """Exact lookup of imported pt-PT spelling dictionary, not intent."""
+    return _PT_GENERAL_DICTIONARY.contains(word)

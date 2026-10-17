@@ -112,3 +112,95 @@ def test_real_shell_dispatch_then_native_lpac_result(tmp_path):
     envelope = json.loads(stdout)
     assert validate("result", envelope["result"])["status"] == "PASS"
     assert envelope["trace"]["process"] == "verify"
+
+
+
+@pytest.mark.parametrize("process", ("convert_pdf", "book"))
+def test_writer_must_pass_shell_before_sandy_without_bypass(tmp_path, monkeypatch, process):
+    """Reproduce the legacy writer exception: refusal by Shell must stop Sandy."""
+    from nexus.contracts import Blocked
+
+    calls = []
+    class RefusedShell:
+        returncode = 2
+        stdout = b""
+        stderr = b""
+
+    def refuse_shell(*args, **kwargs):
+        calls.append(("shell", args))
+        return RefusedShell()
+
+    def reject_writer(*args, **kwargs):
+        calls.append(("writer", args))
+        raise Blocked("Writer must not run after a refused Shell dispatch")
+
+    def reject_preparation(*args, **kwargs):
+        calls.append(("preparation", args))
+        raise Blocked("No preparation or external call before Shell authorization")
+
+    monkeypatch.setattr("nexus.adapters.runner.prepare_task", reject_preparation)
+    monkeypatch.setattr("nexus.host.subprocess.run", refuse_shell)
+    monkeypatch.setattr("nexus.adapters.writer_sandy.convert", reject_writer)
+    host = Host(tmp_path / "data")
+    item = request()
+    item["process"] = process
+    run = host.store.create(item)
+    host.busy.acquire()
+    host._run(run)
+    assert [name for name, _ in calls] == ["shell"], calls
+    assert host.store.state(run)["status"] == "BLOCKED"
+    assert not list((host.store.root / "canonical").iterdir())
+
+
+def test_shell_registry_is_exactly_the_host_authorized_process_set():
+    """No secondary dispatch registry can drift away from the Shell."""
+    import re
+    from nexus.capability_router import BUILTIN_CAPABILITIES
+    from nexus.adapters.runner import PROCESS_TO_TOOL
+    from nexus.contracts import load_policy
+
+    script = (ROOT / "windows" / "runner-shell.cmd").read_text("utf-8")
+    actual = re.findall(r'(?im)^if /i "%~1"=="([a-z_]+)" goto dispatch$', script)
+    expected = set(load_policy()["processes"])
+    assert len(actual) == len(set(actual))
+    assert set(actual) == expected
+    assert expected == set(PROCESS_TO_TOOL)
+    assert expected == {item.process for item in BUILTIN_CAPABILITIES}
+    assert script.count(":dispatch") == 1
+
+
+
+@pytest.mark.parametrize("process", (
+    "verify", "interpret", "proofread", "convert_pdf", "video",
+    "podcast", "visual_podcast", "book", "music", "web",
+))
+def test_every_process_shell_refusal_prevents_all_preparation(tmp_path, monkeypatch, process):
+    """Prevent tools, networking and Writer even before Host preparation."""
+    from nexus.contracts import Blocked
+
+    events = []
+    class Refused:
+        returncode = 2
+        stdout = b""
+        stderr = b""
+
+    def shell_refuse(*_args, **_kwargs):
+        events.append("shell")
+        return Refused()
+
+    def preparation_forbidden(*_args, **_kwargs):
+        events.append("preparation")
+        raise Blocked("Preparation bypassed Shell")
+
+    monkeypatch.setattr("nexus.host.subprocess.run", shell_refuse)
+    monkeypatch.setattr("nexus.adapters.runner.prepare_task", preparation_forbidden)
+    host = Host(tmp_path / process)
+    req = request()
+    req["process"] = process
+    run = host.store.create(req)
+    host.busy.acquire()
+    host._run(run)
+    assert events == ["shell"], (process, events)
+    assert host.store.state(run)["status"] == "BLOCKED"
+    assert not list((host.store.root / "creative").iterdir())
+    assert not list((host.store.root / "canonical").iterdir())
