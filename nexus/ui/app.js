@@ -586,14 +586,23 @@ el("new").onclick=async()=>{
   if(draftTransition || (draftSupported && !draftReady))return;
   lockDraftInput(true);
   try {
-    if(draftSupported){clearTimeout(draftTimer);await saveDraft();}
+    if(draftSupported) {
+      clearTimeout(draftTimer);
+      await saveDraft();
+      // A failed CAS/network write must never erase the human's visible
+      // text or attachment. Clear the editor only after the Host confirms
+      // the exact blank revision of this same Folha.
+      const cleared=await api("/api/folha-draft",{
+        slot:draftSlot,expected_revision:draftRevision,
+        text:"",filename:"",attachment:"",dialogue:null,
+      });
+      draftRevision=cleared.revision;
+    }
     pendingDialogue=null;
     originalNewSheet();
     workingLayout(false);el("history-panel").hidden=true;
     el("history-toggle").setAttribute("aria-expanded","false");
     el("navigation").open=false;paintComposer();
-    // One Folha: clear only this editor, never alternate a/b.
-    if(draftSupported)await saveDraft();
   } catch(error){notice(error.message);}
   finally {lockDraftInput(draftSupported && !draftReady);}
 };

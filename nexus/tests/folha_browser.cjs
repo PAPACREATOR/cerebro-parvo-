@@ -155,6 +155,45 @@ const os=require("node:os"),net=require("node:net"),{spawn}=require("node:child_
     const restoredBytes=await page.locator("#file").evaluate(
       async el=>Array.from(new Uint8Array(await el.files[0].arrayBuffer())));
     assert.deepEqual(restoredBytes,Array.from(draftBinary));
+
+    // Reject the explicit clear once. The visible Folha AND binary file
+    // must survive; an HTTP conflict must not become destructive UI state.
+    let rejectedClear=0;
+    const conflict=route=>{
+      const body=route.request().postDataJSON();
+      if(route.request().method()==="POST" && body?.text==="" &&
+         body?.filename==="" && body?.attachment==="") {
+        rejectedClear++;
+        return route.fulfill({status:409,contentType:"application/json",
+          body:JSON.stringify({error:"Conflito de revisão simulado."})});
+      }
+      return route.continue();
+    };
+    await page.route("**/api/folha-draft",conflict);
+    await page.locator("#navigation summary").click();
+    await page.locator("#new").click();
+    await page.waitForFunction(()=>document.getElementById("notice").textContent.includes("Conflito de revisão simulado."));
+    assert.equal(rejectedClear,1);
+    assert.equal(await page.locator("#text").inputValue(),"Trabalho contínuo com anexo");
+    assert.deepEqual(await page.locator("#file").evaluate(
+      async el=>Array.from(new Uint8Array(await el.files[0].arrayBuffer()))),Array.from(draftBinary));
+    assert.equal(await page.locator("#text").evaluate(el=>el.readOnly),false);
+    await page.unroute("**/api/folha-draft",conflict);
+
+    // Once the Host accepts a blank revision, the SAME Folha is cleared.
+    const cleared=page.waitForResponse(response=>
+      response.request().method()==="POST" &&
+      new URL(response.url()).pathname==="/api/folha-draft" &&
+      response.request().postDataJSON()?.text==="" &&
+      response.request().postDataJSON()?.filename==="" &&
+      response.request().postDataJSON()?.attachment==="");
+    await page.locator("#new").click();
+    assert.equal((await cleared).status(),200);
+    await page.waitForFunction(()=>document.getElementById("text").value==="" &&
+      document.getElementById("file").files.length===0);
+    await page.reload();
+    await page.waitForFunction(()=>document.getElementById("text").value==="" &&
+      document.getElementById("file").files.length===0);
     assert.ok(!routes.some(route=>route==="/api/folha-draft/b"));
     assert.deepEqual(errors,[]);
     console.log(JSON.stringify({result:"PASS",windowsWebSupported:true,oneFolha:true,
