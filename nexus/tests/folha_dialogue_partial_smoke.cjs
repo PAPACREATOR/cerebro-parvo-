@@ -1,6 +1,6 @@
 "use strict";
 // Exercise the actual Folha browser script with a deterministic HTTP peer.
-// A reply supplying only duration must NOT be silently copied into tone.
+// Natural, essential-only questions stay in the same Folha across partial replies.
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
@@ -19,15 +19,13 @@ function node(id) {
   return nodes.get(id);
 }
 function interpreted(text) {
-  const missing = [];
-  if (!/\b(?:documental|informal)\b/iu.test(text)) missing.push("tom");
-  if (!/\b\d+\s*minutos?\b/iu.test(text)) missing.push("duração");
+  const missing = text.split("\n").at(-1).trim() === "Guimarães" ? [] : ["tema"];
   return {
     status: "RESOLVED", intent: "trabalhar", original: text,
     execution: "NOT_AUTHORIZED",
     assistant: {
       process: "podcast", missing,
-      question: missing.length ? "Falta informação para continuar." : null,
+      question: missing.length ? "Sobre que tema queres trabalhar?" : null,
     }
   };
 }
@@ -56,27 +54,29 @@ async function submit(message) {
   await node("form").onsubmit({preventDefault() {}});
 }
 (async () => {
-  const original = "Cria um podcast sobre Guimarães";
-  await submit(original);
-  assert.match(node("message").textContent, /Falta informação/);
-  assert.equal(calls.filter(c => c.uri === "/api/prepare-run").length, 0);
+  const initial = "Cria um podcast";
+  await submit(initial);
+  assert.match(node("message").textContent, /tema/);
+  assert.equal(node("text").value,initial+"\n");
+  assert.equal(calls.filter(c=>c.uri==="/api/prepare-run").length,0);
 
-  // A single answer with duration does not supply any tone.
-  await submit(original+"\n5 minutos");
-  assert.equal(calls.filter(c => c.uri === "/api/prepare-run").length, 0,
-    "Invented tone was accepted as if the human had specified it");
-  const second = calls.filter(c => c.uri === "/api/interpret").at(-1);
-  assert.equal(second.body.text, original + "\n5 minutos");
-  assert.match(node("message").textContent, /Falta informação/);
+  // Incomplete reply cannot invent a topic or discard preceding text.
+  const partial=initial+"\nAinda não sei";
+  await submit(partial);
+  assert.equal(node("text").value,partial+"\n");
+  assert.match(node("message").textContent,/tema/);
+  assert.equal(calls.filter(c=>c.uri==="/api/prepare-run").length,0);
+  assert.equal(calls.filter(c=>c.uri==="/api/interpret").at(-1).body.text,partial);
 
-  // A later independent answer supplies the missing tone explicitly.
-  await submit(original+"\n5 minutos\ndocumental");
-  const prepares = calls.filter(c => c.uri === "/api/prepare-run");
-  assert.equal(prepares.length, 1);
-  assert.equal(prepares[0].body.text, original + "\n5 minutos\ndocumental");
-  assert.doesNotMatch(prepares[0].body.text, /Tom: 5 minutos|Duração: documental/i);
-  assert.equal(node("execution-confirmation").open, true);
-  assert.equal(node("execution-approve").disabled, true);
-  assert.equal(calls.filter(c => c.uri === "/api/confirm-run").length, 0);
-  console.log("PASS staged dialogue: no fabricated tone, explicit duration and tone, human gate intact");
+  // Essential detail permits one ticket, without executing before consent.
+  const complete=partial+"\nGuimarães";
+  await submit(complete);
+  const prepares=calls.filter(c=>c.uri==="/api/prepare-run");
+  assert.equal(prepares.length,1);
+  assert.equal(prepares[0].body.text,complete);
+  assert.equal(node("execution-confirmation").open,true);
+  assert.equal(node("execution-approve").disabled,true);
+  assert.equal(calls.filter(c=>c.uri==="/api/confirm-run").length,0);
+  console.log("PASS same Folha: partial topic answer retained, no invented values, human gate intact");
+
 })().catch(error => {console.error(error); process.exitCode = 1;});

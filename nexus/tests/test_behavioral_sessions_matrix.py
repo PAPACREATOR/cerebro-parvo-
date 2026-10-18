@@ -206,8 +206,27 @@ def test_optional_editorial_options_never_force_clarification(text):
     assert assistant["question"] is None
 
 
-def test_missing_essential_subject_asks_naturally():
-    assistant = _natural_assistant("Cria um podcast")
-    assert assistant["process"] == "podcast"
+@pytest.mark.parametrize("text,process", [
+    ("Cria um podcast", "podcast"),
+    ("Cria um podcast, por favor!", "podcast"),
+    ("Cria um podcast por favor", "podcast"),
+    ("Faz um vídeo, por favor.", "video"),
+    ("Quero criar uma música por favor", "music"),
+    ("Prepara um podcast visual, por favor", "visual_podcast"),
+])
+def test_missing_essential_subject_asks_naturally(text, process):
+    assistant = _natural_assistant(text)
+    assert assistant["process"] == process
     assert assistant["missing"] == ["tema"]
     assert "tema" in assistant["question"]
+
+
+@pytest.mark.parametrize("text", [
+    "Cria um podcast sobre astronomia, por favor!",
+    "Cria um podcast sobre Guimarães por favor",
+])
+def test_politeness_does_not_force_question_when_subject_exists(text):
+    assistant = _natural_assistant(text)
+    assert assistant["process"] == "podcast"
+    assert assistant["question"] is None
+    assert assistant["missing"] == []

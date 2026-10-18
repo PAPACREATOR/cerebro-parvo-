@@ -200,6 +200,8 @@ def _natural_assistant(text):
     process = _natural_work_process(text)
     if process in {"podcast", "visual_podcast", "video", "music"}:
         normal = re.sub(r"\s+", " ", unicodedata.normalize("NFKC", text).casefold()).strip(" .!?")
+        # A trailing polite phrase is not a topic. Preserve the original request.
+        normal = re.sub(r"[, ]+por favor$", "", normal).strip(" .!?,")
         bare = re.fullmatch(
             r"(?:por favor[, ]+)?(?:cria|criar|faz|fazer|prepara|preparar|"
             r"quero\s+(?:criar|fazer|preparar)|preciso\s+de)\s+"
