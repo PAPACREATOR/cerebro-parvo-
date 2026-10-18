@@ -60,11 +60,15 @@ const os=require("node:os"),net=require("node:net"),{spawn}=require("node:child_
     assert.equal(await page.locator("#execution-approve").isDisabled(),true);
     assert.match(await page.locator("#execution-review").textContent(),/Guimarães/);
     await page.locator("#execution-cancel").click();
+    await page.waitForFunction(()=>!document.getElementById("execution-confirmation").open &&
+      !document.getElementById("submit").disabled);
     assert.ok(routes.includes("/api/confirm-run"));
     assert.equal(routes.includes("/api/approve"),false);
 
     // A missing topic is asked naturally in the SAME editable Folha.
     await page.locator("#text").fill("Cria um podcast");
+    await page.waitForFunction(()=>document.getElementById("text").value==="Cria um podcast" &&
+      !document.getElementById("submit").disabled);
     await page.locator("#submit").click();
     try {
       await page.waitForFunction(()=>document.getElementById("message").textContent.includes("tema"),null,{timeout:6000});
@@ -79,7 +83,10 @@ const os=require("node:os"),net=require("node:net"),{spawn}=require("node:child_
           message:document.getElementById("message").textContent,
           notice:document.getElementById("notice").textContent,
           result:document.getElementById("result").hidden,
-          submitDisabled:document.getElementById("submit").disabled};
+          submitDisabled:document.getElementById("submit").disabled,
+          modalOpen:document.getElementById("execution-confirmation").open,
+          draftSlot:sessionStorage.getItem("nexus-active-folha"),
+          hasDraft:typeof sessionStorage.getItem("nexus-session")==="string"};
       });
       console.error("ESSENTIAL_QUESTION_DIAGNOSIS",JSON.stringify(diag));
       throw error;
