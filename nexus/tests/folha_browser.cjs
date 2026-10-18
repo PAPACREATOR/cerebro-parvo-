@@ -66,7 +66,24 @@ const os=require("node:os"),net=require("node:net"),{spawn}=require("node:child_
     // A missing topic is asked naturally in the SAME editable Folha.
     await page.locator("#text").fill("Cria um podcast");
     await page.locator("#submit").click();
-    await page.waitForFunction(()=>document.getElementById("message").textContent.includes("tema"));
+    try {
+      await page.waitForFunction(()=>document.getElementById("message").textContent.includes("tema"),null,{timeout:6000});
+    } catch(error) {
+      const diag=await page.evaluate(async()=>{
+        const s=sessionStorage.getItem("nexus-session");
+        const res=await fetch("/api/interpret",{method:"POST",
+          headers:{"X-Nexus-Session":s,"Content-Type":"application/json"},
+          body:JSON.stringify({text:"Cria um podcast"})});
+        return {status:res.status,preview:await res.json(),
+          value:document.getElementById("text").value,
+          message:document.getElementById("message").textContent,
+          notice:document.getElementById("notice").textContent,
+          result:document.getElementById("result").hidden,
+          submitDisabled:document.getElementById("submit").disabled};
+      });
+      console.error("ESSENTIAL_QUESTION_DIAGNOSIS",JSON.stringify(diag));
+      throw error;
+    }
     assert.equal(await page.locator("#text").inputValue(),"Cria um podcast\n");
     const savedQuestion=page.waitForResponse(response=>
       response.request().method()==="POST" &&
