@@ -196,35 +196,20 @@ def _natural_work_process(text):
 
 
 def _natural_assistant(text):
-    """Read-only conversational preparation by Nexus; tools have no say here."""
+    """Read-only process suggestion; editorial tone/duration are optional."""
     process = _natural_work_process(text)
-    if process not in {"podcast", "visual_podcast", "video", "music"}:
-        return {"process": process, "question": None, "missing": []}
-    normal = unicodedata.normalize("NFKC", text).casefold()
-    # Fixed recognition, not an invented default. Unsupported tone words can
-    # be supplied explicitly as 'tom: ...' or 'estilo: ...'.
-    tone = bool(re.search(
-        r"\b(?:documental|jornalístico|jornalistico|informal|formal|académico|academico|"
-        r"narrativo|educativo|didático|didatico|descontraído|descontraido|"
-        r"humorístico|humoristico|humor|sério|serio|emocional|conversacional|"
-        r"cinematográfico|cinematografico|folk|fado|rock|rap|pop|clássico|classico)\b",
-        normal,
-    ) or re.search(r"\b(?:tom|estilo)\s*:\s*\S+", normal))
-    duration = bool(re.search(
-        r"\b\d+(?:[.,]\d+)?\s*(?:segundos?|seg|minutos?|min|horas?|h)\b",
-        normal,
-    ))
-    missing = []
-    if not tone:
-        missing.append("tom")
-    if not duration:
-        missing.append("duração")
-    questions = {
-        ("tom", "duração"): "Que tom pretendes e quanto deve durar?",
-        ("tom",): "Que tom pretendes?",
-        ("duração",): "Quanto deve durar?",
-    }
-    return {"process": process, "question": questions.get(tuple(missing)), "missing": missing}
+    if process in {"podcast", "visual_podcast", "video", "music"}:
+        normal = re.sub(r"\s+", " ", unicodedata.normalize("NFKC", text).casefold()).strip(" .!?")
+        bare = re.fullmatch(
+            r"(?:por favor[, ]+)?(?:cria|criar|faz|fazer|prepara|preparar|"
+            r"quero\s+(?:criar|fazer|preparar)|preciso\s+de)\s+"
+            r"(?:(?:um|uma|o|a)\s+)?"
+            r"(?:podcast\s+visual|podcast|v[ií]deo|curta(?:-metragem)?|m[uú]sica|can[cç][aã]o)",
+            normal,
+        )
+        if bare:
+            return {"process": process, "question": "Sobre que tema queres trabalhar?", "missing": ["tema"]}
+    return {"process": process, "question": None, "missing": []}
 
 
 def _natural_request(data, host):

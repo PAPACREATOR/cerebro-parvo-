@@ -258,11 +258,14 @@ el("form").onsubmit=async (event, classified=null)=>{
     if(revision!==editRevision)
       throw new Error("O texto ou anexo mudou durante a preparação. Revê o pedido.");
     if (pendingDialogue) {
-      const answer=payload.text;
-      if(!answer.trim() || answer.length>500)throw new Error("Escreve uma resposta até 500 caracteres.");
-      // The answer continues the original request; it is not an autonomous command.
-      payload.text=pendingDialogue.original+"\n"+answer;
-      el("text").value=payload.text;
+      const prefix=pendingDialogue.original+"\n";
+      if(payload.text.startsWith(prefix)) {
+        const answer=payload.text.slice(prefix.length);
+        if(!answer.trim() || answer.length>500)
+          throw new Error("Responde abaixo do pedido na mesma Folha (até 500 caracteres).");
+        payload.text=prefix+answer;
+      }
+      // Editing the original request starts a fresh interpretation.
       pendingDialogue=null;
       clearTimeout(draftTimer);
       await saveDraft();
@@ -321,7 +324,7 @@ el("form").onsubmit=async (event, classified=null)=>{
     if(preview.assistant?.question && !payload.filename && !payload.attachment) {
       pendingDialogue={original:payload.text,question:preview.assistant.question};
       showQuestion(pendingDialogue.question);
-      el("text").value="";paintComposer();el("text").focus();
+      el("text").value=payload.text+"\n";paintComposer();el("text").focus();
       clearTimeout(draftTimer);
       await saveDraft();
       return;
@@ -500,9 +503,9 @@ el("pdf").onclick=async()=>{
 };
 
 
-// Two scratch Folhas live beside (never inside) the sovereign Store.
-// No execution tickets, Host sessions or Canonical approvals are persisted.
-// Server optimistic revisions prevent stale writes from replacing newer text.
+// One visible Folha. Preserve the active legacy scratch slot to recover
+// existing drafts; never switch slots on new requests.
+// No execution authority, tickets or Canonical approvals persist here.
 const draftSupported=typeof File==="function" && typeof DataTransfer==="function";
 let draftSlot=pageStorage.getItem("nexus-active-folha")==="b"?"b":"a";
 let draftRevision=0,draftReady=false,draftTimer=null,draftQueue=Promise.resolve(),draftTransition=false;
@@ -556,7 +559,11 @@ async function restoreDraft(slot){
   }
   el("text").value=saved.text;
   pendingDialogue=saved.dialogue || null;
-  if(pendingDialogue)showQuestion(pendingDialogue.question);
+  if(pendingDialogue) {
+    const prefix=pendingDialogue.original+"\n";
+    if(!saved.text.startsWith(prefix))el("text").value=prefix+saved.text;
+    showQuestion(pendingDialogue.question);
+  }
   draftReady=true;
   paintComposer();
 }
@@ -577,36 +584,18 @@ el("file").onchange=()=>{originalFileChange();paintComposer();};
 const originalNewSheet=el("new").onclick;
 el("new").onclick=async()=>{
   if(draftTransition || (draftSupported && !draftReady))return;
-  // Lock at transition start, not after the pending queue/network awaits.
-  // The old Folha remains intact if disk CAS/save refuses the change.
   lockDraftInput(true);
-  const oldSlot=draftSlot;
   try {
-    if(draftSupported) {
-      clearTimeout(draftTimer);
-      await saveDraft();
-    }
+    if(draftSupported){clearTimeout(draftTimer);await saveDraft();}
     pendingDialogue=null;
     originalNewSheet();
     workingLayout(false);el("history-panel").hidden=true;
     el("history-toggle").setAttribute("aria-expanded","false");
     el("navigation").open=false;paintComposer();
-    if(draftSupported) {
-      draftReady=false;
-      draftSlot=oldSlot==="a"?"b":"a";
-      pageStorage.setItem("nexus-active-folha",draftSlot);
-      await restoreDraft(draftSlot);
-    }
-  } catch(error) {
-    if(draftSupported && draftSlot!==oldSlot) {
-      draftSlot=oldSlot;
-      pageStorage.setItem("nexus-active-folha",oldSlot);
-      try {await restoreDraft(oldSlot);}catch(restoreError){notice(restoreError.message);}
-    }
-    notice(error.message);
-  } finally {
-    lockDraftInput(draftSupported && !draftReady);
-  }
+    // One Folha: clear only this editor, never alternate a/b.
+    if(draftSupported)await saveDraft();
+  } catch(error){notice(error.message);}
+  finally {lockDraftInput(draftSupported && !draftReady);}
 };
 el("browse-file").onclick=()=>{el("navigation").open=false;el("file").click();};
 el("history-toggle").onclick=async()=>{

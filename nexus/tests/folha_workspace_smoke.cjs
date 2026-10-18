@@ -68,30 +68,42 @@ test("text-only web request goes from Nexus classification to Host research",asy
   assert.equal(ui.node("execution-confirmation").open,false);
   assert.equal(ui.calls.some(c=>c.route==="/api/confirm-run"),false);
 });
-test("Nexus asks tone and duration in natural language before the Host",async()=>{
+test("optional podcast tone/duration never block the existing human gate",async()=>{
   const ui=sheet({handler:async(route,body)=>{
-    if(route==="/api/interpret"){
-      const answered=/^Cria um podcast sobre Guimarães\n/.test(body.text);
-      return {status:"RESOLVED",intent:"trabalhar",original:body.text,
-        assistant:{process:"podcast",question:answered?null:"Que tom pretendes e quanto deve durar?",
-          missing:answered?[]:["tom","duração"]}};
-    }
+    if(route==="/api/interpret")return {status:"RESOLVED",intent:"trabalhar",original:body.text,
+      assistant:{process:"podcast",question:null,missing:[]}};
     if(route==="/api/prepare-run")return {ticket:"one",process:"podcast",filename:"pedido"};
     return [];
   }});
   await ui.submit("Cria um podcast sobre Guimarães");
-  assert.match(ui.node("message").textContent,/tom.*durar/);
-  assert.equal(ui.calls.some(c=>c.route==="/api/prepare-run"),false);
-  await ui.submit("Informal, 5 minutos");
-  assert.equal(ui.calls.filter(c=>c.route==="/api/interpret").length,2);
-  const approved=ui.calls.find(c=>c.route==="/api/prepare-run");
-  assert.match(approved.body.text,/^Cria um podcast sobre Guimarães/);
-  assert.match(approved.body.text,/Informal, 5 minutos/);
-  assert.equal(approved.body.filename,"");
-  assert.equal(approved.body.attachment,"");
+  assert.equal(ui.calls.filter(c=>c.route==="/api/interpret").length,1);
+  assert.equal(ui.calls.filter(c=>c.route==="/api/prepare-run").length,1);
   assert.equal(ui.node("execution-confirmation").open,true);
   assert.equal(ui.node("execution-approve").disabled,true);
   assert.equal(ui.calls.some(c=>c.route==="/api/confirm-run"),false);
+});
+test("essential question retains original request in same Folha",async()=>{
+  const ui=sheet({handler:async(route,body)=>{
+    if(route==="/api/interpret")return {status:"RESOLVED",intent:"trabalhar",original:body.text,
+      assistant:{process:"podcast",question:body.text==="Cria um podcast"?"Sobre que tema queres trabalhar?":null,
+        missing:body.text==="Cria um podcast"?["tema"]:[]}};
+    if(route==="/api/prepare-run")return {ticket:"one",process:"podcast",filename:"pedido"};
+    return [];
+  }});
+  await ui.submit("Cria um podcast");
+  assert.equal(ui.node("text").value,"Cria um podcast\n");
+  assert.match(ui.node("message").textContent,/tema/);
+  assert.equal(ui.calls.some(c=>c.route==="/api/prepare-run"),false);
+  await ui.submit("Cria um podcast\nGuimarães");
+  assert.equal(ui.calls.filter(c=>c.route==="/api/prepare-run").length,1);
+  assert.equal(ui.calls.find(c=>c.route==="/api/prepare-run").body.text,"Cria um podcast\nGuimarães");
+  assert.equal(ui.node("execution-confirmation").open,true);
+});
+test("one visible Folha and no alternating draft action",()=>{
+  const html=fs.readFileSync(path.join(__dirname,"..","ui","index.html"),"utf8");
+  assert.match(html,/Novo pedido/);
+  assert.doesNotMatch(html,/Nova folha/);
+  assert.doesNotMatch(code,/draftSlot=oldSlot==="a"\?"b":"a"/);
 });
 test("registered file capability still requires the original human ticket",async()=>{
   const req="& verificar integridade de ficheiro";

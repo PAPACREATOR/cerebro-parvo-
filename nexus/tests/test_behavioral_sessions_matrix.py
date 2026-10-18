@@ -193,14 +193,21 @@ def test_unconfirmed_ticket_cannot_resume_as_authority_after_server_restart(tmp_
     assert _empty_storage(tmp_path)
 
 
-@pytest.mark.parametrize("text,missing", [
-    ("Cria um podcast sobre astronomia", ("tom", "duração")),
-    ("Cria um podcast documental sobre astronomia", ("duração",)),
-    ("Cria um podcast sobre astronomia de 4 minutos", ("tom",)),
-    ("Cria um podcast documental de 4 minutos sobre astronomia", ()),
+@pytest.mark.parametrize("text", [
+    "Cria um podcast sobre astronomia",
+    "Cria um podcast documental sobre astronomia",
+    "Cria um podcast sobre astronomia de 4 minutos",
+    "Cria um podcast documental de 4 minutos sobre astronomia",
 ])
-def test_dialogue_suggestions_do_not_claim_product_authority(text, missing):
+def test_optional_editorial_options_never_force_clarification(text):
     assistant = _natural_assistant(text)
     assert assistant["process"] == "podcast"
-    assert tuple(assistant["missing"]) == missing
-    assert bool(assistant["question"]) == bool(missing)
+    assert assistant["missing"] == []
+    assert assistant["question"] is None
+
+
+def test_missing_essential_subject_asks_naturally():
+    assistant = _natural_assistant("Cria um podcast")
+    assert assistant["process"] == "podcast"
+    assert assistant["missing"] == ["tema"]
+    assert "tema" in assistant["question"]

@@ -62,7 +62,7 @@ async function submit(message) {
   assert.equal(calls.filter(c => c.uri === "/api/prepare-run").length, 0);
 
   // A single answer with duration does not supply any tone.
-  await submit("5 minutos");
+  await submit(original+"\n5 minutos");
   assert.equal(calls.filter(c => c.uri === "/api/prepare-run").length, 0,
     "Invented tone was accepted as if the human had specified it");
   const second = calls.filter(c => c.uri === "/api/interpret").at(-1);
@@ -70,7 +70,7 @@ async function submit(message) {
   assert.match(node("message").textContent, /Falta informação/);
 
   // A later independent answer supplies the missing tone explicitly.
-  await submit("documental");
+  await submit(original+"\n5 minutos\ndocumental");
   const prepares = calls.filter(c => c.uri === "/api/prepare-run");
   assert.equal(prepares.length, 1);
   assert.equal(prepares[0].body.text, original + "\n5 minutos\ndocumental");
